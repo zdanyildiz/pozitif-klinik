@@ -5,6 +5,12 @@ use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
 return function (App $app) {
+    // Health check
+    $app->get('/', function ($request, $response) {
+        $response->getBody()->write('Pozitif Klinik Backend is Running!');
+        return $response;
+    });
+
     // Public routes
     $app->post('/auth/login', \App\Domain\Auth\AuthController::class . ':login');
 
