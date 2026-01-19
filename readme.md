@@ -24,6 +24,7 @@ Proje **Domain Driven Design (DDD)** esintileri taşıyan modüler bir yapıdad�
 ```text
 /pozitif-klinik-backend
 ├── /config                 # DB, Route ve Middleware ayarları
+├── /migration/database     # Veritabanı tabloları ve migration dosyaları
 ├── /public
 │   └── index.php           # Uygulama giriş noktası (Entry Point)
 ├── /src
@@ -59,7 +60,7 @@ DB_PASS=sifreniz
 
 JWT_SECRET=cok_gizli_ve_karmasik_bir_anahtar_buraya
 4. Veritabanını Oluşturun
-/docs/schema.sql dosyasındaki SQL komutlarını çalıştırarak tabloları oluşturun.
+/migration/database/schema.sql dosyasındaki SQL komutlarını çalıştırarak tabloları oluşturun.
 
 5. Sunucuyu Başlatın
 Geliştirme ortamı için PHP'nin dahili sunucusunu kullanabilirsiniz:
@@ -67,6 +68,23 @@ Geliştirme ortamı için PHP'nin dahili sunucusunu kullanabilirsiniz:
 Bash
 php -S localhost:8080 -t public
 🛡️ Güvenlik ve Geliştirme Kuralları (ÖNEMLİ)
+
+### ⚠️ HATA YÖNETİMİ VE FALLBACK POLİTİKASI (ÇOK ÖNEMLİ)
+
+**BU PROJEDE "SILENT FAILURE" (SESSİZ HATA) KESİNLİKLE YASAKTIR!**
+
+1.  **Fallback Kullanımı Yasak:** Bir veri bulunamadığında veya hata oluştuğunda asla "varsayılan değer" (boş string, null, 0 vb.) döndürüp işleyişe devam etmeyin.
+2.  **Hata Fırlatın (Fail Fast):**
+    - Veritabanı bağlantısı koptuysa -> `500 Internal Server Error` fırlatın.
+    - Token geçersizse -> `401 Unauthorized` fırlatın.
+    - Zorunlu alan eksikse -> `400 Bad Request` fırlatın.
+3.  **Development Modu:** Şu an geliştirme aşamasındayız. Hataları ekrana basmak (Stack Trace), sorunu halı altına süpürmekten çok daha değerlidir. `try-catch` bloklarını hatayı yutmak için değil, loglamak ve anlamlı bir HTTP hatası döndürmek için kullanın.
+
+### 🛠 GELİŞTİRME DÜZENİ (KESİN TALİMATLAR)
+
+1.  **Geçici ve Test Dosyaları:** Geliştirme sürecinde oluşturduğunuz tüm geçici scriptler, test dosyaları ve deneme amaçlı kodlar **KESİNLİKLE** kök dizinde değil, `/tests` dizini altında oluşturulmalıdır.
+2.  **Veritabanı Değişiklikleri (Migrations):** Tüm SQL dosyaları, tablo oluşturma scriptleri ve veritabanı güncellemeleri `/migration/database` dizini altında tutulmalıdır. Manuel olarak veritabanında yapılan her değişikliğin bir SQL karşılığı bu dizine eklenmelidir.
+
 Bu projede çalışan tüm geliştiriciler (ve AI Ajanları) aşağıdaki kurallara uymak zorundadır:
 
 1. Multi-Tenancy (Kiracı Ayrımı)

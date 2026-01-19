@@ -37,6 +37,13 @@ $logError = true;
 $logErrorDetails = true;
 
 $errorMiddleware = $app->addErrorMiddleware($displayErrorDetails, $logError, $logErrorDetails);
+$errorMiddleware->setDefaultErrorHandler(
+    new \App\Core\HttpErrorHandler(
+        $app->getCallableResolver(),
+        $app->getResponseFactory(),
+        $container->get(\Psr\Log\LoggerInterface::class)
+    )
+);
 
 // CORS Middleware (Basic)
 $app->add(function ($request, $handler) {
@@ -52,9 +59,8 @@ $app->options('/{routes:.+}', function ($request, $response, $args) {
     return $response;
 });
 
-$app->get('/', function ($request, $response, $args) {
-    $response->getBody()->write("Pozitif Klinik Backend is Running!");
-    return $response;
-});
+// Register routes
+$routes = require __DIR__ . '/../config/routes.php';
+$routes($app);
 
 $app->run();

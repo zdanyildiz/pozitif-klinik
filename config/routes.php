@@ -14,6 +14,13 @@ return function (App $app) {
     // Public routes
     $app->post('/auth/login', \App\Domain\Auth\AuthController::class . ':login');
 
+    // Platform Admin routes
+    $app->post('/admin/login', \App\Domain\Platform\PlatformAuthController::class . ':login');
+
+    $app->group('/admin', function (RouteCollectorProxy $group) {
+        $group->post('/tenants', \App\Domain\Platform\TenantController::class . ':create');
+    })->add(\App\Middleware\PlatformAdminMiddleware::class);
+
     // API routes with TenantMiddleware
     $app->group('/api', function (RouteCollectorProxy $group) {
         $group->get('/test', function ($request, $response) {

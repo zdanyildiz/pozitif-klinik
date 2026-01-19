@@ -20,4 +20,9 @@ return [
     PDO::class => function (ContainerInterface $c) {
         return $c->get(Database::class)->getConnection();
     },
+
+    \Psr\Log\LoggerInterface::class => function (ContainerInterface $c) {
+        $settings = $c->get('settings');
+        return \App\Core\LoggerFactory::create($settings['settings']['logger']);
+    },
 ];
