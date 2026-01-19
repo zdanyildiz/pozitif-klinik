@@ -20,5 +20,14 @@ return function (App $app) {
             $response->getBody()->write('API Test Route');
             return $response;
         });
+
+        // Patient routes
+        $group->group('/patients', function (RouteCollectorProxy $patientGroup) {
+            $patientGroup->get('', \App\Domain\Patient\PatientController::class . ':listPatients');
+            $patientGroup->get('/{id:[0-9]+}', \App\Domain\Patient\PatientController::class . ':getPatient');
+            $patientGroup->post('', \App\Domain\Patient\PatientController::class . ':createPatient');
+            $patientGroup->put('/{id:[0-9]+}', \App\Domain\Patient\PatientController::class . ':updatePatient');
+            $patientGroup->delete('/{id:[0-9]+}', \App\Domain\Patient\PatientController::class . ':deletePatient');
+        });
     })->add(TenantMiddleware::class);
 };
