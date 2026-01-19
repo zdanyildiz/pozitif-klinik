@@ -81,4 +81,17 @@ class TenantController extends BaseController
             throw $e;
         }
     }
+
+    /**
+     * Tüm Klinikleri Listele
+     *
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     */
+    public function list(Request $request, Response $response): Response
+    {
+        $tenants = $this->db->fetchAll("SELECT * FROM sys_tenants ORDER BY created_at DESC");
+        return $this->successResponse($response, $tenants);
+    }
 }

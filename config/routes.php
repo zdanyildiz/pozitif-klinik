@@ -19,6 +19,7 @@ return function (App $app) {
 
     $app->group('/admin', function (RouteCollectorProxy $group) {
         $group->post('/tenants', \App\Domain\Platform\TenantController::class . ':create');
+        $group->get('/tenants', \App\Domain\Platform\TenantController::class . ':list');
     })->add(\App\Middleware\PlatformAdminMiddleware::class);
 
     // API routes with TenantMiddleware

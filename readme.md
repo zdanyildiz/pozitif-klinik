@@ -110,6 +110,55 @@ Değişken ve fonksiyon isimleri İngilizce ve camelCase olmalıdır.
 
 SQL Tablo isimleri: sys_ (Sistem), ptn_ (Hasta), cln_ (Klinik), fin_ (Finans) ön eklerini alır.
 
+### 🎨 FRONTEND KOD AYIRIMI (INLINE CSS/JS YASAĞI)
+
+**BU PROJEDE INLINE CSS VE JAVASCRIPT KODU YAZMAK KESİNLİKLE YASAKTIR!**
+
+HTML dosyalarında `<style>` ve `<script>` etiketleri içinde kod yazmak **YASAKTIR**. Tüm stiller ve JavaScript kodları harici dosyalara ayrılmalıdır.
+
+#### ❌ YANLIŞ (YASAK):
+```html
+<style>
+    body { background: red; }
+</style>
+
+<script>
+    function doSomething() { ... }
+</script>
+```
+
+#### ✅ DOĞRU:
+```html
+<link rel="stylesheet" href="css/style.css">
+<script src="js/app.js"></script>
+```
+
+#### Dosya Yapısı:
+```
+/public/admin/
+├── index.html
+├── dashboard.html
+├── css/
+│   ├── variables.css     # CSS değişkenleri
+│   ├── base.css          # Temel stiller
+│   ├── components.css    # Bileşen stilleri
+│   └── pages/
+│       ├── login.css
+│       └── dashboard.css
+└── js/
+    ├── config.js         # API config, axios ayarları
+    ├── utils.js          # Yardımcı fonksiyonlar
+    └── pages/
+        ├── login.js
+        └── dashboard.js
+```
+
+**NEDEN?**
+1. **Bakım Kolaylığı:** Ayrı dosyalar, kodun bulunmasını ve düzenlenmesini kolaylaştırır.
+2. **Önbellekleme:** Tarayıcı harici dosyaları önbelleğe alabilir, sayfa yüklenme hızı artar.
+3. **Separation of Concerns:** İçerik (HTML), stil (CSS) ve davranış (JS) birbirinden ayrılmalıdır.
+4. **Kod Tekrarını Önler:** Ortak stiller ve fonksiyonlar tek bir yerden yönetilir.
+
 🔌 API Kullanımı (Örnekler)
 Tüm yanıtlar JSON formatındadır.
 

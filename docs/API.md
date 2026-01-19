@@ -2,118 +2,142 @@
 
 ## Genel Bilgiler
 
-**Base URL:** `http://localhost/Pozitif-Klinik/public`
+**Base URL:** Sunucu yapılandırmasına göre değişir (örn: `http://localhost/pozitif-klinik/public`)
 
-**Content-Type:** `application/json`
-
-**Authentication:** Bearer Token (JWT)
+**Authentication:** Tüm `/api/*` ve `/admin/*` endpoint'leri (login hariç) `Bearer <token>` JWT ile korunmaktadır.
 
 ---
 
-## Endpoints
+## Hata Yanıt Formatı
 
-### Health Check
-
-```
-GET /
-```
-
-**Response:**
-```
-Pozitif Klinik Backend is Running!
-```
-
----
-
-## Authentication
-
-### Token Yapısı
-
-JWT Token içinde aşağıdaki claim'ler bulunmalı:
+Tüm hata yanıtları (`4xx`, `5xx`) standart bir formatta döner:
 
 ```json
 {
-  "iat": 1737304605,
-  "exp": 1737308205,
-  "clinic_id": 1,
-  "user_id": 123,
-  "role": "admin"
+    "statusCode": 401,
+    "error": {
+        "type": "UNAUTHENTICATED",
+        "description": "Token süresi dolmuş"
+    },
+    "trace_id": "ab123cd-45ef-67gh-89ij-klm012nop345"
 }
-```
-
-### Header Formatı
-
-```
-Authorization: Bearer <token>
 ```
 
 ---
 
-## Error Responses
+## Public API
 
-Tüm hata yanıtları aşağıdaki formatta döner:
+Bu endpoint'ler, klinik kullanıcılarının (doktor, resepsiyonist vb.) mobil veya web uygulamaları üzerinden erişimi içindir.
 
+### `POST /auth/login`
+
+Klinik kullanıcısının sisteme giriş yapmasını ve JWT almasını sağlar.
+
+**Payload:**
 ```json
 {
-  "success": false,
-  "error": {
-    "code": <HTTP_STATUS_CODE>,
-    "message": "<Hata mesajı>"
-  }
+  "username": "doktor_ahmet",
+  "password": "secure_password"
 }
 ```
 
-### 401 Unauthorized
-Token eksik veya geçersiz.
-
+**Başarılı Yanıt (200 OK):**
 ```json
 {
-  "success": false,
-  "error": {
-    "code": 401,
-    "message": "Authorization header bulunamadı"
-  }
-}
-```
-
-**Olası Mesajlar:**
-- `Authorization header bulunamadı`
-- `Geçersiz Authorization header formatı`
-- `Token süresi dolmuş`
-- `Geçersiz token imzası`
-- `Token doğrulama hatası: <detay>`
-
-### 403 Forbidden
-Token geçerli ama `clinic_id` claim'i yok.
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": 403,
-    "message": "Klinik kimliği bulunamadı"
-  }
-}
-```
-
-### 500 Internal Server Error
-Sunucu hatası.
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": 500,
-    "message": "Bir hata oluştu"
+  "status": true,
+  "message": "Giriş başarılı.",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzczMDQ2MDUsImV4cCI6MTczNzMwODIwNSwiY2xpbmljX2lkIjoxLCJ1c2VyX2lkIjoxMjMsInJvbGUiOiJkb2N0b3IifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
   }
 }
 ```
 
 ---
 
-## Multi-Tenancy
+## Platform API (Admin)
 
-Her istek `clinic_id` ile izole edilir. Token içindeki `clinic_id` değeri:
-- Request attribute olarak eklenir
-- Tüm veritabanı sorgularında filtre olarak kullanılır
-- Farklı kliniklerin verilerine erişim engellenir
+Bu endpoint'ler, sadece platform yöneticisinin (root admin) erişebileceği, klinik yönetimiyle ilgili işlemler içindir. Tüm istekler `PlatformAdminMiddleware` tarafından kontrol edilir.
+
+### `POST /admin/login`
+
+Platform yöneticisinin (root) sisteme giriş yapmasını sağlar. Bu token, diğer `/admin` endpoint'lerine erişim için gereklidir.
+
+**Payload:**
+```json
+{
+  "username": "admin",
+  "password": "root_password"
+}
+```
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "message": "Giriş başarılı.",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzczMDQ2MDUsImV4cCI6MTczNzMwODIwNSwicm9sZSI6InBsYXRmb3JtX2FkbWluIn0.aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+  }
+}
+```
+
+### `POST /admin/tenants`
+
+Yeni bir klinik (tenant) oluşturur.
+
+**Gerekli Yetki:** Platform Admin
+
+**Payload:**
+```json
+{
+  "name": "Yeni Test Kliniği",
+  "domain_prefix": "yeniklinik",
+  "admin_email": "admin@yeniklinik.com",
+  "admin_password": "strong_password123",
+  "is_active": true
+}
+```
+*   `domain_prefix`: Sisteme girişte kullanılacak alt alan adı (subdomain) gibi düşünülebilir. Benzersiz olmalıdır.
+
+**Başarılı Yanıt (201 Created):**
+```json
+{
+    "status": true,
+    "message": "Klinik başarıyla oluşturuldu.",
+    "data": {
+        "tenant_id": 5
+    }
+}
+```
+
+### `GET /admin/tenants`
+
+Sistemdeki tüm klinikleri listeler.
+
+**Gerekli Yetki:** Platform Admin
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+    "status": true,
+    "message": "Klinikler listelendi.",
+    "data": [
+        {
+            "id": 1,
+            "name": "Merkez Diş Kliniği",
+            "domain_prefix": "merkezdis",
+            "is_active": 1,
+            "created_at": "2026-01-19 10:00:00",
+            "updated_at": "2026-01-19 10:00:00"
+        },
+        {
+            "id": 2,
+            "name": "Hayat Fizik Tedavi",
+            "domain_prefix": "hayatftr",
+            "is_active": 1,
+            "created_at": "2026-01-20 11:30:00",
+            "updated_at": "2026-01-20 11:30:00"
+        }
+    ]
+}
+```

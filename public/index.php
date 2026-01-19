@@ -45,6 +45,12 @@ $errorMiddleware->setDefaultErrorHandler(
     )
 );
 
+// Add Routing Middleware (required for Slim to resolve routes)
+$app->addRoutingMiddleware();
+
+// Add Body Parsing Middleware (required for JSON request body parsing)
+$app->addBodyParsingMiddleware();
+
 // CORS Middleware (Basic)
 $app->add(function ($request, $handler) {
     $response = $handler->handle($request);

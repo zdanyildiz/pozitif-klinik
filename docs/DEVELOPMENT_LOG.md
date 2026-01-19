@@ -11,149 +11,58 @@
 
 ### 1. Backend İskeleti (✅ Tamamlandı)
 **Tarih:** 2026-01-19
-
-#### Oluşturulan Klasör Yapısı:
-```
-Pozitif-Klinik/
-├── config/
-│   ├── settings.php
-│   └── container.php
-├── public/
-│   └── index.php
-├── src/
-│   ├── Core/
-│   │   └── Database.php
-│   ├── Domain/
-│   └── Middleware/
-├── docs/
-├── .env.example
-└── composer.json
-```
-
-#### Oluşturulan Dosyalar:
-
-**composer.json** - Bağımlılıklar:
-- `slim/slim`: ^4.14
-- `slim/psr7`: ^1.7
-- `php-di/php-di`: ^7.0
-- `firebase/php-jwt`: ^6.10
-- `vlucas/phpdotenv`: ^5.6
-- `monolog/monolog`: ^3.8
-
-**public/index.php** - Giriş noktası:
-- Dotenv ile .env yükleme
-- PHP-DI ContainerBuilder
-- Error Middleware (development mode)
-- CORS Middleware (Allow All)
-- OPTIONS request handler
+- Bağımlılıklar: Slim, PHP-DI, PHP-JWT, Dotenv, Monolog.
+- Temel klasör yapısı (`src`, `config`, `public`, `docs`) oluşturuldu.
+- `public/index.php` giriş noktası ve temel middleware'ler (CORS, Error) ayarlandı.
 
 ---
 
 ### 2. Veritabanı Katmanı (✅ Tamamlandı)
 **Tarih:** 2026-01-19
-
-#### config/settings.php
-- `.env` dosyasından DB ayarlarını okur
-- PDO flag'leri tanımlar (ERRMODE_EXCEPTION, FETCH_ASSOC, utf8mb4)
-
-#### src/Core/Database.php
-- **Singleton Pattern** kullanır
-- PDO bağlantısını try-catch içinde kurar
-- Helper metodlar:
-  - `getInstance(array $settings)`: Singleton instance döner
-  - `getConnection()`: Raw PDO bağlantısı
-  - `query($sql, $params)`: Prepared statement çalıştırır
-  - `fetch($sql, $params)`: Tek satır döner
-  - `fetchAll($sql, $params)`: Tüm satırları döner
-- SQL Injection koruması: Tüm sorgular prepared statement kullanır
-
-#### config/container.php
-- Database sınıfını DI Container'a ekler
-- PDO alias tanımlar
+- `src/Core/Database.php` PDO wrapper (Singleton) oluşturuldu.
+- Prepared statement kullanımı ile SQL Injection koruması sağlandı.
+- DI container'a eklendi.
 
 ---
 
-### 3. Multi-Tenancy Middleware (✅ Tamamlandı)
+### 3. Multi-Tenancy ve Güvenlik Middleware (✅ Tamamlandı)
 **Tarih:** 2026-01-19
-**Dosya:** `/src/Middleware/TenantMiddleware.php`
+- `TenantMiddleware`: Gelen isteklerdeki JWT'yi doğrular, `clinic_id` claim'ini ayıklar ve isteğe ekler. Klinikler arası veri izolasyonu sağlar.
+- `PlatformAdminMiddleware`: Platform yöneticisine özel root yetkilerini kontrol eder.
+- `BaseController`: Tüm controller'lar için ortak response metodları (`successResponse`, `errorResponse` vb.) ve yardımcı fonksiyonlar (`getClinicId`) içerir.
 
-#### Özellikler:
-- **PSR-15 MiddlewareInterface** implementasyonu
-- Authorization header kontrolü (`Bearer <token>` formatı)
-- `firebase/php-jwt` ile token decode (HS256 algoritması)
-- Token içinde `clinic_id` claim kontrolü
-- Request attribute olarak `clinic_id` ve `jwt_payload` ekleme
+---
 
-#### Hata Durumları:
-| Durum | HTTP Kodu | Mesaj |
-|-------|-----------|-------|
-| Token yok | 401 | Authorization header bulunamadı |
-| Geçersiz format | 401 | Geçersiz Authorization header formatı |
-| Token süresi dolmuş | 401 | Token süresi dolmuş |
-| Geçersiz imza | 401 | Geçersiz token imzası |
-| clinic_id yok | 403 | Klinik kimliği bulunamadı |
+### 4. Platform Yönetim Modülü (✅ Tamamlandı)
+- **Auth (Login/JWT):** `/auth/login` endpoint'i ile klinik kullanıcıları için JWT üretimi tamamlandı.
+- **Platform Admin:**
+  - `PlatformAuthController` ile `POST /admin/login` üzerinden root admin girişi sağlandı.
+  - `TenantController` ile `POST /admin/tenants` (klinik oluşturma) ve `GET /admin/tenants` (klinik listeleme) endpoint'leri eklendi.
+  - Klinik oluşturma ve listeleme akışı tamamlandı.
 
-#### Örnek Kullanım:
-```php
-// Route'a middleware ekle
-$app->get('/api/patients', PatientController::class . ':list')
-    ->add(new TenantMiddleware());
+---
 
-// Controller'da clinic_id'ye erişim
-$clinicId = $request->getAttribute('clinic_id');
-```
+### 5. Gelişmiş Loglama (✅ Tamamlandı)
+- **Monolog Entegrasyonu:** `LoggerFactory` ile yapılandırılmış loglama sistemi kuruldu.
+- **Trace ID:** Her isteğe benzersiz bir `trace_id` atanarak logların takibi kolaylaştırıldı.
+- **Global Error Handler:** `HttpErrorHandler` override edilerek tüm hataların yakalanıp standart bir formatta (`trace_id` içeren) loglanması sağlandı. Bu sayede "sessiz" hatalar engellendi.
+
+---
+
+### 6. Admin Frontend (✅ Tamamlandı)
+- **Decoupled Mimari:** Backend'den tamamen ayrı, statik HTML/JS/CSS dosyalarından oluşan bir admin paneli `/public/admin` klasörü altına kuruldu.
+- **API İletişimi:** Panel, backend ile sadece Axios üzerinden API endpoint'lerini çağırarak haberleşir.
+- **Teknolojiler:** Bootstrap 5, Axios, SweetAlert2.
+- **Fonksiyonellik:** Root admin girişi, yeni klinik oluşturma ve mevcut klinikleri listeleme özellikleri eklendi.
 
 ---
 
 ## Bekleyen Görevler
 
-### 4. Auth Controller (⏳ Bekliyor)
-**Dosya:** `/src/Domain/Auth/AuthController.php`
-
-**Yapılacaklar:**
-1. Login endpoint (`POST /auth/login`)
-2. Kullanıcı doğrulama
-3. JWT token oluşturma
-4. Token refresh mekanizması
-
-### 5. Base Controller (✅ Tamamlandı)
-**Tarih:** 2026-01-19
-**Dosya:** `/src/Core/BaseController.php`
-
-#### Özellikler:
-- **Abstract sınıf** - Tüm controllerlar buradan türer
-- **DI Container** injection via constructor
-- **Database** erişimi `$this->db` üzerinden
-
-#### Metodlar:
-| Metod | Açıklama |
-|-------|----------|
-| `jsonResponse()` | Ham JSON yanıtı oluşturur |
-| `successResponse()` | Başarılı işlem yanıtı `{status: true, message, data}` |
-| `errorResponse()` | Hata yanıtı `{status: false, message, errors}` |
-| `notFoundResponse()` | 404 yanıtı |
-| `forbiddenResponse()` | 403 yanıtı |
-| `createdResponse()` | 201 Created yanıtı |
-| `validationErrorResponse()` | 422 Validation hatası |
-| `getClinicId()` | Request'ten clinic_id al |
-| `getUserId()` | Request'ten user_id al |
-| `getJwtPayload()` | Request'ten JWT payload al |
-
-#### Örnek Kullanım:
-```php
-class PatientController extends BaseController
-{
-    public function list(Request $request, Response $response): Response
-    {
-        $clinicId = $this->getClinicId($request);
-        $patients = $this->db->fetchAll(
-            "SELECT * FROM patients WHERE clinic_id = ?",
-            [$clinicId]
-        );
-        return $this->successResponse($response, $patients);
-    }
-}
-```
+- **Hasta Modülü Geliştirmeleri:** Detaylı hasta bilgileri, geçmiş ve dosya yönetimi.
+- **Randevu Modülü:** Randevu oluşturma, takvim entegrasyonu.
+- **Rol Tabanlı Yetkilendirme (RBAC):** `admin`, `doctor`, `receptionist` rolleri için detaylı yetkilendirme.
+- **Unit ve Integration Testleri:** Kod kalitesini artırmak için testlerin yazılması.
 
 ---
 
@@ -167,6 +76,8 @@ DB_NAME=pozitif_klinik
 DB_USER=root
 DB_PASS=
 JWT_SECRET=changeme
+PLATFORM_ADMIN_USER=admin
+PLATFORM_ADMIN_PASS=admin
 ```
 
 ---
@@ -174,21 +85,9 @@ JWT_SECRET=changeme
 ## Notlar
 
 ### CORS Politikası Notu
-`public/index.php` dosyasında tanımlanan `CORS Middleware (Allow All)` sadece geliştirme ortamı için geçerlidir. Production ortamında, güvenlik nedeniyle sadece izin verilen domain'lere erişim hakkı tanınmalıdır. Bu ayar, `config/settings.php` üzerinden yönetilmeli ve production ortamında `.env` dosyasından okunmalıdır.
-
-### PHP CLI Kullanımı
-XAMPP kurulumunda PHP CLI şu konumda:
-```bash
-/opt/lampp/bin/php
-```
+`public/index.php` dosyasında tanımlanan `CORS Middleware (Allow All)` sadece geliştirme ortamı için geçerlidir. Production ortamında, güvenlik nedeniyle sadece izin verilen domain'lere erişim hakkı tanınmalıdır.
 
 ### Test Komutu
 ```bash
-/opt/lampp/bin/php test_db.php
-```
-
-### Composer Kurulumu
-```bash
-cd /opt/lampp/htdocs/Pozitif-Klinik
-/opt/lampp/bin/php /path/to/composer.phar install
+/opt/lampp/bin/php tests/test_db.php
 ```

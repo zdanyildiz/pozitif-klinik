@@ -1,0 +1,117 @@
+/**
+ * Pozitif Klinik - Admin Panel API Konfigürasyonu
+ */
+
+// API Base URL - Sunucu ayarına göre değiştirin
+// Eğer localhost:8080 kullanıyorsanız veya pozitif-klinik.localhost gibi vhost kullanıyorsanız
+// sadece window.location.origin yeterlidir
+const API_URL = window.location.origin;
+
+// Axios instance oluştur
+const api = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    timeout: 10000
+});
+
+// Her istekte Token ekle (Request Interceptor)
+api.interceptors.request.use(
+    config => {
+        const token = localStorage.getItem('platform_token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    error => {
+        return Promise.reject(error);
+    }
+);
+
+// 401 Hatası gelirse Login'e yönlendir (Response Interceptor)
+// Not: Login sayfasındayken 401 normal bir durumdur (yanlış şifre), yönlendirme yapma
+api.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response && error.response.status === 401) {
+            // Sadece login sayfasında değilsek yönlendir
+            const isLoginPage = window.location.pathname.endsWith('index.html') ||
+                window.location.pathname.endsWith('/admin/') ||
+                window.location.pathname.endsWith('/admin');
+
+            if (!isLoginPage) {
+                localStorage.removeItem('platform_token');
+                window.location.href = 'index.html';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
+/**
+ * Yardımcı Fonksiyonlar
+ */
+const Utils = {
+    // Tarih formatlama
+    formatDate: (dateString) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('tr-TR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    },
+
+    // Durum badge'i oluştur
+    getStatusBadge: (isActive) => {
+        if (isActive === 1 || isActive === true || isActive === '1') {
+            return '<span class="badge bg-success">Aktif</span>';
+        }
+        return '<span class="badge bg-danger">Pasif</span>';
+    },
+
+    // Hata mesajı göster
+    showError: (message, title = 'Hata!') => {
+        Swal.fire({
+            icon: 'error',
+            title: title,
+            text: message,
+            confirmButtonColor: '#dc3545'
+        });
+    },
+
+    // Başarı mesajı göster
+    showSuccess: (message, title = 'Başarılı!') => {
+        Swal.fire({
+            icon: 'success',
+            title: title,
+            text: message,
+            confirmButtonColor: '#198754',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    },
+
+    // Loading göster
+    showLoading: (message = 'Yükleniyor...') => {
+        Swal.fire({
+            title: message,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    },
+
+    // Loading kapat
+    closeLoading: () => {
+        Swal.close();
+    }
+};
