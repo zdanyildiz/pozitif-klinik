@@ -72,10 +72,9 @@ class HttpErrorHandler extends ErrorHandler
         }
 
         $payload = [
-            'success' => false,
-            'error' => [
-                'code' => $statusCode,
-                'message' => $message,
+            'status' => false,
+            'message' => $message,
+            'data' => [
                 'trace_id' => $this->getTraceId()
             ],
         ];

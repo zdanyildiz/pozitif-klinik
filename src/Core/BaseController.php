@@ -46,7 +46,7 @@ abstract class BaseController
      * @param int $status HTTP status kodu
      * @return Response
      */
-    protected function jsonResponse(Response $response, mixed $payload, int $status = 200): Response
+    private function jsonResponse(Response $response, mixed $payload, int $status = 200): Response
     {
         $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
@@ -65,56 +65,48 @@ abstract class BaseController
      * @param Response $response PSR-7 Response objesi
      * @param mixed $data Yanıt verisi (nullable)
      * @param string $message Başarı mesajı
-     * @param int $status HTTP status kodu
+     * @param int $code HTTP status kodu
      * @return Response
      */
-    protected function successResponse(
+    protected function success(
         Response $response,
         mixed $data = null,
         string $message = 'İşlem başarılı',
-        int $status = 200
+        int $code = 200
     ): Response {
         $payload = [
             'status' => true,
             'message' => $message,
+            'data' => $data
         ];
 
-        // Data varsa ekle
-        if ($data !== null) {
-            $payload['data'] = $data;
-        }
-
-        return $this->jsonResponse($response, $payload, $status);
+        return $this->jsonResponse($response, $payload, $code);
     }
 
     /**
      * Hatalı işlem yanıtı
      * 
-     * Format: {"status": false, "message": "...", "errors": ...}
+     * Format: {"status": false, "message": "...", "data": ...}
      *
      * @param Response $response PSR-7 Response objesi
      * @param string $message Hata mesajı
-     * @param int $status HTTP status kodu
-     * @param mixed $errorDetails Hata detayları (validation errors vs.)
+     * @param int $code HTTP status kodu
+     * @param mixed $data Hata detayları (validation errors vs.)
      * @return Response
      */
-    protected function errorResponse(
+    protected function error(
         Response $response,
         string $message,
-        int $status = 400,
-        mixed $errorDetails = null
+        int $code = 400,
+        mixed $data = null
     ): Response {
         $payload = [
             'status' => false,
             'message' => $message,
+            'data' => $data
         ];
 
-        // Error detayları varsa ekle
-        if ($errorDetails !== null) {
-            $payload['errors'] = $errorDetails;
-        }
-
-        return $this->jsonResponse($response, $payload, $status);
+        return $this->jsonResponse($response, $payload, $code);
     }
 
     /**
@@ -166,7 +158,7 @@ abstract class BaseController
      */
     protected function notFoundResponse(Response $response, string $message = 'Kayıt bulunamadı'): Response
     {
-        return $this->errorResponse($response, $message, 404);
+        return $this->error($response, $message, 404);
     }
 
     /**
@@ -178,7 +170,7 @@ abstract class BaseController
      */
     protected function forbiddenResponse(Response $response, string $message = 'Bu işlem için yetkiniz yok'): Response
     {
-        return $this->errorResponse($response, $message, 403);
+        return $this->error($response, $message, 403);
     }
 
     /**
@@ -191,7 +183,7 @@ abstract class BaseController
      */
     protected function createdResponse(Response $response, mixed $data = null, string $message = 'Kayıt oluşturuldu'): Response
     {
-        return $this->successResponse($response, $data, $message, 201);
+        return $this->success($response, $data, $message, 201);
     }
 
     /**
@@ -203,6 +195,6 @@ abstract class BaseController
      */
     protected function validationErrorResponse(Response $response, array $errors): Response
     {
-        return $this->errorResponse($response, 'Doğrulama hatası', 422, $errors);
+        return $this->error($response, 'Doğrulama hatası', 422, $errors);
     }
 }

@@ -14,14 +14,14 @@ class PatientController extends BaseController
     public function listPatients(Request $request, Response $response): Response
     {
         // Placeholder
-        return $this->successResponse($response, ['message' => 'List of patients']);
+        return $this->success($response, ['message' => 'List of patients']);
     }
 
     public function getPatient(Request $request, Response $response, array $args): Response
     {
-        $patientId = (int)$args['id'];
+        $patientId = (int) $args['id'];
         // Placeholder
-        return $this->successResponse($response, ['message' => "Details of patient $patientId"]);
+        return $this->success($response, ['message' => "Details of patient $patientId"]);
     }
 
     public function createPatient(Request $request, Response $response): Response
@@ -29,9 +29,9 @@ class PatientController extends BaseController
         $data = $request->getParsedBody();
 
         $validator = v::key('first_name', v::stringType()->length(2, 100))
-                     ->key('last_name', v::stringType()->length(2, 100))
-                     ->key('email', v::email())
-                     ->key('phone', v::oneOf(v::nullType(), v::phone()));
+            ->key('last_name', v::stringType()->length(2, 100))
+            ->key('email', v::email())
+            ->key('phone', v::oneOf(v::nullType(), v::phone()));
 
         try {
             $validator->assert($data);
@@ -44,17 +44,17 @@ class PatientController extends BaseController
 
     public function updatePatient(Request $request, Response $response, array $args): Response
     {
-        $patientId = (int)$args['id'];
+        $patientId = (int) $args['id'];
         $data = $request->getParsedBody();
 
         // Placeholder for update logic
-        return $this->successResponse($response, ['message' => "Patient $patientId updated successfully"]);
+        return $this->success($response, ['message' => "Patient $patientId updated successfully"]);
     }
 
     public function deletePatient(Request $request, Response $response, array $args): Response
     {
-        $patientId = (int)$args['id'];
+        $patientId = (int) $args['id'];
         // Placeholder for delete logic
-        return $this->successResponse($response, ['message' => "Patient $patientId deleted successfully"]);
+        return $this->success($response, ['message' => "Patient $patientId deleted successfully"]);
     }
 }

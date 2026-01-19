@@ -60,6 +60,25 @@ Pozitif Klinik, multi-tenant SaaS mimarisi üzerine kurulu bir klinik yönetim s
 
 ---
 
+## Standart Yanıt Yapısı (Pozitif JSON Anayasası)
+
+İstemci ile sunucu arasındaki tüm iletişim (başarılı veya hatalı), "Tek Zar, Tek Format" prensibi gereği aynı zarf yapısında gerçekleşir. Bu yapı `BaseController` ve `HttpErrorHandler` tarafından garanti altına alınmıştır.
+
+**Zarf Yapısı:**
+```json
+{
+  "status": true,           // İşlem sonucu: true (başarılı) veya false (hatalı)
+  "message": "Mesaj metni", // Kullanıcıya veya geliştiriciye not
+  "data": { ... }           // Payload: Obje, Array veya null.
+}
+```
+
+- **Backend Koruması:** `BaseController` içindeki `success()` ve `error()` metodları bu formatı zorunlu kılar.
+- **Hata Koruması:** `HttpErrorHandler`, Framework veya veritabanı seviyesindeki her türlü hatayı otomatik olarak bu formata dönüştürür.
+- **Frontend Garantisi:** `config.js` içindeki Axios interceptor, gelen her yanıtın `status` alanını kontrol eder ve hataları merkezi olarak yönetir.
+
+---
+
 ## Frontend Yaklaşımı
 
 Uygulama, "decoupled" (ayrık) bir frontend mimarisini benimser.
@@ -104,3 +123,7 @@ Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını payl
 3.  **Yetkilendirme (Authorization)**: Rol tabanlı yetki kontrolü (RBAC), özel bir middleware aracılığıyla sağlanacaktır. JWT içindeki `role` claim'i (`platform_admin`, `clinic_admin`, `doctor` vb.) kullanılır.
 4.  **Veri İzolasyonu**: `clinic_id` ile tenant verilerinin birbirine karışması engellenir.
 5.  **Girdi Doğrulama (Input Validation)**: İstemciden gelen tüm veriler, `respect/validation` gibi bir kütüphane ile controller katmanında doğrulanmalıdır.
+6. **CSRF ve XSS Stratejisi (Stateless Security):**
+   - Sistem **Stateless (Durumsuz)** mimaride olduğu ve oturum bilgisi Cookie yerine `localStorage` (Bearer Token) içinde tutulduğu için, klasik **CSRF (Cross-Site Request Forgery)** saldırılarına karşı mimari olarak korumalıdır. Bu nedenle CSRF Token kullanılmaz.
+   - Bunun yerine, güvenliği sağlamak için **Strict CORS (Sıkı Köken Politikası)** ve **XSS (Cross-Site Scripting)** korumalarına odaklanılır. Production ortamında `Access-Control-Allow-Origin` sadece izin verilen domainlere açılır.
+

@@ -40,8 +40,8 @@ function setupEventListeners() {
 // Klinikleri Yükle
 async function loadTenants() {
     try {
-        const response = await api.get('/admin/tenants');
-        const tenants = response.data.data || [];
+        const result = await api.get('/admin/tenants');
+        const tenants = result.data || [];
 
         // Stats güncelle
         totalClinicsEl.textContent = tenants.length;
@@ -191,13 +191,8 @@ async function handleSaveTenant() {
     } catch (error) {
         console.error('Klinik oluşturulurken hata:', error);
 
-        let errorMessage = 'Klinik oluşturulamadı.';
-        if (error.response?.data?.message) {
-            errorMessage = error.response.data.message;
-        } else if (error.response?.data?.error?.message) {
-            errorMessage = error.response.data.error.message;
-        }
-
+        // Interceptor hatayı string olarak fırlatıyor olabilir
+        const errorMessage = typeof error === 'string' ? error : 'Klinik oluşturulamadı.';
         Utils.showError(errorMessage);
     } finally {
         saveTenantBtn.disabled = false;

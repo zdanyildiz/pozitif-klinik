@@ -31,11 +31,20 @@ api.interceptors.request.use(
     }
 );
 
-// 401 Hatası gelirse Login'e yönlendir (Response Interceptor)
-// Not: Login sayfasındayken 401 normal bir durumdur (yanlış şifre), yönlendirme yapma
+// Yanıtı Karşılama (Response Interceptor)
 api.interceptors.response.use(
-    response => response,
-    error => {
+    (response) => {
+        // Backend'den "status: true" geldiyse, tüm zarfı dön (status, message, data)
+        if (response.data && response.data.status === true) {
+            return response.data;
+        } else {
+            // Backend "status: false" dediyse (ama HTTP 200 döndüyse bile) hata fırlat
+            const message = response.data?.message || "İşlem başarısız";
+            return Promise.reject(message);
+        }
+    },
+    (error) => {
+        // HTTP hatası olduysa (401, 500 vb.)
         if (error.response && error.response.status === 401) {
             // Sadece login sayfasında değilsek yönlendir
             const isLoginPage = window.location.pathname.endsWith('index.html') ||
@@ -47,7 +56,16 @@ api.interceptors.response.use(
                 window.location.href = 'index.html';
             }
         }
-        return Promise.reject(error);
+
+        // Backend'in gönderdiği standart mesajı yakala
+        let message = "Bilinmeyen hata";
+        if (error.response && error.response.data && error.response.data.message) {
+            message = error.response.data.message;
+        } else if (error.message) {
+            message = error.message;
+        }
+
+        return Promise.reject(message);
     }
 );
 

@@ -28,7 +28,7 @@ class TenantController extends BaseController
 
         // Temel validasyon
         if (empty($name) || empty($domain_prefix) || empty($admin_username) || empty($admin_password)) {
-            return $this->errorResponse($response, 'Tüm alanlar (name, domain_prefix, admin_username, admin_password) gereklidir', 400);
+            return $this->error($response, 'Tüm alanlar (name, domain_prefix, admin_username, admin_password) gereklidir', 400);
         }
 
         // Domain prefix kontrolü
@@ -38,7 +38,7 @@ class TenantController extends BaseController
         );
 
         if ($existingTenant) {
-            return $this->errorResponse($response, "Bu domain prefix ('$domain_prefix') zaten kullanımda", 400);
+            return $this->error($response, "Bu domain prefix ('$domain_prefix') zaten kullanımda", 400);
         }
 
         $connection = $this->db->getConnection();
@@ -92,6 +92,6 @@ class TenantController extends BaseController
     public function list(Request $request, Response $response): Response
     {
         $tenants = $this->db->fetchAll("SELECT * FROM sys_tenants ORDER BY created_at DESC");
-        return $this->successResponse($response, $tenants);
+        return $this->success($response, $tenants);
     }
 }

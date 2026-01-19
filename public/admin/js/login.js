@@ -41,19 +41,19 @@ document.addEventListener('DOMContentLoaded', function () {
         btnLogin.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Giriş Yapılıyor...';
 
         try {
-            const response = await api.post('/admin/login', {
+            const result = await api.post('/admin/login', {
                 username: username,
                 password: password
             });
 
-            if (response.data && response.data.status && response.data.data && response.data.data.access_token) {
+            if (result.status && result.data && result.data.access_token) {
                 // Token'ı kaydet
-                localStorage.setItem('platform_token', response.data.data.access_token);
+                localStorage.setItem('platform_token', result.data.access_token);
 
                 // Başarı animasyonu
                 await Swal.fire({
                     icon: 'success',
-                    title: 'Hoş Geldiniz!',
+                    title: result.message || 'Hoş Geldiniz!',
                     text: 'Yönetim paneline yönlendiriliyorsunuz...',
                     timer: 1500,
                     showConfirmButton: false,
@@ -63,22 +63,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Dashboard'a yönlendir
                 window.location.href = 'dashboard.html';
             } else {
-                throw new Error(response.data?.message || 'Giriş başarısız');
+                throw new Error(result.message || 'Giriş başarısız');
             }
         } catch (error) {
             console.error('Login error:', error);
-
-            let errorMessage = 'Giriş yapılırken bir hata oluştu.';
-
-            if (error.response) {
-                // Sunucudan dönen hata
-                errorMessage = error.response.data?.message ||
-                    error.response.data?.error?.message ||
-                    errorMessage;
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-
+            // Interceptor hatayı string olarak fırlatıyor olabilir veya Axios hatası olabilir
+            const errorMessage = typeof error === 'string' ? error : (error.message || 'Giriş yapılırken bir hata oluştu');
             Utils.showError(errorMessage);
         } finally {
             // Butonu tekrar aktif et

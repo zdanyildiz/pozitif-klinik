@@ -27,7 +27,7 @@ class AuthController extends BaseController
         $password = $data['password'] ?? '';
 
         if (empty($username) || empty($password)) {
-            return $this->errorResponse($response, 'Kullanıcı adı ve şifre zorunludur.', 400);
+            return $this->error($response, 'Kullanıcı adı ve şifre zorunludur.', 400);
         }
 
         // 2. sys_users tablosunda kullanıcı ara
@@ -36,13 +36,13 @@ class AuthController extends BaseController
 
         // 3. Kullanıcı bulunamazsa hata dön
         if (!$user) {
-            return $this->errorResponse($response, 'Kullanıcı bulunamadı', 401);
+            return $this->error($response, 'Kullanıcı bulunamadı', 401);
         }
 
         // 4. Şifre kontrolü
         if (!password_verify($password, $user['password_hash'])) {
             // Güvenlik notu: Asla şifreyi loglama
-            return $this->errorResponse($response, 'Hatalı şifre', 401);
+            return $this->error($response, 'Hatalı şifre', 401);
         }
 
         // 5. JWT Token üret
@@ -50,7 +50,7 @@ class AuthController extends BaseController
 
         if (empty($secretKey)) {
             // Uygulama hatası: Secret key tanımlanmamış
-            return $this->errorResponse($response, 'Sunucu yapılandırma hatası (JWT Secret eksik).', 500);
+            return $this->error($response, 'Sunucu yapılandırma hatası (JWT Secret eksik).', 500);
         }
 
         $now = new DateTimeImmutable();
@@ -66,10 +66,10 @@ class AuthController extends BaseController
         try {
             $token = JWT::encode($payload, $secretKey, 'HS256');
         } catch (\Exception $e) {
-            return $this->errorResponse($response, 'Token oluşturulamadı: ' . $e->getMessage(), 500);
+            return $this->error($response, 'Token oluşturulamadı: ' . $e->getMessage(), 500);
         }
 
         // 6. Başarılı yanıt
-        return $this->successResponse($response, ['token' => $token], 'Giriş başarılı');
+        return $this->success($response, ['token' => $token], 'Giriş başarılı');
     }
 }

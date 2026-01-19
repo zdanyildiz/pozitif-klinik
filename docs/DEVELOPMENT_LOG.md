@@ -57,6 +57,15 @@
 
 ---
 
+### 7. Tek Zar, Tek Format (✅ Tamamlandı)
+**Tarih:** 2026-01-19
+- **Pozitif JSON Anayasası:** Tüm API yanıtları (Başarı/Hata/Middleware) `{status, message, data}` formatına sabitlendi.
+- **Backend Kilidi:** `BaseController` içindeki metodlar revize edildi, `jsonResponse` metoduna doğrudan erişim kapatıldı.
+- **Hata Yönetimi:** `HttpErrorHandler` standart formata uyarlandı, sistem hatalarının bile aynı zarf içinde dönmesi sağlandı.
+- **Frontend Interceptor:** Axios interceptor güncellenerek gelen yanıtların merkezi olarak işlenmesi ve hataların otomatik yakalanması sağlandı.
+
+---
+
 ## Bekleyen Görevler
 
 - **Hasta Modülü Geliştirmeleri:** Detaylı hasta bilgileri, geçmiş ve dosya yönetimi.
