@@ -181,3 +181,80 @@ return [
 4. **Data Isolation**: clinic_id ile tenant izolasyonu
 5. **Input Validation**: Tüm girdiler validate edilir
 6. **CORS**: Kontrollü cross-origin erişim
+
+---
+
+## Detaylı Güvenlik Stratejileri
+
+### Input Validation (Girdi Doğrulama)
+
+Tüm kullanıcı girdileri, Controller katmanında `respect/validation` kütüphanesi kullanılarak doğrulanmalıdır. Bu, hem veri bütünlüğünü sağlar hem de XSS gibi zafiyetleri engeller.
+
+**Örnek:** Yeni bir hasta kaydı oluşturulurken yapılacak validasyon.
+
+```php
+// PatientController içinde
+use Respect\Validation\Validator as v;
+
+// ...
+
+$data = $request->getParsedBody();
+
+$validator = v::key('first_name', v::stringType()->length(2, 100))
+             ->key('last_name', v::stringType()->length(2, 100))
+             ->key('email', v::email())
+             ->key('phone', v::oneOf(v::nullType(), v::phone()));
+
+try {
+    $validator->assert($data);
+    // Veri geçerli, devam et
+} catch (\Respect\Validation\Exceptions\NestedValidationException $exception) {
+    // Hataları BaseController'daki validationErrorResponse ile döndür
+    return $this->validationErrorResponse($response, $exception->getMessages());
+}
+```
+
+Bu yaklaşım, validasyon kurallarını merkezi ve okunabilir bir şekilde yönetmemizi sağlar.
+
+### Authorization (Yetkilendirme) - RBAC
+
+Yetkilendirme, `role` claim'ini JWT token içinden okuyan özel bir `AuthMiddleware` ile sağlanacaktır. Bu middleware, `TenantMiddleware`'den *sonra* çalışmalıdır.
+
+**Roller:**
+- `admin`: Tüm işlemleri yapabilir.
+- `doctor`: Sadece kendi hastalarını ve randevularını yönetebilir.
+- `receptionist`: Hasta kaydı ve randevu yönetimi yapabilir, tıbbi kayıtlara erişemez.
+
+**`AuthMiddleware` Mimarisi:**
+
+1.  Request'ten `jwt_payload` attribute'unu okur (`TenantMiddleware` tarafından eklenir).
+2.  `role` claim'ini alır.
+3.  Gidilmek istenen rotanın gerektirdiği minimum rol seviyesini kontrol eder.
+4.  Yetki yetersizse `403 Forbidden` hatası döndürür.
+
+**Rota Tanımlaması (Örnek):**
+
+Rol bazlı yetkilendirme, rota grupları ve middleware argümanları ile yönetilebilir.
+
+```php
+// config/routes.php içinde
+
+$app->group('/api', function (RouteCollectorProxy $group) {
+    
+    // Sadece admin erişebilir
+    $group->group('/reports', function (RouteCollectorProxy $reportsGroup) {
+        $reportsGroup->get('', \App\Domain\Reports\ReportsController::class . ':generate');
+    })->add(new AuthMiddleware('admin')); // Gerekli minimum rol
+
+    // Doktor veya admin erişebilir
+    $group->group('/patients/{id}/medical-records', function (RouteCollectorProxy $recordsGroup) {
+        $recordsGroup->get('', \App\Domain\Patient\PatientController::class . ':getMedicalRecords');
+        $recordsGroup->post('', \App\Domain\Patient\PatientController::class . ':addMedicalRecord');
+    })->add(new AuthMiddleware('doctor'));
+
+    // Resepsiyonist, doktor veya admin erişebilir
+    $group->get('/patients', \App\Domain\Patient\PatientController::class . ':list')
+          ->add(new AuthMiddleware('receptionist'));
+
+})->add(TenantMiddleware::class);
+```

@@ -173,6 +173,9 @@ JWT_SECRET=changeme
 
 ## Notlar
 
+### CORS Politikası Notu
+`public/index.php` dosyasında tanımlanan `CORS Middleware (Allow All)` sadece geliştirme ortamı için geçerlidir. Production ortamında, güvenlik nedeniyle sadece izin verilen domain'lere erişim hakkı tanınmalıdır. Bu ayar, `config/settings.php` üzerinden yönetilmeli ve production ortamında `.env` dosyasından okunmalıdır.
+
 ### PHP CLI Kullanımı
 XAMPP kurulumunda PHP CLI şu konumda:
 ```bash
