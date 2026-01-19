@@ -1,0 +1,64 @@
+# Composer
+/vendor/
+/composer.lock
+
+# Environments
+.env
+.env.backup
+.env.example
+
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+!error.log
+
+# OS generated files
+.DS_Store
+.localized
+.project
+.settings
+.vs/
+*.suo
+*.user
+*.bak
+*.cache
+*.komodoproject
+*.sublime-project
+*.sublime-workspace
+.phpunit.result.cache
+.webassets-base-url
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnp/
+.pnp.js
+
+# Testing
+/coverage
+/.build/
+/.vagrant/
+.cabal-sandbox/
+.stack-work/
+
+# PhpStorm
+.idea/
+.iml
+*.ipr
+*.iws
+
+# MacOS
+.DS_Store
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# VS Code
+.vscode/
+
