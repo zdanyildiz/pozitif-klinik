@@ -26,7 +26,11 @@ class PlatformAdminMiddleware implements MiddlewareInterface
         }
 
         $token = $matches[1];
-        $secret = $_ENV['JWT_SECRET'] ?? 'changeme';
+        $secret = $_ENV['JWT_SECRET'] ?? '';
+
+        if (empty($secret)) {
+            throw new \RuntimeException('JWT_SECRET missing in environment');
+        }
 
         try {
             $decoded = JWT::decode($token, new Key($secret, 'HS256'));
@@ -57,7 +61,8 @@ class PlatformAdminMiddleware implements MiddlewareInterface
         $response = new SlimResponse();
         $payload = [
             'status' => false,
-            'message' => $message
+            'message' => $message,
+            'data' => null
         ];
 
         $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_UNICODE));

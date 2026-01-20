@@ -104,11 +104,9 @@ class TenantMiddleware implements MiddlewareInterface
         $response = $response->withHeader('Content-Type', 'application/json');
 
         $body = json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 401,
-                'message' => $message
-            ]
+            'status' => false,
+            'message' => $message,
+            'data' => null
         ], JSON_UNESCAPED_UNICODE);
 
         $response->getBody()->write($body);
@@ -129,11 +127,9 @@ class TenantMiddleware implements MiddlewareInterface
         $response = $response->withHeader('Content-Type', 'application/json');
 
         $body = json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 403,
-                'message' => $message
-            ]
+            'status' => false,
+            'message' => $message,
+            'data' => null
         ], JSON_UNESCAPED_UNICODE);
 
         $response->getBody()->write($body);

@@ -131,29 +131,4 @@ class AuthController extends BaseController
         // 6. Başarılı yanıt
         return $this->success($response, ['token' => $token], 'Giriş başarılı');
     }
-
-    /**
-     * DEBUG ENDPOINT - GEÇİCİ
-     */
-    #[Route('GET', '/debug/{code}')]
-    public function debug(Request $request, Response $response, array $args): Response
-    {
-        $code = $args['code'];
-
-        // Repository kullanarak sorgula (SQL YOK)
-        $tenant = $this->tenantRepository->findByDomain($code);
-
-        $result = [
-            'searched_code' => $code,
-            'tenant_found' => (bool) $tenant,
-            'tenant' => $tenant,
-            'users' => []
-        ];
-
-        if ($tenant) {
-            $result['users'] = $this->userRepository->findAll($tenant['id']);
-        }
-
-        return $this->success($response, $result);
-    }
 }

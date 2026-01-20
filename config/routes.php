@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Pozitif Klinik - Otomatik Rota Keşfi (Auto-Discovery Routing)
  * 

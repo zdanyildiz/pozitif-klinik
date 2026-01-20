@@ -72,19 +72,6 @@ class UserRepository
     }
 
     /**
-     * @deprecated Bu metod güvenlik açığı yaratabilir. Yerine findUserByTenantAndUsername kullanın.
-     * Kullanıcı adına göre kullanıcıyı bulur (Global arama - Login için)
-     */
-    public function findByUsernameGlobal(string $username): ?array
-    {
-        $sql = "SELECT id, clinic_id, username, password_hash, role, is_active 
-                FROM sys_users 
-                WHERE username = ?";
-        $result = $this->db->fetch($sql, [$username]);
-        return $result ?: null;
-    }
-
-    /**
      * Yeni kullanıcı oluşturur
      */
     public function create(int $clinicId, array $data): int

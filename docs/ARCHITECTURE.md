@@ -173,6 +173,7 @@ Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını payl
 6. **CSRF ve XSS Stratejisi (Stateless Security):**
    - Sistem **Stateless (Durumsuz)** mimaride olduğu ve oturum bilgisi Cookie yerine `localStorage` (Bearer Token) içinde tutulduğu için, klasik **CSRF (Cross-Site Request Forgery)** saldırılarına karşı mimari olarak korumalıdır. Bu nedenle CSRF Token kullanılmaz.
    - Bunun yerine, güvenliği sağlamak için **Strict CORS (Sıkı Köken Politikası)** ve **XSS (Cross-Site Scripting)** korumalarına odaklanılır. Production ortamında `Access-Control-Allow-Origin` sadece izin verilen domainlere açılır.
+7.  **Sıfır Hardcoded Sır Politikası**: Kod içinde hiçbir şekilde API key, JWT secret veya veritabanı şifresi (fallback olarak bile) bulundurulamaz. Tüm hassas veriler sadece `.env` dosyasından okunmalıdır. Aksi durum denetimlerde kritik hata olarak işaretlenir.
 
 
 ## Yazılım Kalite Standartları

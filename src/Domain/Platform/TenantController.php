@@ -55,7 +55,7 @@ class TenantController extends BaseController
 
         // Domain prefix kontrolü
         if ($this->tenantRepository->findByDomain($domain_prefix)) {
-            return $this->error($response, "Bu domain prefix ('$domain_prefix') zaten kullanımda", 400);
+            return $this->error($response, sprintf("Bu domain prefix ('%s') zaten kullanımda", $domain_prefix), 400);
         }
 
         try {
