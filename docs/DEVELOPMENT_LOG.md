@@ -77,6 +77,15 @@
 
 ---
 
+### 9. Personel Yönetimi (User Management) Modülü (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **RBAC (Role Based Access Control):** Klinik içindeki kullanıcılar için rol tabanlı yetkilendirme altyapısı kuruldu.
+- **Güvenlik Politikası:** Sadece `admin` rolüne sahip kullanıcıların yeni personel ekleyebilmesi veya silebilmesi sağlandı.
+- **Hiyerarşi Koruması:** Yöneticilerin kendi hesaplarını veya diğer yöneticileri silebilmesi engellenerek sistem güvenliği artırıldı.
+- **API Endpointleri:** Personel listeleme, ekleme ve silme işlemleri tamamlandı.
+
+---
+
 ## Bekleyen Görevler
 
 - **Hasta Modülü Geliştirmeleri:** Detaylı hasta bilgileri, geçmiş ve dosya yönetimi.

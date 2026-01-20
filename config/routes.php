@@ -41,5 +41,12 @@ return function (App $app) {
             // Vitals tracking
             $patientGroup->post('/{id:[0-9]+}/vitals', \App\Domain\Patient\PatientController::class . ':addVital');
         });
+
+        // User Management (Sadece Klinik Yöneticileri İçin)
+        $group->group('/users', function (RouteCollectorProxy $userGroup) {
+            $userGroup->get('', \App\Domain\User\UserController::class . ':listUsers');
+            $userGroup->post('', \App\Domain\User\UserController::class . ':createUser');
+            $userGroup->delete('/{id:[0-9]+}', \App\Domain\User\UserController::class . ':deleteUser');
+        });
     })->add(TenantMiddleware::class);
 };

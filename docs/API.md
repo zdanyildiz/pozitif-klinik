@@ -194,3 +194,27 @@ Hastaya yaşam bulgusu (ölçüm) ekler.
   "heart_rate": 72
 }
 ```
+
+---
+
+## Domain API (Personel Yönetimi)
+
+Bu endpoint'ler sadece `role: 'admin'` yetkisine sahip kullanıcılar tarafından kullanılabilir.
+
+### `GET /api/users`
+Kliniğe ait tüm personeli listeler.
+
+### `POST /api/users`
+Yeni personel ekler (Doktor veya Sekreter).
+
+**Payload:**
+```json
+{
+  "username": "doktor_ahmet",
+  "password": "secure_password123",
+  "role": "doctor"
+}
+```
+
+### `DELETE /api/users/{id}`
+Personel kaydını siler. (Yöneticiler birbirini veya kendi hesabını silemez).
