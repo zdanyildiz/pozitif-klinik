@@ -21,21 +21,7 @@ use App\Core\RouteRegistrar;
 return function (App $app) {
 
     // ══════════════════════════════════════════════════════════════════════
-    // 1. HEALTH CHECK - Sabit endpoint (API'nin çalıştığını doğrulamak için)
-    // ══════════════════════════════════════════════════════════════════════
-    $app->get('/', function ($request, $response) {
-        $response->getBody()->write(json_encode([
-            'success' => true,
-            'message' => 'Pozitif Klinik API',
-            'version' => '1.0.0',
-            'routing' => 'Auto-Discovery Active'
-        ], JSON_UNESCAPED_UNICODE));
-
-        return $response->withHeader('Content-Type', 'application/json');
-    });
-
-    // ══════════════════════════════════════════════════════════════════════
-    // 2. OTOMATİK ROTA KEŞFİ BAŞLAT
+    // OTOMATİK ROTA KEŞFİ BAŞLAT
     // ══════════════════════════════════════════════════════════════════════
     // RouteRegistrar, src/Domain altındaki tüm *Controller.php dosyalarını
     // tarar ve #[Route], #[Group], #[Middleware] attribute'larını okuyarak

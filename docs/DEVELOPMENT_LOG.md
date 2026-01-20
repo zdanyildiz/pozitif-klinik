@@ -133,3 +133,11 @@ PLATFORM_ADMIN_PASS=admin
 ```bash
 /opt/lampp/bin/php tests/test_db.php
 ```
+### 11. Refactoring ve Mimari Temizlik (Code Audit Fixes) (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **Strict Types:** Proje genelinde tip güvenliği artırıldı.
+- **Repository Pattern Enforcement:**
+  - `TenantController` ve `AuthController` içindeki Raw SQL sorguları temizlendi.
+  - `TenantRepository` oluşturuldu ve Transaction yönetimi buraya taşındı.
+  - `UserRepository` güncellenerek global kullanıcı arama metodları eklendi.
+- **Health Check:** `routes.php` içindeki manuel tanımlama iptal edildi, `src/Domain/System/HealthController.php` oluşturuldu ve Auto-Discovery sistemine dahil edildi.

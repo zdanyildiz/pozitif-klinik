@@ -174,3 +174,17 @@ Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını payl
    - Sistem **Stateless (Durumsuz)** mimaride olduğu ve oturum bilgisi Cookie yerine `localStorage` (Bearer Token) içinde tutulduğu için, klasik **CSRF (Cross-Site Request Forgery)** saldırılarına karşı mimari olarak korumalıdır. Bu nedenle CSRF Token kullanılmaz.
    - Bunun yerine, güvenliği sağlamak için **Strict CORS (Sıkı Köken Politikası)** ve **XSS (Cross-Site Scripting)** korumalarına odaklanılır. Production ortamında `Access-Control-Allow-Origin` sadece izin verilen domainlere açılır.
 
+
+## Yazılım Kalite Standartları
+
+Mimari bütünlüğü korumak ve teknik borcu önlemek için aşağıdaki katı kurallar uygulanır:
+
+1.  **Strict Types:** Tüm PHP dosyaları `declare(strict_types=1);` ile başlamalı ve tüm metot parametreleri/dönüş değerleri tip korumalı olmalıdır.
+2.  **Controller İçinde Logic Yasağı:**
+    *   **NO RAW SQL:** Controller sınıflarında SQL sorgusu (`SELECT`, `INSERT`, vb.) yazmak kesinlikle yasaktır.
+    *   **Repository Pattern:** Veritabanı ile yapılacak her türlü işlem, ilgili Domain'e ait bir `Repository` sınıfı üzerinden yapılmalıdır. Controller sadece Repository'i çağırır.
+    *   **Transaction Yönetimi:** Çoklu tablo güncellemeleri gerektiren işlemler (örn: Klinik + Admin oluşturma) Repository veya Service katmanında `beginTransaction` / `commit` blokları içinde yönetilmelidir. Controller bu detaydan haberdar olmamalıdır.
+3.  **Sessiz Hata Yasağı (No Silent Failures):**
+    *   Boş `catch` blokları yasaktır.
+    *   Hatalar ya anlamlı bir HttpHatası'na dönüştürülüp kullanıcıya sunulmalı ya da `HttpErrorHandler` tarafından yakalanması için `throw` edilmelidir.
+

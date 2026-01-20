@@ -7,10 +7,12 @@ namespace App\Domain\Auth;
 use App\Core\Attributes\Route;
 use App\Core\Attributes\Group;
 use App\Core\BaseController;
+use App\Domain\User\UserRepository;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Firebase\JWT\JWT;
 use DateTimeImmutable;
+use Psr\Container\ContainerInterface;
 
 /**
  * AuthController - Klinik Kullanıcıları için Kimlik Doğrulama
@@ -23,12 +25,16 @@ use DateTimeImmutable;
 #[Group('/auth')]
 class AuthController extends BaseController
 {
+    private UserRepository $userRepository;
+
+    public function __construct(ContainerInterface $container, UserRepository $userRepository)
+    {
+        parent::__construct($container);
+        $this->userRepository = $userRepository;
+    }
+
     /**
      * Kullanıcı girişi ve JWT token üretimi
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return Response
      */
     #[Route('POST', '/login')]
     public function login(Request $request, Response $response): Response
@@ -42,18 +48,16 @@ class AuthController extends BaseController
             return $this->error($response, 'Kullanıcı adı ve şifre zorunludur.', 400);
         }
 
-        // 2. sys_users tablosunda kullanıcı ara
-        $sql = "SELECT * FROM sys_users WHERE username = ? AND is_active = 1";
-        $user = $this->db->fetch($sql, [$username]);
+        // 2. Kullanıcıyı ara (Global arama, repository üzerinden)
+        $user = $this->userRepository->findByUsernameGlobal($username);
 
-        // 3. Kullanıcı bulunamazsa hata dön
-        if (!$user) {
+        // 3. Kullanıcı bulunamazsa veya pasifse hata dön
+        if (!$user || (int) $user['is_active'] !== 1) {
             return $this->error($response, 'Kullanıcı bulunamadı', 401);
         }
 
         // 4. Şifre kontrolü
         if (!password_verify($password, $user['password_hash'])) {
-            // Güvenlik notu: Asla şifreyi loglama
             return $this->error($response, 'Hatalı şifre', 401);
         }
 
@@ -61,7 +65,6 @@ class AuthController extends BaseController
         $secretKey = $_ENV['JWT_SECRET'] ?? '';
 
         if (empty($secretKey)) {
-            // Uygulama hatası: Secret key tanımlanmamış
             return $this->error($response, 'Sunucu yapılandırma hatası (JWT Secret eksik).', 500);
         }
 
@@ -71,7 +74,7 @@ class AuthController extends BaseController
             'iat' => $now->getTimestamp(),
             'exp' => $now->modify('+4 hours')->getTimestamp(),
             'sub' => $user['id'],
-            'clinic_id' => $user['clinic_id'], // ÇOK ÖNEMLİ!
+            'clinic_id' => $user['clinic_id'],
             'role' => $user['role']
         ];
 

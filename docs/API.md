@@ -40,6 +40,22 @@ Tüm yanıtlar (Başarılı `2xx` veya Hatalı `4xx`, `5xx`), "Tek Zar, Tek Form
 
 Bu endpoint'ler, klinik kullanıcılarının (doktor, resepsiyonist vb.) mobil veya web uygulamaları üzerinden erişimi içindir.
 
+### `GET /`
+Sistem sağlık kontrolü (Health Check). Servisin ayakta olup olmadığını doğrular.
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "message": "Pozitif Klinik Backend Running...",
+  "data": {
+    "service": "Pozitif Klinik API",
+    "version": "1.0.0",
+    "status": "active"
+  }
+}
+```
+
 ### `POST /auth/login`
 
 Klinik kullanıcısının sisteme giriş yapmasını ve JWT almasını sağlar.

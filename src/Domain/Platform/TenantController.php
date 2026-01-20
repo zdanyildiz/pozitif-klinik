@@ -12,6 +12,7 @@ use App\Middleware\PlatformAdminMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Throwable;
+use Psr\Container\ContainerInterface;
 
 /**
  * TenantController - Klinik (Tenant) Yönetimi
@@ -27,12 +28,16 @@ use Throwable;
 #[Middleware(PlatformAdminMiddleware::class)]
 class TenantController extends BaseController
 {
+    private TenantRepository $tenantRepository;
+
+    public function __construct(ContainerInterface $container, TenantRepository $tenantRepository)
+    {
+        parent::__construct($container);
+        $this->tenantRepository = $tenantRepository;
+    }
+
     /**
      * Yeni Klinik ve Admin Oluştur
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return Response
      */
     #[Route('POST', '')]
     public function create(Request $request, Response $response): Response
@@ -49,41 +54,15 @@ class TenantController extends BaseController
         }
 
         // Domain prefix kontrolü
-        $existingTenant = $this->db->fetch(
-            "SELECT id FROM sys_tenants WHERE domain_prefix = :prefix",
-            ['prefix' => $domain_prefix]
-        );
-
-        if ($existingTenant) {
+        if ($this->tenantRepository->findByDomain($domain_prefix)) {
             return $this->error($response, "Bu domain prefix ('$domain_prefix') zaten kullanımda", 400);
         }
 
-        $connection = $this->db->getConnection();
-
         try {
-            $connection->beginTransaction();
-
-            // 1. sys_tenants tablosuna kliniği ekle
-            $sqlTenant = "INSERT INTO sys_tenants (name, domain_prefix) VALUES (:name, :prefix)";
-            $stmtTenant = $connection->prepare($sqlTenant);
-            $stmtTenant->execute([
-                'name' => $name,
-                'prefix' => $domain_prefix
-            ]);
-
-            $clinicId = $connection->lastInsertId();
-
-            // 2. sys_users tablosuna admin kullanıcısını ekle
-            $sqlUser = "INSERT INTO sys_users (clinic_id, username, password_hash, role) 
-                        VALUES (:clinic_id, :username, :password_hash, 'admin')";
-            $stmtUser = $connection->prepare($sqlUser);
-            $stmtUser->execute([
-                'clinic_id' => $clinicId,
-                'username' => $admin_username,
-                'password_hash' => password_hash($admin_password, PASSWORD_BCRYPT)
-            ]);
-
-            $connection->commit();
+            $clinicId = $this->tenantRepository->createTenantWithAdmin(
+                ['name' => $name, 'domain_prefix' => $domain_prefix],
+                ['username' => $admin_username, 'password' => $admin_password]
+            );
 
             return $this->createdResponse($response, [
                 'clinic_id' => $clinicId,
@@ -93,23 +72,19 @@ class TenantController extends BaseController
             ], 'Klinik ve Yönetici başarıyla oluşturuldu');
 
         } catch (Throwable $e) {
-            $connection->rollBack();
-            // Silent failure YASAK dendiği için hatayı fırlatıyoruz (HttpErrorHandler yakalayacak)
+            // Detaylı hatayı loglayıp genel hata dönmek daha güvenli olabilir, 
+            // ama geliştirme aşamasında hatayı görmek için fırlatıyoruz.
             throw $e;
         }
     }
 
     /**
      * Tüm Klinikleri Listele
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return Response
      */
     #[Route('GET', '')]
     public function list(Request $request, Response $response): Response
     {
-        $tenants = $this->db->fetchAll("SELECT * FROM sys_tenants ORDER BY created_at DESC");
+        $tenants = $this->tenantRepository->findAll();
         return $this->success($response, $tenants);
     }
 }
