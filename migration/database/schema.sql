@@ -1,6 +1,6 @@
 -- ==========================================
 -- Pozitif Klinik Database Schema
--- Version: 2.0 - Şifreleme Altyapısı Dahil
+-- Version: 3.0 - Hizmet ve Adisyon Desteği
 -- Son Güncelleme: 2026-01-20
 -- ==========================================
 -- GÖREV: Aşağıdaki SQL komutlarını sırasıyla çalıştırarak veritabanı şemasını oluştur.
@@ -14,7 +14,6 @@ USE `pozitif_klinik`;
 -- ==========================================
 
 -- 1. Platform Yöneticileri Tablosu
--- Bu tablo tenantlardan bağımsızdır. Sistemi yöneten "Bizim" kullanıcılarımızdır.
 CREATE TABLE IF NOT EXISTS sys_platform_admins (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -23,8 +22,6 @@ CREATE TABLE IF NOT EXISTS sys_platform_admins (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 2. "Root" Admin Kullanıcısını Ekle (Seeding)
--- Username: root
--- Password: 123456 (BCrypt Hash)
 INSERT IGNORE INTO sys_platform_admins (username, password_hash) 
 VALUES ('root', '$2y$10$vI8aWBdWs4j3w.8L6x8K.eXb7of.hD/Fp7p/j7s.u/u6v/u6v/u6');
 
@@ -36,7 +33,7 @@ VALUES ('root', '$2y$10$vI8aWBdWs4j3w.8L6x8K.eXb7of.hD/Fp7p/j7s.u/u6v/u6v/u6');
 -- 3. Klinikler (Tenants)
 CREATE TABLE IF NOT EXISTS sys_tenants (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    domain_prefix VARCHAR(50) NOT NULL UNIQUE, -- ornek.pozitifklinik.com
+    domain_prefix VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
     logo_url VARCHAR(255),
     is_active TINYINT(1) DEFAULT 1,
@@ -44,14 +41,13 @@ CREATE TABLE IF NOT EXISTS sys_tenants (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. Klinik Kullanıcıları (Doctors, Secretaries)
--- Her kullanıcı mutlaka bir kliniğe (sys_tenants) bağlıdır.
 CREATE TABLE IF NOT EXISTS sys_users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     clinic_id BIGINT UNSIGNED NOT NULL,
     username VARCHAR(50) NOT NULL,
     name VARCHAR(100) NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'doctor', 'secretary') NOT NULL, -- admin burada "Klinik Yöneticisi" demek
+    role ENUM('admin', 'doctor', 'secretary') NOT NULL,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE RESTRICT,
@@ -77,7 +73,6 @@ CREATE TABLE IF NOT EXISTS sys_sms_logs (
 
 -- 6. Hasta Kartları
 -- ÖNEMLİ: TÜM KİŞİSEL VERİLER AES-256-GCM ile şifrelenmiş olarak saklanır.
--- Arama için HMAC-SHA256 blind index hash'leri kullanılır.
 CREATE TABLE IF NOT EXISTS ptn_cards (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     clinic_id BIGINT UNSIGNED NOT NULL,
@@ -95,11 +90,11 @@ CREATE TABLE IF NOT EXISTS ptn_cards (
     email VARCHAR(255) NULL COMMENT 'AES-256-GCM şifreli email',
     
     birth_date DATE NULL,
-    gender ENUM('M', 'F', 'U') DEFAULT 'U' COMMENT 'M:Male, F:Female, U:Unknown',
+    gender ENUM('M', 'F', 'U') DEFAULT 'U',
     blood_type ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-') NULL,
     address TEXT NULL COMMENT 'AES-256-GCM şifreli adres',
-    notes TEXT NULL COMMENT 'Personel özel notları (şifrelenmez - operasyonel)',
-    status TINYINT(1) DEFAULT 1 COMMENT '1:Aktif, 0:Pasif (Arşiv)',
+    notes TEXT NULL,
+    status TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id),
@@ -114,13 +109,13 @@ CREATE TABLE IF NOT EXISTS ptn_vitals (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     clinic_id BIGINT UNSIGNED NOT NULL,
     patient_id BIGINT UNSIGNED NOT NULL,
-    height SMALLINT UNSIGNED NULL COMMENT 'cm cinsinden',
-    weight DECIMAL(5,2) NULL COMMENT 'kg cinsinden',
-    systolic_bp SMALLINT UNSIGNED NULL COMMENT 'Büyük Tansiyon (mmHg)',
-    diastolic_bp SMALLINT UNSIGNED NULL COMMENT 'Küçük Tansiyon (mmHg)',
-    heart_rate SMALLINT UNSIGNED NULL COMMENT 'Nabız (bpm)',
+    height SMALLINT UNSIGNED NULL,
+    weight DECIMAL(5,2) NULL,
+    systolic_bp SMALLINT UNSIGNED NULL,
+    diastolic_bp SMALLINT UNSIGNED NULL,
+    heart_rate SMALLINT UNSIGNED NULL,
     measured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by BIGINT UNSIGNED NULL COMMENT 'Ölçümü giren personel ID',
+    created_by BIGINT UNSIGNED NULL,
     FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE CASCADE,
     FOREIGN KEY (patient_id) REFERENCES ptn_cards(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -153,20 +148,35 @@ CREATE TABLE IF NOT EXISTS cln_examinations (
     FOREIGN KEY (doctor_user_id) REFERENCES sys_users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 10. Randevu Türleri
+-- 10. Hizmet Kataloğu
+CREATE TABLE IF NOT EXISTS `cln_services` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `clinic_id` BIGINT UNSIGNED NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `code` VARCHAR(50) NULL,
+    `standard_price` DECIMAL(10,2) DEFAULT 0.00,
+    `tax_rate` DECIMAL(5,2) DEFAULT 20.00,
+    `is_active` TINYINT(1) DEFAULT 1,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_service_clinic FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. Randevu Türleri
 CREATE TABLE IF NOT EXISTS cln_appointment_types (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     clinic_id BIGINT UNSIGNED NOT NULL,
     name VARCHAR(255) NOT NULL,
     color_code VARCHAR(10) DEFAULT '#3788d8',
     duration_minutes INT DEFAULT 30,
+    default_price DECIMAL(10,2) DEFAULT 0.00,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_app_type_clinic FOREIGN KEY (clinic_id) REFERENCES sys_tenants (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 11. Randevular
+-- 12. Randevular
 CREATE TABLE IF NOT EXISTS cln_appointments (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     clinic_id BIGINT UNSIGNED NOT NULL,
@@ -180,9 +190,27 @@ CREATE TABLE IF NOT EXISTS cln_appointments (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_app_clinic FOREIGN KEY (clinic_id) REFERENCES sys_tenants (id) ON DELETE CASCADE,
     CONSTRAINT fk_app_patient FOREIGN KEY (patient_id) REFERENCES ptn_cards (id) ON DELETE CASCADE,
-    CONSTRAINT fk_app_doctor FOREIGN KEY (doctor_id) REFERENCES sys_users (id) ON DELETE SET NULL,
+    CONSTRAINT fk_app_doctor FOREIGN KEY (doctor_id) REFERENCES sys_users(id) ON DELETE SET NULL,
     CONSTRAINT fk_app_type FOREIGN KEY (type_id) REFERENCES cln_appointment_types (id),
     INDEX idx_appointment_date (clinic_id, appointment_date),
     INDEX idx_patient_appointments (clinic_id, patient_id),
     INDEX idx_doctor_appointments (clinic_id, doctor_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 13. Randevu Kalemleri / Adisyon
+CREATE TABLE IF NOT EXISTS `cln_appointment_items` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `clinic_id` BIGINT UNSIGNED NOT NULL,
+    `appointment_id` BIGINT UNSIGNED NOT NULL,
+    `service_id` BIGINT UNSIGNED NULL,
+    `item_name` VARCHAR(255) NOT NULL,
+    `quantity` INT DEFAULT 1,
+    `unit_price` DECIMAL(10,2) NOT NULL,
+    `total_price` DECIMAL(10,2) NOT NULL,
+    `performer_id` BIGINT UNSIGNED NULL COMMENT 'İşlemi yapan personel',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_item_clinic FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE CASCADE,
+    CONSTRAINT fk_item_app FOREIGN KEY (appointment_id) REFERENCES cln_appointments(id) ON DELETE CASCADE,
+    CONSTRAINT fk_item_service FOREIGN KEY (service_id) REFERENCES cln_services(id) ON DELETE SET NULL,
+    CONSTRAINT fk_item_performer FOREIGN KEY (performer_id) REFERENCES sys_users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

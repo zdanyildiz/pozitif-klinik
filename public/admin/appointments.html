@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Pozitif Klinik Randevu Yönetimi - Randevu takibi, hasta yönetimi ve durum güncellemeleri">
+    <meta name="description" content="Pozitif Klinik Randevu Yönetimi - Randevu takibi, hasta yönetimi ve adisyon">
     <title>Randevular | Pozitif Klinik</title>
 
     <!-- Bootstrap 5 CSS -->
@@ -19,50 +18,54 @@
     <!-- Custom CSS -->
     <link href="css/dashboard.css" rel="stylesheet">
     <style>
-        /* Randevu Durum Badge'leri */
+        /* Modern UI Tweaks */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
         .appointment-status-pending {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: #f8f9fa;
             color: #6c757d;
             border: 1px solid #dee2e6;
         }
 
         .appointment-status-confirmed {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            background: #e3f2fd;
             color: #1565c0;
             border: 1px solid #90caf9;
         }
 
         .appointment-status-waiting {
-            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            background: #fff3e0;
             color: #e65100;
             border: 1px solid #ffcc80;
         }
 
         .appointment-status-in_test {
-            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            background: #f3e5f5;
             color: #7b1fa2;
             border: 1px solid #ce93d8;
         }
 
         .appointment-status-completed {
-            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            background: #e8f5e9;
             color: #2e7d32;
             border: 1px solid #a5d6a7;
         }
 
         .appointment-status-cancelled {
-            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            background: #ffebee;
             color: #c62828;
             border: 1px solid #ef9a9a;
         }
 
         .appointment-status-no_show {
-            background: linear-gradient(135deg, #424242 0%, #212121 100%);
+            background: #424242;
             color: #ffffff;
             border: 1px solid #424242;
         }
 
-        /* Tür Badge */
         .type-badge {
             padding: 0.35rem 0.75rem;
             border-radius: 50rem;
@@ -71,7 +74,6 @@
             display: inline-flex;
             align-items: center;
             gap: 0.35rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         }
 
         .type-badge::before {
@@ -82,26 +84,6 @@
             background-color: currentColor;
         }
 
-        /* Durum Select */
-        .status-select {
-            padding: 0.35rem 0.75rem;
-            font-size: 0.85rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: 130px;
-        }
-
-        .status-select:hover {
-            transform: scale(1.02);
-        }
-
-        .status-select:focus {
-            box-shadow: 0 0 0 3px rgba(55, 136, 216, 0.25);
-        }
-
-        /* Saat Badge */
         .time-badge {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -109,99 +91,51 @@
             border-radius: 0.5rem;
             font-weight: 600;
             font-size: 0.9rem;
-            display: inline-block;
-            min-width: 60px;
-            text-align: center;
         }
 
-        /* Aksiyon Butonları */
-        .action-btn {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Filter Bar */
-        .filter-bar {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-radius: 1rem;
-            padding: 1.25rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        /* Detail Modal Tabs */
+        .nav-tabs-custom {
+            border-bottom: 2px solid #f1f3f5;
             margin-bottom: 1.5rem;
         }
 
-        /* Stats Cards */
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 1rem;
-            padding: 1.25rem;
-            color: white;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .stat-card.secondary {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        }
-
-        .stat-card .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-        }
-
-        .stat-card .stat-label {
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
-
-        /* Empty State */
-        .empty-state {
-            padding: 4rem 2rem;
-            text-align: center;
+        .nav-tabs-custom .nav-link {
+            border: none;
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
             color: #6c757d;
+            position: relative;
         }
 
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
+        .nav-tabs-custom .nav-link.active {
+            color: var(--primary-color);
+            background: none;
         }
 
-        /* Type List Item */
-        .type-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
+        .nav-tabs-custom .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+        }
+
+        /* Billing Table */
+        .billing-table th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            letter-spacing: 0.5px;
+        }
+
+        .billing-total {
             background: #f8f9fa;
-            margin-bottom: 0.5rem;
-            transition: all 0.2s ease;
-        }
-
-        .type-list-item:hover {
-            background: #e9ecef;
-        }
-
-        .type-color-dot {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            margin-right: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
         }
     </style>
 </head>
@@ -211,107 +145,71 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <a href="clinic-dashboard.html" class="sidebar-logo">
-                <div class="sidebar-logo-icon">
-                    <i class="bi bi-hospital"></i>
-                </div>
-                <div class="sidebar-logo-text">
-                    Pozitif
-                    <span>Klinik Yönetimi</span>
-                </div>
+                <div class="sidebar-logo-icon"><i class="bi bi-hospital"></i></div>
+                <div class="sidebar-logo-text">Pozitif<span>Klinik Yönetimi</span></div>
             </a>
         </div>
-
         <nav class="sidebar-nav">
             <div class="nav-section">
                 <div class="nav-section-title">Hizmetler</div>
-                <a href="patients.html" class="nav-link-custom">
-                    <i class="bi bi-person-heart"></i>
-                    Hastalar
-                </a>
-                <a href="appointments.html" class="nav-link-custom active">
-                    <i class="bi bi-calendar-check"></i>
-                    Randevular
-                </a>
-                <a href="clinic-dashboard.html" class="nav-link-custom">
-                    <i class="bi bi-people"></i>
-                    Personel
-                </a>
+                <a href="patients.html" class="nav-link-custom"><i class="bi bi-person-heart"></i>Hastalar</a>
+                <a href="appointments.html" class="nav-link-custom active"><i
+                        class="bi bi-calendar-check"></i>Randevular</a>
+                <a href="clinic-dashboard.html" class="nav-link-custom"><i class="bi bi-people"></i>Personel</a>
             </div>
-
             <div class="nav-section">
                 <div class="nav-section-title">Kurumsal</div>
-                <a href="#" class="nav-link-custom">
-                    <i class="bi bi-gear"></i>
-                    Klinik Ayarları
-                </a>
+                <a href="#" class="nav-link-custom"><i class="bi bi-gear"></i>Hizmet Tanımları</a>
+                <a href="#" class="nav-link-custom"><i class="bi bi-shield-check"></i>Güvenlik Ayarları</a>
             </div>
         </nav>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Top Navbar -->
         <header class="top-navbar">
-            <h1 class="navbar-title">
-                <i class="bi bi-calendar-check me-2"></i>
-                Randevu Yönetimi
-            </h1>
-
+            <h1 class="navbar-title"><i class="bi bi-calendar-check me-2"></i>Randevu Yönetimi</h1>
             <div class="navbar-actions">
                 <div class="user-profile me-3 d-none d-md-flex">
                     <div class="text-end me-2">
                         <div class="fw-bold" id="userName">-</div>
                         <div class="small text-secondary" id="userRole">-</div>
                     </div>
-                    <div class="avatar">
-                        <i class="bi bi-person-circle fs-2"></i>
-                    </div>
                 </div>
-                <button class="btn-logout" id="logoutBtn">
-                    <i class="bi bi-box-arrow-right"></i>
-                    Çıkış Yap
-                </button>
+                <button class="btn-logout" id="logoutBtn"><i class="bi bi-box-arrow-right"></i>Çıkış Yap</button>
             </div>
         </header>
 
-        <!-- Content Area -->
         <div class="content-area">
-            <!-- Stats Row -->
+            <!-- Stats -->
             <div class="row mb-4">
                 <div class="col-md-3">
-                    <div class="stat-card">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                         <div class="stat-value" id="todayCount">0</div>
                         <div class="stat-label">Bugünkü Randevu</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card secondary">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                         <div class="stat-value" id="pendingCount">0</div>
-                        <div class="stat-label">Bekleyen Randevu</div>
+                        <div class="stat-label">Bekleyen İşlem</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Filter Bar -->
-            <div class="filter-bar">
+            <!-- Filters -->
+            <div class="filter-bar mb-4">
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-calendar3 text-primary fs-5"></i>
-                            <input type="date" id="filterDate" class="form-control form-control-sm"
-                                style="width: 180px;">
-                        </div>
-                        <button class="btn btn-sm btn-outline-primary" id="btnToday">
-                            <i class="bi bi-calendar-day"></i> Bugün
-                        </button>
-                        <button class="btn btn-sm btn-primary" id="btnRefresh">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </button>
+                        <input type="date" id="filterDate" class="form-control form-control-sm" style="width: 180px;">
+                        <button class="btn btn-sm btn-outline-primary" id="btnToday">Bugün</button>
+                        <button class="btn btn-sm btn-primary" id="btnRefresh"><i
+                                class="bi bi-arrow-clockwise"></i></button>
                     </div>
                     <div class="d-flex gap-2">
                         <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
                             data-bs-target="#typeModal">
-                            <i class="bi bi-tags me-1"></i> Türleri Yönet
+                            <i class="bi bi-tags me-1"></i> Randevu Türleri
                         </button>
                         <button class="btn btn-save btn-sm" id="btnNewAppointment">
                             <i class="bi bi-calendar-plus me-1"></i> Yeni Randevu
@@ -320,7 +218,7 @@
                 </div>
             </div>
 
-            <!-- Appointments Table -->
+            <!-- Table -->
             <div class="table-card">
                 <div class="table-responsive">
                     <table class="table table-hover" id="appointmentsTable">
@@ -335,14 +233,8 @@
                             </tr>
                         </thead>
                         <tbody id="appointmentsTableBody">
-                            <!-- Loading State -->
                             <tr id="loadingRow">
-                                <td colspan="6">
-                                    <div class="loading-state">
-                                        <div class="loading-spinner"></div>
-                                        <p>Randevular yükleniyor...</p>
-                                    </div>
-                                </td>
+                                <td colspan="6" class="text-center">Yükleniyor...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -351,133 +243,187 @@
         </div>
     </main>
 
-    <!-- New Appointment Modal -->
-    <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
+    <!-- NEW APPOINTMENT MODAL -->
+    <div class="modal fade" id="appointmentModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title d-flex align-items-center">
-                        <div
-                            class="bg-primary bg-opacity-10 rounded-circle p-2 me-3 d-flex align-items-center justify-content-center">
-                            <i class="bi bi-calendar-plus text-primary fs-5"></i>
-                        </div>
-                        <div>
-                            <span id="modalTitle">Yeni Randevu Oluştur</span>
-                            <p class="text-muted small mb-0 mt-1" id="modalSubtitle">Randevu bilgilerini giriniz</p>
-                        </div>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    <h5 class="modal-title">Yeni Randevu Oluştur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body pt-4">
                     <form id="appointmentForm">
-                        <input type="hidden" name="appointment_id" id="appointmentId">
-
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-person text-primary me-1"></i> Hasta Seçin
-                                </label>
-                                <select class="form-select" name="patient_id" id="patientSelect" required>
-                                    <option value="">Hasta seçiniz...</option>
-                                </select>
+                                <label class="form-label fw-semibold">Hasta Seçin</label>
+                                <select class="form-select" name="patient_id" id="patientSelect" required></select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-tag text-primary me-1"></i> Randevu Türü
-                                </label>
-                                <select class="form-select" name="type_id" id="typeSelect" required>
-                                    <option value="">Tür seçiniz...</option>
-                                </select>
+                                <label class="form-label fw-semibold">Randevu Türü</label>
+                                <select class="form-select" name="type_id" id="typeSelect" required></select>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-person-badge text-primary me-1"></i> Doktor (Opsiyonel)
-                                </label>
-                                <select class="form-select" name="doctor_id" id="doctorSelect">
-                                    <option value="">Doktor seçiniz...</option>
-                                </select>
+                                <label class="form-label fw-semibold">Doktor</label>
+                                <select class="form-select" name="doctor_id" id="doctorSelect"></select>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-calendar3 text-primary me-1"></i> Tarih
-                                </label>
+                                <label class="form-label fw-semibold">Tarih</label>
                                 <input type="date" class="form-control" name="date" id="appDate" required>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-clock text-primary me-1"></i> Saat
-                                </label>
+                                <label class="form-label fw-semibold">Saat</label>
                                 <input type="time" class="form-control" name="time" id="appTime" required>
                             </div>
                         </div>
-
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                <i class="bi bi-sticky text-primary me-1"></i> Notlar (Opsiyonel)
-                            </label>
-                            <textarea class="form-control" name="notes" id="appNotes" rows="2"
-                                placeholder="Randevu hakkında ek notlar..."></textarea>
+                            <label class="form-label fw-semibold">Notlar</label>
+                            <textarea class="form-control" name="notes" id="appNotes" rows="2"></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg me-1"></i> İptal
-                    </button>
-                    <button type="button" class="btn btn-save" id="saveAppointmentBtn">
-                        <i class="bi bi-check-lg me-1"></i>
-                        <span id="saveButtonText">Randevu Oluştur</span>
-                    </button>
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-save" id="saveAppointmentBtn">Oluştur</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Appointment Types Management Modal -->
-    <div class="modal fade" id="typeModal" tabindex="-1" aria-hidden="true">
+    <!-- DETAIL MODAL (GENERAL + BILLING) -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Randevu Detayı</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-general">Genel
+                                Bilgiler</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-billing">Hizmetler &
+                                Ücretler</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- General Tab -->
+                        <div class="tab-pane fade show active" id="tab-general">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Hasta</label>
+                                    <div class="fw-bold" id="detailPatientName">-</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Randevu Türü</label>
+                                    <div id="detailTypeBadge">-</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Doktor</label>
+                                    <div class="fw-bold" id="detailDoctorName">-</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Tarih / Saat</label>
+                                    <div class="fw-bold" id="detailDateTime">-</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="text-muted small">Notlar</label>
+                                    <div class="p-2 bg-light rounded" id="detailNotes">-</div>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <label class="text-muted small mb-2 d-block">Randevu Durumu</label>
+                                    <select class="form-select" id="detailStatusSelect">
+                                        <option value="pending">Bekliyor</option>
+                                        <option value="waiting">Klinikte / Beklemede</option>
+                                        <option value="in_test">İşlemde</option>
+                                        <option value="completed">Tamamlandı</option>
+                                        <option value="cancelled">İptal Edildi</option>
+                                        <option value="no_show">Gelmedi</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Billing Tab -->
+                        <div class="tab-pane fade" id="tab-billing">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Uygulanan Hizmetler</h6>
+                                <button class="btn btn-sm btn-outline-primary" id="btnAddService">
+                                    <i class="bi bi-plus-lg"></i> Hizmet Ekle
+                                </button>
+                            </div>
+
+                            <table class="table billing-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hizmet / İşlem</th>
+                                        <th style="width: 80px;">Adet</th>
+                                        <th style="width: 120px;" class="text-end">Birim Fiyat</th>
+                                        <th style="width: 120px;" class="text-end">Toplam</th>
+                                        <th style="width: 50px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billingItemsBody">
+                                    <!-- Items here -->
+                                </tbody>
+                            </table>
+
+                            <div class="billing-total d-flex justify-content-between mt-4">
+                                <span>Genel Toplam</span>
+                                <span id="billingGrandTotal">0,00 ₺</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-save" id="btnUpdateDetails">Değişiklikleri Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TYPE MANAGEMENT MODAL -->
+    <div class="modal fade" id="typeModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title d-flex align-items-center">
-                        <i class="bi bi-tags text-primary me-2"></i>
-                        Randevu Türleri
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    <h5 class="modal-title">Randevu Türleri ve Ücretler</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="typeForm" class="mb-4">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-5">
+                        <div class="row g-2">
+                            <div class="col-12">
                                 <label class="form-label small fw-semibold">Tür Adı</label>
-                                <input type="text" class="form-control form-control-sm" name="name" id="typeName"
-                                    placeholder="Örn: Muayene" required>
+                                <input type="text" class="form-control form-control-sm" name="name" required
+                                    placeholder="Örn: Botox">
                             </div>
-                            <div class="col-2">
+                            <div class="col-4">
                                 <label class="form-label small fw-semibold">Renk</label>
-                                <input type="color" class="form-control form-control-sm form-control-color"
-                                    name="color_code" id="typeColor" value="#3788d8" style="width: 100%; height: 38px;">
+                                <input type="color" class="form-control form-control-sm form-control-color w-100"
+                                    name="color_code" value="#3788d8">
                             </div>
-                            <div class="col-3">
+                            <div class="col-4">
                                 <label class="form-label small fw-semibold">Süre (dk)</label>
-                                <input type="number" class="form-control form-control-sm" name="duration"
-                                    id="typeDuration" value="30" min="5" step="5">
+                                <input type="number" class="form-control form-control-sm" name="duration_minutes"
+                                    value="30">
                             </div>
-                            <div class="col-2">
-                                <button type="submit" class="btn btn-primary btn-sm w-100">
-                                    <i class="bi bi-plus-lg"></i>
-                                </button>
+                            <div class="col-4">
+                                <label class="form-label small fw-semibold">Ücret (₺)</label>
+                                <input type="number" class="form-control form-control-sm" name="default_price" value="0"
+                                    step="0.01">
+                            </div>
+                            <div class="col-12 mt-2">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Yeni Tür Ekle</button>
                             </div>
                         </div>
                     </form>
-
-                    <hr>
-
-                    <div id="typeList">
-                        <!-- Types will be listed here -->
-                    </div>
+                    <div id="typeList"></div>
                 </div>
             </div>
         </div>
@@ -487,9 +433,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Custom JS -->
-    <script src="js/config.js?v=3"></script>
-    <script src="js/appointments.js?v=2"></script>
+    <script src="js/config.js?v=4"></script>
+    <script src="js/appointments.js?v=4"></script>
 </body>
 
 </html>

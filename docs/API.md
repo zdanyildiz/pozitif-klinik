@@ -406,3 +406,54 @@ Randevu türünü günceller.
 
 ### `DELETE /api/appointments/types/{id}`
 Randevu türünü pasif yapar (soft delete).
+
+---
+
+## Domain API (Hizmet Kataloğu)
+
+Bu endpoint'ler klinikte sunulan hizmetleri (Botox, Dolgu, Muayene vb.) yönetir.
+
+### `GET /api/services`
+Aktif hizmetleri listeler.
+
+### `POST /api/services`
+Yeni hizmet ekler.
+
+**Payload:**
+```json
+{
+  "name": "Botox Uygulaması",
+  "code": "BTX-01",
+  "standard_price": 1500.00,
+  "tax_rate": 20.00
+}
+```
+
+### `PUT /api/services/{id}`
+Hizmet bilgilerini günceller.
+
+### `DELETE /api/services/{id}`
+Hizmeti pasif yapar.
+
+---
+
+## Domain API (Adisyon / Randevu Kalemleri)
+
+Her randevuya birden fazla hizmet/işlem eklenebilir.
+
+### `POST /api/appointments/{id}/items`
+Randevuya hizmet/kalem ekler.
+
+**Payload:**
+```json
+{
+  "service_id": 5,        // Opsiyonel (Katalogdan seçildiyse)
+  "item_name": "Botox",   // Manuel isim girilebilir
+  "unit_price": 1500.00,
+  "quantity": 1,
+  "performer_id": 3       // İşlemi yapan doktor ID
+}
+```
+
+### `DELETE /api/appointments/{id}/items/{itemId}`
+Randevudan bir kalem siler.

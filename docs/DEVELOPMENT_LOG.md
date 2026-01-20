@@ -170,32 +170,26 @@ PLATFORM_ADMIN_PASS=admin
 
 ### 14. Kriptografi ve Hasta Veri Güvenliği (✅ Tamamlandı)
 **Tarih:** 2026-01-20
-- **AES-256-GCM Şifreleme:** Hasta hassas verileri (Ad Soyad, TC No, Telefon, Email, Adres) veritabanında AES-256-GCM ile şifrelenmiş olarak saklanıyor. Bu sayede fiziksel veritabanı çalınsa dahi anahtar olmadan hasta bilgilerine ulaşılamaz.
-- **CryptoService:** `src/Core/Security/CryptoService.php` sınıfı `encrypt()`, `decrypt()` ve `blindIndex()` metodları ile tüm kriptografik işlemleri merkezi olarak yönetir.
-- **Blind Index Arama:** Şifreli veriler (IV nedeniyle) doğrudan aranamadığı için, arama yapılması gereken kolonlar (Ad Soyad, TC No, Telefon) için HMAC-SHA256 tabanlı "Blind Index" hash sistemi kuruldu.
-- **Tam KVKK Uyumu:** Sağlık bilgileri ile hasta kimliğinin açık metin olarak eşleşmesi engellendi. Gözlem ve notlar dışındaki tüm kimlik verileri şifrelendi.
-- **Repo Entegrasyonu:** `PatientRepository` ve `AppointmentRepository` (JOIN'lerde) otomatik şifreleme ve çözme yapacak şekilde revize edildi.
-- **Migration:** `schema.sql` güncellenerek tüm kimlik kolonları `VARCHAR(255)` yapıldı ve hash index sütunları eklendi.
+- **AES-256-GCM Şifreleme:** Hasta hassas verileri (Ad Soyad, TC No, Telefon, Email, Adres) veritabanında AES-256-GCM ile şifrelenmiş olarak saklanıyor.
+- **CryptoService:** Merkezi şifreleme ve blind-index altyapısı kuruldu.
+- **Tam KVKK Uyumu:** Veri sızıntısında kimlik verilerinin korunması sağlandı.
 
 ---
 
 ### 15. Randevu Modülü - Full CRUD (✅ Tamamlandı)
 **Tarih:** 2026-01-20
-- **AppointmentRepository:** Randevu CRUD işlemleri, tür yönetimi, tarih aralığı filtreleme, çakışma kontrolü metodları eklendi.
-- **AppointmentController:** Tam CRUD API endpoint'leri oluşturuldu:
-  - `GET /api/appointments` - Tarih filtreli listeleme
-  - `POST /api/appointments` - Yeni randevu (çakışma kontrolü ile)
-  - `PUT /api/appointments/{id}` - Randevu güncelleme
-  - `PUT /api/appointments/{id}/status` - Durum güncelleme (auto-save)
-  - `DELETE /api/appointments/{id}` - Randevu silme
-  - `GET /api/appointments/stats/today` - İstatistikler
-  - `GET /api/appointments/patient/{patientId}` - Hasta randevuları
-- **Randevu Türleri API:** Tür oluşturma, listeleme, güncelleme ve silme endpoint'leri.
-- **Frontend Güncelleme:**
-  - `appointments.html`: Stat kartları, modern tasarım, düzenle/sil butonları
-  - `appointments.js`: v2.0 - Full CRUD, auto-save durum, animasyonlar, toast bildirimler
-  - `config.js`: `showToast()` ve `showConfirm()` yardımcı fonksiyonları eklendi
-- **Durum Yönetimi:** 7 farklı randevu durumu destekleniyor (pending, confirmed, waiting, in_test, completed, cancelled, no_show).
+- **Tam Fonksiyonel Randevu Takvimi:** Randevu oluşturma, güncelleme, silme ve durum yönetimi API'leri tamamlandı.
+- **Çakışma Kontrolü:** Doktor bazlı randevu çakışmalarını önleyen validasyon mekanizması eklendi.
+
+---
+
+### 16. Hizmet Kataloğu ve Adisyon (Billing) Sistemi (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **Hizmet Kataloğu:** Kliniklerin sunduğu hizmetleri ve standart fiyatlarını tanımlayabildiği `cln_services` modülü eklendi.
+- **Adisyon Altyapısı (Appointment Items):** Randevulara birden fazla hizmet/işlem eklenebilen ve toplam tutar hesaplayan yapı kuruldu.
+- **Otomatik Fiyatlandırma:** Randevu türünde (muayene vb.) varsayılan fiyat tanımlanmışsa, randevu oluşturulunca otomatik adisyon kalemi açılması sağlandı.
+- **Modern Detay Modalı:** Randevular tablosunda tıklanan randevu için sekmeli (Genel Bilgiler / Hizmetler) detay arayüzü geliştirildi.
+- **Veritabanı Birleştirme:** Tüm güncel şema `migration/database/schema.sql` dosyasında konsolide edildi.
 
 ---
 

@@ -10,12 +10,10 @@ use App\Core\Security\CryptoService;
 /**
  * AppointmentRepository - Randevu Veritabanı İşlemleri
  * 
- * Randevu CRUD işlemleri ve tür yönetimi.
+ * Randevu CRUD işlemleri, tür yönetimi ve adisyon (items) yönetimi.
  * Hasta verileri şifrelenmiş olduğundan, listelerken CryptoService ile çözülür.
  * 
  * ⚠️ GÜVENLİK: Tüm sorgular clinic_id filtresi ile çalışır (multi-tenancy)
- * 
- * @package App\Domain\Appointment
  */
 class AppointmentRepository
 {
@@ -32,58 +30,48 @@ class AppointmentRepository
     // RANDEVU TÜRLERİ
     // ==========================================
 
-    /**
-     * Yeni randevu türü oluşturur
-     */
     public function createType(int $clinicId, array $data): int
     {
-        $sql = "INSERT INTO cln_appointment_types (clinic_id, name, color_code, duration_minutes, is_active) 
-                VALUES (?, ?, ?, ?, 1)";
+        $sql = "INSERT INTO cln_appointment_types (clinic_id, name, color_code, duration_minutes, default_price, is_active) 
+                VALUES (?, ?, ?, ?, ?, 1)";
 
         $this->db->query($sql, [
             $clinicId,
             $data['name'],
             $data['color_code'] ?? '#3788d8',
-            $data['duration_minutes'] ?? 30
+            $data['duration_minutes'] ?? 30,
+            $data['default_price'] ?? 0.00
         ]);
 
         return (int) $this->db->getConnection()->lastInsertId();
     }
 
-    /**
-     * Randevu türlerini listeler
-     */
     public function listTypes(int $clinicId): array
     {
         $sql = "SELECT * FROM cln_appointment_types WHERE clinic_id = ? AND is_active = 1 ORDER BY name ASC";
         return $this->db->fetchAll($sql, [$clinicId]);
     }
 
-    /**
-     * Randevu türünü ID'ye göre getirir
-     */
     public function findTypeById(int $clinicId, int $typeId): ?array
     {
         $sql = "SELECT * FROM cln_appointment_types WHERE clinic_id = ? AND id = ?";
-        $result = $this->db->fetch($sql, [$clinicId, $typeId]);
-        return $result ?: null;
+        return $this->db->fetch($sql, [$clinicId, $typeId]);
     }
 
-    /**
-     * Randevu türünü günceller
-     */
     public function updateType(int $clinicId, int $typeId, array $data): bool
     {
         $sql = "UPDATE cln_appointment_types SET 
                     name = ?,
                     color_code = ?,
-                    duration_minutes = ?
+                    duration_minutes = ?,
+                    default_price = ?
                 WHERE clinic_id = ? AND id = ?";
 
         $this->db->query($sql, [
             $data['name'],
             $data['color_code'] ?? '#3788d8',
             $data['duration_minutes'] ?? 30,
+            $data['default_price'] ?? 0.00,
             $clinicId,
             $typeId
         ]);
@@ -91,9 +79,6 @@ class AppointmentRepository
         return true;
     }
 
-    /**
-     * Randevu türünü pasif yapar (soft delete)
-     */
     public function deleteType(int $clinicId, int $typeId): bool
     {
         $sql = "UPDATE cln_appointment_types SET is_active = 0 WHERE clinic_id = ? AND id = ?";
@@ -105,11 +90,9 @@ class AppointmentRepository
     // RANDEVULAR
     // ==========================================
 
-    /**
-     * Yeni randevu oluşturur
-     */
     public function createAppointment(int $clinicId, array $data): int
     {
+        // 1. Randevuyu oluştur
         $sql = "INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, notes) 
                 VALUES (?, ?, ?, ?, ?, 'pending', ?)";
 
@@ -122,59 +105,23 @@ class AppointmentRepository
             $data['notes'] ?? null
         ]);
 
-        return (int) $this->db->getConnection()->lastInsertId();
+        $appointmentId = (int) $this->db->getConnection()->lastInsertId();
+
+        // 2. Eğer randevu türünün varsayılan fiyatı varsa, adisyona ilk kalemi ekle
+        $type = $this->findTypeById($clinicId, (int) $data['type_id']);
+        if ($type && $type['default_price'] > 0) {
+            $this->addItem($clinicId, $appointmentId, [
+                'item_name' => $type['name'] . ' (Muayene)',
+                'quantity' => 1,
+                'unit_price' => $type['default_price'],
+                'total_price' => $type['default_price'],
+                'performer_id' => $data['doctor_id'] ?? null
+            ]);
+        }
+
+        return $appointmentId;
     }
 
-    /**
-     * Randevu durumunu günceller
-     */
-    public function updateStatus(int $clinicId, int $appointmentId, string $status): bool
-    {
-        $sql = "UPDATE cln_appointments SET status = ? WHERE clinic_id = ? AND id = ?";
-        $this->db->query($sql, [$status, $clinicId, $appointmentId]);
-        return true;
-    }
-
-    /**
-     * Randevuyu günceller
-     */
-    public function updateAppointment(int $clinicId, int $appointmentId, array $data): bool
-    {
-        $sql = "UPDATE cln_appointments SET 
-                    patient_id = ?,
-                    doctor_id = ?,
-                    type_id = ?,
-                    appointment_date = ?,
-                    notes = ?
-                WHERE clinic_id = ? AND id = ?";
-
-        $this->db->query($sql, [
-            $data['patient_id'],
-            $data['doctor_id'] ?? null,
-            $data['type_id'],
-            $data['appointment_date'],
-            $data['notes'] ?? null,
-            $clinicId,
-            $appointmentId
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Randevuyu siler
-     */
-    public function deleteAppointment(int $clinicId, int $appointmentId): bool
-    {
-        $sql = "DELETE FROM cln_appointments WHERE clinic_id = ? AND id = ?";
-        $this->db->query($sql, [$clinicId, $appointmentId]);
-        return true;
-    }
-
-    /**
-     * Randevuyu ID'ye göre getirir
-     * Hasta adı şifreli olduğundan decrypt edilir.
-     */
     public function findById(int $clinicId, int $appointmentId): ?array
     {
         $sql = "SELECT 
@@ -195,13 +142,26 @@ class AppointmentRepository
             return null;
         }
 
-        return $this->decryptAppointmentPatientName($result);
+        $appointment = $this->decryptAppointmentPatientName($result);
+
+        // Randevu kalemlerini (items) getir
+        $appointment['items'] = $this->getItems($clinicId, $appointmentId);
+
+        // Toplam tutarı hesapla
+        $appointment['total_amount'] = array_reduce($appointment['items'], function ($carry, $item) {
+            return $carry + $item['total_price'];
+        }, 0);
+
+        return $appointment;
     }
 
-    /**
-     * Belirli bir tarihteki randevuları listeler
-     * Hasta adları şifreli saklandığından decrypt edilir.
-     */
+    public function updateStatus(int $clinicId, int $appointmentId, string $status): bool
+    {
+        $sql = "UPDATE cln_appointments SET status = ? WHERE clinic_id = ? AND id = ?";
+        $this->db->query($sql, [$status, $clinicId, $appointmentId]);
+        return true;
+    }
+
     public function listDailyAppointments(int $clinicId, string $date): array
     {
         $sql = "SELECT 
@@ -222,124 +182,50 @@ class AppointmentRepository
         return array_map([$this, 'decryptAppointmentPatientName'], $results);
     }
 
-    /**
-     * Belirli bir tarih aralığındaki randevuları listeler
-     */
-    public function listAppointmentsByDateRange(int $clinicId, string $startDate, string $endDate): array
+    // ==========================================
+    // RANDEVU KALEMLERİ (ADİSYON)
+    // ==========================================
+
+    public function getItems(int $clinicId, int $appointmentId): array
     {
-        $sql = "SELECT 
-                    a.*, 
-                    p.name as patient_name_encrypted, 
-                    t.name as type_name, 
-                    t.color_code,
-                    u.name as doctor_name
-                FROM cln_appointments a
-                JOIN ptn_cards p ON a.patient_id = p.id
-                JOIN cln_appointment_types t ON a.type_id = t.id
-                LEFT JOIN sys_users u ON a.doctor_id = u.id
-                WHERE a.clinic_id = ? AND DATE(a.appointment_date) BETWEEN ? AND ?
-                ORDER BY a.appointment_date ASC";
+        $sql = "SELECT i.*, s.name as service_name, u.name as performer_name
+                FROM cln_appointment_items i
+                LEFT JOIN cln_services s ON i.service_id = s.id
+                LEFT JOIN sys_users u ON i.performer_id = u.id
+                WHERE i.clinic_id = ? AND i.appointment_id = ?
+                ORDER BY i.id ASC";
 
-        $results = $this->db->fetchAll($sql, [$clinicId, $startDate, $endDate]);
-
-        return array_map([$this, 'decryptAppointmentPatientName'], $results);
+        return $this->db->fetchAll($sql, [$clinicId, $appointmentId]);
     }
 
-    /**
-     * Hastanın randevularını listeler
-     */
-    public function listPatientAppointments(int $clinicId, int $patientId): array
+    public function addItem(int $clinicId, int $appointmentId, array $data): int
     {
-        $sql = "SELECT 
-                    a.*, 
-                    t.name as type_name, 
-                    t.color_code,
-                    u.name as doctor_name
-                FROM cln_appointments a
-                JOIN cln_appointment_types t ON a.type_id = t.id
-                LEFT JOIN sys_users u ON a.doctor_id = u.id
-                WHERE a.clinic_id = ? AND a.patient_id = ?
-                ORDER BY a.appointment_date DESC";
+        $sql = "INSERT INTO cln_appointment_items (
+                    clinic_id, appointment_id, service_id, item_name, 
+                    quantity, unit_price, total_price, performer_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        return $this->db->fetchAll($sql, [$clinicId, $patientId]);
+        $this->db->query($sql, [
+            $clinicId,
+            $appointmentId,
+            $data['service_id'] ?? null,
+            $data['item_name'],
+            $data['quantity'] ?? 1,
+            $data['unit_price'],
+            $data['total_price'],
+            $data['performer_id'] ?? null
+        ]);
+
+        return (int) $this->db->getConnection()->lastInsertId();
     }
 
-    /**
-     * Bugünkü randevu sayısını getirir (Dashboard için)
-     */
-    public function countTodayAppointments(int $clinicId): int
+    public function removeItem(int $clinicId, int $appointmentId, int $itemId): bool
     {
-        $sql = "SELECT COUNT(*) as total FROM cln_appointments 
-                WHERE clinic_id = ? AND DATE(appointment_date) = CURDATE()";
-        $result = $this->db->fetch($sql, [$clinicId]);
-
-        return (int) ($result['total'] ?? 0);
+        $sql = "DELETE FROM cln_appointment_items WHERE clinic_id = ? AND appointment_id = ? AND id = ?";
+        $this->db->query($sql, [$clinicId, $appointmentId, $itemId]);
+        return true;
     }
 
-    /**
-     * Bekleyen randevu sayısını getirir
-     */
-    public function countPendingAppointments(int $clinicId): int
-    {
-        $sql = "SELECT COUNT(*) as total FROM cln_appointments 
-                WHERE clinic_id = ? AND status IN ('pending', 'confirmed', 'waiting')";
-        $result = $this->db->fetch($sql, [$clinicId]);
-
-        return (int) ($result['total'] ?? 0);
-    }
-
-    /**
-     * Doktorun belirli bir tarihteki randevularını listeler
-     */
-    public function listDoctorAppointments(int $clinicId, int $doctorId, string $date): array
-    {
-        $sql = "SELECT 
-                    a.*, 
-                    p.name as patient_name_encrypted, 
-                    t.name as type_name, 
-                    t.color_code
-                FROM cln_appointments a
-                JOIN ptn_cards p ON a.patient_id = p.id
-                JOIN cln_appointment_types t ON a.type_id = t.id
-                WHERE a.clinic_id = ? AND a.doctor_id = ? AND DATE(a.appointment_date) = ?
-                ORDER BY a.appointment_date ASC";
-
-        $results = $this->db->fetchAll($sql, [$clinicId, $doctorId, $date]);
-
-        return array_map([$this, 'decryptAppointmentPatientName'], $results);
-    }
-
-    /**
-     * Randevu çakışması kontrolü
-     */
-    public function checkConflict(int $clinicId, string $appointmentDate, ?int $doctorId = null, ?int $excludeId = null): bool
-    {
-        // Eğer doktor belirtilmemişse çakışma kontrolü yapmıyoruz
-        if ($doctorId === null) {
-            return false;
-        }
-
-        $sql = "SELECT COUNT(*) as total FROM cln_appointments 
-                WHERE clinic_id = ? 
-                AND doctor_id = ? 
-                AND appointment_date = ?
-                AND status NOT IN ('cancelled', 'no_show')";
-
-        $params = [$clinicId, $doctorId, $appointmentDate];
-
-        if ($excludeId !== null) {
-            $sql .= " AND id != ?";
-            $params[] = $excludeId;
-        }
-
-        $result = $this->db->fetch($sql, $params);
-
-        return (int) ($result['total'] ?? 0) > 0;
-    }
-
-    /**
-     * Randevu kaydındaki şifreli hasta adını çözer
-     */
     private function decryptAppointmentPatientName(array $appointment): array
     {
         if (!empty($appointment['patient_name_encrypted'])) {
