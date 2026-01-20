@@ -12,6 +12,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\LoggerInterface;
 use Slim\Psr7\Response;
 
 /**
@@ -28,10 +29,16 @@ class TenantMiddleware implements MiddlewareInterface
     private string $jwtSecret;
 
     /**
+     * Logger
+     */
+    private LoggerInterface $logger;
+
+    /**
      * Constructor
      */
-    public function __construct()
+    public function __construct(LoggerInterface $logger)
     {
+        $this->logger = $logger;
         $this->jwtSecret = $_ENV['JWT_SECRET'] ?? '';
 
         if (empty($this->jwtSecret)) {
@@ -79,9 +86,6 @@ class TenantMiddleware implements MiddlewareInterface
             // Ek olarak, tüm token verilerini de ekleyelim (user_id vs. için kullanışlı olabilir)
             $request = $request->withAttribute('jwt_payload', $decoded);
 
-            // 6. İsteği bir sonraki katmana ilet
-            return $handler->handle($request);
-
         } catch (ExpiredException $e) {
             return $this->unauthorizedResponse('Token süresi dolmuş');
         } catch (SignatureInvalidException $e) {
@@ -89,6 +93,9 @@ class TenantMiddleware implements MiddlewareInterface
         } catch (\Exception $e) {
             return $this->unauthorizedResponse('Token doğrulama hatası: ' . $e->getMessage());
         }
+
+        // 6. İsteği bir sonraki katmana ilet (Try-catch dışında, böylece uygulama hataları bastırılmaz)
+        return $handler->handle($request);
     }
 
     /**
@@ -99,6 +106,8 @@ class TenantMiddleware implements MiddlewareInterface
      */
     private function unauthorizedResponse(string $message): ResponseInterface
     {
+        $this->logger->warning("[TenantMiddleware] Unauthorized: " . $message);
+
         $response = new Response();
         $response = $response->withStatus(401);
         $response = $response->withHeader('Content-Type', 'application/json');
@@ -122,6 +131,8 @@ class TenantMiddleware implements MiddlewareInterface
      */
     private function forbiddenResponse(string $message): ResponseInterface
     {
+        $this->logger->warning("[TenantMiddleware] Forbidden: " . $message);
+
         $response = new Response();
         $response = $response->withStatus(403);
         $response = $response->withHeader('Content-Type', 'application/json');

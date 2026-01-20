@@ -129,6 +129,14 @@ class AuthController extends BaseController
         $this->logger->info("[AuthController] Login successful", ['username' => $username, 'clinic_id' => $user['clinic_id']]);
 
         // 6. Başarılı yanıt
-        return $this->success($response, ['token' => $token], 'Giriş başarılı');
+        return $this->success($response, [
+            'token' => $token,
+            'user' => [
+                'id' => $user['id'],
+                'username' => $user['username'],
+                'name' => $user['name'] ?? $user['username'],
+                'role' => $user['role']
+            ]
+        ], 'Giriş başarılı');
     }
 }

@@ -29,10 +29,13 @@ let newUserModal;
 document.addEventListener('DOMContentLoaded', () => {
     newUserModal = new bootstrap.Modal(document.getElementById('newUserModal'));
 
-    // JWT'den kullanıcı bilgilerini göster (Opsiyonel: decode edilebilir ama config.js'de decode edilmiyor)
-    // Şimdilik sadece "Klinik Yöneticisi" yazalım
-    document.getElementById('userName').textContent = 'Klinik Yöneticisi';
-    document.getElementById('userRole').textContent = 'Admin';
+    // Kullanıcı bilgilerini göster
+    const fullName = localStorage.getItem('user_full_name');
+    const role = localStorage.getItem('user_role');
+    const roleText = role === 'admin' ? 'Yönetici' : (role === 'doctor' ? 'Doktor' : 'Sekreter');
+
+    if (document.getElementById('userName')) document.getElementById('userName').textContent = fullName || 'Klinik Personeli';
+    if (document.getElementById('userRole')) document.getElementById('userRole').textContent = roleText;
 
     loadUsers();
     setupEventListeners();
@@ -98,7 +101,8 @@ function renderUserRow(user) {
     const row = document.createElement('tr');
     row.innerHTML = `
         <td><strong>#${user.id}</strong></td>
-        <td><span class="clinic-name">${escapeHtml(user.username)}</span></td>
+        <td><span class="user-full-name">${escapeHtml(user.name || '-')}</span></td>
+        <td><span class="clinic-name text-secondary">${escapeHtml(user.username)}</span></td>
         <td>
             <span class="badge ${roleInfo.class} px-3 py-2 rounded-3">
                 ${roleInfo.text}
@@ -123,12 +127,13 @@ function renderUserRow(user) {
 // Personel Kaydet
 async function handleSaveUser() {
     const data = {
+        name: document.getElementById('newName').value.trim(),
         username: document.getElementById('newUsername').value.trim(),
         password: document.getElementById('newPassword').value,
         role: document.getElementById('newRole').value
     };
 
-    if (!data.username || !data.password || !data.role) {
+    if (!data.name || !data.username || !data.password || !data.role) {
         Utils.showError('Lütfen tüm alanları doldurun.');
         return;
     }

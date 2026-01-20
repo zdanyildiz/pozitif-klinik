@@ -107,8 +107,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Token'ı kaydet
                 localStorage.setItem('platform_token', token);
 
-                // Kullanıcı Tipi (Opsiyonel: Dashboard'da ayrım için)
+                // Kullanıcı Tipi
                 localStorage.setItem('user_type', isPlatformMode ? 'platform_admin' : 'clinic_user');
+
+                // Kullanıcı Detayları (Klinik tarafında)
+                if (!isPlatformMode && result.data?.user) {
+                    localStorage.setItem('user_role', result.data.user.role);
+                    localStorage.setItem('user_full_name', result.data.user.name || result.data.user.username);
+                }
 
                 // Başarı animasyonu
                 await Swal.fire({

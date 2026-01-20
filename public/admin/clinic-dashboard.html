@@ -41,7 +41,7 @@
                     <i class="bi bi-person-heart"></i>
                     Hastalar
                 </a>
-                <a href="#" class="nav-link-custom">
+                <a href="appointments.html" class="nav-link-custom">
                     <i class="bi bi-calendar-check"></i>
                     Randevular
                 </a>
@@ -131,6 +131,7 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Ad Soyad</th>
                                 <th>Kullanıcı Adı</th>
                                 <th>Rol</th>
                                 <th>Durum</th>
@@ -168,6 +169,11 @@
                 </div>
                 <div class="modal-body">
                     <form id="newUserForm">
+                        <div class="mb-3">
+                            <label class="form-label">Ad Soyad</label>
+                            <input type="text" class="form-control" name="name" id="newName"
+                                placeholder="örn: Dr. Ahmet Yılmaz" required>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label">Kullanıcı Adı</label>
                             <input type="text" class="form-control" name="username" id="newUsername"

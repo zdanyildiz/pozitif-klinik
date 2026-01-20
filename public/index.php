@@ -35,6 +35,12 @@ $container = $containerBuilder->build();
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
+// Set Base Path if app is not in the root
+// Örn: http://localhost/pozitif-klinik/public/ -> /pozitif-klinik/public
+$scriptName = $_SERVER['SCRIPT_NAME']; // /pozitif-klinik/public/index.php
+$basePath = str_replace('/index.php', '', $scriptName);
+$app->setBasePath($basePath);
+
 // Add Error Middleware
 $displayErrorDetails = filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN);
 $logError = true;

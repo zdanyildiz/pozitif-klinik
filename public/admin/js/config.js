@@ -2,10 +2,20 @@
  * Pozitif Klinik - Admin Panel API Konfigürasyonu
  */
 
-// API Base URL - Sunucu ayarına göre değiştirin
-// Eğer localhost:8080 kullanıyorsanız veya pozitif-klinik.localhost gibi vhost kullanıyorsanız
-// sadece window.location.origin yeterlidir
-const API_URL = window.location.origin;
+// API Base URL'i mevcut sayfa yoluna göre dinamik olarak hesapla
+// Örn: /pozitif-klinik/public/admin/index.html -> /pozitif-klinik/public
+const getBasePath = () => {
+    const path = window.location.pathname;
+    if (path.includes('/admin/')) {
+        return path.split('/admin/')[0];
+    }
+    if (path.endsWith('/admin')) {
+        return path.substring(0, path.length - 6);
+    }
+    return '';
+};
+
+const API_URL = window.location.origin + getBasePath();
 
 // Axios instance oluştur
 const api = axios.create({

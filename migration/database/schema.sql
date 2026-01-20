@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS sys_users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     clinic_id BIGINT UNSIGNED NOT NULL,
     username VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NULL,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin', 'doctor', 'secretary') NOT NULL, -- admin burada "Klinik Yöneticisi" demek
     is_active TINYINT(1) DEFAULT 1,
@@ -131,4 +132,35 @@ CREATE TABLE IF NOT EXISTS cln_examinations (
     FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id),
     FOREIGN KEY (patient_id) REFERENCES ptn_cards(id),
     FOREIGN KEY (doctor_user_id) REFERENCES sys_users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. Randevu Türleri
+CREATE TABLE IF NOT EXISTS cln_appointment_types (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    clinic_id BIGINT UNSIGNED NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    color_code VARCHAR(10) DEFAULT '#3788d8',
+    duration_minutes INT DEFAULT 30,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_app_type_clinic FOREIGN KEY (clinic_id) REFERENCES sys_tenants (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. Randevular
+CREATE TABLE IF NOT EXISTS cln_appointments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    clinic_id BIGINT UNSIGNED NOT NULL,
+    patient_id BIGINT UNSIGNED NOT NULL,
+    doctor_id BIGINT UNSIGNED NULL,
+    type_id BIGINT UNSIGNED NOT NULL,
+    appointment_date DATETIME NOT NULL,
+    status ENUM('pending', 'confirmed', 'waiting', 'in_test', 'completed', 'cancelled', 'no_show') DEFAULT 'pending',
+    notes TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_app_clinic FOREIGN KEY (clinic_id) REFERENCES sys_tenants (id) ON DELETE CASCADE,
+    CONSTRAINT fk_app_patient FOREIGN KEY (patient_id) REFERENCES ptn_cards (id) ON DELETE CASCADE,
+    CONSTRAINT fk_app_doctor FOREIGN KEY (doctor_id) REFERENCES sys_users (id) ON DELETE SET NULL,
+    CONSTRAINT fk_app_type FOREIGN KEY (type_id) REFERENCES cln_appointment_types (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

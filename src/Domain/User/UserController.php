@@ -66,6 +66,7 @@ class UserController extends BaseController
 
         // Validasyon
         $validator = v::key('username', v::alnum()->noWhitespace()->length(3))
+            ->key('name', v::stringType()->length(2))
             ->key('password', v::stringType()->length(6))
             ->key('role', v::in(['doctor', 'secretary']));
 
@@ -80,7 +81,8 @@ class UserController extends BaseController
             $userId = $this->userRepository->create($clinicId, $data);
 
             return $this->createdResponse($response, [
-                'id' => $userId
+                'id' => $userId,
+                'name' => $data['name']
             ], 'Kullanıcı başarıyla oluşturuldu.');
 
         } catch (\Respect\Validation\Exceptions\NestedValidationException $e) {
