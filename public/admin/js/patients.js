@@ -248,7 +248,7 @@ function renderVitalsTable(history) {
         const bmi = (v.weight && v.height) ? (v.weight / ((v.height / 100) * (v.height / 100))).toFixed(1) : '-';
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${Utils.formatDate(v.created_at)}</td>
+            <td>${Utils.formatDate(v.measured_at)}</td>
             <td>${v.height || '-'}</td>
             <td>${v.weight || '-'}</td>
             <td>${v.systolic_bp || '-'}/${v.diastolic_bp || '-'}</td>
@@ -266,6 +266,7 @@ async function handleAddVital(patientId) {
         title: 'Yaşam Bulgusu Ekle',
         html:
             '<div class="row g-3 text-start">' +
+            '  <div class="col-12"><label class="small fw-bold text-primary">Ölçüm Zamanı</label><input id="swal-date" type="datetime-local" class="form-control" value="' + new Date().toLocaleString('sv-SE').slice(0, 16).replace(' ', 'T') + '"></div>' +
             '  <div class="col-6"><label class="small fw-bold">Boy (cm)</label><input id="swal-height" type="number" class="form-control" placeholder="175"></div>' +
             '  <div class="col-6"><label class="small fw-bold">Kilo (kg)</label><input id="swal-weight" type="number" step="0.1" class="form-control" placeholder="70.5"></div>' +
             '  <div class="col-6"><label class="small fw-bold">Tansiyon (Büyük)</label><input id="swal-sys" type="number" class="form-control" placeholder="120"></div>' +
@@ -282,6 +283,7 @@ async function handleAddVital(patientId) {
         },
         preConfirm: () => {
             return {
+                measured_at: document.getElementById('swal-date').value,
                 height: document.getElementById('swal-height').value,
                 weight: document.getElementById('swal-weight').value,
                 systolic_bp: document.getElementById('swal-sys').value,

@@ -162,7 +162,8 @@ class PatientController extends BaseController
             ->key('weight', v::optional(v::numericVal()->positive()))
             ->key('systolic_bp', v::optional(v::intVal()->positive()))
             ->key('diastolic_bp', v::optional(v::intVal()->positive()))
-            ->key('heart_rate', v::optional(v::intVal()->positive()));
+            ->key('heart_rate', v::optional(v::intVal()->positive()))
+            ->key('measured_at', v::optional(v::dateTime()));
 
         try {
             $validator->assert($data);

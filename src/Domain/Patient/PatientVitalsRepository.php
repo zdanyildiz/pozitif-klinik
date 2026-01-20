@@ -26,8 +26,8 @@ class PatientVitalsRepository
     {
         $sql = "INSERT INTO ptn_vitals (
                     clinic_id, patient_id, height, weight, 
-                    systolic_bp, diastolic_bp, heart_rate, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    systolic_bp, diastolic_bp, heart_rate, measured_at, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $this->db->query($sql, [
             $clinicId,
@@ -37,6 +37,7 @@ class PatientVitalsRepository
             $data['systolic_bp'] ?? null,
             $data['diastolic_bp'] ?? null,
             $data['heart_rate'] ?? null,
+            $data['measured_at'] ?? null,
             $data['created_by'] ?? null
         ]);
 

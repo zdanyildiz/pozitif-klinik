@@ -146,7 +146,7 @@ abstract class BaseController
     protected function getUserId(\Psr\Http\Message\ServerRequestInterface $request): ?int
     {
         $payload = $this->getJwtPayload($request);
-        return $payload?->user_id ?? null;
+        return $payload?->sub ?? null;
     }
 
     /**
