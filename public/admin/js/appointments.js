@@ -12,6 +12,8 @@ let detailModal;
 let appointmentModal;
 let typeModal;
 let currentAppointmentId = null;
+let patientTomSelect = null;
+let doctorTomSelect = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
@@ -106,15 +108,49 @@ async function loadTypes() {
 }
 
 async function loadPatients() {
-    const res = await api.get('/api/patients');
-    patients = res.data.patients || [];
+    const res = await api.get('/api/patients/select-list');
+    patients = res.data || [];
     renderPatientOptions();
+
+    // Tom Select Başlat
+    if (!patientTomSelect) {
+        patientTomSelect = new TomSelect('#patientSelect', {
+            create: false,
+            sortField: { field: 'text', order: 'asc' },
+            placeholder: 'Hasta Ara...',
+            allowEmptyOption: true
+        });
+    } else {
+        patientTomSelect.clearOptions();
+        const options = patients.map(p => ({
+            value: p.id,
+            text: `${p.name} (${p.tc_no || '-'})`
+        }));
+        patientTomSelect.addOptions(options);
+    }
 }
 
 async function loadDoctors() {
     const res = await api.get('/api/users');
     doctors = (res.data.users || []).filter(u => u.role === 'doctor' || u.role === 'admin');
     renderDoctorOptions();
+
+    // Tom Select Başlat
+    if (!doctorTomSelect) {
+        doctorTomSelect = new TomSelect('#doctorSelect', {
+            create: false,
+            sortField: { field: 'text', order: 'asc' },
+            placeholder: 'Doktor Seç...',
+            allowEmptyOption: true
+        });
+    } else {
+        doctorTomSelect.clearOptions();
+        const options = doctors.map(d => ({
+            value: d.id,
+            text: d.name || d.username
+        }));
+        doctorTomSelect.addOptions(options);
+    }
 }
 
 async function loadServices() {
@@ -279,10 +315,37 @@ function renderBillingItems(items, total) {
 async function handleAddServiceToBilling() {
     const { value: serviceId } = await Swal.fire({
         title: 'Hizmet Seçin',
-        input: 'select',
-        inputOptions: services.reduce((acc, s) => ({ ...acc, [s.id]: `${s.name} (${s.standard_price} ₺)` }), {}),
-        inputPlaceholder: 'Hizmet seçiniz',
-        showCancelButton: true
+        html: '<select id="swalServiceSelect" class="form-select"></select>',
+        showCancelButton: true,
+        confirmButtonText: 'Ekle',
+        cancelButtonText: 'İptal',
+        didOpen: () => {
+            const select = document.getElementById('swalServiceSelect');
+            const options = services.map(s => ({
+                id: s.id,
+                name: s.name,
+                price: s.price
+            }));
+
+            new TomSelect('#swalServiceSelect', {
+                options: options,
+                valueField: 'id',
+                labelField: 'name',
+                searchField: ['name'],
+                placeholder: 'Hizmet ara...',
+                render: {
+                    option: function (data, escape) {
+                        return `<div><span class="fw-bold">${escape(data.name)}</span> <small class="text-muted">(${escape(parseFloat(data.price).toFixed(2))} ₺)</small></div>`;
+                    },
+                    item: function (data, escape) {
+                        return `<div>${escape(data.name)}</div>`;
+                    }
+                }
+            });
+        },
+        preConfirm: () => {
+            return document.getElementById('swalServiceSelect').value;
+        }
     });
 
     if (serviceId) {
@@ -291,7 +354,7 @@ async function handleAddServiceToBilling() {
             await api.post(`/api/appointments/${currentAppointmentId}/items`, {
                 service_id: s.id,
                 item_name: s.name,
-                unit_price: s.standard_price,
+                unit_price: s.price,
                 quantity: 1
             });
             refreshDetail();
@@ -367,6 +430,8 @@ function escapeHtml(text) {
 function resetAppointmentForm() {
     const f = document.getElementById('appointmentForm');
     f.reset();
+    if (patientTomSelect) patientTomSelect.clear();
+    if (doctorTomSelect) doctorTomSelect.clear();
     document.getElementById('appDate').value = document.getElementById('filterDate').value;
     document.getElementById('appTime').value = new Date().toTimeString().substring(0, 5);
 }

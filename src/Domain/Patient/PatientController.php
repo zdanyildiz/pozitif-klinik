@@ -59,6 +59,36 @@ class PatientController extends BaseController
     }
 
     /**
+     * Sadece ID ve İsim listesini döner (Dropdownlar için)
+     */
+    #[Route('GET', '/select-list')]
+    public function getSelectList(Request $request, Response $response): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $patients = $this->patientRepository->getSelectList($clinicId);
+        return $this->success($response, $patients);
+    }
+
+    /**
+     * Hastaları arar (TC, Telefon veya İsim)
+     */
+    #[Route('GET', '/search')]
+    public function searchPatients(Request $request, Response $response): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $queryParams = $request->getQueryParams();
+        $query = $queryParams['q'] ?? '';
+
+        if (empty($query)) {
+            return $this->success($response, []);
+        }
+
+        $patients = $this->patientRepository->search($clinicId, $query);
+
+        return $this->success($response, $patients);
+    }
+
+    /**
      * Hasta detayını ve son yaşam bulgularını getirir
      */
     #[Route('GET', '/{id:[0-9]+}')]

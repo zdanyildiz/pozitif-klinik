@@ -200,6 +200,15 @@ PLATFORM_ADMIN_PASS=admin
 
 ---
 
+### 18. Ölçeklenebilir UI ve Arama Deneyimi (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **Tom Select Entegrasyonu:** `appointments.html` sayfasındaki hasta ve doktor seçimi, yüzlerce kayıt arasında anlık arama yapabilen Tom Select bileşenine taşındı.
+- **Select-List Optimizasyonu:** Hasta listesinin tamamını yüklemek yerine sadece ID ve isim içeren hafif bir `/api/patients/select-list` endpoint'i üzerinden veri çekilmesi sağlandı.
+- **Adisyon Kolaylığı:** Hizmet ekleme (Swal) penceresine Tom Select entegre edilerek hizmet kataloğu içinde arama yapma yeteneği eklendi.
+- **Backend Search:** `PatientRepository` ve `PatientController` seviyesinde blind-index bazlı tam eşleşme arama (`/api/patients/search`) altyapısı kuruldu.
+
+---
+
 ## Bekleyen Görevler
 
 - **SMS/Bildirim Modülü:** Randevu hatırlatma SMS'leri.

@@ -30,8 +30,6 @@ class PatientRepository
 
     /**
      * Tüm aktif hastaları getirir (status = 1)
-     * Hassas veriler decrypt edilerek döndürülür.
-     * Lokasyon bilgileri join ile eklenir.
      */
     public function findAll(int $clinicId): array
     {
@@ -43,7 +41,16 @@ class PatientRepository
                 ORDER BY p.id DESC";
 
         $patients = $this->db->fetchAll($sql, [$clinicId]);
+        return array_map([$this, 'decryptPatientData'], $patients);
+    }
 
+    /**
+     * Sadece ID ve İsim döndürür (Select-box yüklemeleri için)
+     */
+    public function getSelectList(int $clinicId): array
+    {
+        $sql = "SELECT id, name, tc_no FROM ptn_cards WHERE clinic_id = ? AND status = 1 ORDER BY id DESC";
+        $patients = $this->db->fetchAll($sql, [$clinicId]);
         return array_map([$this, 'decryptPatientData'], $patients);
     }
 
@@ -161,5 +168,25 @@ class PatientRepository
 
         unset($patient['tc_no_hash'], $patient['name_hash'], $patient['phone_hash']);
         return $patient;
+    }
+
+    /**
+     * Hastaları TC, Telefon veya İsim Hash'i ile arar (Tam Eşleşme)
+     */
+    public function search(int $clinicId, string $query): array
+    {
+        $hash = $this->crypto->blindIndex($query);
+
+        $sql = "SELECT p.*, pr.name as province_name, d.name as district_name 
+                FROM ptn_cards p
+                LEFT JOIN sys_provinces pr ON p.province_id = pr.id
+                LEFT JOIN sys_districts d ON p.district_id = d.id
+                WHERE p.clinic_id = ? AND p.status = 1 
+                AND (p.tc_no_hash = ? OR p.phone_hash = ? OR p.name_hash = ?)
+                LIMIT 20";
+
+        $patients = $this->db->fetchAll($sql, [$clinicId, $hash, $hash, $hash]);
+
+        return array_map([$this, 'decryptPatientData'], $patients);
     }
 }
