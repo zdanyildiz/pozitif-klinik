@@ -262,6 +262,7 @@ function renderVitalsTable(history) {
 // Yaşam Bulgusu Ekle (SweetAlert2 ile)
 async function handleAddVital(patientId) {
     const { value: formValues } = await Swal.fire({
+        target: document.getElementById('detailModal'),
         title: 'Yaşam Bulgusu Ekle',
         html:
             '<div class="row g-3 text-start">' +
@@ -275,6 +276,10 @@ async function handleAddVital(patientId) {
         showCancelButton: true,
         confirmButtonText: 'Kaydet',
         cancelButtonText: 'İptal',
+        didOpen: () => {
+            const firstInput = document.getElementById('swal-height');
+            if (firstInput) firstInput.focus();
+        },
         preConfirm: () => {
             return {
                 height: document.getElementById('swal-height').value,
