@@ -80,6 +80,26 @@ php -S localhost:8080 -t public
     - Zorunlu alan eksikse -> `400 Bad Request` fırlatın.
 3.  **Development Modu:** Şu an geliştirme aşamasındayız. Hataları ekrana basmak (Stack Trace), sorunu halı altına süpürmekten çok daha değerlidir. `try-catch` bloklarını hatayı yutmak için değil, loglamak ve anlamlı bir HTTP hatası döndürmek için kullanın.
 
+### 🏗️ YAZILIM MİMARİSİ VE KOD KALİTESİ (HAYATİ KURALLAR)
+
+**Aşağıdaki kurallar "Pozitif Tech" kod denetim süreci tarafından zorunlu kılınmıştır. İhlali durumunda kod reddedilir.**
+
+1.  **Tip Güvenliği (Strict Types):**
+    *   Tüm PHP dosyaları (`src/` altındaki) İSTİSNASIZ `declare(strict_types=1);` satırı ile başlamalıdır.
+    *   Fonksiyon parametreleri ve dönüş değerleri (return types) kesinlikle belirtilmelidir (örn: `function test(int $id): ?array`).
+
+2.  **Controller Temizliği (Clean Controllers):**
+    *   **NO RAW SQL:** Controller sınıfları içinde `SELECT`, `INSERT`, `UPDATE`, `PDO` işlemi yapmak **KESİNLİKLE YASAKTIR**.
+    *   **Repository Zorunluluğu:** Veritabanı ile ilgili her işlem (en basit sorgu bile) ilgili `Repository` sınıfına taşınmalı ve Controller sadece bu repository metodunu çağırmalıdır.
+    *   **Logic Separation:** İş mantığı (Transaction, validasyon, hesaplama) mümkün oldukça Controller'dan arındırılmalı, Service veya Repository katmanına itilmelidir.
+
+3.  **Routing (Auto-Discovery):**
+    *   `config/routes.php` dosyasına manuel rota (`$app->get(...)`) eklemek **YASAKTIR**.
+    *   Tüm rotalar, Controller sınıflarının üzerine eklenen PHP 8 Attribute'ları (`#[Route]`, `#[Group]`, `#[Middleware]`) ile tanımlanmalıdır.
+
+4.  **Transaction Yönetimi:**
+    *   Veritabanı transaction işlemleri (`beginTransaction`, `commit`) Controller içinde DEĞİL, Repository veya Service katmanında yapılmalıdır. Controller, veritabanı sürücüsüne (`Connection`) dokunmamalıdır.
+
 ### 🛠 GELİŞTİRME DÜZENİ (KESİN TALİMATLAR)
 
 1.  **Geçici ve Test Dosyaları:** Geliştirme sürecinde oluşturduğunuz tüm geçici scriptler, test dosyaları ve deneme amaçlı kodlar **KESİNLİKLE** kök dizinde değil, `/tests` dizini altında oluşturulmalıdır.
@@ -180,7 +200,7 @@ JSON
 🤝 Katkıda Bulunma
 Yeni bir modül ekleyecekseniz /src/Domain altına yeni klasör açın.
 
-config/routes.php dosyasına endpoint'lerinizi ekleyin.
+Controller sınıfınızı oluşturun ve #[Route] attribute'larını kullanarak rotalarınızı tanımlayın.
 
 Pull Request açmadan önce composer check-style (eğer tanımlıysa) çalıştırın.
 
