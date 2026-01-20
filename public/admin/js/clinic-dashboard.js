@@ -188,10 +188,10 @@ window.handleEditUser = function (userId) {
     }
 
     document.getElementById('editUserId').value = user.id;
-    document.getElementById('editName').value = user.name;
-    document.getElementById('editUsername').value = user.username;
-    document.getElementById('editRole').value = user.role;
-    document.getElementById('editStatus').value = user.is_active === 1 ? 'active' : 'inactive';
+    document.getElementById('editName').value = user.name || ''; // null kontrolü
+    document.getElementById('editUsername').value = user.username || '';
+    document.getElementById('editRole').value = user.role || 'secretary';
+    document.getElementById('editStatus').value = (user.is_active === 1 || user.is_active === '1' || user.is_active === true) ? 'active' : 'inactive';
     document.getElementById('editPassword').value = ''; // Clear password field for security
 
     editUserModal.show();

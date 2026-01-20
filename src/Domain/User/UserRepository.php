@@ -109,4 +109,62 @@ class UserRepository
         $result = $this->db->fetch($sql, [$userId]);
         return $result['role'] ?? null;
     }
+
+    /**
+     * ID'ye göre kullanıcı getirir
+     */
+    public function findById(int $clinicId, int $userId): ?array
+    {
+        $sql = "SELECT id, clinic_id, username, name, role, is_active, created_at 
+                FROM sys_users 
+                WHERE clinic_id = ? AND id = ?";
+        $result = $this->db->fetch($sql, [$clinicId, $userId]);
+        return $result ?: null;
+    }
+
+    /**
+     * Kullanıcı bilgilerini günceller
+     */
+    public function update(int $clinicId, int $userId, array $data): bool
+    {
+        // Şifre güncellemesi varsa
+        if (!empty($data['password'])) {
+            $sql = "UPDATE sys_users SET 
+                        username = ?,
+                        name = ?,
+                        role = ?,
+                        is_active = ?,
+                        password_hash = ?
+                    WHERE clinic_id = ? AND id = ?";
+
+            $this->db->query($sql, [
+                $data['username'],
+                $data['name'] ?? null,
+                $data['role'],
+                $data['is_active'] ?? 1,
+                password_hash($data['password'], PASSWORD_BCRYPT),
+                $clinicId,
+                $userId
+            ]);
+        } else {
+            // Şifre güncellemesi yok
+            $sql = "UPDATE sys_users SET 
+                        username = ?,
+                        name = ?,
+                        role = ?,
+                        is_active = ?
+                    WHERE clinic_id = ? AND id = ?";
+
+            $this->db->query($sql, [
+                $data['username'],
+                $data['name'] ?? null,
+                $data['role'],
+                $data['is_active'] ?? 1,
+                $clinicId,
+                $userId
+            ]);
+        }
+
+        return true;
+    }
 }

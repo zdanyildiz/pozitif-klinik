@@ -121,4 +121,57 @@ class UserController extends BaseController
 
         return $this->success($response, null, 'Kullanıcı başarıyla silindi.');
     }
+
+    /**
+     * Personel bilgilerini günceller
+     */
+    #[Route('PUT', '/{id:[0-9]+}')]
+    public function updateUser(Request $request, Response $response, array $args): Response
+    {
+        // Yetki Kontrolü: Sadece admin güncelleyebilir
+        $jwtPayload = $this->getJwtPayload($request);
+        if (($jwtPayload->role ?? '') !== 'admin') {
+            return $this->forbiddenResponse($response, 'Bu işlem için Klinik Yöneticisi (admin) yetkisi gereklidir.');
+        }
+
+        $clinicId = (int) $this->getClinicId($request);
+        $userId = (int) $args['id'];
+        $data = $request->getParsedBody();
+
+        // Mevcut kullanıcıyı kontrol et
+        $existingUser = $this->userRepository->findById($clinicId, $userId);
+        if (!$existingUser) {
+            return $this->notFoundResponse($response, 'Kullanıcı bulunamadı.');
+        }
+
+        // Validasyon - şifre opsiyonel
+        $validator = v::key('username', v::alnum()->noWhitespace()->length(3))
+            ->key('name', v::stringType()->length(2))
+            ->key('role', v::in(['admin', 'doctor', 'secretary']))
+            ->key('is_active', v::optional(v::intVal()));
+
+        // Şifre varsa ayrı validation
+        if (!empty($data['password'])) {
+            $validator = $validator->key('password', v::stringType()->length(6));
+        }
+
+        try {
+            $validator->assert($data);
+
+            // Kullanıcı adı değiştiyse mükerrer kontrolü
+            if ($data['username'] !== $existingUser['username']) {
+                $duplicateUser = $this->userRepository->findByUsername($clinicId, $data['username']);
+                if ($duplicateUser) {
+                    return $this->error($response, 'Bu kullanıcı adı zaten kullanımda.', 409);
+                }
+            }
+
+            $this->userRepository->update($clinicId, $userId, $data);
+
+            return $this->success($response, null, 'Kullanıcı bilgileri güncellendi.');
+
+        } catch (\Respect\Validation\Exceptions\NestedValidationException $e) {
+            return $this->validationErrorResponse($response, $e->getMessages());
+        }
+    }
 }
