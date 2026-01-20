@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Pozitif Klinik Randevu Yönetimi">
+    <meta name="description"
+        content="Pozitif Klinik Randevu Yönetimi - Randevu takibi, hasta yönetimi ve durum güncellemeleri">
     <title>Randevular | Pozitif Klinik</title>
 
     <!-- Bootstrap 5 CSS -->
@@ -18,59 +19,189 @@
     <!-- Custom CSS -->
     <link href="css/dashboard.css" rel="stylesheet">
     <style>
+        /* Randevu Durum Badge'leri */
         .appointment-status-pending {
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             color: #6c757d;
             border: 1px solid #dee2e6;
         }
 
         .appointment-status-confirmed {
-            background-color: #e3f2fd;
-            color: #0d6efd;
-            border: 1px solid #b3e5fc;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            border: 1px solid #90caf9;
         }
 
         .appointment-status-waiting {
-            background-color: #fff3e0;
-            color: #ef6c00;
-            border: 1px solid #ffe0b2;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #e65100;
+            border: 1px solid #ffcc80;
         }
 
         .appointment-status-in_test {
-            background-color: #f3e5f5;
-            color: #8e24aa;
-            border: 1px solid #e1bee7;
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            color: #7b1fa2;
+            border: 1px solid #ce93d8;
         }
 
         .appointment-status-completed {
-            background-color: #e8f5e9;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
             color: #2e7d32;
-            border: 1px solid #c8e6c9;
+            border: 1px solid #a5d6a7;
         }
 
         .appointment-status-cancelled {
-            background-color: #ffebee;
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
             color: #c62828;
-            border: 1px solid #ffcdd2;
+            border: 1px solid #ef9a9a;
         }
 
         .appointment-status-no_show {
-            background-color: #424242;
+            background: linear-gradient(135deg, #424242 0%, #212121 100%);
             color: #ffffff;
-            border: 1px solid #212121;
+            border: 1px solid #424242;
         }
 
+        /* Tür Badge */
         .type-badge {
-            padding: 0.25rem 0.6rem;
+            padding: 0.35rem 0.75rem;
             border-radius: 50rem;
             font-size: 0.75rem;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         }
 
+        .type-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+        /* Durum Select */
         .status-select {
-            padding: 0.2rem 0.5rem;
+            padding: 0.35rem 0.75rem;
             font-size: 0.85rem;
-            border-radius: 0.4rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 130px;
+        }
+
+        .status-select:hover {
+            transform: scale(1.02);
+        }
+
+        .status-select:focus {
+            box-shadow: 0 0 0 3px rgba(55, 136, 216, 0.25);
+        }
+
+        /* Saat Badge */
+        .time-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Aksiyon Butonları */
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            color: white;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-card.secondary {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Type List Item */
+        .type-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            background: #f8f9fa;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .type-list-item:hover {
+            background: #e9ecef;
+        }
+
+        .type-color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -121,7 +252,10 @@
     <main class="main-content">
         <!-- Top Navbar -->
         <header class="top-navbar">
-            <h1 class="navbar-title">Randevu Yönetimi</h1>
+            <h1 class="navbar-title">
+                <i class="bi bi-calendar-check me-2"></i>
+                Randevu Yönetimi
+            </h1>
 
             <div class="navbar-actions">
                 <div class="user-profile me-3 d-none d-md-flex">
@@ -142,12 +276,34 @@
 
         <!-- Content Area -->
         <div class="content-area">
+            <!-- Stats Row -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value" id="todayCount">0</div>
+                        <div class="stat-label">Bugünkü Randevu</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card secondary">
+                        <div class="stat-value" id="pendingCount">0</div>
+                        <div class="stat-label">Bekleyen Randevu</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filter Bar -->
-            <div class="table-card mb-4">
-                <div class="p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <label for="filterDate" class="fw-bold">Tarih:</label>
-                        <input type="date" id="filterDate" class="form-control form-control-sm" style="width: 200px;">
+            <div class="filter-bar">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-calendar3 text-primary fs-5"></i>
+                            <input type="date" id="filterDate" class="form-control form-control-sm"
+                                style="width: 180px;">
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" id="btnToday">
+                            <i class="bi bi-calendar-day"></i> Bugün
+                        </button>
                         <button class="btn btn-sm btn-primary" id="btnRefresh">
                             <i class="bi bi-arrow-clockwise"></i>
                         </button>
@@ -155,10 +311,10 @@
                     <div class="d-flex gap-2">
                         <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal"
                             data-bs-target="#typeModal">
-                            <i class="bi bi-tags"></i> Türleri Yönet
+                            <i class="bi bi-tags me-1"></i> Türleri Yönet
                         </button>
                         <button class="btn btn-save btn-sm" id="btnNewAppointment">
-                            <i class="bi bi-calendar-plus"></i> Yeni Randevu
+                            <i class="bi bi-calendar-plus me-1"></i> Yeni Randevu
                         </button>
                     </div>
                 </div>
@@ -167,15 +323,15 @@
             <!-- Appointments Table -->
             <div class="table-card">
                 <div class="table-responsive">
-                    <table class="table" id="appointmentsTable">
+                    <table class="table table-hover" id="appointmentsTable">
                         <thead>
                             <tr>
-                                <th>Saat</th>
+                                <th style="width: 100px;">Saat</th>
                                 <th>Hasta Adı</th>
                                 <th>Randevu Türü</th>
                                 <th>Doktor</th>
-                                <th>Durum</th>
-                                <th class="text-end">İşlemler</th>
+                                <th style="width: 160px;">Durum</th>
+                                <th class="text-end" style="width: 120px;">İşlemler</th>
                             </tr>
                         </thead>
                         <tbody id="appointmentsTableBody">
@@ -197,56 +353,83 @@
 
     <!-- New Appointment Modal -->
     <div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-calendar-plus me-2"></i>
-                        Yeni Randevu Oluştur
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title d-flex align-items-center">
+                        <div
+                            class="bg-primary bg-opacity-10 rounded-circle p-2 me-3 d-flex align-items-center justify-content-center">
+                            <i class="bi bi-calendar-plus text-primary fs-5"></i>
+                        </div>
+                        <div>
+                            <span id="modalTitle">Yeni Randevu Oluştur</span>
+                            <p class="text-muted small mb-0 mt-1" id="modalSubtitle">Randevu bilgilerini giriniz</p>
+                        </div>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body pt-4">
                     <form id="appointmentForm">
-                        <div class="mb-3">
-                            <label class="form-label">Hasta Seçin</label>
-                            <select class="form-select" name="patient_id" id="patientSelect" required>
-                                <option value="">Hasta seçiniz...</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Randevu Türü</label>
-                            <select class="form-select" name="type_id" id="typeSelect" required>
-                                <option value="">Tür seçiniz...</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Doktor (Opsiyonel)</label>
-                            <select class="form-select" name="doctor_id" id="doctorSelect">
-                                <option value="">Doktor seçiniz...</option>
-                            </select>
-                        </div>
+                        <input type="hidden" name="appointment_id" id="appointmentId">
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Tarih</label>
-                                <input type="date" class="form-control" name="date" id="appDate" required>
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-person text-primary me-1"></i> Hasta Seçin
+                                </label>
+                                <select class="form-select" name="patient_id" id="patientSelect" required>
+                                    <option value="">Hasta seçiniz...</option>
+                                </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Saat</label>
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-tag text-primary me-1"></i> Randevu Türü
+                                </label>
+                                <select class="form-select" name="type_id" id="typeSelect" required>
+                                    <option value="">Tür seçiniz...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-person-badge text-primary me-1"></i> Doktor (Opsiyonel)
+                                </label>
+                                <select class="form-select" name="doctor_id" id="doctorSelect">
+                                    <option value="">Doktor seçiniz...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-calendar3 text-primary me-1"></i> Tarih
+                                </label>
+                                <input type="date" class="form-control" name="date" id="appDate" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-clock text-primary me-1"></i> Saat
+                                </label>
                                 <input type="time" class="form-control" name="time" id="appTime" required>
                             </div>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">Notlar</label>
-                            <textarea class="form-control" name="notes" id="appNotes" rows="2"></textarea>
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-sticky text-primary me-1"></i> Notlar (Opsiyonel)
+                            </label>
+                            <textarea class="form-control" name="notes" id="appNotes" rows="2"
+                                placeholder="Randevu hakkında ek notlar..."></textarea>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i> İptal
+                    </button>
                     <button type="button" class="btn btn-save" id="saveAppointmentBtn">
                         <i class="bi bi-check-lg me-1"></i>
-                        Randevu Oluştur
+                        <span id="saveButtonText">Randevu Oluştur</span>
                     </button>
                 </div>
             </div>
@@ -257,31 +440,42 @@
     <div class="modal fade" id="typeModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Randevu Türleri</h5>
+                <div class="modal-header border-0">
+                    <h5 class="modal-title d-flex align-items-center">
+                        <i class="bi bi-tags text-primary me-2"></i>
+                        Randevu Türleri
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
                 </div>
                 <div class="modal-body">
                     <form id="typeForm" class="mb-4">
-                        <div class="row g-2">
-                            <div class="col-8">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-5">
+                                <label class="form-label small fw-semibold">Tür Adı</label>
                                 <input type="text" class="form-control form-control-sm" name="name" id="typeName"
-                                    placeholder="Tür Adı (Örn: Muayene)" required>
+                                    placeholder="Örn: Muayene" required>
                             </div>
-                            <div class="col-4">
+                            <div class="col-2">
+                                <label class="form-label small fw-semibold">Renk</label>
                                 <input type="color" class="form-control form-control-sm form-control-color"
-                                    name="color_code" id="typeColor" value="#3788d8" style="width: 100%;">
+                                    name="color_code" id="typeColor" value="#3788d8" style="width: 100%; height: 38px;">
                             </div>
-                            <div class="col-8">
+                            <div class="col-3">
+                                <label class="form-label small fw-semibold">Süre (dk)</label>
                                 <input type="number" class="form-control form-control-sm" name="duration"
-                                    id="typeDuration" placeholder="Süre (Dakika)" value="30">
+                                    id="typeDuration" value="30" min="5" step="5">
                             </div>
-                            <div class="col-4">
-                                <button type="submit" class="btn btn-primary btn-sm w-100">Ekle</button>
+                            <div class="col-2">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
                             </div>
                         </div>
                     </form>
-                    <div id="typeList" class="list-group list-group-flush">
+
+                    <hr>
+
+                    <div id="typeList">
                         <!-- Types will be listed here -->
                     </div>
                 </div>
@@ -294,8 +488,8 @@
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Custom JS -->
-    <script src="js/config.js?v=2"></script>
-    <script src="js/appointments.js?v=1"></script>
+    <script src="js/config.js?v=3"></script>
+    <script src="js/appointments.js?v=2"></script>
 </body>
 
 </html>

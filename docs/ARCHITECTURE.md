@@ -176,6 +176,12 @@ Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını payl
    - Sistem **Stateless (Durumsuz)** mimaride olduğu ve oturum bilgisi Cookie yerine `localStorage` (Bearer Token) içinde tutulduğu için, klasik **CSRF (Cross-Site Request Forgery)** saldırılarına karşı mimari olarak korumalıdır. Bu nedenle CSRF Token kullanılmaz.
    - Bunun yerine, güvenliği sağlamak için **Strict CORS (Sıkı Köken Politikası)** ve **XSS (Cross-Site Scripting)** korumalarına odaklanılır. Production ortamında `Access-Control-Allow-Origin` sadece izin verilen domainlere açılır.
 7.  **Sıfır Hardcoded Sır Politikası**: Kod içinde hiçbir şekilde API key, JWT secret veya veritabanı şifresi (fallback olarak bile) bulundurulamaz. Tüm hassas veriler sadece `.env` dosyasından okunmalıdır. Aksi durum denetimlerde kritik hata olarak işaretlenir.
+8.  **Kriptografi ve Veri Şifreleme:**
+    - **Algoritma:** AES-256-GCM (OpenSSL) kullanılır. Bu algoritma hem gizlilik hem de bütünlük sağlar.
+    - **Şifreli Alanlar:** Hasta hassas verileri (TC Kimlik, Telefon, Email, Adres) veritabanında şifrelenmiş olarak saklanır.
+    - **Anahtar Yönetimi:** `APP_KEY` environment değişkeni olarak 64 karakterlik hex string (32 byte) tutulur.
+    - **Blind Index:** Şifreli verilerde arama yapabilmek için HMAC-SHA256 tabanlı blind index hash'leri kullanılır (`tc_no_hash`, `phone_hash`).
+    - **CryptoService:** `src/Core/Security/CryptoService.php` sınıfı `encrypt()`, `decrypt()` ve `blindIndex()` metodları sunar.
 
 
 ## Yazılım Kalite Standartları

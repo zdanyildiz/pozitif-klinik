@@ -141,5 +141,39 @@ const Utils = {
     // Loading kapat
     closeLoading: () => {
         Swal.close();
+    },
+
+    // Toast bildirim göster (küçük ve geçici)
+    showToast: (message, icon = 'success') => {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+        Toast.fire({
+            icon: icon,
+            title: message
+        });
+    },
+
+    // Onay dialogu göster
+    showConfirm: async (title, text, confirmText = 'Evet', cancelText = 'İptal') => {
+        const result = await Swal.fire({
+            title: title,
+            text: text,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3788d8',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: confirmText,
+            cancelButtonText: cancelText
+        });
+        return result.isConfirmed;
     }
 };

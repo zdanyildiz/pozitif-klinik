@@ -10,12 +10,16 @@ if (!token || userType !== 'clinic_user') {
     window.location.href = 'index.html';
 }
 
+// Global state
+let users = [];
+
 // DOM Elements
 const usersTableBody = document.getElementById('usersTableBody');
 const newUserForm = document.getElementById('newUserForm');
 const saveUserBtn = document.getElementById('saveUserBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const btnAddUser = document.getElementById('btnAddUser');
+const updateUserBtn = document.getElementById('updateUserBtn');
 
 // Stats Elements
 const totalUsersCountEl = document.getElementById('totalUsersCount');
@@ -24,10 +28,12 @@ const secretaryCountEl = document.getElementById('secretaryCount');
 
 // Modal
 let newUserModal;
+let editUserModal; // Add this line
 
 // Sayfa Yüklendiğinde
 document.addEventListener('DOMContentLoaded', () => {
     newUserModal = new bootstrap.Modal(document.getElementById('newUserModal'));
+    editUserModal = new bootstrap.Modal(document.getElementById('editUserModal')); // Initialize editUserModal
 
     // Kullanıcı bilgilerini göster
     const fullName = localStorage.getItem('user_full_name');
@@ -51,6 +57,9 @@ function setupEventListeners() {
     // Yeni Personel Kaydet
     saveUserBtn.addEventListener('click', handleSaveUser);
 
+    // Personel Güncelle
+    document.getElementById('updateUserBtn').addEventListener('click', handleUpdateUser);
+
     // Çıkış Yap
     logoutBtn.addEventListener('click', handleLogout);
 }
@@ -60,7 +69,7 @@ async function loadUsers() {
     try {
         const result = await api.get('/api/users');
         // Backend {count: X, users: [...]} şeklinde bir obje dönüyor
-        const users = result.data?.users || [];
+        users = result.data?.users || [];
 
         // Stats güncelle
         totalUsersCountEl.textContent = users.length;
@@ -116,6 +125,9 @@ function renderUserRow(user) {
         </td>
         <td class="date-cell">${Utils.formatDate(user.created_at)}</td>
         <td class="text-end">
+            <button class="btn btn-sm btn-outline-primary me-2" onclick="handleEditUser(${user.id})">
+                <i class="bi bi-pencil"></i> Düzenle
+            </button>
             <button class="btn btn-sm btn-outline-danger" onclick="handleDeleteUser(${user.id}, '${escapeHtml(user.username)}')">
                 <i class="bi bi-trash"></i> Sil
             </button>
@@ -163,6 +175,75 @@ async function handleSaveUser() {
     } finally {
         saveUserBtn.disabled = false;
         saveUserBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Kaydet';
+    }
+}
+
+// Personel Düzenle (Modal Doldurma)
+window.handleEditUser = function (userId) {
+    const user = users.find(u => u.id === userId);
+    if (!user) {
+        console.error('User not found for editing:', userId);
+        Utils.showError('Personel bulunamadı.');
+        return;
+    }
+
+    document.getElementById('editUserId').value = user.id;
+    document.getElementById('editName').value = user.name;
+    document.getElementById('editUsername').value = user.username;
+    document.getElementById('editRole').value = user.role;
+    document.getElementById('editStatus').value = user.is_active === 1 ? 'active' : 'inactive';
+    document.getElementById('editPassword').value = ''; // Clear password field for security
+
+    editUserModal.show();
+}
+
+// Personel Güncelle (API Çağrısı)
+async function handleUpdateUser() {
+    const updateUserBtn = document.getElementById('updateUserBtn');
+    const userId = document.getElementById('editUserId').value;
+    const data = {
+        name: document.getElementById('editName').value.trim(),
+        username: document.getElementById('editUsername').value.trim(),
+        role: document.getElementById('editRole').value,
+        is_active: document.getElementById('editStatus').value === 'active' ? 1 : 0
+    };
+
+    const password = document.getElementById('editPassword').value;
+    if (password) {
+        data.password = password;
+    }
+
+    if (!data.name || !data.username || !data.role) {
+        Utils.showError('Lütfen tüm gerekli alanları doldurun.');
+        return;
+    }
+
+    updateUserBtn.disabled = true;
+    updateUserBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Güncelleniyor...';
+
+    try {
+        await api.put(`/api/users/${userId}`, data);
+
+        editUserModal.hide();
+        // Clear the password field explicitly after successful update
+        document.getElementById('editPassword').value = '';
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Başarılı!',
+            text: 'Personel bilgileri güncellendi.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        loadUsers();
+
+    } catch (error) {
+        console.error('Personel güncellenirken hata:', error);
+        Utils.showError(typeof error === 'string' ? error : 'Güncelleme işlemi başarısız.');
+    } finally {
+        updateUserBtn.disabled = false;
+        updateUserBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Güncelle';
     }
 }
 
@@ -246,7 +327,13 @@ function renderErrorState() {
 
 // XSS Koruması
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    if (typeof text !== 'string') {
+        return '';
+    }
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }

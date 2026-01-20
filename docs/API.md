@@ -270,3 +270,139 @@ Yeni personel ekler (Doktor veya Sekreter).
 
 ### `DELETE /api/users/{id}`
 Personel kaydını siler. (Yöneticiler birbirini veya kendi hesabını silemez).
+
+---
+
+## Domain API (Randevu Yönetimi)
+
+Bu endpoint'ler klinik bazlı randevu işlemlerini yönetir. `clinic_id` JWT token'dan otomatik alınır.
+
+### Randevu İşlemleri
+
+### `GET /api/appointments`
+Belirli tarihteki randevuları hasta adı, tür ve doktor bilgisi ile listeler.
+
+**Query Params:**
+- `date` (YYYY-MM-DD): Tek günlük listeleme (varsayılan: bugün)
+- `start_date` & `end_date`: Tarih aralığı listeleme
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "message": "İşlem başarılı",
+  "data": {
+    "date": "2026-01-20",
+    "count": 5,
+    "appointments": [
+      {
+        "id": 1,
+        "patient_id": 12,
+        "patient_name": "Ahmet Yılmaz",
+        "type_id": 1,
+        "type_name": "Muayene",
+        "color_code": "#3788d8",
+        "doctor_id": 3,
+        "doctor_name": "Dr. Mehmet",
+        "appointment_date": "2026-01-20 09:30:00",
+        "status": "waiting",
+        "notes": null
+      }
+    ]
+  }
+}
+```
+
+### `GET /api/appointments/{id}`
+Tek bir randevuyu detaylarıyla getirir.
+
+### `POST /api/appointments`
+Yeni randevu oluşturur.
+
+**Payload:**
+```json
+{
+  "patient_id": 12,
+  "type_id": 1,
+  "doctor_id": 3,
+  "appointment_date": "2026-01-20 14:00:00",
+  "notes": "Kontrol muayenesi"
+}
+```
+
+**Hata Durumu (409 Conflict):**
+```json
+{
+  "status": false,
+  "message": "Bu zaman diliminde doktorun başka bir randevusu var"
+}
+```
+
+### `PUT /api/appointments/{id}`
+Randevu bilgilerini günceller.
+
+### `PUT /api/appointments/{id}/status`
+Randevu durumunu günceller (Auto-save için tasarlandı).
+
+**Payload:**
+```json
+{
+  "status": "in_test"
+}
+```
+
+**Geçerli Status Değerleri:**
+| Değer | Açıklama |
+|-------|----------|
+| `pending` | Bekliyor |
+| `confirmed` | Onaylı |
+| `waiting` | Geldi / Bekliyor |
+| `in_test` | Testte |
+| `completed` | Tamamlandı |
+| `cancelled` | İptal |
+| `no_show` | Gelmedi |
+
+### `DELETE /api/appointments/{id}`
+Randevuyu siler.
+
+### `GET /api/appointments/stats/today`
+Bugünkü ve bekleyen randevu sayılarını getirir (Dashboard için).
+
+**Başarılı Yanıt:**
+```json
+{
+  "status": true,
+  "data": {
+    "today": 8,
+    "pending": 5
+  }
+}
+```
+
+### `GET /api/appointments/patient/{patientId}`
+Belirli bir hastanın tüm randevularını listeler.
+
+---
+
+### Randevu Türleri
+
+### `GET /api/appointments/types`
+Tanımlı randevu türlerini listeler.
+
+### `POST /api/appointments/types`
+Yeni randevu türü oluşturur.
+
+**Payload:**
+```json
+{
+  "name": "Kontrol",
+  "color_code": "#28a745",
+  "duration_minutes": 15
+}
+```
+
+### `PUT /api/appointments/types/{id}`
+Randevu türünü günceller.
+
+### `DELETE /api/appointments/types/{id}`
+Randevu türünü pasif yapar (soft delete).

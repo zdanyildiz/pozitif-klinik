@@ -165,3 +165,76 @@ PLATFORM_ADMIN_PASS=admin
   - Sayfalar arası izinsiz geçişleri önlemek için UI seviyesinde token + rol kontrolü sıkılaştırıldı.
 - **API Veri Entegrasyonu:** `clinic-dashboard.js` üzerinden `/api/users` endpoint'i ile gerçek zamanlı veri çekme ve istatistik (Doktor/Sekreter sayısı) gösterimi sağlandı.
 - **Hata Giderme:** Frontend'in beklediği dizi formatı ile API'den gelen nesne formatı arasındaki uyumsuzluk (filter bug) giderildi.
+
+---
+
+### 14. Kriptografi ve Hasta Veri Güvenliği (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **AES-256-GCM Şifreleme:** Hasta hassas verileri (TC, Telefon, Email, Adres) veritabanında şifrelenmiş olarak saklanıyor.
+- **CryptoService:** `src/Core/Security/CryptoService.php` sınıfı `encrypt()`, `decrypt()` ve `blindIndex()` metodları ile güvenli veri yönetimi sağlıyor.
+- **Blind Index Arama:** TC ve Telefon numaralarında arama yapabilmek için HMAC-SHA256 hash tabanlı blind index sistemi kuruldu.
+- **Otomatik Şifreleme/Çözme:** `PatientRepository` create/update işlemlerinde otomatik şifreleme, read işlemlerinde otomatik çözme yapıyor.
+- **Migration:** `schema.sql` güncellenerek şifreli alanlar için VARCHAR(255) ve hash index sütunları eklendi.
+- **Container Entegrasyonu:** `CryptoService` DI container'a eklendi, `APP_KEY` environment bağımlılığı kuruldu.
+
+---
+
+### 15. Randevu Modülü - Full CRUD (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **AppointmentRepository:** Randevu CRUD işlemleri, tür yönetimi, tarih aralığı filtreleme, çakışma kontrolü metodları eklendi.
+- **AppointmentController:** Tam CRUD API endpoint'leri oluşturuldu:
+  - `GET /api/appointments` - Tarih filtreli listeleme
+  - `POST /api/appointments` - Yeni randevu (çakışma kontrolü ile)
+  - `PUT /api/appointments/{id}` - Randevu güncelleme
+  - `PUT /api/appointments/{id}/status` - Durum güncelleme (auto-save)
+  - `DELETE /api/appointments/{id}` - Randevu silme
+  - `GET /api/appointments/stats/today` - İstatistikler
+  - `GET /api/appointments/patient/{patientId}` - Hasta randevuları
+- **Randevu Türleri API:** Tür oluşturma, listeleme, güncelleme ve silme endpoint'leri.
+- **Frontend Güncelleme:**
+  - `appointments.html`: Stat kartları, modern tasarım, düzenle/sil butonları
+  - `appointments.js`: v2.0 - Full CRUD, auto-save durum, animasyonlar, toast bildirimler
+  - `config.js`: `showToast()` ve `showConfirm()` yardımcı fonksiyonları eklendi
+- **Durum Yönetimi:** 7 farklı randevu durumu destekleniyor (pending, confirmed, waiting, in_test, completed, cancelled, no_show).
+
+---
+
+## Bekleyen Görevler
+
+- **SMS/Bildirim Modülü:** Randevu hatırlatma SMS'leri.
+- **Raporlama Modülü:** Hasta ve randevu istatistikleri.
+- **Dosya Yükleme:** Hasta evrakları ve görselleri.
+- **Unit ve Integration Testleri:** Kod kalitesini artırmak için testlerin yazılması.
+
+---
+
+## Ortam Değişkenleri (.env)
+
+```env
+APP_ENV=development
+APP_DEBUG=true
+DB_HOST=localhost
+DB_NAME=pozitif_klinik
+DB_USER=root
+DB_PASS=
+
+# Güvenlik Anahtarları
+JWT_SECRET=your_jwt_secret_min_32_chars
+APP_KEY=64_character_hex_string_for_aes256
+
+# Loglama
+LOG_LEVEL=DEBUG
+```
+
+---
+
+## Notlar
+
+### CORS Politikası Notu
+`public/index.php` dosyasında tanımlanan `CORS Middleware (Allow All)` sadece geliştirme ortamı için geçerlidir. Production ortamında, güvenlik nedeniyle sadece izin verilen domain'lere erişim hakkı tanınmalıdır.
+
+### Test Komutu
+```bash
+/opt/lampp/bin/php tests/test_db.php
+```
+
