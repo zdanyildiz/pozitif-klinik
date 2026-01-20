@@ -258,9 +258,9 @@ async function handleSaveAppointment() {
         appointmentModal.hide();
         loadAppointments();
         loadStats();
-        Swal.fire('Başarılı', 'Randevu oluşturuldu', 'success');
+        Utils.showSuccess('Randevu oluşturuldu');
     } catch (e) {
-        Swal.fire('Hata', 'Randevu oluşturulamadı', 'error');
+        Utils.showError(typeof e === 'string' ? e : 'Randevu oluşturulamadı');
     }
 }
 
@@ -285,7 +285,7 @@ async function viewDetail(id, e) {
 
         detailModal.show();
     } catch (e) {
-        Swal.fire('Hata', 'Detay yüklenemedi', 'error');
+        Utils.showError('Detay yüklenemedi');
     }
 }
 
@@ -359,7 +359,7 @@ async function handleAddServiceToBilling() {
             });
             refreshDetail();
         } catch (e) {
-            Swal.fire('Hata', 'Hizmet eklenemedi', 'error');
+            Utils.showError('Hizmet eklenemedi');
         }
     }
 }
@@ -377,7 +377,7 @@ async function removeBillingItem(itemId) {
             await api.delete(`/api/appointments/${currentAppointmentId}/items/${itemId}`);
             refreshDetail();
         } catch (e) {
-            Swal.fire('Hata', 'Silinemedi', 'error');
+            Utils.showError('Silinemedi');
         }
     }
 }
@@ -389,9 +389,9 @@ async function handleSaveDetails() {
         detailModal.hide();
         loadAppointments();
         loadStats();
-        Swal.fire('Başarılı', 'Güncellendi', 'success');
+        Utils.showSuccess('Güncellendi');
     } catch (e) {
-        Swal.fire('Hata', 'Güncellenemedi', 'error');
+        Utils.showError('Güncellenemedi');
     }
 }
 
@@ -404,9 +404,9 @@ async function handleSaveType(e) {
         await api.post('/api/appointments/types', data);
         e.target.reset();
         loadTypes();
-        Swal.fire('Başarılı', 'Tür eklendi', 'success');
+        Utils.showSuccess('Tür eklendi');
     } catch (e) {
-        Swal.fire('Hata', 'Tür eklenemedi', 'error');
+        Utils.showError('Tür eklenemedi');
     }
 }
 

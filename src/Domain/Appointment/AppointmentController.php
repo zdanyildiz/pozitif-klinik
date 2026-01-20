@@ -149,4 +149,14 @@ class AppointmentController extends BaseController
         $id = $this->repository->createType($clinicId, $data);
         return $this->success($response, ['id' => $id], 'Randevu türü oluşturuldu.', 201);
     }
+
+    #[Route('GET', '/stats/today')]
+    public function getStats(Request $request, Response $response): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $date = date('Y-m-d');
+        $stats = $this->repository->getStats($clinicId, $date);
+
+        return $this->success($response, $stats);
+    }
 }

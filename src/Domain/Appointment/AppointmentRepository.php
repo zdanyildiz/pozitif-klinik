@@ -182,6 +182,26 @@ class AppointmentRepository
         return array_map([$this, 'decryptAppointmentPatientName'], $results);
     }
 
+    public function getStats(int $clinicId, string $date): array
+    {
+        // 1. Bugunkü toplam randevu sayısı
+        $sqlToday = "SELECT COUNT(*) as count FROM cln_appointments WHERE clinic_id = ? AND DATE(appointment_date) = ?";
+        $resToday = $this->db->fetch($sqlToday, [$clinicId, $date]);
+        $todayCount = (int) ($resToday['count'] ?? 0);
+
+        // 2. Bekleyen randevu sayısı (pending, waiting, in_test)
+        $sqlPending = "SELECT COUNT(*) as count FROM cln_appointments 
+                       WHERE clinic_id = ? AND DATE(appointment_date) = ? 
+                       AND status IN ('pending', 'waiting', 'in_test')";
+        $resPending = $this->db->fetch($sqlPending, [$clinicId, $date]);
+        $pendingCount = (int) ($resPending['count'] ?? 0);
+
+        return [
+            'today' => $todayCount,
+            'pending' => $pendingCount
+        ];
+    }
+
     // ==========================================
     // RANDEVU KALEMLERİ (ADİSYON)
     // ==========================================
