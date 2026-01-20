@@ -175,26 +175,54 @@ function renderAppointments() {
         const time = app.appointment_date.split(' ')[1].substring(0, 5);
         const row = document.createElement('tr');
         row.style.cursor = 'pointer';
-        row.innerHTML = `
-            <td><span class="time-badge">${time}</span></td>
-            <td class="fw-bold">${escapeHtml(app.patient_name)}</td>
-            <td>
-                <span class="type-badge" style="background: ${app.color_code}15; color: ${app.color_code}">
-                    ${escapeHtml(app.type_name)}
-                </span>
-            </td>
-            <td>${escapeHtml(app.doctor_name || '-')}</td>
-            <td>
-                <span class="badge appointment-status-${app.status}">
-                    ${getStatusLabel(app.status)}
-                </span>
-            </td>
-            <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary" onclick="viewDetail(${app.id}, event)">
-                    <i class="bi bi-eye"></i>
-                </button>
-            </td>
-        `;
+
+        // Time Column
+        const tdTime = document.createElement('td');
+        const timeBadge = document.createElement('span');
+        timeBadge.className = 'time-badge';
+        timeBadge.textContent = time;
+        tdTime.appendChild(timeBadge);
+        row.appendChild(tdTime);
+
+        // Patient Column
+        const tdPatient = document.createElement('td');
+        tdPatient.className = 'fw-bold';
+        tdPatient.textContent = app.patient_name;
+        row.appendChild(tdPatient);
+
+        // Type Column
+        const tdType = document.createElement('td');
+        const typeBadge = document.createElement('span');
+        typeBadge.className = 'type-badge';
+        typeBadge.style.backgroundColor = `${app.color_code}15`;
+        typeBadge.style.color = app.color_code;
+        typeBadge.textContent = app.type_name;
+        tdType.appendChild(typeBadge);
+        row.appendChild(tdType);
+
+        // Doctor Column
+        const tdDoctor = document.createElement('td');
+        tdDoctor.textContent = app.doctor_name || '-';
+        row.appendChild(tdDoctor);
+
+        // Status Column
+        const tdStatus = document.createElement('td');
+        const statusBadge = document.createElement('span');
+        statusBadge.className = `badge appointment-status-${app.status}`;
+        statusBadge.textContent = getStatusLabel(app.status);
+        tdStatus.appendChild(statusBadge);
+        row.appendChild(tdStatus);
+
+        // Actions Column
+        const tdActions = document.createElement('td');
+        tdActions.className = 'text-end';
+        const btnView = document.createElement('button');
+        btnView.className = 'btn btn-sm btn-outline-primary';
+        btnView.innerHTML = '<i class="bi bi-eye"></i>';
+        btnView.onclick = (e) => viewDetail(app.id, e);
+        tdActions.appendChild(btnView);
+        row.appendChild(tdActions);
+
         row.onclick = (e) => viewDetail(app.id, e);
         tbody.appendChild(row);
     });
@@ -202,25 +230,52 @@ function renderAppointments() {
 
 function renderTypeOptions() {
     const sel = document.getElementById('typeSelect');
-    sel.innerHTML = '<option value="">Seçiniz...</option>';
+    sel.innerHTML = '';
+
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = 'Seçiniz...';
+    sel.appendChild(defaultOpt);
+
     appointmentTypes.forEach(t => {
-        sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        sel.appendChild(opt);
     });
 }
 
 function renderPatientOptions() {
     const sel = document.getElementById('patientSelect');
-    sel.innerHTML = '<option value="">Seçiniz...</option>';
+    sel.innerHTML = '';
+
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = 'Seçiniz...';
+    sel.appendChild(defaultOpt);
+
     patients.forEach(p => {
-        sel.innerHTML += `<option value="${p.id}">${p.name} (${p.tc_no || '-'})</option>`;
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.name} (${p.tc_no || '-'})`;
+        sel.appendChild(opt);
     });
 }
 
 function renderDoctorOptions() {
     const sel = document.getElementById('doctorSelect');
-    sel.innerHTML = '<option value="">Seçiniz...</option>';
+    sel.innerHTML = '';
+
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = 'Seçiniz...';
+    sel.appendChild(defaultOpt);
+
     doctors.forEach(d => {
-        sel.innerHTML += `<option value="${d.id}">${d.name || d.username}</option>`;
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name || d.username;
+        sel.appendChild(opt);
     });
 }
 
@@ -228,17 +283,18 @@ function renderTypeList() {
     const list = document.getElementById('typeList');
     list.innerHTML = '';
     appointmentTypes.forEach(t => {
-        list.innerHTML += `
-            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                <div class="d-flex align-items-center">
-                    <div style="width:12px; height:12px; border-radius:50%; background:${t.color_code}" class="me-2"></div>
-                    <div>
-                        <div class="fw-bold small">${t.name}</div>
-                        <small class="text-muted">${t.duration_minutes}dk - ${t.default_price}₺</small>
-                    </div>
+        const item = document.createElement('div');
+        item.className = 'd-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded';
+        item.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div style="width:12px; height:12px; border-radius:50%; background:${t.color_code}" class="me-2"></div>
+                <div>
+                    <div class="fw-bold small">${escapeHtml(t.name)}</div>
+                    <small class="text-muted">${t.duration_minutes}dk - ${parseFloat(t.default_price).toFixed(2)}₺</small>
                 </div>
             </div>
         `;
+        list.appendChild(item);
     });
 }
 
@@ -273,9 +329,15 @@ async function viewDetail(id, e) {
         const app = res.data;
 
         document.getElementById('detailPatientName').textContent = app.patient_name;
-        document.getElementById('detailTypeBadge').innerHTML = `
-            <span class="type-badge" style="background: ${app.color_code}15; color: ${app.color_code}">${app.type_name}</span>
-        `;
+
+        const typeBadgeWrapper = document.getElementById('detailTypeBadge');
+        typeBadgeWrapper.innerHTML = '';
+        const badge = document.createElement('span');
+        badge.className = 'type-badge';
+        badge.style.backgroundColor = `${app.color_code}15`;
+        badge.style.color = app.color_code;
+        badge.textContent = app.type_name;
+        typeBadgeWrapper.appendChild(badge);
         document.getElementById('detailDoctorName').textContent = app.doctor_name || '-';
         document.getElementById('detailDateTime').textContent = app.appointment_date;
         document.getElementById('detailNotes').textContent = app.notes || 'Not yok';

@@ -22,6 +22,16 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 #[Group('/admin')]
 class PlatformAuthController extends BaseController
 {
+    private PlatformAdminRepository $platformAdminRepository;
+
+    public function __construct(
+        \Psr\Container\ContainerInterface $container,
+        PlatformAdminRepository $platformAdminRepository
+    ) {
+        parent::__construct($container);
+        $this->platformAdminRepository = $platformAdminRepository;
+    }
+
     /**
      * Platform Admin Login
      *
@@ -40,18 +50,20 @@ class PlatformAuthController extends BaseController
             return $this->error($response, 'Kullanıcı adı ve şifre gereklidir', 400);
         }
 
-        // sys_platform_admins tablosunda ara
-        $admin = $this->db->fetch(
-            "SELECT * FROM sys_platform_admins WHERE username = :username",
-            ['username' => $username]
-        );
+        // PlatformAdminRepository üzerinden admini ara
+        $admin = $this->platformAdminRepository->findByUsername($username);
 
         if (!$admin || !password_verify($password, $admin['password_hash'])) {
             return $this->error($response, 'Geçersiz kullanıcı adı veya şifre', 401);
         }
 
         // Token Oluştur
-        $secret = $_ENV['JWT_SECRET'] ?? 'changeme';
+        $secret = $_ENV['JWT_SECRET'] ?? null;
+
+        if (empty($secret)) {
+            throw new \RuntimeException('Sunucu yapılandırma hatası: JWT_SECRET eksik.');
+        }
+
         $payload = [
             'iat' => time(),
             'exp' => time() + (60 * 60 * 12), // 12 saat

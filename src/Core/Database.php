@@ -55,7 +55,7 @@ class Database
         return $stmt;
     }
 
-    public function fetch(string $sql, array $params = []): mixed
+    public function fetch(string $sql, array $params = []): array|false
     {
         return $this->query($sql, $params)->fetch();
     }

@@ -95,9 +95,17 @@ async function loadProvinces() {
         const provinces = response.data || [];
         const provinceSelect = document.getElementById('province_id');
 
-        provinceSelect.innerHTML = '<option value="">İl Seçiniz</option>';
+        provinceSelect.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'İl Seçiniz';
+        provinceSelect.appendChild(defaultOpt);
+
         provinces.forEach(p => {
-            provinceSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.name;
+            provinceSelect.appendChild(opt);
         });
     } catch (error) {
         console.error('İller yüklenirken hata:', error);
@@ -121,9 +129,17 @@ async function loadDistricts(provinceId, selectedDistrictId = null) {
         const response = await api.get(`/api/general/districts?province_id=${provinceId}`);
         const districts = response.data || [];
 
-        districtSelect.innerHTML = '<option value="">İlçe Seçiniz</option>';
+        districtSelect.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'İlçe Seçiniz';
+        districtSelect.appendChild(defaultOpt);
+
         districts.forEach(d => {
-            districtSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = d.name;
+            districtSelect.appendChild(opt);
         });
 
         districtSelect.disabled = false;
@@ -160,26 +176,73 @@ function renderPatients(searchQuery = '') {
         const genderText = genderMap[patient.gender] || 'Belirtilmemiş';
         const genderBadge = patient.gender === 'M' ? 'bg-info' : (patient.gender === 'F' ? 'bg-danger' : 'bg-secondary');
 
-        row.innerHTML = `
-            <td><code>${escapeHtml(patient.tc_no)}</code></td>
-            <td><div class="fw-bold text-dark">${escapeHtml(patient.name)}</div></td>
-            <td>${escapeHtml(patient.phone)}</td>
-            <td><span class="badge ${genderBadge}-subtle text-${genderBadge.split('-')[1]} rounded-pill">${genderText}</span></td>
-            <td><small class="text-muted">${Utils.formatDate(patient.updated_at || patient.created_at)}</small></td>
-            <td class="text-end">
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="showPatientDetails(${patient.id})" title="Detay / Vitals">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="btn btn-outline-warning" onclick="editPatient(${patient.id})" title="Düzenle">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-outline-danger" onclick="handleArchivePatient(${patient.id})" title="Arşivle">
-                        <i class="bi bi-archive"></i>
-                    </button>
-                </div>
-            </td>
-        `;
+        // TC Column
+        const tdTc = document.createElement('td');
+        const code = document.createElement('code');
+        code.textContent = patient.tc_no;
+        tdTc.appendChild(code);
+        row.appendChild(tdTc);
+
+        // Name Column
+        const tdName = document.createElement('td');
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'fw-bold text-dark';
+        nameDiv.textContent = patient.name;
+        tdName.appendChild(nameDiv);
+        row.appendChild(tdName);
+
+        // Phone Column
+        const tdPhone = document.createElement('td');
+        tdPhone.textContent = patient.phone;
+        row.appendChild(tdPhone);
+
+        // Gender Column
+        const tdGender = document.createElement('td');
+        const genderBadgeEl = document.createElement('span');
+        const colorClass = genderBadge.split('-')[1];
+        genderBadgeEl.className = `badge ${genderBadge}-subtle text-${colorClass} rounded-pill`;
+        genderBadgeEl.textContent = genderText;
+        tdGender.appendChild(genderBadgeEl);
+        row.appendChild(tdGender);
+
+        // Last Action Column
+        const tdLastAction = document.createElement('td');
+        const lastActionSmall = document.createElement('small');
+        lastActionSmall.className = 'text-muted';
+        lastActionSmall.textContent = Utils.formatDate(patient.updated_at || patient.created_at);
+        tdLastAction.appendChild(lastActionSmall);
+        row.appendChild(tdLastAction);
+
+        // Actions Column
+        const tdActions = document.createElement('td');
+        tdActions.className = 'text-end';
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'btn-group btn-group-sm';
+
+        const btnView = document.createElement('button');
+        btnView.className = 'btn btn-outline-primary';
+        btnView.innerHTML = '<i class="bi bi-eye"></i>';
+        btnView.title = 'Detay / Vitals';
+        btnView.onclick = () => showPatientDetails(patient.id);
+
+        const btnEdit = document.createElement('button');
+        btnEdit.className = 'btn btn-outline-warning';
+        btnEdit.innerHTML = '<i class="bi bi-pencil"></i>';
+        btnEdit.title = 'Düzenle';
+        btnEdit.onclick = () => editPatient(patient.id);
+
+        const btnArchive = document.createElement('button');
+        btnArchive.className = 'btn btn-outline-danger';
+        btnArchive.innerHTML = '<i class="bi bi-archive"></i>';
+        btnArchive.title = 'Arşivle';
+        btnArchive.onclick = () => handleArchivePatient(patient.id);
+
+        btnGroup.appendChild(btnView);
+        btnGroup.appendChild(btnEdit);
+        btnGroup.appendChild(btnArchive);
+        tdActions.appendChild(btnGroup);
+        row.appendChild(tdActions);
+
         patientsTableBody.appendChild(row);
     });
 }
@@ -316,14 +379,34 @@ function renderVitalsTable(history) {
     history.forEach(v => {
         const bmi = (v.weight && v.height) ? (v.weight / ((v.height / 100) * (v.height / 100))).toFixed(1) : '-';
         const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${Utils.formatDate(v.measured_at)}</td>
-            <td>${v.height || '-'}</td>
-            <td>${v.weight || '-'}</td>
-            <td>${v.systolic_bp || '-'}/${v.diastolic_bp || '-'}</td>
-            <td>${v.heart_rate || '-'}</td>
-            <td><span class="badge bg-secondary">${bmi}</span></td>
-        `;
+
+        const tdDate = document.createElement('td');
+        tdDate.textContent = Utils.formatDate(v.measured_at);
+        row.appendChild(tdDate);
+
+        const tdHeight = document.createElement('td');
+        tdHeight.textContent = v.height || '-';
+        row.appendChild(tdHeight);
+
+        const tdWeight = document.createElement('td');
+        tdWeight.textContent = v.weight || '-';
+        row.appendChild(tdWeight);
+
+        const tdBp = document.createElement('td');
+        tdBp.textContent = `${v.systolic_bp || '-'}/${v.diastolic_bp || '-'}`;
+        row.appendChild(tdBp);
+
+        const tdHr = document.createElement('td');
+        tdHr.textContent = v.heart_rate || '-';
+        row.appendChild(tdHr);
+
+        const tdBmi = document.createElement('td');
+        const bmiBadge = document.createElement('span');
+        bmiBadge.className = 'badge bg-secondary';
+        bmiBadge.textContent = bmi;
+        tdBmi.appendChild(bmiBadge);
+        row.appendChild(tdBmi);
+
         vitalsTableBody.appendChild(row);
     });
 }
