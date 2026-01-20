@@ -76,8 +76,8 @@ CREATE TABLE IF NOT EXISTS sys_sms_logs (
 -- ==========================================
 
 -- 6. Hasta Kartları
--- ÖNEMLİ: tc_no, phone, email alanları AES-256-GCM ile şifrelenmiş olarak saklanır.
--- tc_no_hash ve phone_hash alanları blind index (HMAC-SHA256) için kullanılır.
+-- ÖNEMLİ: TÜM KİŞİSEL VERİLER AES-256-GCM ile şifrelenmiş olarak saklanır.
+-- Arama için HMAC-SHA256 blind index hash'leri kullanılır.
 CREATE TABLE IF NOT EXISTS ptn_cards (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     clinic_id BIGINT UNSIGNED NOT NULL,
@@ -86,7 +86,8 @@ CREATE TABLE IF NOT EXISTS ptn_cards (
     tc_no VARCHAR(255) NOT NULL COMMENT 'AES-256-GCM şifreli TC Kimlik',
     tc_no_hash VARCHAR(64) NULL COMMENT 'HMAC-SHA256 blind index (arama için)',
     
-    name VARCHAR(100) NOT NULL COMMENT 'Hasta adı (şifrelenmez)',
+    name VARCHAR(255) NOT NULL COMMENT 'AES-256-GCM şifreli hasta adı',
+    name_hash VARCHAR(64) NULL COMMENT 'HMAC-SHA256 blind index (arama için)',
     
     phone VARCHAR(255) NOT NULL COMMENT 'AES-256-GCM şifreli telefon',
     phone_hash VARCHAR(64) NULL COMMENT 'HMAC-SHA256 blind index (arama için)',
@@ -97,12 +98,13 @@ CREATE TABLE IF NOT EXISTS ptn_cards (
     gender ENUM('M', 'F', 'U') DEFAULT 'U' COMMENT 'M:Male, F:Female, U:Unknown',
     blood_type ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-') NULL,
     address TEXT NULL COMMENT 'AES-256-GCM şifreli adres',
-    notes TEXT NULL COMMENT 'Personel özel notları (şifrelenmez)',
+    notes TEXT NULL COMMENT 'Personel özel notları (şifrelenmez - operasyonel)',
     status TINYINT(1) DEFAULT 1 COMMENT '1:Aktif, 0:Pasif (Arşiv)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id),
     INDEX idx_tc_hash (clinic_id, tc_no_hash),
+    INDEX idx_name_hash (clinic_id, name_hash),
     INDEX idx_phone_hash (clinic_id, phone_hash),
     INDEX idx_status (clinic_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

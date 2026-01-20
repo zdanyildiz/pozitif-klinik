@@ -13,6 +13,8 @@ use App\Core\Security\CryptoService;
  * Randevu CRUD işlemleri ve tür yönetimi.
  * Hasta verileri şifrelenmiş olduğundan, listelerken CryptoService ile çözülür.
  * 
+ * ⚠️ GÜVENLİK: Tüm sorgular clinic_id filtresi ile çalışır (multi-tenancy)
+ * 
  * @package App\Domain\Appointment
  */
 class AppointmentRepository
@@ -171,12 +173,13 @@ class AppointmentRepository
 
     /**
      * Randevuyu ID'ye göre getirir
+     * Hasta adı şifreli olduğundan decrypt edilir.
      */
     public function findById(int $clinicId, int $appointmentId): ?array
     {
         $sql = "SELECT 
                     a.*, 
-                    p.name as patient_name, 
+                    p.name as patient_name_encrypted, 
                     t.name as type_name, 
                     t.color_code,
                     u.name as doctor_name
@@ -187,18 +190,23 @@ class AppointmentRepository
                 WHERE a.clinic_id = ? AND a.id = ?";
 
         $result = $this->db->fetch($sql, [$clinicId, $appointmentId]);
-        return $result ?: null;
+
+        if (!$result) {
+            return null;
+        }
+
+        return $this->decryptAppointmentPatientName($result);
     }
 
     /**
      * Belirli bir tarihteki randevuları listeler
-     * Patient name şifrelenmemiş olarak saklandığından doğrudan kullanılır.
+     * Hasta adları şifreli saklandığından decrypt edilir.
      */
     public function listDailyAppointments(int $clinicId, string $date): array
     {
         $sql = "SELECT 
                     a.*, 
-                    p.name as patient_name, 
+                    p.name as patient_name_encrypted, 
                     t.name as type_name, 
                     t.color_code,
                     u.name as doctor_name
@@ -209,7 +217,9 @@ class AppointmentRepository
                 WHERE a.clinic_id = ? AND DATE(a.appointment_date) = ?
                 ORDER BY a.appointment_date ASC";
 
-        return $this->db->fetchAll($sql, [$clinicId, $date]);
+        $results = $this->db->fetchAll($sql, [$clinicId, $date]);
+
+        return array_map([$this, 'decryptAppointmentPatientName'], $results);
     }
 
     /**
@@ -219,7 +229,7 @@ class AppointmentRepository
     {
         $sql = "SELECT 
                     a.*, 
-                    p.name as patient_name, 
+                    p.name as patient_name_encrypted, 
                     t.name as type_name, 
                     t.color_code,
                     u.name as doctor_name
@@ -230,7 +240,9 @@ class AppointmentRepository
                 WHERE a.clinic_id = ? AND DATE(a.appointment_date) BETWEEN ? AND ?
                 ORDER BY a.appointment_date ASC";
 
-        return $this->db->fetchAll($sql, [$clinicId, $startDate, $endDate]);
+        $results = $this->db->fetchAll($sql, [$clinicId, $startDate, $endDate]);
+
+        return array_map([$this, 'decryptAppointmentPatientName'], $results);
     }
 
     /**
@@ -283,7 +295,7 @@ class AppointmentRepository
     {
         $sql = "SELECT 
                     a.*, 
-                    p.name as patient_name, 
+                    p.name as patient_name_encrypted, 
                     t.name as type_name, 
                     t.color_code
                 FROM cln_appointments a
@@ -292,7 +304,9 @@ class AppointmentRepository
                 WHERE a.clinic_id = ? AND a.doctor_id = ? AND DATE(a.appointment_date) = ?
                 ORDER BY a.appointment_date ASC";
 
-        return $this->db->fetchAll($sql, [$clinicId, $doctorId, $date]);
+        $results = $this->db->fetchAll($sql, [$clinicId, $doctorId, $date]);
+
+        return array_map([$this, 'decryptAppointmentPatientName'], $results);
     }
 
     /**
@@ -321,5 +335,19 @@ class AppointmentRepository
         $result = $this->db->fetch($sql, $params);
 
         return (int) ($result['total'] ?? 0) > 0;
+    }
+
+    /**
+     * Randevu kaydındaki şifreli hasta adını çözer
+     */
+    private function decryptAppointmentPatientName(array $appointment): array
+    {
+        if (!empty($appointment['patient_name_encrypted'])) {
+            $decrypted = $this->crypto->decrypt($appointment['patient_name_encrypted']);
+            $appointment['patient_name'] = $decrypted ?? 'Bilinmeyen';
+            unset($appointment['patient_name_encrypted']);
+        }
+
+        return $appointment;
     }
 }

@@ -10,9 +10,10 @@ use App\Core\Security\CryptoService;
 /**
  * PatientRepository - Hasta Veritabanı İşlemleri
  * 
- * Tüm hassas veriler (TC, Telefon, Email, Adres) AES-256-GCM ile
- * şifrelenerek saklanır. TC ve Telefon için blind index hash'leri
- * tutularak şifreli verilerde arama yapılabilir.
+ * TÜM KİŞİSEL VERİLER (Ad, TC, Telefon, Email, Adres) AES-256-GCM ile
+ * şifrelenerek saklanır. Arama için blind index hash'leri kullanılır.
+ * 
+ * ⚠️ GÜVENLİK: Tüm sorgular clinic_id filtresi ile çalışır (multi-tenancy)
  * 
  * @package App\Domain\Patient
  */
@@ -93,31 +94,71 @@ class PatientRepository
     }
 
     /**
+     * Hasta adına göre arama (tam eşleşme)
+     * Blind index hash kullanarak şifreli veri üzerinde arama yapar.
+     */
+    public function findByName(int $clinicId, string $name): ?array
+    {
+        $nameHash = $this->crypto->blindIndex($name);
+
+        $sql = "SELECT * FROM ptn_cards WHERE clinic_id = ? AND name_hash = ? AND status = 1";
+        $result = $this->db->fetch($sql, [$clinicId, $nameHash]);
+
+        if (!$result) {
+            return null;
+        }
+
+        return $this->decryptPatientData($result);
+    }
+
+    /**
+     * Çoklu arama (TC, Telefon veya Ad ile arama)
+     * Blind index hash kullanarak şifreli veriler üzerinde arama yapar.
+     */
+    public function search(int $clinicId, string $query): array
+    {
+        $queryHash = $this->crypto->blindIndex($query);
+
+        $sql = "SELECT * FROM ptn_cards 
+                WHERE clinic_id = ? 
+                AND status = 1
+                AND (tc_no_hash = ? OR phone_hash = ? OR name_hash = ?)
+                ORDER BY id DESC";
+
+        $results = $this->db->fetchAll($sql, [$clinicId, $queryHash, $queryHash, $queryHash]);
+
+        return array_map([$this, 'decryptPatientData'], $results);
+    }
+
+    /**
      * Yeni hasta oluşturur
-     * Hassas veriler encrypt edilerek kaydedilir.
+     * TÜM kişisel veriler encrypt edilerek kaydedilir.
      */
     public function create(int $clinicId, array $data): int
     {
-        // Hassas verileri şifrele
+        // Tüm kişisel verileri şifrele
+        $encryptedName = $this->crypto->encrypt($data['name']);
         $encryptedTcNo = $this->crypto->encrypt($data['tc_no']);
         $encryptedPhone = $this->crypto->encrypt($data['phone']);
         $encryptedEmail = $this->crypto->encryptSafe($data['email'] ?? null);
         $encryptedAddress = $this->crypto->encryptSafe($data['address'] ?? null);
 
         // Blind index hash'lerini oluştur (arama için)
+        $nameHash = $this->crypto->blindIndex($data['name']);
         $tcHash = $this->crypto->blindIndex($data['tc_no']);
         $phoneHash = $this->crypto->blindIndex($data['phone']);
 
         $sql = "INSERT INTO ptn_cards (
-                    clinic_id, tc_no, tc_no_hash, name, phone, phone_hash, email, 
+                    clinic_id, name, name_hash, tc_no, tc_no_hash, phone, phone_hash, email, 
                     birth_date, gender, blood_type, address, notes, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
 
         $this->db->query($sql, [
             $clinicId,
+            $encryptedName,
+            $nameHash,
             $encryptedTcNo,
             $tcHash,
-            $data['name'], // İsim şifrelenmez (arama için gerekli)
             $encryptedPhone,
             $phoneHash,
             $encryptedEmail,
@@ -133,24 +174,27 @@ class PatientRepository
 
     /**
      * Hasta bilgilerini günceller
-     * Hassas veriler encrypt edilerek kaydedilir.
+     * TÜM kişisel veriler encrypt edilerek kaydedilir.
      */
     public function update(int $clinicId, int $patientId, array $data): bool
     {
-        // Hassas verileri şifrele
+        // Tüm kişisel verileri şifrele
+        $encryptedName = $this->crypto->encrypt($data['name']);
         $encryptedTcNo = $this->crypto->encrypt($data['tc_no']);
         $encryptedPhone = $this->crypto->encrypt($data['phone']);
         $encryptedEmail = $this->crypto->encryptSafe($data['email'] ?? null);
         $encryptedAddress = $this->crypto->encryptSafe($data['address'] ?? null);
 
         // Blind index hash'lerini güncelle
+        $nameHash = $this->crypto->blindIndex($data['name']);
         $tcHash = $this->crypto->blindIndex($data['tc_no']);
         $phoneHash = $this->crypto->blindIndex($data['phone']);
 
         $sql = "UPDATE ptn_cards SET 
+                    name = ?,
+                    name_hash = ?,
                     tc_no = ?, 
                     tc_no_hash = ?,
-                    name = ?, 
                     phone = ?, 
                     phone_hash = ?,
                     email = ?, 
@@ -162,9 +206,10 @@ class PatientRepository
                 WHERE clinic_id = ? AND id = ?";
 
         $this->db->query($sql, [
+            $encryptedName,
+            $nameHash,
             $encryptedTcNo,
             $tcHash,
-            $data['name'],
             $encryptedPhone,
             $phoneHash,
             $encryptedEmail,
@@ -208,10 +253,14 @@ class PatientRepository
      */
     private function decryptPatientData(array $patient): array
     {
-        // Hassas alanları decrypt et
+        // Tüm şifreli alanları decrypt et
+        if (!empty($patient['name'])) {
+            $decrypted = $this->crypto->decrypt($patient['name']);
+            $patient['name'] = $decrypted ?? $patient['name'];
+        }
+
         if (!empty($patient['tc_no'])) {
             $decrypted = $this->crypto->decrypt($patient['tc_no']);
-            // Eğer decrypt başarısız olduysa (eski şifrelenmemiş veri olabilir), orijinali kullan
             $patient['tc_no'] = $decrypted ?? $patient['tc_no'];
         }
 
@@ -231,21 +280,9 @@ class PatientRepository
         }
 
         // Hash alanlarını frontend'e döndürmeye gerek yok
-        unset($patient['tc_no_hash'], $patient['phone_hash']);
+        unset($patient['tc_no_hash'], $patient['phone_hash'], $patient['name_hash']);
 
         return $patient;
-    }
-
-    /**
-     * Hasta adını ID'ye göre getir (Randevu listesi için optimize)
-     * Sadece isim döner, hassas veri içermez.
-     */
-    public function getPatientName(int $clinicId, int $patientId): ?string
-    {
-        $sql = "SELECT name FROM ptn_cards WHERE clinic_id = ? AND id = ?";
-        $result = $this->db->fetch($sql, [$clinicId, $patientId]);
-
-        return $result['name'] ?? null;
     }
 
     /**
