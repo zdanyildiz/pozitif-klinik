@@ -1,0 +1,247 @@
+/**
+ * Pozitif Klinik - Clinic Dashboard Scripts
+ */
+
+// Token Kontrolü
+const token = localStorage.getItem('platform_token');
+const userType = localStorage.getItem('user_type');
+
+if (!token || userType !== 'clinic_user') {
+    window.location.href = 'index.html';
+}
+
+// DOM Elements
+const usersTableBody = document.getElementById('usersTableBody');
+const newUserForm = document.getElementById('newUserForm');
+const saveUserBtn = document.getElementById('saveUserBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const btnAddUser = document.getElementById('btnAddUser');
+
+// Stats Elements
+const totalUsersCountEl = document.getElementById('totalUsersCount');
+const doctorCountEl = document.getElementById('doctorCount');
+const secretaryCountEl = document.getElementById('secretaryCount');
+
+// Modal
+let newUserModal;
+
+// Sayfa Yüklendiğinde
+document.addEventListener('DOMContentLoaded', () => {
+    newUserModal = new bootstrap.Modal(document.getElementById('newUserModal'));
+
+    // JWT'den kullanıcı bilgilerini göster (Opsiyonel: decode edilebilir ama config.js'de decode edilmiyor)
+    // Şimdilik sadece "Klinik Yöneticisi" yazalım
+    document.getElementById('userName').textContent = 'Klinik Yöneticisi';
+    document.getElementById('userRole').textContent = 'Admin';
+
+    loadUsers();
+    setupEventListeners();
+});
+
+// Event Listeners
+function setupEventListeners() {
+    // Modal Aç
+    btnAddUser.addEventListener('click', () => {
+        newUserModal.show();
+    });
+
+    // Yeni Personel Kaydet
+    saveUserBtn.addEventListener('click', handleSaveUser);
+
+    // Çıkış Yap
+    logoutBtn.addEventListener('click', handleLogout);
+}
+
+// Personelleri Yükle
+async function loadUsers() {
+    try {
+        const result = await api.get('/api/users');
+        // Backend {count: X, users: [...]} şeklinde bir obje dönüyor
+        const users = result.data?.users || [];
+
+        // Stats güncelle
+        totalUsersCountEl.textContent = users.length;
+        doctorCountEl.textContent = users.filter(u => u.role === 'doctor').length;
+        secretaryCountEl.textContent = users.filter(u => u.role === 'secretary').length;
+
+        usersTableBody.innerHTML = '';
+
+        if (users.length === 0) {
+            renderEmptyState();
+            return;
+        }
+
+        // Personelleri tabloya ekle
+        users.forEach(user => renderUserRow(user));
+
+    } catch (error) {
+        console.error('Personel yüklenirken hata:', error);
+        renderErrorState();
+    }
+}
+
+// Personel satırı oluştur
+function renderUserRow(user) {
+    const isActive = user.is_active === 1 || user.is_active === '1' || user.is_active === true;
+    const statusClass = isActive ? 'active' : 'inactive';
+    const statusText = isActive ? 'Aktif' : 'Pasif';
+    const statusIcon = isActive ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+
+    // Rol Badge
+    const roleMap = {
+        'admin': { text: 'Yönetici', class: 'bg-danger' },
+        'doctor': { text: 'Doktor', class: 'bg-primary' },
+        'secretary': { text: 'Sekreter', class: 'bg-info' }
+    };
+    const roleInfo = roleMap[user.role] || { text: user.role, class: 'bg-secondary' };
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td><strong>#${user.id}</strong></td>
+        <td><span class="clinic-name">${escapeHtml(user.username)}</span></td>
+        <td>
+            <span class="badge ${roleInfo.class} px-3 py-2 rounded-3">
+                ${roleInfo.text}
+            </span>
+        </td>
+        <td>
+            <span class="status-badge ${statusClass}">
+                <i class="bi ${statusIcon}"></i>
+                ${statusText}
+            </span>
+        </td>
+        <td class="date-cell">${Utils.formatDate(user.created_at)}</td>
+        <td class="text-end">
+            <button class="btn btn-sm btn-outline-danger" onclick="handleDeleteUser(${user.id}, '${escapeHtml(user.username)}')">
+                <i class="bi bi-trash"></i> Sil
+            </button>
+        </td>
+    `;
+    usersTableBody.appendChild(row);
+}
+
+// Personel Kaydet
+async function handleSaveUser() {
+    const data = {
+        username: document.getElementById('newUsername').value.trim(),
+        password: document.getElementById('newPassword').value,
+        role: document.getElementById('newRole').value
+    };
+
+    if (!data.username || !data.password || !data.role) {
+        Utils.showError('Lütfen tüm alanları doldurun.');
+        return;
+    }
+
+    saveUserBtn.disabled = true;
+    saveUserBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+
+    try {
+        await api.post('/api/users', data);
+
+        newUserModal.hide();
+        newUserForm.reset();
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Başarılı!',
+            text: 'Personel kaydı oluşturuldu.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        loadUsers();
+
+    } catch (error) {
+        console.error('Personel eklenirken hata:', error);
+        Utils.showError(typeof error === 'string' ? error : 'İşlem başarısız.');
+    } finally {
+        saveUserBtn.disabled = false;
+        saveUserBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Kaydet';
+    }
+}
+
+// Personel Sil
+window.handleDeleteUser = async function (id, username) {
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Emin misiniz?',
+        text: `${username} personeli silinecek. Bu işlem geri alınamaz!`,
+        showCancelButton: true,
+        confirmButtonText: 'Evet, Sil',
+        cancelButtonText: 'İptal',
+        confirmButtonColor: '#dc2626'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await api.delete(`/api/users/${id}`);
+            Utils.showSuccess('Personel silindi.');
+            loadUsers();
+        } catch (error) {
+            Utils.showError(typeof error === 'string' ? error : 'Silme işlemi başarısız.');
+        }
+    }
+}
+
+// Çıkış Yap
+async function handleLogout() {
+    const result = await Swal.fire({
+        icon: 'question',
+        title: 'Çıkış Yap',
+        text: 'Oturumunuzu kapatmak istediğinize emin misiniz?',
+        showCancelButton: true,
+        confirmButtonText: 'Evet, Çıkış Yap',
+        cancelButtonText: 'İptal',
+        confirmButtonColor: '#dc2626'
+    });
+
+    if (result.isConfirmed) {
+        localStorage.removeItem('platform_token');
+        localStorage.removeItem('user_type');
+        window.location.href = 'index.html';
+    }
+}
+
+// Helper: Boş durum
+function renderEmptyState() {
+    usersTableBody.innerHTML = `
+        <tr>
+            <td colspan="6">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <h5>Henüz personel bulunmuyor</h5>
+                    <p>Klinik personelini eklemek için "Yeni Personel Ekle" butonuna tıklayın.</p>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+// Helper: Hata durum
+function renderErrorState() {
+    usersTableBody.innerHTML = `
+        <tr>
+            <td colspan="6">
+                <div class="empty-state">
+                    <div class="empty-state-icon error">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <h5>Veriler yüklenemedi</h5>
+                    <button class="btn-add" onclick="loadUsers()">
+                        <i class="bi bi-arrow-clockwise"></i> Yeniden Dene
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+// XSS Koruması
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}

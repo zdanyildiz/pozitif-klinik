@@ -85,8 +85,10 @@ Pozitif Klinik, multi-tenant SaaS mimarisi üzerine kurulu bir klinik yönetim s
 Uygulama, "decoupled" (ayrık) bir frontend mimarisini benimser.
 
 - **Backend (Bu Proje):** Saf bir JSON API'dir. HTML, CSS veya JavaScript render etmez. Görevi, veri işlemek, iş mantığını uygulamak ve sonuçları JSON formatında sunmaktır.
-- **Platform Admin Paneli:** `/public/admin` klasörü altında bulunan, tamamen statik bir web uygulamasıdır. HTML, CSS ve JavaScript (Axios kütüphanesi ile) dosyalarından oluşur. Bu panel, backend ile standart API endpoint'leri üzerinden haberleşir. Bu yapı, backend ve frontend geliştirmesinin bağımsız olarak yürütülmesine olanak tanır.
-- **Klinik Frontend'leri:** Gelecekte geliştirilecek olan klinik personeli ve hasta portalları da (React, Vue, Angular veya mobil uygulama) bu backend API'sini tüketecektir.
+- **Platform Admin Paneli:** `/public/admin` klasörü altında bulunan, tamamen statik bir web uygulamasıdır. `dashboard.html` üzerinden sistem genelindeki klinikleri yönetir.
+- **Klinik Yönetim Paneli:** Klinik personelinin kendi verilerini (personel, hasta vb.) yönettiği `clinic-dashboard.html` arayüzüdür. Giriş anında kullanıcı rolüne göre otomatik yönlendirme yapılır.
+- **API İletişimi:** Her iki panel de backend ile sadece Axios üzerinden API endpoint'lerini çağırarak haberleşir. Bu yapı, backend ve frontend geliştirmesinin bağımsız olarak yürütülmesine olanak tanır.
+- **Klinik Frontend'leri:** Gelecekte geliştirilecek olan mobil uygulamalar veya hasta portalları da bu backend API'sini tüketecektir.
 
 ---
 

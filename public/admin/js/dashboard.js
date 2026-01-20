@@ -4,7 +4,9 @@
 
 // Token Kontrolü
 const token = localStorage.getItem('platform_token');
-if (!token) {
+const userType = localStorage.getItem('user_type');
+
+if (!token || userType !== 'platform_admin') {
     window.location.href = 'index.html';
 }
 
@@ -297,6 +299,7 @@ async function handleLogout() {
 
     if (result.isConfirmed) {
         localStorage.removeItem('platform_token');
+        localStorage.removeItem('user_type');
         window.location.href = 'index.html';
     }
 }

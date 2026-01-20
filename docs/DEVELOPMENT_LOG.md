@@ -154,3 +154,14 @@ PLATFORM_ADMIN_PASS=admin
 - **Yanıt Standardizasyonu:** Middleware seviyesindeki (Tenant ve Platform Admin) hata yanıtları, sistemin ana JSON anayasasına (`status, message, data`) uygun hale getirildi.
 - **Tip Güvenliği:** `config/routes.php` gibi eksik kalan dosyalara `strict_types` bildirimi eklendi.
 - **XSS Koruması:** Hata mesajlarındaki dinamik değişken gösterimleri `sprintf` ile daha güvenli bir yapıya (template-safe) taşındı.
+
+---
+
+### 13. Klinik Dashboard ve Rol Tabanlı UI Yönlendirme (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **Klinik Dashboard (`clinic-dashboard.html`):** Klinik personeli için özel, kendi çalışanlarını yönetebilecekleri basitleştirilmiş bir dashboard arayüzü oluşturuldu.
+- **Frontend Mimari Ayrışması:**
+  - Süper Admin ve Klinik Personeli için yönlendirme mantığı (`login.js`) kullanıcı tipine (`user_type`) göre dinamik hale getirildi.
+  - Sayfalar arası izinsiz geçişleri önlemek için UI seviyesinde token + rol kontrolü sıkılaştırıldı.
+- **API Veri Entegrasyonu:** `clinic-dashboard.js` üzerinden `/api/users` endpoint'i ile gerçek zamanlı veri çekme ve istatistik (Doktor/Sekreter sayısı) gösterimi sağlandı.
+- **Hata Giderme:** Frontend'in beklediği dizi formatı ile API'den gelen nesne formatı arasındaki uyumsuzluk (filter bug) giderildi.

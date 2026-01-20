@@ -5,8 +5,13 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Eğer zaten token varsa dashboard'a yönlendir
     const existingToken = localStorage.getItem('platform_token');
+    const userType = localStorage.getItem('user_type');
     if (existingToken) {
-        window.location.href = 'dashboard.html';
+        if (userType === 'platform_admin') {
+            window.location.href = 'dashboard.html';
+        } else {
+            window.location.href = 'clinic-dashboard.html';
+        }
         return;
     }
 
@@ -115,8 +120,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     timerProgressBar: true
                 });
 
-                // Dashboard'a yönlendir
-                window.location.href = 'dashboard.html';
+                if (isPlatformMode) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    window.location.href = 'clinic-dashboard.html';
+                }
             } else {
                 throw new Error(result.message || 'Giriş başarısız');
             }
