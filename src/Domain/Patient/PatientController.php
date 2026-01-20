@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Patient;
 
+use App\Core\Attributes\Route;
+use App\Core\Attributes\Group;
+use App\Core\Attributes\Middleware;
 use App\Core\BaseController;
+use App\Middleware\TenantMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Respect\Validation\Validator as v;
@@ -12,7 +16,18 @@ use Psr\Container\ContainerInterface;
 
 /**
  * PatientController - Hasta Yönetimi ve Yaşam Bulguları
+ * 
+ * Rotalar:
+ * - GET    /api/patients            - Hasta listesi
+ * - GET    /api/patients/{id}       - Hasta detayı
+ * - POST   /api/patients            - Yeni hasta
+ * - PUT    /api/patients/{id}       - Hasta güncelle
+ * - PATCH  /api/patients/{id}/archive - Hastayı arşivle
+ * - DELETE /api/patients/{id}       - Hasta sil
+ * - POST   /api/patients/{id}/vitals - Yaşam bulgusu ekle
  */
+#[Group('/api/patients')]
+#[Middleware(TenantMiddleware::class)]
 class PatientController extends BaseController
 {
     private PatientRepository $patientRepository;
@@ -31,6 +46,7 @@ class PatientController extends BaseController
     /**
      * Aktif hastaları listeler
      */
+    #[Route('GET', '')]
     public function listPatients(Request $request, Response $response): Response
     {
         $clinicId = (int) $this->getClinicId($request);
@@ -45,6 +61,7 @@ class PatientController extends BaseController
     /**
      * Hasta detayını ve son yaşam bulgularını getirir
      */
+    #[Route('GET', '/{id:[0-9]+}')]
     public function getPatient(Request $request, Response $response, array $args): Response
     {
         $clinicId = (int) $this->getClinicId($request);
@@ -66,6 +83,7 @@ class PatientController extends BaseController
     /**
      * Yeni hasta kaydı oluşturur
      */
+    #[Route('POST', '')]
     public function createPatient(Request $request, Response $response): Response
     {
         $clinicId = (int) $this->getClinicId($request);
@@ -99,6 +117,7 @@ class PatientController extends BaseController
     /**
      * Hasta bilgilerini günceller
      */
+    #[Route('PUT', '/{id:[0-9]+}')]
     public function updatePatient(Request $request, Response $response, array $args): Response
     {
         $clinicId = (int) $this->getClinicId($request);
@@ -131,6 +150,7 @@ class PatientController extends BaseController
     /**
      * Hastaya yaşam bulgusu (Vital) ekler
      */
+    #[Route('POST', '/{id:[0-9]+}/vitals')]
     public function addVital(Request $request, Response $response, array $args): Response
     {
         $clinicId = (int) $this->getClinicId($request);
@@ -164,6 +184,7 @@ class PatientController extends BaseController
     /**
      * Hastayı arşivler (status = 0)
      */
+    #[Route('PATCH', '/{id:[0-9]+}/archive')]
     public function archivePatient(Request $request, Response $response, array $args): Response
     {
         $clinicId = (int) $this->getClinicId($request);
@@ -177,6 +198,7 @@ class PatientController extends BaseController
     /**
      * Hastayı tamamen siler
      */
+    #[Route('DELETE', '/{id:[0-9]+}')]
     public function deletePatient(Request $request, Response $response, array $args): Response
     {
         $clinicId = (int) $this->getClinicId($request);

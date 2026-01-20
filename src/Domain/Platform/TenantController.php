@@ -4,11 +4,27 @@ declare(strict_types=1);
 
 namespace App\Domain\Platform;
 
+use App\Core\Attributes\Route;
+use App\Core\Attributes\Group;
+use App\Core\Attributes\Middleware;
 use App\Core\BaseController;
+use App\Middleware\PlatformAdminMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Throwable;
 
+/**
+ * TenantController - Klinik (Tenant) Yönetimi
+ * 
+ * Rotalar:
+ * - POST /admin/tenants - Yeni klinik oluştur
+ * - GET  /admin/tenants - Tüm klinikleri listele
+ * 
+ * NOT: Bu controller PlatformAdminMiddleware ile korunur.
+ * Sadece Platform (Super) Admin'ler erişebilir.
+ */
+#[Group('/admin/tenants')]
+#[Middleware(PlatformAdminMiddleware::class)]
 class TenantController extends BaseController
 {
     /**
@@ -18,6 +34,7 @@ class TenantController extends BaseController
      * @param Response $response
      * @return Response
      */
+    #[Route('POST', '')]
     public function create(Request $request, Response $response): Response
     {
         $body = $request->getParsedBody();
@@ -89,6 +106,7 @@ class TenantController extends BaseController
      * @param Response $response
      * @return Response
      */
+    #[Route('GET', '')]
     public function list(Request $request, Response $response): Response
     {
         $tenants = $this->db->fetchAll("SELECT * FROM sys_tenants ORDER BY created_at DESC");

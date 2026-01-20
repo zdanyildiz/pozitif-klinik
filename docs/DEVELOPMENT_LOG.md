@@ -86,6 +86,19 @@
 
 ---
 
+### 10. Otomatik Rota Keşfi (Auto-Discovery Routing) (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **PHP 8 Attributes:** `#[Route]`, `#[Group]` ve `#[Middleware]` attribute sınıfları oluşturuldu.
+- **RouteRegistrar Motoru:** `src/Domain` klasörünü yinelemeli olarak tarayan, Reflection ile Controller'ları analiz eden ve rotaları otomatik kaydeden motor bloğu yazıldı.
+- **Sıfır Manuel Müdahale:** `config/routes.php` dosyası tamamen temizlendi, artık sadece health check ve auto-discovery çağrısı içeriyor.
+- **Controller Dönüşümü:** Tüm Controller'lar (PatientController, UserController, AuthController, PlatformAuthController, TenantController) attribute tabanlı sisteme taşındı.
+- **Avantajlar:**
+  - Yeni modül eklerken `routes.php`'ye dokunmak gerekmiyor
+  - Rota tanımları kodun yanında yaşıyor (tek noktada yönetim)
+  - IDE otomatik tamamlama desteği
+
+---
+
 ## Bekleyen Görevler
 
 - **Hasta Modülü Geliştirmeleri:** Detaylı hasta bilgileri, geçmiş ve dosya yönetimi.

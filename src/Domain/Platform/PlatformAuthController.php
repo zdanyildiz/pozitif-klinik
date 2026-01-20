@@ -4,11 +4,22 @@ declare(strict_types=1);
 
 namespace App\Domain\Platform;
 
+use App\Core\Attributes\Route;
+use App\Core\Attributes\Group;
 use App\Core\BaseController;
 use Firebase\JWT\JWT;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
+/**
+ * PlatformAuthController - Platform (Super) Admin Kimlik Doğrulama
+ * 
+ * Rotalar:
+ * - POST /admin/login - Platform admin girişi
+ * 
+ * NOT: Bu controller public'tir, middleware gerektirmez.
+ */
+#[Group('/admin')]
 class PlatformAuthController extends BaseController
 {
     /**
@@ -18,6 +29,7 @@ class PlatformAuthController extends BaseController
      * @param Response $response
      * @return Response
      */
+    #[Route('POST', '/login')]
     public function login(Request $request, Response $response): Response
     {
         $body = $request->getParsedBody();

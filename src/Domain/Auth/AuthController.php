@@ -4,12 +4,23 @@ declare(strict_types=1);
 
 namespace App\Domain\Auth;
 
+use App\Core\Attributes\Route;
+use App\Core\Attributes\Group;
 use App\Core\BaseController;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Firebase\JWT\JWT;
 use DateTimeImmutable;
 
+/**
+ * AuthController - Klinik Kullanıcıları için Kimlik Doğrulama
+ * 
+ * Rotalar:
+ * - POST /auth/login - Kullanıcı girişi ve JWT token üretimi
+ * 
+ * NOT: Bu controller public'tir, TenantMiddleware gerektirmez.
+ */
+#[Group('/auth')]
 class AuthController extends BaseController
 {
     /**
@@ -19,6 +30,7 @@ class AuthController extends BaseController
      * @param Response $response
      * @return Response
      */
+    #[Route('POST', '/login')]
     public function login(Request $request, Response $response): Response
     {
         // 1. Request body'den verileri al

@@ -1,52 +1,47 @@
 <?php
 
-use App\Middleware\TenantMiddleware;
+/**
+ * Pozitif Klinik - Otomatik Rota Keşfi (Auto-Discovery Routing)
+ * 
+ * Bu dosya artık manuel rota tanımları içermiyor.
+ * Tüm rotalar Controller sınıflarındaki PHP 8 Attributes ile tanımlanır.
+ * 
+ * Desteklenen Attribute'lar:
+ * - #[Group('/prefix')] - Controller sınıfına URL prefix ekler
+ * - #[Middleware(Class::class)] - Sınıf/Metod seviyesinde koruma
+ * - #[Route('METHOD', '/path')] - Endpoint tanımı
+ * 
+ * @see src/Core/RouteRegistrar.php
+ * @see src/Core/Attributes/
+ */
+
 use Slim\App;
-use Slim\Routing\RouteCollectorProxy;
+use App\Core\RouteRegistrar;
 
 return function (App $app) {
-    // Health check
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 1. HEALTH CHECK - Sabit endpoint (API'nin çalıştığını doğrulamak için)
+    // ══════════════════════════════════════════════════════════════════════
     $app->get('/', function ($request, $response) {
-        $response->getBody()->write('Pozitif Klinik Backend is Running!');
-        return $response;
+        $response->getBody()->write(json_encode([
+            'success' => true,
+            'message' => 'Pozitif Klinik API',
+            'version' => '1.0.0',
+            'routing' => 'Auto-Discovery Active'
+        ], JSON_UNESCAPED_UNICODE));
+
+        return $response->withHeader('Content-Type', 'application/json');
     });
 
-    // Public routes
-    $app->post('/auth/login', \App\Domain\Auth\AuthController::class . ':login');
+    // ══════════════════════════════════════════════════════════════════════
+    // 2. OTOMATİK ROTA KEŞFİ BAŞLAT
+    // ══════════════════════════════════════════════════════════════════════
+    // RouteRegistrar, src/Domain altındaki tüm *Controller.php dosyalarını
+    // tarar ve #[Route], #[Group], #[Middleware] attribute'larını okuyarak
+    // rotaları otomatik olarak kaydeder.
+    // ══════════════════════════════════════════════════════════════════════
 
-    // Platform Admin routes
-    $app->post('/admin/login', \App\Domain\Platform\PlatformAuthController::class . ':login');
-
-    $app->group('/admin', function (RouteCollectorProxy $group) {
-        $group->post('/tenants', \App\Domain\Platform\TenantController::class . ':create');
-        $group->get('/tenants', \App\Domain\Platform\TenantController::class . ':list');
-    })->add(\App\Middleware\PlatformAdminMiddleware::class);
-
-    // API routes with TenantMiddleware
-    $app->group('/api', function (RouteCollectorProxy $group) {
-        $group->get('/test', function ($request, $response) {
-            $response->getBody()->write('API Test Route');
-            return $response;
-        });
-
-        // Patient routes
-        $group->group('/patients', function (RouteCollectorProxy $patientGroup) {
-            $patientGroup->get('', \App\Domain\Patient\PatientController::class . ':listPatients');
-            $patientGroup->get('/{id:[0-9]+}', \App\Domain\Patient\PatientController::class . ':getPatient');
-            $patientGroup->post('', \App\Domain\Patient\PatientController::class . ':createPatient');
-            $patientGroup->put('/{id:[0-9]+}', \App\Domain\Patient\PatientController::class . ':updatePatient');
-            $patientGroup->patch('/{id:[0-9]+}/archive', \App\Domain\Patient\PatientController::class . ':archivePatient');
-            $patientGroup->delete('/{id:[0-9]+}', \App\Domain\Patient\PatientController::class . ':deletePatient');
-
-            // Vitals tracking
-            $patientGroup->post('/{id:[0-9]+}/vitals', \App\Domain\Patient\PatientController::class . ':addVital');
-        });
-
-        // User Management (Sadece Klinik Yöneticileri İçin)
-        $group->group('/users', function (RouteCollectorProxy $userGroup) {
-            $userGroup->get('', \App\Domain\User\UserController::class . ':listUsers');
-            $userGroup->post('', \App\Domain\User\UserController::class . ':createUser');
-            $userGroup->delete('/{id:[0-9]+}', \App\Domain\User\UserController::class . ':deleteUser');
-        });
-    })->add(TenantMiddleware::class);
+    $registrar = new RouteRegistrar($app);
+    $registrar->register(__DIR__ . '/../src/Domain');
 };

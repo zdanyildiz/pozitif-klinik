@@ -32,7 +32,8 @@ Pozitif Klinik, multi-tenant SaaS mimarisi üzerine kurulu bir klinik yönetim s
 |    +-----------------------------------------------------------+    |
 |                                |                                    |
 |    +-----------------------------------------------------------+    |
-|    |                         ROUTING                           |    |
+|    |             ROUTING (Auto-Discovery + Attributes)         |    |
+|    |        RouteRegistrar: Controller'ları otomatik tarar     |    |
 |    +-----------------------------------------------------------+    |
 |                                |                                    |
 |    +-----------------------------------------------------------+    |
@@ -100,6 +101,52 @@ Etkili hata takibi ve sistem analizi için yapılandırılmış (structured) bir
 **Örnek Log Kaydı (var/logs/app.log):**
 ```
 [2026-01-20T14:30:00.123456+03:00] app.ERROR: Veritabanı bağlantı hatası {"code":500,"message":"SQLSTATE[HY000] [2002] Connection refused"} {"url":"/api/patients","method":"GET","ip":"127.0.0.1","trace_id":"ab123cd-45ef-67gh-89ij-klm012nop345"}
+```
+
+---
+
+## Otomatik Rota Keşfi (Auto-Discovery Routing)
+
+### Yaklaşım: PHP 8 Attributes ile Sıfır Manuel Müdahale
+
+Proje, modern PHP 8.2+ Attributes sistemini kullanarak otomatik rota keşfi yapar. `config/routes.php` dosyası artık statik rota tanımları içermez; bunun yerine `RouteRegistrar` sınıfı, `src/Domain` altındaki tüm Controller'ları otomatik tarar.
+
+**Desteklenen Attribute'lar:**
+
+| Attribute | Hedef | Açıklama |
+|-----------|-------|----------|
+| `#[Group('/prefix')]` | Sınıf | Tüm metodlar için URL prefix tanımlar |
+| `#[Middleware(Class::class)]` | Sınıf/Metod | Koruma katmanı ekler (tekrarlanabilir) |
+| `#[Route('METHOD', '/path')]` | Metod | HTTP endpoint tanımlar |
+
+**Örnek Controller:**
+```php
+#[Group('/api/patients')]
+#[Middleware(TenantMiddleware::class)]
+class PatientController extends BaseController
+{
+    #[Route('GET', '')]
+    public function listPatients(...) { ... }
+
+    #[Route('POST', '/{id}/vitals')]
+    public function addVital(...) { ... }
+}
+```
+
+**Avantajlar:**
+1. **Sıfır Manuel Müdahale:** Yeni Controller eklediğinizde `routes.php`'ye dokunmanız gerekmez.
+2. **Tek Noktada Tanım:** Rota bilgisi metodun hemen üzerinde, kodla birlikte yaşar.
+3. **IDE Desteği:** Attribute'lar IDE tarafından tanınır, otomatik tamamlama çalışır.
+4. **Reflection Gücü:** Runtime'da tüm rotalar dinamik olarak keşfedilir.
+
+**Dosya Yapısı:**
+```
+src/Core/
+├── Attributes/
+│   ├── Route.php       # Metod seviyesi rota tanımı
+│   ├── Group.php       # Sınıf seviyesi prefix
+│   └── Middleware.php  # Koruma katmanı (tekrarlanabilir)
+└── RouteRegistrar.php  # Motor: Tarama ve kayıt
 ```
 
 ---

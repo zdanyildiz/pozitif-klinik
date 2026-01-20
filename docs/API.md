@@ -6,6 +6,8 @@
 
 **Authentication:** Tüm `/api/*` ve `/admin/*` endpoint'leri (login hariç) `Bearer <token>` JWT ile korunmaktadır.
 
+**Routing:** Tüm rotalar PHP 8 Attributes (`#[Route]`, `#[Group]`, `#[Middleware]`) ile Controller sınıflarında tanımlanır ve `RouteRegistrar` tarafından otomatik keşfedilir.
+
 ---
 
 ## Standart Yanıt Formatı (Pozitif JSON Anayasası)

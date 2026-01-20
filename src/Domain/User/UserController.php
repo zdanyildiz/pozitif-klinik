@@ -4,12 +4,26 @@ declare(strict_types=1);
 
 namespace App\Domain\User;
 
+use App\Core\Attributes\Route;
+use App\Core\Attributes\Group;
+use App\Core\Attributes\Middleware;
 use App\Core\BaseController;
+use App\Middleware\TenantMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Respect\Validation\Validator as v;
 use Psr\Container\ContainerInterface;
 
+/**
+ * UserController - Klinik Personel Yönetimi
+ * 
+ * Rotalar:
+ * - GET    /api/users       - Personel listesi
+ * - POST   /api/users       - Yeni personel ekle (admin only)
+ * - DELETE /api/users/{id}  - Personel sil (admin only)
+ */
+#[Group('/api/users')]
+#[Middleware(TenantMiddleware::class)]
 class UserController extends BaseController
 {
     private UserRepository $userRepository;
@@ -23,6 +37,7 @@ class UserController extends BaseController
     /**
      * O kliniğe ait tüm personeli listeler
      */
+    #[Route('GET', '')]
     public function listUsers(Request $request, Response $response): Response
     {
         $clinicId = (int) $this->getClinicId($request);
@@ -37,6 +52,7 @@ class UserController extends BaseController
     /**
      * Yeni personel ekler
      */
+    #[Route('POST', '')]
     public function createUser(Request $request, Response $response): Response
     {
         // Yetki Kontrolü: Sadece admin silebilir
@@ -75,6 +91,7 @@ class UserController extends BaseController
     /**
      * Personeli siler
      */
+    #[Route('DELETE', '/{id:[0-9]+}')]
     public function deleteUser(Request $request, Response $response, array $args): Response
     {
         // Yetki Kontrolü: Sadece admin silebilir
