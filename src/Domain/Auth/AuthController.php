@@ -41,24 +41,26 @@ class AuthController extends BaseController
     {
         // 1. Request body'den verileri al
         $data = $request->getParsedBody();
+        $clinicCode = $data['clinic_code'] ?? '';
         $username = $data['username'] ?? '';
         $password = $data['password'] ?? '';
 
-        if (empty($username) || empty($password)) {
-            return $this->error($response, 'Kullanıcı adı ve şifre zorunludur.', 400);
+        if (empty($clinicCode) || empty($username) || empty($password)) {
+            return $this->error($response, 'Kurum kodu, kullanıcı adı ve şifre zorunludur.', 400);
         }
 
-        // 2. Kullanıcıyı ara (Global arama, repository üzerinden)
-        $user = $this->userRepository->findByUsernameGlobal($username);
+        // 2. Kullanıcıyı ara (Tenant Aware arama)
+        // Önce tenant kodu ile aktif tenant aranır, sonra o tenant altında kullanıcı aranır.
+        $user = $this->userRepository->findUserByTenantAndUsername($clinicCode, $username);
 
-        // 3. Kullanıcı bulunamazsa veya pasifse hata dön
+        // 3. Kullanıcı bulunamazsa veya pasifse hata dön (Güvenlik: Detay verme)
         if (!$user || (int) $user['is_active'] !== 1) {
-            return $this->error($response, 'Kullanıcı bulunamadı', 401);
+            return $this->error($response, 'Giriş bilgileri hatalı veya kurum pasif.', 401);
         }
 
         // 4. Şifre kontrolü
         if (!password_verify($password, $user['password_hash'])) {
-            return $this->error($response, 'Hatalı şifre', 401);
+            return $this->error($response, 'Giriş bilgileri hatalı veya kurum pasif.', 401);
         }
 
         // 5. JWT Token üret

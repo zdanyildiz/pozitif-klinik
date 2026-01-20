@@ -39,9 +39,17 @@
             </div>
 
             <form id="loginForm" autocomplete="off">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="clinic_code" name="clinic_code"
+                        placeholder="örn: pozitif" required autofocus>
+                    <label for="clinic_code">
+                        <i class="bi bi-building me-2"></i>Kurum Kodu
+                    </label>
+                </div>
+
                 <div class="form-floating">
                     <input type="text" class="form-control" id="username" name="username" placeholder="Kullanıcı Adı"
-                        required autofocus>
+                        required>
                     <label for="username">
                         <i class="bi bi-person me-2"></i>Kullanıcı Adı
                     </label>
@@ -61,6 +69,12 @@
                 <button type="submit" class="btn btn-login" id="btnLogin">
                     <span class="btn-text">Giriş Yap</span>
                 </button>
+
+                <div class="text-center mt-3">
+                    <a href="#" id="toggleLoginMode" class="text-decoration-none small">
+                        <i class="bi bi-shield-lock me-1"></i>Platform Yöneticisi Girişi
+                    </a>
+                </div>
             </form>
 
             <div class="footer-text">

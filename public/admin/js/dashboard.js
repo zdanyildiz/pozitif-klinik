@@ -33,6 +33,9 @@ function setupEventListeners() {
     // Yeni Klinik Kaydet
     saveTenantBtn.addEventListener('click', handleSaveTenant);
 
+    // Klinik Güncelle
+    document.getElementById('updateTenantBtn').addEventListener('click', handleUpdateTenant);
+
     // Çıkış Yap
     logoutBtn.addEventListener('click', handleLogout);
 }
@@ -71,6 +74,7 @@ function renderTenantRow(tenant) {
     const statusClass = isActive ? 'active' : 'inactive';
     const statusText = isActive ? 'Aktif' : 'Pasif';
     const statusIcon = isActive ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+    const adminUsername = tenant.admin_username || '';
 
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -89,9 +93,88 @@ function renderTenantRow(tenant) {
             </span>
         </td>
         <td class="date-cell">${Utils.formatDate(tenant.created_at)}</td>
+        <td class="text-end">
+            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(${tenant.id}, '${escapeHtml(tenant.name)}', '${escapeHtml(tenant.domain_prefix)}', ${isActive}, '${escapeHtml(adminUsername)}')">
+                <i class="bi bi-pencil"></i> Düzenle
+            </button>
+        </td>
     `;
     tenantsTableBody.appendChild(row);
 }
+
+// ... (renderEmptyState, renderErrorState stay same)
+
+// Edit Modal Aç
+let editModal;
+let currentEditId = null;
+
+window.openEditModal = function (id, name, domainPrefix, isActive, adminUsername) {
+    currentEditId = id;
+    document.getElementById('editClinicName').value = name;
+    document.getElementById('editClinicDomain').value = domainPrefix;
+    document.getElementById('editClinicStatus').value = isActive ? "1" : "0";
+    document.getElementById('editAdminUsername').value = adminUsername;
+    document.getElementById('editAdminPassword').value = ''; // Şifre her zaman boş gelir
+
+    if (!editModal) {
+        editModal = new bootstrap.Modal(document.getElementById('editTenantModal'));
+    }
+    editModal.show();
+}
+
+// Klinik Güncelle
+async function handleUpdateTenant() {
+    const name = document.getElementById('editClinicName').value.trim();
+    const isActive = document.getElementById('editClinicStatus').value;
+    const adminUsername = document.getElementById('editAdminUsername').value.trim();
+    const adminPassword = document.getElementById('editAdminPassword').value;
+
+    if (!name) {
+        Utils.showError('Klinik adı zorunludur.');
+        return;
+    }
+
+    if (!adminUsername) {
+        Utils.showError('Yönetici kullanıcı adı zorunludur.');
+        return;
+    }
+
+    const btn = document.getElementById('updateTenantBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Güncelleniyor...';
+
+    const payload = {
+        name: name,
+        is_active: isActive,
+        admin_username: adminUsername
+    };
+
+    if (adminPassword) {
+        payload.admin_password = adminPassword;
+    }
+
+    try {
+        await api.put(`/admin/tenants/${currentEditId}`, payload);
+
+        editModal.hide();
+        await Swal.fire({
+            icon: 'success',
+            title: 'Güncellendi',
+            text: 'Klinik bilgileri başarıyla güncellendi.',
+            timer: 1500,
+            showConfirmButton: false
+        });
+        loadTenants();
+    } catch (error) {
+        console.error('Update error:', error);
+        Utils.showError('Güncelleme sırasında bir hata oluştu.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Güncelle';
+    }
+}
+
+// ... (handleSaveTenant, handleLogout, escapeHtml stay same)
 
 // Boş durum göster
 function renderEmptyState() {

@@ -87,4 +87,49 @@ class TenantController extends BaseController
         $tenants = $this->tenantRepository->findAll();
         return $this->success($response, $tenants);
     }
+
+    /**
+     * Klinik Güncelle (İsim, Durum ve Yönetici Bilgileri)
+     */
+    #[Route('PUT', '/{id:[0-9]+}')]
+    public function update(Request $request, Response $response, array $args): Response
+    {
+        $id = (int) $args['id'];
+        $body = $request->getParsedBody();
+
+        $name = $body['name'] ?? '';
+        $isActive = isset($body['is_active']) ? (int) $body['is_active'] : 1;
+
+        // Yönetici güncelleme bilgileri (opsiyonel)
+        $adminUsername = $body['admin_username'] ?? null;
+        $adminPassword = $body['admin_password'] ?? null;
+
+        if (empty($name)) {
+            return $this->error($response, 'Klinik adı zorunludur.', 400);
+        }
+
+        // Klinik var mı?
+        $existing = $this->tenantRepository->findById($id);
+        if (!$existing) {
+            return $this->error($response, 'Klinik bulunamadı.', 404);
+        }
+
+        $tenantData = [
+            'name' => $name,
+            'is_active' => $isActive
+        ];
+
+        $adminData = [];
+        if (!empty($adminUsername)) {
+            $adminData['username'] = $adminUsername;
+        }
+        if (!empty($adminPassword)) {
+            $adminData['password'] = $adminPassword;
+        }
+
+        // Güncelle
+        $this->tenantRepository->update($id, $tenantData, $adminData);
+
+        return $this->success($response, null, 'Klinik bilgileri başarıyla güncellendi.');
+    }
 }

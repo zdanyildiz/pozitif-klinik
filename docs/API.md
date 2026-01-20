@@ -58,11 +58,12 @@ Sistem sağlık kontrolü (Health Check). Servisin ayakta olup olmadığını do
 
 ### `POST /auth/login`
 
-Klinik kullanıcısının sisteme giriş yapmasını ve JWT almasını sağlar.
+Klinik kullanıcısının sisteme giriş yapmasını ve JWT almasını sağlar. "Tenant-Aware" login işlemi yapılır; öncelikle kurum kodu ile klinik doğrulanır, ardından kullanıcı o klinikte aranır.
 
 **Payload:**
 ```json
 {
+  "clinic_code": "pozitif",
   "username": "doktor_ahmet",
   "password": "secure_password"
 }
@@ -137,6 +138,31 @@ Yeni bir klinik (tenant) oluşturur.
         "domain_prefix": "yeniklinik",
         "admin_username": "admin"
     }
+}
+```
+
+### `PUT /admin/tenants/{id}`
+
+Klinik bilgilerini ve opsiyonel olarak klinik yöneticisini günceller.
+
+**Gerekli Yetki:** Platform Admin
+
+**Payload:**
+```json
+{
+  "name": "Güncellenmiş Klinik Adı",
+  "is_active": 1,
+  "admin_username": "yeni_admin_user",  // (Opsiyonel) Değişecekse gönderilir
+  "admin_password": "yeni_password"     // (Opsiyonel) Değişecekse gönderilir
+}
+```
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+    "status": true,
+    "message": "Klinik bilgileri başarıyla güncellendi.",
+    "data": null
 }
 ```
 

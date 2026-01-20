@@ -130,12 +130,13 @@
                                 <th>Domain Prefix</th>
                                 <th>Durum</th>
                                 <th>Oluşturulma Tarihi</th>
+                                <th class="text-end">İşlemler</th>
                             </tr>
                         </thead>
                         <tbody id="tenantsTableBody">
                             <!-- Loading State -->
                             <tr id="loadingRow">
-                                <td colspan="5">
+                                <td colspan="6">
                                     <div class="loading-state">
                                         <div class="loading-spinner"></div>
                                         <p>Klinikler yükleniyor...</p>
@@ -198,6 +199,67 @@
                     <button type="button" class="btn btn-save" id="saveTenantBtn">
                         <i class="bi bi-check-lg me-1"></i>
                         Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Tenant Modal -->
+    <div class="modal fade" id="editTenantModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        Klinik Düzenle
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTenantForm">
+                        <div class="mb-3">
+                            <label class="form-label">Klinik Adı</label>
+                            <input type="text" class="form-control" id="editClinicName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Domain Prefix</label>
+                            <input type="text" class="form-control" id="editClinicDomain" readonly disabled
+                                class="bg-light">
+                            <div class="form-text">Domain prefix değiştirilemez.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Durum</label>
+                            <select class="form-select" id="editClinicStatus">
+                                <option value="1">Aktif</option>
+                                <option value="0">Pasif</option>
+                            </select>
+                        </div>
+
+                        <div class="section-divider mt-4 mb-3">
+                            <span class="text-muted small fw-bold">
+                                <i class="bi bi-person-badge me-1"></i>Yönetici Bilgileri
+                            </span>
+                            <hr class="mt-1">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Yönetici Kullanıcı Adı</label>
+                            <input type="text" class="form-control" id="editAdminUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Yeni Şifre</label>
+                            <input type="password" class="form-control" id="editAdminPassword"
+                                placeholder="Değiştirmek istemiyorsanız boş bırakın">
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-save" id="updateTenantBtn">
+                        <i class="bi bi-check-lg me-1"></i>
+                        Güncelle
                     </button>
                 </div>
             </div>

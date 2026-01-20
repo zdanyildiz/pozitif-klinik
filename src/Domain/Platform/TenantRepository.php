@@ -65,11 +65,14 @@ class TenantRepository
     }
 
     /**
-     * Tüm klinikleri listeler
+     * Tüm klinikleri listeler (Admin kullanıcısı ile birlikte)
      */
     public function findAll(): array
     {
-        $sql = "SELECT id, name, domain_prefix, created_at FROM sys_tenants ORDER BY created_at DESC";
+        $sql = "SELECT t.*, 
+                (SELECT username FROM sys_users WHERE clinic_id = t.id AND role = 'admin' LIMIT 1) as admin_username
+                FROM sys_tenants t 
+                ORDER BY t.created_at DESC";
         return $this->db->fetchAll($sql);
     }
 
@@ -81,5 +84,77 @@ class TenantRepository
         $sql = "SELECT id, name, domain_prefix FROM sys_tenants WHERE domain_prefix = ?";
         $result = $this->db->fetch($sql, [$prefix]);
         return $result ?: null;
+    }
+
+    /**
+     * ID'ye göre klinik arar
+     */
+    public function findById(int $id): ?array
+    {
+        $sql = "SELECT * FROM sys_tenants WHERE id = ?";
+        $result = $this->db->fetch($sql, [$id]);
+        return $result ?: null;
+    }
+
+    /**
+     * Klinik ve Opsiyonel Olarak Yönetici Bilgilerini Günceller
+     */
+    public function update(int $id, array $tenantData, array $adminData = []): bool
+    {
+        $connection = $this->db->getConnection();
+
+        try {
+            $connection->beginTransaction();
+
+            // 1. Klinik Bilgilerini Güncelle
+            $sqlTenant = "UPDATE sys_tenants SET name = ?, is_active = ? WHERE id = ?";
+            $stmt = $connection->prepare($sqlTenant);
+            $stmt->execute([
+                $tenantData['name'],
+                $tenantData['is_active'],
+                $id
+            ]);
+
+            // 2. Yönetici Bilgilerini Güncelle (Eğer gönderildiyse)
+            if (!empty($adminData)) {
+                // Mevcut admini bul
+                $sqlFindAdmin = "SELECT id FROM sys_users WHERE clinic_id = ? AND role = 'admin' LIMIT 1";
+                $stmtFind = $connection->prepare($sqlFindAdmin);
+                $stmtFind->execute([$id]);
+                $adminUser = $stmtFind->fetch(\PDO::FETCH_ASSOC);
+
+                if ($adminUser) {
+                    $userId = $adminUser['id'];
+                    $updates = [];
+                    $params = [];
+
+                    if (!empty($adminData['username'])) {
+                        $updates[] = "username = ?";
+                        $params[] = $adminData['username'];
+                    }
+
+                    if (!empty($adminData['password'])) {
+                        $updates[] = "password_hash = ?";
+                        $params[] = password_hash($adminData['password'], PASSWORD_BCRYPT);
+                    }
+
+                    if (!empty($updates)) {
+                        $sqlUser = "UPDATE sys_users SET " . implode(', ', $updates) . " WHERE id = ?";
+                        $params[] = $userId;
+                        $stmtUser = $connection->prepare($sqlUser);
+                        $stmtUser->execute($params);
+                    }
+                }
+            }
+
+            $connection->commit();
+            return true;
+
+        } catch (Throwable $e) {
+            if ($connection->inTransaction()) {
+                $connection->rollBack();
+            }
+            throw new Exception("Güncelleme hatası: " . $e->getMessage(), 0, $e);
+        }
     }
 }
