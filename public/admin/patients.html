@@ -255,9 +255,22 @@
                                     <option value="0-">0 RH-</option>
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="info-label">İl</label>
+                                <select class="form-select" name="province_id" id="province_id">
+                                    <option value="">İl Seçiniz</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="info-label">İlçe</label>
+                                <select class="form-select" name="district_id" id="district_id" disabled>
+                                    <option value="">Önce İl Seçiniz</option>
+                                </select>
+                            </div>
                             <div class="col-12">
-                                <label class="info-label">Adres</label>
-                                <textarea class="form-control" name="address" id="address" rows="2"></textarea>
+                                <label class="info-label">Açık Adres</label>
+                                <textarea class="form-control" name="address" id="address" rows="2"
+                                    placeholder="Mahalle, Sokak, No..."></textarea>
                             </div>
                             <div class="col-12">
                                 <label class="info-label">Notlar</label>

@@ -98,6 +98,8 @@ class PatientController extends BaseController
             ->key('gender', v::optional(v::in(['M', 'F', 'U'])))
             ->key('blood_type', v::optional(v::in(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'])))
             ->key('address', v::optional(v::stringType()))
+            ->key('province_id', v::optional(v::intVal()))
+            ->key('district_id', v::optional(v::intVal()))
             ->key('notes', v::optional(v::stringType()));
 
         try {
@@ -133,6 +135,8 @@ class PatientController extends BaseController
             ->key('gender', v::optional(v::in(['M', 'F', 'U'])))
             ->key('blood_type', v::optional(v::in(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'])))
             ->key('address', v::optional(v::stringType()))
+            ->key('province_id', v::optional(v::intVal()))
+            ->key('district_id', v::optional(v::intVal()))
             ->key('notes', v::optional(v::stringType()));
 
         try {

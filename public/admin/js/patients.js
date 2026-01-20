@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('userRole').textContent = 'Yetkili';
 
     loadPatients();
+    loadProvinces();
     setupEventListeners();
 });
 
@@ -65,6 +66,11 @@ function setupEventListeners() {
 
     // Çıkış Yap
     logoutBtn.addEventListener('click', handleLogout);
+
+    // İl Değiştiğinde İlçeleri Getir
+    document.getElementById('province_id').addEventListener('change', (e) => {
+        loadDistricts(e.target.value);
+    });
 }
 
 // Hastaları API'den Yükle
@@ -79,6 +85,55 @@ async function loadPatients() {
         console.error('Hastalar yüklenirken hata:', error);
         Utils.showError('Hasta listesi yüklenemedi.');
         renderErrorState();
+    }
+}
+
+// İlleri API'den Yükle
+async function loadProvinces() {
+    try {
+        const response = await api.get('/api/general/provinces');
+        const provinces = response.data || [];
+        const provinceSelect = document.getElementById('province_id');
+
+        provinceSelect.innerHTML = '<option value="">İl Seçiniz</option>';
+        provinces.forEach(p => {
+            provinceSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        });
+    } catch (error) {
+        console.error('İller yüklenirken hata:', error);
+    }
+}
+
+// İlçeleri API'den Yükle
+async function loadDistricts(provinceId, selectedDistrictId = null) {
+    const districtSelect = document.getElementById('district_id');
+
+    if (!provinceId) {
+        districtSelect.innerHTML = '<option value="">Önce İl Seçiniz</option>';
+        districtSelect.disabled = true;
+        return;
+    }
+
+    try {
+        districtSelect.disabled = true;
+        districtSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+
+        const response = await api.get(`/api/general/districts?province_id=${provinceId}`);
+        const districts = response.data || [];
+
+        districtSelect.innerHTML = '<option value="">İlçe Seçiniz</option>';
+        districts.forEach(d => {
+            districtSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+        });
+
+        districtSelect.disabled = false;
+
+        if (selectedDistrictId) {
+            districtSelect.value = selectedDistrictId;
+        }
+    } catch (error) {
+        console.error('İlçeler yüklenirken hata:', error);
+        districtSelect.innerHTML = '<option value="">Hata!</option>';
     }
 }
 
@@ -195,6 +250,13 @@ window.editPatient = function (id) {
     document.getElementById('birth_date').value = patient.birth_date || '';
     document.getElementById('gender').value = patient.gender || 'U';
     document.getElementById('blood_type').value = patient.blood_type || '';
+    document.getElementById('province_id').value = patient.province_id || '';
+    if (patient.province_id) {
+        loadDistricts(patient.province_id, patient.district_id);
+    } else {
+        document.getElementById('district_id').innerHTML = '<option value="">Önce İl Seçiniz</option>';
+        document.getElementById('district_id').disabled = true;
+    }
     document.getElementById('address').value = patient.address || '';
     document.getElementById('notes').value = patient.notes || '';
 
@@ -215,7 +277,14 @@ window.showPatientDetails = async function (id) {
         document.getElementById('detailPhone').textContent = patient.phone;
         document.getElementById('detailBirth').textContent = patient.birth_date || '-';
         document.getElementById('detailBlood').textContent = patient.blood_type || '-';
-        document.getElementById('detailAddress').textContent = patient.address || 'Adres bilgisi yok.';
+
+        const fullAddress = [
+            patient.address,
+            patient.district_name,
+            patient.province_name
+        ].filter(Boolean).join(', ');
+
+        document.getElementById('detailAddress').textContent = fullAddress || 'Adres bilgisi yok.';
         document.getElementById('detailNotes').textContent = patient.notes || 'Not bulunmuyor.';
 
         const genderMap = { 'M': 'Erkek', 'F': 'Kadın', 'U': 'Bilinmiyor' };

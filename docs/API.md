@@ -199,6 +199,21 @@ Sistemdeki tüm klinikleri listeler.
 
 ---
 
+## Domain API (Genel / Yardımcı İşlemler)
+
+Tüm klinik kullanıcıları tarafından erişilebilen yardımcı endpoint'ler.
+
+### `GET /api/general/provinces`
+Tüm illeri isim sırasına göre listeler.
+
+### `GET /api/general/districts`
+Belirli bir ile ait ilçeleri listeler.
+
+**Query Params:**
+- `province_id` (int): İlin plakası veya ID'si.
+
+---
+
 ## Domain API (Hasta Yönetimi)
 
 Bu endpoint'ler klinik bazlı veri izolasyonu (Multi-Tenancy) sağlar. `clinic_id` JWT token'dan otomatik alınır.
@@ -219,10 +234,14 @@ Yeni hasta kaydı oluşturur.
   "birth_date": "1990-01-01",
   "gender": "M",
   "blood_type": "A+",
-  "address": "İstanbul, Türkiye",
+  "province_id": 34,
+  "district_id": 3423,
+  "address": "Kadıköy, İstanbul",
   "notes": "Alerjisi var"
 }
 ```
+
+**Güvenlik Notu:** `name`, `tc_no`, `phone`, `email` ve `address` alanları veritabanında AES-256-GCM ile şifrelenmiş olarak tutulmaktadır. Arama işlemleri bu alanların HMAC-SHA256 hash'leri (Blind Index) üzerinden yapılır.
 
 ### `GET /api/patients/{id}`
 Hasta detayını ve son 5 yaşam bulgusu geçmişini (`vitals_history`) getirir.

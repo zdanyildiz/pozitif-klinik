@@ -29,15 +29,13 @@ class ServiceRepository
 
     public function create(int $clinicId, array $data): int
     {
-        $sql = "INSERT INTO cln_services (clinic_id, name, code, standard_price, tax_rate, is_active) 
-                VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO cln_services (clinic_id, name, price, is_active) 
+                VALUES (?, ?, ?, ?)";
 
         $this->db->query($sql, [
             $clinicId,
             $data['name'],
-            $data['code'] ?? null,
-            $data['standard_price'] ?? 0,
-            $data['tax_rate'] ?? 20,
+            $data['price'] ?? 0,
             $data['is_active'] ?? 1
         ]);
 
@@ -48,17 +46,13 @@ class ServiceRepository
     {
         $sql = "UPDATE cln_services SET 
                     name = ?, 
-                    code = ?, 
-                    standard_price = ?, 
-                    tax_rate = ?, 
+                    price = ?, 
                     is_active = ? 
                 WHERE clinic_id = ? AND id = ?";
 
         $this->db->query($sql, [
             $data['name'],
-            $data['code'] ?? null,
-            $data['standard_price'] ?? 0,
-            $data['tax_rate'] ?? 20,
+            $data['price'] ?? 0,
             $data['is_active'] ?? 1,
             $clinicId,
             $serviceId

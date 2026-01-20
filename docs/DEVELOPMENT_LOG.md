@@ -189,7 +189,14 @@ PLATFORM_ADMIN_PASS=admin
 - **Adisyon Altyapısı (Appointment Items):** Randevulara birden fazla hizmet/işlem eklenebilen ve toplam tutar hesaplayan yapı kuruldu.
 - **Otomatik Fiyatlandırma:** Randevu türünde (muayene vb.) varsayılan fiyat tanımlanmışsa, randevu oluşturulunca otomatik adisyon kalemi açılması sağlandı.
 - **Modern Detay Modalı:** Randevular tablosunda tıklanan randevu için sekmeli (Genel Bilgiler / Hizmetler) detay arayüzü geliştirildi.
-- **Veritabanı Birleştirme:** Tüm güncel şema `migration/database/schema.sql` dosyasında konsolide edildi.
+---
+
+### 17. Veritabanı ve Dokümantasyon Konsolidasyonu (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **Şema Birleştirme:** `schema_full.sql` dosyası, tüm tablo yapılarını ve lokasyon verilerini (81 il/ilçe) içerecek şekilde `schema.sql` dosyasına aktarıldı.
+- **Migration Temizliği:** Redundant (gereksiz) hale gelen `schema_full.sql` dosyası silindi.
+- **API Dokümantasyonu:** `/api/general` endpoint'leri ve hasta verilerindeki lokasyon/güvenlik detayları `API.md` dosyasına işlendi.
+- **Git Entegrasyonu:** Tüm mimari değişiklikler versiyon kontrol sistemine commit edildi.
 
 ---
 
