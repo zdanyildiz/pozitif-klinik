@@ -165,6 +165,35 @@ class AppointmentController extends BaseController
         return $this->success($response, ['id' => $id], 'Randevu türü oluşturuldu.', 201);
     }
 
+    #[Route('PUT', '/types/{id:[0-9]+}')]
+    public function updateType(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $typeId = (int) $args['id'];
+        $data = $request->getParsedBody();
+
+        if (empty($data['name'])) {
+            return $this->error($response, 'Tür adı gereklidir.', 400);
+        }
+
+        $this->repository->updateType($clinicId, $typeId, $data);
+        return $this->success($response, null, 'Randevu türü güncellendi.');
+    }
+
+    #[Route('DELETE', '/types/{id:[0-9]+}')]
+    public function deleteType(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $typeId = (int) $args['id'];
+
+        try {
+            $this->repository->deleteType($clinicId, $typeId);
+            return $this->success($response, null, 'Randevu türü silindi.');
+        } catch (\Exception $e) {
+            return $this->error($response, 'Bu tür silinemez, kullanımda olabilir.', 400);
+        }
+    }
+
     #[Route('GET', '/stats/today')]
     public function getStats(Request $request, Response $response): Response
     {

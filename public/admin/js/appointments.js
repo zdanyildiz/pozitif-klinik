@@ -12,6 +12,7 @@ let detailModal;
 let appointmentModal;
 let typeModal;
 let currentAppointmentId = null;
+let currentTypeId = null; // Düzenleme için tür ID'si
 let patientTomSelect = null;
 let doctorTomSelect = null;
 
@@ -305,6 +306,14 @@ function renderTypeList() {
                     <small class="text-muted">${t.duration_minutes}dk - ${parseFloat(t.default_price).toFixed(2)}₺</small>
                 </div>
             </div>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-warning btn-sm" onclick="editType(${t.id})" title="Düzenle">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="deleteType(${t.id})" title="Sil">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
         `;
         list.appendChild(item);
     });
@@ -519,14 +528,72 @@ async function handleSaveType(e) {
     const fd = new FormData(e.target);
     const data = Object.fromEntries(fd);
 
+    const isEdit = !!currentTypeId;
+
     try {
-        await api.post('/api/appointments/types', data);
-        e.target.reset();
+        if (isEdit) {
+            await api.put(`/api/appointments/types/${currentTypeId}`, data);
+            Utils.showSuccess('Tür güncellendi');
+        } else {
+            await api.post('/api/appointments/types', data);
+            Utils.showSuccess('Tür eklendi');
+        }
+        resetTypeForm();
         loadTypes();
-        Utils.showSuccess('Tür eklendi');
-    } catch (e) {
-        Utils.showError('Tür eklenemedi');
+    } catch (err) {
+        Utils.showError(isEdit ? 'Tür güncellenemedi' : 'Tür eklenemedi');
     }
+}
+
+function editType(id) {
+    const type = appointmentTypes.find(t => t.id === id);
+    if (!type) return;
+
+    currentTypeId = id;
+
+    const form = document.getElementById('typeForm');
+    form.querySelector('[name="name"]').value = type.name;
+    form.querySelector('[name="color_code"]').value = type.color_code;
+    form.querySelector('[name="duration_minutes"]').value = type.duration_minutes;
+    form.querySelector('[name="default_price"]').value = type.default_price;
+
+    // Buton metnini güncelle ve İptal butonunu göster
+    form.querySelector('button[type="submit"]').textContent = 'Türü Güncelle';
+    const cancelBtn = document.getElementById('btnCancelTypeEdit');
+    if (cancelBtn) cancelBtn.style.display = 'block';
+}
+
+async function deleteType(id) {
+    const res = await Swal.fire({
+        title: 'Emin misiniz?',
+        text: 'Bu randevu türü silinecek',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sil',
+        cancelButtonText: 'İptal'
+    });
+
+    if (res.isConfirmed) {
+        try {
+            await api.delete(`/api/appointments/types/${id}`);
+            Utils.showSuccess('Tür silindi');
+            loadTypes();
+        } catch (err) {
+            Utils.showError('Tür silinemedi (kullanımda olabilir)');
+        }
+    }
+}
+
+function resetTypeForm() {
+    currentTypeId = null;
+    const form = document.getElementById('typeForm');
+    form.reset();
+    form.querySelector('[name="color_code"]').value = '#3788d8';
+    form.querySelector('[name="duration_minutes"]').value = '30';
+    form.querySelector('[name="default_price"]').value = '0';
+    form.querySelector('button[type="submit"]').textContent = 'Yeni Tür Ekle';
+    const cancelBtn = document.getElementById('btnCancelTypeEdit');
+    if (cancelBtn) cancelBtn.style.display = 'none';
 }
 
 async function refreshDetail() {
@@ -564,3 +631,6 @@ function resetAppointmentForm() {
 
 window.viewDetail = viewDetail;
 window.removeBillingItem = removeBillingItem;
+window.editType = editType;
+window.deleteType = deleteType;
+window.resetTypeForm = resetTypeForm;
