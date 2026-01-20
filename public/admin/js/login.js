@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
-        const clinicCode = clinicInput.value.trim();
+        const clinicCode = clinicInput.value.trim().toLowerCase();
 
         // Validasyon
         if (isPlatformMode) {

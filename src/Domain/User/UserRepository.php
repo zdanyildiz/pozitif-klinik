@@ -43,15 +43,18 @@ class UserRepository
      * Tenant ve Kullanıcı adına göre kullanıcıyı bulur (Tenant-Aware Login)
      * Önce tenant'ın aktifliğini kontrol eder, sonra kullanıcıyı sorgular.
      */
-    public function findUserByTenantAndUsername(string $clinicCode, string $username): ?array
+    public function findUserByTenantAndUsername(string $clinicCode, string $username): array
     {
         // 1. Önce Tenant (Klinik) kontrolü
         $sqlTenant = "SELECT id, is_active FROM sys_tenants WHERE domain_prefix = ?";
         $tenant = $this->db->fetch($sqlTenant, [$clinicCode]);
 
-        // Klinik yoksa veya pasifse null dön
-        if (!$tenant || (int) $tenant['is_active'] !== 1) {
-            return null;
+        if (!$tenant) {
+            return ['status' => 'error', 'reason' => 'tenant_not_found'];
+        }
+
+        if ((int) $tenant['is_active'] !== 1) {
+            return ['status' => 'error', 'reason' => 'tenant_inactive'];
         }
 
         // 2. Kullanıcıyı sorgula (Tenant ID ile)
@@ -61,7 +64,11 @@ class UserRepository
 
         $user = $this->db->fetch($sqlUser, [$tenant['id'], $username]);
 
-        return $user ?: null;
+        if (!$user) {
+            return ['status' => 'error', 'reason' => 'user_not_found'];
+        }
+
+        return ['status' => 'success', 'user' => $user];
     }
 
     /**

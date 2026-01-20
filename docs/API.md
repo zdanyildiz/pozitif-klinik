@@ -80,6 +80,14 @@ Klinik kullanıcısının sisteme giriş yapmasını ve JWT almasını sağlar. 
 }
 ```
 
+**Hata Yanıtları (401 Unauthorized):**
+Giriş başarısız olduğunda dönen `message` alanı sorunun kaynağını belirtir:
+- "Girdiğiniz Kurum Kodu sisteme kayıtlı değil."
+- "Kurum hesabı pasif durumda."
+- "Bu kurumda belirtilen kullanıcı adı bulunamadı."
+- "Girilen şifre hatalı."
+- "Kullanıcı hesabı pasif durumda."
+
 ---
 
 ## Platform API (Admin)

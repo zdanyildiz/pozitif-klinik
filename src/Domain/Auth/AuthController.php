@@ -26,11 +26,19 @@ use Psr\Container\ContainerInterface;
 class AuthController extends BaseController
 {
     private UserRepository $userRepository;
+    private \App\Domain\Platform\TenantRepository $tenantRepository;
+    private \Psr\Log\LoggerInterface $logger;
 
-    public function __construct(ContainerInterface $container, UserRepository $userRepository)
-    {
+    public function __construct(
+        ContainerInterface $container,
+        UserRepository $userRepository,
+        \App\Domain\Platform\TenantRepository $tenantRepository,
+        \Psr\Log\LoggerInterface $logger
+    ) {
         parent::__construct($container);
         $this->userRepository = $userRepository;
+        $this->tenantRepository = $tenantRepository;
+        $this->logger = $logger;
     }
 
     /**
@@ -41,32 +49,63 @@ class AuthController extends BaseController
     {
         // 1. Request body'den verileri al
         $data = $request->getParsedBody();
-        $clinicCode = $data['clinic_code'] ?? '';
+        $rawClinicCode = $data['clinic_code'] ?? '';
+        $clinicCode = strtolower((string) $rawClinicCode);
         $username = $data['username'] ?? '';
         $password = $data['password'] ?? '';
 
+        $this->logger->info("[AuthController] Login attempt", [
+            'raw_clinic' => $rawClinicCode,
+            'clinic_code' => $clinicCode,
+            'username' => $username
+        ]);
+
         if (empty($clinicCode) || empty($username) || empty($password)) {
+            $this->logger->warning("[AuthController] Missing credentials");
             return $this->error($response, 'Kurum kodu, kullanıcı adı ve şifre zorunludur.', 400);
         }
 
         // 2. Kullanıcıyı ara (Tenant Aware arama)
-        // Önce tenant kodu ile aktif tenant aranır, sonra o tenant altında kullanıcı aranır.
-        $user = $this->userRepository->findUserByTenantAndUsername($clinicCode, $username);
+        $result = $this->userRepository->findUserByTenantAndUsername($clinicCode, $username);
 
-        // 3. Kullanıcı bulunamazsa veya pasifse hata dön (Güvenlik: Detay verme)
-        if (!$user || (int) $user['is_active'] !== 1) {
-            return $this->error($response, 'Giriş bilgileri hatalı veya kurum pasif.', 401);
+        if ($result['status'] === 'error') {
+            $reason = $result['reason'];
+
+            $this->logger->warning("[AuthController] Login failed", [
+                'reason' => $reason,
+                'clinic_code' => $clinicCode,
+                'username' => $username
+            ]);
+
+            $message = match ($reason) {
+                'tenant_not_found' => 'Girdiğiniz Kurum Kodu sisteme kayıtlı değil.',
+                'tenant_inactive' => 'Kurum hesabı pasif durumda. Yönetici ile iletişime geçin.',
+                'user_not_found' => 'Bu kurumda belirtilen kullanıcı adı bulunamadı.',
+                default => 'Giriş bilgileri hatalı.'
+            };
+
+            return $this->error($response, $message, 401);
+        }
+
+        $user = $result['user'];
+
+        // 3. Kullanıcı pasif kontrolü
+        if ((int) $user['is_active'] !== 1) {
+            $this->logger->warning("[AuthController] User inactive", ['username' => $username]);
+            return $this->error($response, 'Kullanıcı hesabı pasif durumda.', 401);
         }
 
         // 4. Şifre kontrolü
         if (!password_verify($password, $user['password_hash'])) {
-            return $this->error($response, 'Giriş bilgileri hatalı veya kurum pasif.', 401);
+            $this->logger->warning("[AuthController] Password mismatch", ['username' => $username]);
+            return $this->error($response, 'Girilen şifre hatalı.', 401);
         }
 
         // 5. JWT Token üret
         $secretKey = $_ENV['JWT_SECRET'] ?? '';
 
         if (empty($secretKey)) {
+            $this->logger->critical("[AuthController] JWT Secret missing");
             return $this->error($response, 'Sunucu yapılandırma hatası (JWT Secret eksik).', 500);
         }
 
@@ -83,10 +122,38 @@ class AuthController extends BaseController
         try {
             $token = JWT::encode($payload, $secretKey, 'HS256');
         } catch (\Exception $e) {
+            $this->logger->error("[AuthController] Token generation failed: " . $e->getMessage());
             return $this->error($response, 'Token oluşturulamadı: ' . $e->getMessage(), 500);
         }
 
+        $this->logger->info("[AuthController] Login successful", ['username' => $username, 'clinic_id' => $user['clinic_id']]);
+
         // 6. Başarılı yanıt
         return $this->success($response, ['token' => $token], 'Giriş başarılı');
+    }
+
+    /**
+     * DEBUG ENDPOINT - GEÇİCİ
+     */
+    #[Route('GET', '/debug/{code}')]
+    public function debug(Request $request, Response $response, array $args): Response
+    {
+        $code = $args['code'];
+
+        // Repository kullanarak sorgula (SQL YOK)
+        $tenant = $this->tenantRepository->findByDomain($code);
+
+        $result = [
+            'searched_code' => $code,
+            'tenant_found' => (bool) $tenant,
+            'tenant' => $tenant,
+            'users' => []
+        ];
+
+        if ($tenant) {
+            $result['users'] = $this->userRepository->findAll($tenant['id']);
+        }
+
+        return $this->success($response, $result);
     }
 }
