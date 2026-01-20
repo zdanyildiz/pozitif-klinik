@@ -81,8 +81,8 @@ class PatientRepository
     {
         $sql = "INSERT INTO ptn_cards (
                     clinic_id, tc_no, tc_no_hash, name, name_hash, phone, phone_hash, 
-                    email, birth_date, gender, address, province_id, district_id, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
+                    email, birth_date, gender, blood_type, address, province_id, district_id, notes, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
 
         $this->db->query($sql, [
             $clinicId,
@@ -95,9 +95,11 @@ class PatientRepository
             $this->crypto->encryptSafe($data['email'] ?? null),
             $data['birth_date'] ?? null,
             $data['gender'] ?? 'U',
+            $data['blood_type'] ?? null,
             $this->crypto->encryptSafe($data['address'] ?? null),
             $data['province_id'] ?? null,
-            $data['district_id'] ?? null
+            $data['district_id'] ?? null,
+            $this->crypto->encryptSafe($data['notes'] ?? null)
         ]);
 
         return (int) $this->db->getConnection()->lastInsertId();
@@ -112,8 +114,8 @@ class PatientRepository
                     tc_no = ?, tc_no_hash = ?, 
                     name = ?, name_hash = ?, 
                     phone = ?, phone_hash = ?, 
-                    email = ?, birth_date = ?, gender = ?, 
-                    address = ?, province_id = ?, district_id = ?
+                    email = ?, birth_date = ?, gender = ?, blood_type = ?,
+                    address = ?, province_id = ?, district_id = ?, notes = ?
                 WHERE clinic_id = ? AND id = ?";
 
         $this->db->query($sql, [
@@ -126,9 +128,11 @@ class PatientRepository
             $this->crypto->encryptSafe($data['email'] ?? null),
             $data['birth_date'] ?? null,
             $data['gender'] ?? 'U',
+            $data['blood_type'] ?? null,
             $this->crypto->encryptSafe($data['address'] ?? null),
             $data['province_id'] ?? null,
             $data['district_id'] ?? null,
+            $this->crypto->encryptSafe($data['notes'] ?? null),
             $clinicId,
             $patientId
         ]);
@@ -158,7 +162,7 @@ class PatientRepository
      */
     private function decryptPatientData(array $patient): array
     {
-        $fields = ['tc_no', 'name', 'phone', 'email', 'address'];
+        $fields = ['tc_no', 'name', 'phone', 'email', 'address', 'notes'];
         foreach ($fields as $field) {
             if (!empty($patient[$field])) {
                 $decrypted = $this->crypto->decrypt($patient[$field]);

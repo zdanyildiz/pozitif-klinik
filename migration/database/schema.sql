@@ -1,148 +1,242 @@
--- Pozitif Klinik Full Schema
--- Includes Locations, Services, Patients, Appointments and Security
+-- Pozitif Klinik Master Schema
+-- Bu dosya tüm modülleri bir araya getirir.
+-- Modüler dosyalar migration/database/modules/ altındadır.
 
--- Foreign Key kontrollerini geçici olarak kapatıyoruz (Tabloları rahat silebiliriz)
 SET FOREIGN_KEY_CHECKS = 0;
 
-CREATE DATABASE IF NOT EXISTS `pozitif_klinik` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `pozitif_klinik`;
+-- ==========================================
+-- 1. SYSTEM MODULE (sys_)
+-- ==========================================
+-- Provinces, Districts, Tenants, Users, PlatformAdmins, SMS Logs
 
--- 1. Lokasyon Tabloları
-DROP TABLE IF EXISTS sys_provinces;
-CREATE TABLE sys_provinces (
-    id INT UNSIGNED PRIMARY KEY,
-    name VARCHAR(50) NOT NULL
+CREATE TABLE IF NOT EXISTS `sys_provinces` (
+  `id` int(10) unsigned NOT NULL,
+  `name` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS sys_districts;
-CREATE TABLE sys_districts (
-    id INT UNSIGNED PRIMARY KEY,
-    province_id INT UNSIGNED NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    FOREIGN KEY (province_id) REFERENCES sys_provinces(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS `sys_districts` (
+  `id` int(10) unsigned NOT NULL,
+  `province_id` int(10) unsigned NOT NULL,
+  `name` varchar(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `province_id` (`province_id`),
+  CONSTRAINT `sys_districts_ibfk_1` FOREIGN KEY (`province_id`) REFERENCES `sys_provinces` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. Tenancy & Users
-CREATE TABLE IF NOT EXISTS sys_tenants (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    domain_prefix VARCHAR(50) NOT NULL UNIQUE,
-    name VARCHAR(100) NOT NULL,
-    logo_url VARCHAR(255),
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS `sys_tenants` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `domain_prefix` varchar(50) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `logo_url` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `domain_prefix` (`domain_prefix`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS sys_users (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    clinic_id BIGINT UNSIGNED NOT NULL,
-    username VARCHAR(50) NOT NULL,
-    name VARCHAR(100) NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'doctor', 'secretary') NOT NULL,
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE RESTRICT,
-    UNIQUE KEY unique_user_per_clinic (clinic_id, username)
+CREATE TABLE IF NOT EXISTS `sys_users` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `role` enum('admin','doctor','secretary') NOT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_per_clinic` (`clinic_id`,`username`),
+  CONSTRAINT `sys_users_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Hizmet Kataloğu
-DROP TABLE IF EXISTS cln_services;
-CREATE TABLE cln_services (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    clinic_id BIGINT UNSIGNED NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    price DECIMAL(10,2) DEFAULT 0.00,
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS `sys_platform_admins` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. Randevu Türleri
-DROP TABLE IF EXISTS cln_appointment_types;
-CREATE TABLE cln_appointment_types (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    clinic_id BIGINT UNSIGNED NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    color_code VARCHAR(10) DEFAULT '#3788d8',
-    duration_minutes INT DEFAULT 30,
-    default_price DECIMAL(10,2) DEFAULT 0.00,
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS `sys_sms_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `phone` varchar(20) NOT NULL,
+  `message` text NOT NULL,
+  `provider_response` text DEFAULT NULL,
+  `status` enum('pending','sent','failed') DEFAULT 'pending',
+  `sent_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `clinic_id` (`clinic_id`),
+  CONSTRAINT `sys_sms_logs_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. Hasta Kartları (Şifreli PII ve Lokasyon)
-DROP TABLE IF EXISTS ptn_cards;
-CREATE TABLE ptn_cards (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    clinic_id BIGINT UNSIGNED NOT NULL,
-    tc_no VARCHAR(255) NOT NULL,
-    tc_no_hash VARCHAR(64) NULL,
-    name VARCHAR(255) NOT NULL,
-    name_hash VARCHAR(64) NULL,
-    phone VARCHAR(255) NOT NULL,
-    phone_hash VARCHAR(64) NULL,
-    email VARCHAR(255) NULL,
-    birth_date DATE NULL,
-    gender ENUM('M', 'F', 'U') DEFAULT 'U',
-    address TEXT NULL,
-    province_id INT UNSIGNED NULL,
-    district_id INT UNSIGNED NULL,
-    status TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id),
-    FOREIGN KEY (province_id) REFERENCES sys_provinces(id),
-    FOREIGN KEY (district_id) REFERENCES sys_districts(id),
-    INDEX idx_tc_hash (clinic_id, tc_no_hash),
-    INDEX idx_name_hash (clinic_id, name_hash),
-    INDEX idx_phone_hash (clinic_id, phone_hash)
+-- ==========================================
+-- 2. PATIENT MODULE (ptn_)
+-- ==========================================
+-- Patient Cards, Vitals, KVKK Consents
+
+CREATE TABLE IF NOT EXISTS `ptn_cards` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `tc_no` varchar(255) NOT NULL,
+  `tc_no_hash` varchar(64) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `name_hash` varchar(64) DEFAULT NULL,
+  `phone` varchar(255) NOT NULL,
+  `phone_hash` varchar(64) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `birth_date` date DEFAULT NULL,
+  `gender` enum('M','F','U') DEFAULT 'U',
+  `blood_type` varchar(10) DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `province_id` int(10) unsigned DEFAULT NULL,
+  `district_id` int(10) unsigned DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `status` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `province_id` (`province_id`),
+  KEY `district_id` (`district_id`),
+  KEY `idx_tc_hash` (`clinic_id`,`tc_no_hash`),
+  KEY `idx_name_hash` (`clinic_id`,`name_hash`),
+  KEY `idx_phone_hash` (`clinic_id`,`phone_hash`),
+  CONSTRAINT `ptn_cards_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`),
+  CONSTRAINT `ptn_cards_ibfk_2` FOREIGN KEY (`province_id`) REFERENCES `sys_provinces` (`id`),
+  CONSTRAINT `ptn_cards_ibfk_3` FOREIGN KEY (`district_id`) REFERENCES `sys_districts` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 6. Randevular
-DROP TABLE IF EXISTS cln_appointments;
-CREATE TABLE cln_appointments (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    clinic_id BIGINT UNSIGNED NOT NULL,
-    patient_id BIGINT UNSIGNED NOT NULL,
-    doctor_id BIGINT UNSIGNED NULL,
-    type_id BIGINT UNSIGNED NOT NULL,
-    appointment_date DATETIME NOT NULL,
-    status ENUM('pending', 'confirmed', 'waiting', 'completed', 'cancelled') DEFAULT 'pending',
-    notes TEXT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE CASCADE,
-    FOREIGN KEY (patient_id) REFERENCES ptn_cards(id) ON DELETE CASCADE,
-    FOREIGN KEY (doctor_id) REFERENCES sys_users(id) ON DELETE SET NULL,
-    FOREIGN KEY (type_id) REFERENCES cln_appointment_types (id)
+CREATE TABLE IF NOT EXISTS `ptn_vitals` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `patient_id` bigint(20) unsigned NOT NULL,
+  `height` smallint(5) unsigned DEFAULT NULL,
+  `weight` decimal(5,2) DEFAULT NULL,
+  `systolic_bp` smallint(5) unsigned DEFAULT NULL,
+  `diastolic_bp` smallint(5) unsigned DEFAULT NULL,
+  `heart_rate` smallint(5) unsigned DEFAULT NULL,
+  `measured_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `clinic_id` (`clinic_id`),
+  KEY `patient_id` (`patient_id`),
+  CONSTRAINT `ptn_vitals_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ptn_vitals_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `ptn_cards` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. Randevu Kalemleri
-DROP TABLE IF EXISTS cln_appointment_items;
-CREATE TABLE cln_appointment_items (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    clinic_id BIGINT UNSIGNED NOT NULL,
-    appointment_id BIGINT UNSIGNED NOT NULL,
-    service_id BIGINT UNSIGNED NULL,
-    item_name VARCHAR(255) NOT NULL,
-    quantity INT DEFAULT 1,
-    unit_price DECIMAL(10,2) NOT NULL,
-    total_price DECIMAL(10,2) NOT NULL,
-    performer_id BIGINT UNSIGNED NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE CASCADE,
-    FOREIGN KEY (appointment_id) REFERENCES cln_appointments(id) ON DELETE CASCADE,
-    FOREIGN KEY (service_id) REFERENCES cln_services(id) ON DELETE SET NULL,
-    FOREIGN KEY (performer_id) REFERENCES sys_users(id) ON DELETE SET NULL
+CREATE TABLE IF NOT EXISTS `ptn_kvkk_consents` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `patient_id` bigint(20) unsigned NOT NULL,
+  `otp_code` varchar(6) NOT NULL,
+  `otp_expires_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_verified` tinyint(1) DEFAULT 0,
+  `verified_at` timestamp NULL DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `clinic_id` (`clinic_id`),
+  KEY `patient_id` (`patient_id`),
+  CONSTRAINT `ptn_kvkk_consents_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`),
+  CONSTRAINT `ptn_kvkk_consents_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `ptn_cards` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Foreign Key kontrollerini geri açıyoruz
+-- ==========================================
+-- 3. CLINIC MODULE (cln_)
+-- ==========================================
+-- Services, Appt Types, Appointments, Appt Items, Examinations
+
+CREATE TABLE IF NOT EXISTS `cln_services` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `price` decimal(10,2) DEFAULT 0.00,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `clinic_id` (`clinic_id`),
+  CONSTRAINT `cln_services_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `cln_appointment_types` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `color_code` varchar(10) DEFAULT '#3788d8',
+  `duration_minutes` int(11) DEFAULT 30,
+  `default_price` decimal(10,2) DEFAULT 0.00,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `clinic_id` (`clinic_id`),
+  CONSTRAINT `cln_appointment_types_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `cln_appointments` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `patient_id` bigint(20) unsigned NOT NULL,
+  `doctor_id` bigint(20) unsigned DEFAULT NULL,
+  `type_id` bigint(20) unsigned NOT NULL,
+  `appointment_date` datetime NOT NULL,
+  `status` enum('pending','confirmed','waiting','completed','cancelled') DEFAULT 'pending',
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `clinic_id` (`clinic_id`),
+  KEY `patient_id` (`patient_id`),
+  KEY `doctor_id` (`doctor_id`),
+  KEY `type_id` (`type_id`),
+  CONSTRAINT `cln_appointments_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cln_appointments_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `ptn_cards` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cln_appointments_ibfk_3` FOREIGN KEY (`doctor_id`) REFERENCES `sys_users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `cln_appointments_ibfk_4` FOREIGN KEY (`type_id`) REFERENCES `cln_appointment_types` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `cln_appointment_items` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `appointment_id` bigint(20) unsigned NOT NULL,
+  `service_id` bigint(20) unsigned DEFAULT NULL,
+  `item_name` varchar(255) NOT NULL,
+  `quantity` int(11) DEFAULT 1,
+  `unit_price` decimal(10,2) NOT NULL,
+  `total_price` decimal(10,2) NOT NULL,
+  `performer_id` bigint(20) unsigned DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `clinic_id` (`clinic_id`),
+  KEY `appointment_id` (`appointment_id`),
+  KEY `service_id` (`service_id`),
+  KEY `performer_id` (`performer_id`),
+  CONSTRAINT `cln_appointment_items_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cln_appointment_items_ibfk_2` FOREIGN KEY (`appointment_id`) REFERENCES `cln_appointments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cln_appointment_items_ibfk_3` FOREIGN KEY (`service_id`) REFERENCES `cln_services` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `cln_appointment_items_ibfk_4` FOREIGN KEY (`performer_id`) REFERENCES `sys_users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `cln_examinations` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `patient_id` bigint(20) unsigned NOT NULL,
+  `doctor_user_id` bigint(20) unsigned NOT NULL,
+  `anamnez` text DEFAULT NULL,
+  `bulgular` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `clinic_id` (`clinic_id`),
+  KEY `patient_id` (`patient_id`),
+  KEY `doctor_user_id` (`doctor_user_id`),
+  CONSTRAINT `cln_examinations_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`),
+  CONSTRAINT `cln_examinations_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `ptn_cards` (`id`),
+  CONSTRAINT `cln_examinations_ibfk_3` FOREIGN KEY (`doctor_user_id`) REFERENCES `sys_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ==========================================
--- DATA SEEDING
+-- SEED DATA (Lokasyon)
 -- ==========================================
 
--- Provinces
 INSERT IGNORE INTO sys_provinces (id, name) VALUES 
 (1, 'Adana'), (2, 'Adıyaman'), (3, 'Afyonkarahisar'), (4, 'Ağrı'), (5, 'Amasya'), (6, 'Ankara'), (7, 'Antalya'), (8, 'Artvin'), 
 (9, 'Aydın'), (10, 'Balıkesir'), (11, 'Bilecik'), (12, 'Bingöl'), (13, 'Bitlis'), (14, 'Bolu'), (15, 'Burdur'), (16, 'Bursa'), 
@@ -155,9 +249,7 @@ INSERT IGNORE INTO sys_provinces (id, name) VALUES
 (65, 'Van'), (66, 'Yozgat'), (67, 'Zonguldak'), (68, 'Aksaray'), (69, 'Bayburt'), (70, 'Karaman'), (71, 'Kırıkkale'), (72, 'Batman'), 
 (73, 'Şırnak'), (74, 'Bartın'), (75, 'Ardahan'), (76, 'Iğdır'), (77, 'Yalova'), (78, 'Karabük'), (79, 'Kilis'), (80, 'Osmaniye'), (81, 'Düzce');
 
--- Districts (Examples for Istanbul, Ankara, Izmir)
 INSERT IGNORE INTO sys_districts (id, province_id, name) VALUES 
--- Istanbul (34)
 (3401, 34, 'Adalar'), (3402, 34, 'Arnavutköy'), (3403, 34, 'Ataşehir'), (3404, 34, 'Avcılar'), (3405, 34, 'Bağcılar'), 
 (3406, 34, 'Bahçelievler'), (3407, 34, 'Bakırköy'), (3408, 34, 'Başakşehir'), (3409, 34, 'Bayrampaşa'), (3410, 34, 'Beşiktaş'), 
 (3411, 34, 'Beykoz'), (3412, 34, 'Beylikdüzü'), (3413, 34, 'Beyoğlu'), (3414, 34, 'Büyükçekmece'), (3415, 34, 'Çatalca'), 
@@ -166,13 +258,11 @@ INSERT IGNORE INTO sys_districts (id, province_id, name) VALUES
 (3426, 34, 'Küçükçekmece'), (3427, 34, 'Maltepe'), (3428, 34, 'Pendik'), (3429, 34, 'Sancaktepe'), (3430, 34, 'Sarıyer'), 
 (3431, 34, 'Silivri'), (3432, 34, 'Sultanbeyli'), (3433, 34, 'Sultangazi'), (3434, 34, 'Şile'), (3435, 34, 'Şişli'), 
 (3436, 34, 'Tuzla'), (3437, 34, 'Ümraniye'), (3438, 34, 'Üsküdar'), (3439, 34, 'Zeytinburnu'),
--- Ankara (6)
 (0601, 6, 'Altındağ'), (0602, 6, 'Ayaş'), (0603, 6, 'Bala'), (0604, 6, 'Beypazarı'), (0605, 6, 'Çamlıdere'), 
 (0606, 6, 'Çankaya'), (0607, 6, 'Çubuk'), (0608, 6, 'Elmadağ'), (0609, 6, 'Etimesgut'), (0610, 6, 'Evren'), 
 (0611, 6, 'Gölbaşı'), (0612, 6, 'Güdül'), (0613, 6, 'Haymana'), (0614, 6, 'Kahramankazan'), (0615, 6, 'Kalecik'), 
 (0616, 6, 'Keçiören'), (0617, 6, 'Kızılcahamam'), (0618, 6, 'Mamak'), (0619, 6, 'Nallıhan'), (0620, 6, 'Polatlı'), 
 (0621, 6, 'Pursaklar'), (0622, 6, 'Şereflikoçhisar'), (0623, 6, 'Sincan'), (0624, 6, 'Yenimahalle'),
--- Izmir (35)
 (3501, 35, 'Aliağa'), (3502, 35, 'Balçova'), (3503, 35, 'Bayındır'), (3504, 35, 'Bayraklı'), (3505, 35, 'Bergama'), 
 (3506, 35, 'Beydağ'), (3507, 35, 'Bornova'), (3508, 35, 'Buca'), (3509, 35, 'Çeşme'), (3510, 35, 'Çiğli'), 
 (3511, 35, 'Dikili'), (3512, 35, 'Foça'), (3513, 35, 'Gaziemir'), (3514, 35, 'Güzelbahçe'), (3515, 35, 'Karabağlar'), 
