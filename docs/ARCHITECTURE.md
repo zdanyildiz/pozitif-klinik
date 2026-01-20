@@ -176,12 +176,18 @@ Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını payl
    - Sistem **Stateless (Durumsuz)** mimaride olduğu ve oturum bilgisi Cookie yerine `localStorage` (Bearer Token) içinde tutulduğu için, klasik **CSRF (Cross-Site Request Forgery)** saldırılarına karşı mimari olarak korumalıdır. Bu nedenle CSRF Token kullanılmaz.
    - Bunun yerine, güvenliği sağlamak için **Strict CORS (Sıkı Köken Politikası)** ve **XSS (Cross-Site Scripting)** korumalarına odaklanılır. Production ortamında `Access-Control-Allow-Origin` sadece izin verilen domainlere açılır.
 7.  **Sıfır Hardcoded Sır Politikası**: Kod içinde hiçbir şekilde API key, JWT secret veya veritabanı şifresi (fallback olarak bile) bulundurulamaz. Tüm hassas veriler sadece `.env` dosyasından okunmalıdır. Aksi durum denetimlerde kritik hata olarak işaretlenir.
-8.  **Kriptografi ve Veri Şifreleme:**
-    - **Algoritma:** AES-256-GCM (OpenSSL) kullanılır. Bu algoritma hem gizlilik hem de bütünlük sağlar.
-    - **Şifreli Alanlar:** Hasta hassas verileri (TC Kimlik, Telefon, Email, Adres) veritabanında şifrelenmiş olarak saklanır.
-    - **Anahtar Yönetimi:** `APP_KEY` environment değişkeni olarak 64 karakterlik hex string (32 byte) tutulur.
-    - **Blind Index:** Şifreli verilerde arama yapabilmek için HMAC-SHA256 tabanlı blind index hash'leri kullanılır (`tc_no_hash`, `phone_hash`).
-    - **CryptoService:** `src/Core/Security/CryptoService.php` sınıfı `encrypt()`, `decrypt()` ve `blindIndex()` metodları sunar.
+8.  **Kriptografi ve Veri Şifreleme (Privacy by Design):**
+    - **Depolama (AES-256-GCM):** Hasta hassas verileri (Ad Soyad, TC No, Telefon, Email, Adres) veritabanında AES-256-GCM algoritması ile şifrelenmiş olarak saklanır.
+        - **IV (Initialization Vector):** Her şifreleme işlemi için benzersiz bir IV üretilir. Bu sayede aynı veri (örn. aynı isimli iki hasta) veritabanında tamamen farklı şifreli metinler olarak görünür.
+        - **Bütünlük:** GCM modu, verinin şifrelendikten sonra değiştirilmediğini garanti eden bir "Authentication Tag" kullanır.
+        - **Geri Döndürülebilirlik:** Şifrelenmiş veriler, `CryptoService::decrypt()` metodu kullanılarak her zaman orijinal haline geri döndürülebilir.
+    - **Arama (Blind Index - HMAC-SHA256):** AES şifreleme her seferinde farklı sonuç (IV nedeniyle) ürettiği için veritabanı seviyesinde `WHERE name = '...'` gibi aramalar yapılamaz. Bu sorunu çözmek için "Blind Index" pattern'i uygulanır:
+        - **Çalışma Mantığı:** Hassas verinin (örn. TC No) HMAC-SHA256 hash'i alınır ve ayrı bir kolonda (`tc_no_hash`) saklanır.
+        - **Sabit Sonuç:** Aynı girdi (örn. aynı TC No) her zaman aynı hash sonucunu verir.
+        - **Güvenli Arama:** Veritabanında arama yapılmak istendiğinde, aranan kelimenin hash'i alınır ve `WHERE tc_no_hash = '...'` sorgusu ile çok hızlı ve güvenli bir şekilde sonuç bulunur.
+        - **Tek Yönlü Koruma:** Hash'ten orijinal veriye (TC No'nun kendisine) geri ulaşılamaz. Veritabanı çalınsa bile saldırgan gerçek kimlik bilgilerini elde edemez.
+    - **Anahtar Yönetimi:** `APP_KEY` environment değişkeni (64 karakter hex) hem AES şifrelemesi hem de HMAC hash üretimi için ana bileşendir.
+    - **CryptoService:** `src/Core/Security/CryptoService.php` tüm bu karmaşıklığı soyutlayarak `encrypt()`, `decrypt()` ve `blindIndex()` metodlarını sunar. Repo katmanı bu metodları kullanarak şifreleme/çözme işlemlerini şeffaf bir şekilde yönetir.
 
 
 ## Yazılım Kalite Standartları

@@ -170,12 +170,12 @@ PLATFORM_ADMIN_PASS=admin
 
 ### 14. Kriptografi ve Hasta Veri Güvenliği (✅ Tamamlandı)
 **Tarih:** 2026-01-20
-- **AES-256-GCM Şifreleme:** Hasta hassas verileri (TC, Telefon, Email, Adres) veritabanında şifrelenmiş olarak saklanıyor.
-- **CryptoService:** `src/Core/Security/CryptoService.php` sınıfı `encrypt()`, `decrypt()` ve `blindIndex()` metodları ile güvenli veri yönetimi sağlıyor.
-- **Blind Index Arama:** TC ve Telefon numaralarında arama yapabilmek için HMAC-SHA256 hash tabanlı blind index sistemi kuruldu.
-- **Otomatik Şifreleme/Çözme:** `PatientRepository` create/update işlemlerinde otomatik şifreleme, read işlemlerinde otomatik çözme yapıyor.
-- **Migration:** `schema.sql` güncellenerek şifreli alanlar için VARCHAR(255) ve hash index sütunları eklendi.
-- **Container Entegrasyonu:** `CryptoService` DI container'a eklendi, `APP_KEY` environment bağımlılığı kuruldu.
+- **AES-256-GCM Şifreleme:** Hasta hassas verileri (Ad Soyad, TC No, Telefon, Email, Adres) veritabanında AES-256-GCM ile şifrelenmiş olarak saklanıyor. Bu sayede fiziksel veritabanı çalınsa dahi anahtar olmadan hasta bilgilerine ulaşılamaz.
+- **CryptoService:** `src/Core/Security/CryptoService.php` sınıfı `encrypt()`, `decrypt()` ve `blindIndex()` metodları ile tüm kriptografik işlemleri merkezi olarak yönetir.
+- **Blind Index Arama:** Şifreli veriler (IV nedeniyle) doğrudan aranamadığı için, arama yapılması gereken kolonlar (Ad Soyad, TC No, Telefon) için HMAC-SHA256 tabanlı "Blind Index" hash sistemi kuruldu.
+- **Tam KVKK Uyumu:** Sağlık bilgileri ile hasta kimliğinin açık metin olarak eşleşmesi engellendi. Gözlem ve notlar dışındaki tüm kimlik verileri şifrelendi.
+- **Repo Entegrasyonu:** `PatientRepository` ve `AppointmentRepository` (JOIN'lerde) otomatik şifreleme ve çözme yapacak şekilde revize edildi.
+- **Migration:** `schema.sql` güncellenerek tüm kimlik kolonları `VARCHAR(255)` yapıldı ve hash index sütunları eklendi.
 
 ---
 
