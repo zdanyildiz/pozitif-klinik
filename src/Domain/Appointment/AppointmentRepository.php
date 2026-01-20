@@ -162,6 +162,27 @@ class AppointmentRepository
         return true;
     }
 
+    public function updateAppointment(int $clinicId, int $appointmentId, array $data): bool
+    {
+        $sql = "UPDATE cln_appointments SET 
+                    doctor_id = ?,
+                    type_id = ?,
+                    appointment_date = ?,
+                    notes = ?
+                WHERE clinic_id = ? AND id = ?";
+
+        $this->db->query($sql, [
+            $data['doctor_id'] ?? null,
+            $data['type_id'],
+            $data['appointment_date'],
+            $data['notes'] ?? null,
+            $clinicId,
+            $appointmentId
+        ]);
+
+        return true;
+    }
+
     public function listDailyAppointments(int $clinicId, string $date): array
     {
         $sql = "SELECT 

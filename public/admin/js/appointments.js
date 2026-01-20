@@ -132,7 +132,7 @@ async function loadPatients() {
 
 async function loadDoctors() {
     const res = await api.get('/api/users');
-    doctors = (res.data.users || []).filter(u => u.role === 'doctor' || u.role === 'admin');
+    doctors = (res.data.users || []).filter(u => u.role === 'doctor');
     renderDoctorOptions();
 
     // Tom Select Başlat
@@ -216,11 +216,23 @@ function renderAppointments() {
         // Actions Column
         const tdActions = document.createElement('td');
         tdActions.className = 'text-end';
+
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'btn-group';
+
+        const btnEdit = document.createElement('button');
+        btnEdit.className = 'btn btn-sm btn-outline-warning';
+        btnEdit.innerHTML = '<i class="bi bi-pencil"></i>';
+        btnEdit.onclick = (e) => editAppointment(app.id, e);
+        btnGroup.appendChild(btnEdit);
+
         const btnView = document.createElement('button');
         btnView.className = 'btn btn-sm btn-outline-primary';
         btnView.innerHTML = '<i class="bi bi-eye"></i>';
         btnView.onclick = (e) => viewDetail(app.id, e);
-        tdActions.appendChild(btnView);
+        btnGroup.appendChild(btnView);
+
+        tdActions.appendChild(btnGroup);
         row.appendChild(tdActions);
 
         row.onclick = (e) => viewDetail(app.id, e);
@@ -309,14 +321,59 @@ async function handleSaveAppointment() {
 
     data.appointment_date = `${data.date} ${data.time}:00`;
 
+    // Validasyon
+    if (!data.patient_id) { Utils.showError('Hasta seçiniz'); return; }
+    if (!data.type_id) { Utils.showError('Randevu türü seçiniz'); return; }
+    if (!data.date || !data.time) { Utils.showError('Tarih ve saat seçiniz'); return; }
+
+    const isEdit = !!currentAppointmentId;
+
     try {
-        await api.post('/api/appointments', data);
+        if (isEdit) {
+            await api.put(`/api/appointments/${currentAppointmentId}`, data);
+            Utils.showSuccess('Randevu güncellendi');
+        } else {
+            await api.post('/api/appointments', data);
+            Utils.showSuccess('Randevu oluşturuldu');
+        }
+
         appointmentModal.hide();
         loadAppointments();
         loadStats();
-        Utils.showSuccess('Randevu oluşturuldu');
     } catch (e) {
-        Utils.showError(typeof e === 'string' ? e : 'Randevu oluşturulamadı');
+        Utils.showError(typeof e === 'string' ? e : 'İşlem başarısız');
+    }
+}
+
+async function editAppointment(id, e) {
+    if (e) e.stopPropagation();
+    currentAppointmentId = id;
+
+    try {
+        const res = await api.get(`/api/appointments/${id}`);
+        const app = res.data;
+
+        // Modal Başlığını Güncelle
+        document.querySelector('#appointmentModal .modal-title').textContent = 'Randevu Düzenle';
+        document.getElementById('saveAppointmentBtn').textContent = 'Güncelle';
+
+        // Formu Doldur
+        if (patientTomSelect) {
+            patientTomSelect.setValue(app.patient_id);
+            // patientTomSelect.disable(); // İsteğe bağlı
+        }
+
+        document.getElementById('typeSelect').value = app.type_id;
+        if (doctorTomSelect) doctorTomSelect.setValue(app.doctor_id);
+
+        const [date, time] = app.appointment_date.split(' ');
+        document.getElementById('appDate').value = date;
+        document.getElementById('appTime').value = time.substring(0, 5);
+        document.getElementById('appNotes').value = app.notes || '';
+
+        appointmentModal.show();
+    } catch (e) {
+        Utils.showError('Randevu bilgileri alınamadı');
     }
 }
 
@@ -490,9 +547,16 @@ function escapeHtml(text) {
 }
 
 function resetAppointmentForm() {
+    currentAppointmentId = null;
+    document.querySelector('#appointmentModal .modal-title').textContent = 'Yeni Randevu Oluştur';
+    document.getElementById('saveAppointmentBtn').textContent = 'Oluştur';
+
     const f = document.getElementById('appointmentForm');
     f.reset();
-    if (patientTomSelect) patientTomSelect.clear();
+    if (patientTomSelect) {
+        patientTomSelect.clear();
+        patientTomSelect.enable();
+    }
     if (doctorTomSelect) doctorTomSelect.clear();
     document.getElementById('appDate').value = document.getElementById('filterDate').value;
     document.getElementById('appTime').value = new Date().toTimeString().substring(0, 5);

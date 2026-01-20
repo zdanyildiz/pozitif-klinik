@@ -92,6 +92,21 @@ class AppointmentController extends BaseController
         return $this->success($response, null, 'Randevu durumu güncellendi.');
     }
 
+    #[Route('PUT', '/{id:[0-9]+}')]
+    public function update(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $appointmentId = (int) $args['id'];
+        $data = $request->getParsedBody();
+
+        if (empty($data['type_id']) || empty($data['appointment_date'])) {
+            return $this->error($response, 'Eksik bilgi: Tür ve Tarih zorunludur.', 400);
+        }
+
+        $this->repository->updateAppointment($clinicId, $appointmentId, $data);
+        return $this->success($response, null, 'Randevu güncellendi.');
+    }
+
     // ==========================================
     // ADİSYON (ITEM) İŞLEMLERİ
     // ==========================================

@@ -13,6 +13,10 @@
     --bg-light: #f8fafc;
     --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --transition-base: all 0.3s ease;
+
+    /* From appointments.css */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.4);
 }
 
 * {
@@ -63,6 +67,16 @@ body {
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-close-sidebar {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    position: absolute;
+    right: 20px;
+    top: 35px;
+    cursor: pointer;
 }
 
 .sidebar-logo-icon i {
@@ -185,6 +199,34 @@ body {
     transition: var(--transition-base);
     position: relative;
     overflow: hidden;
+    /* Enable horizontal layout for generic cards */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Compact Side-by-Side Layout for Cards with Icons */
+.stat-card:has(.stat-icon) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 20px;
+    align-items: center;
+    padding: 20px;
+}
+
+.stat-card:has(.stat-icon) .stat-icon {
+    grid-row: 1 / -1;
+    margin-bottom: 0;
+}
+
+.stat-card:has(.stat-icon) .stat-value {
+    align-self: end;
+    margin-bottom: 0;
+}
+
+.stat-card:has(.stat-icon) .stat-label {
+    align-self: start;
 }
 
 .stat-card::before {
@@ -242,6 +284,24 @@ body {
 .stat-label {
     font-size: 0.9rem;
     color: var(--text-secondary);
+}
+
+/* Colored Stat Cards Support */
+.stat-card.bg-gradient-primary,
+.stat-card.bg-gradient-success {
+    border: none;
+}
+
+.stat-card.bg-gradient-primary .stat-value,
+.stat-card.bg-gradient-primary .stat-label,
+.stat-card.bg-gradient-success .stat-value,
+.stat-card.bg-gradient-success .stat-label {
+    color: white !important;
+}
+
+.stat-card.bg-gradient-primary .stat-label,
+.stat-card.bg-gradient-success .stat-label {
+    opacity: 0.9;
 }
 
 /* Table Card */
@@ -576,5 +636,45 @@ body {
 
     .content-area {
         padding: 20px;
+    }
+
+    .navbar-title {
+        font-size: 1.1rem;
+        /* Allow wrapping or truncation if very long, but primarily smaller size fixes most issues */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+
+    /* Compact Logout Button for Mobile */
+    .btn-logout {
+        padding: 8px;
+        width: 36px;
+        height: 36px;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .btn-logout span,
+    .btn-logout::after {
+        /* Hide text content if any exists (button text is usually direct text node) */
+        display: none;
+    }
+
+    /* Hide the text node directly by making font-size 0 but keeping icon visible */
+    .btn-logout {
+        font-size: 0;
+    }
+
+    .btn-logout i {
+        font-size: 1.2rem;
+    }
+
+    /* Better spacing for stats grid on mobile */
+    .stats-grid {
+        grid-template-columns: 1fr;
+        /* Stack vertically on small screens */
+        gap: 24px;
     }
 }

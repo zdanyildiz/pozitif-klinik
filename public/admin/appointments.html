@@ -24,28 +24,8 @@
 
 <body>
     <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <a href="clinic-dashboard.html" class="sidebar-logo">
-                <div class="sidebar-logo-icon"><i class="bi bi-hospital"></i></div>
-                <div class="sidebar-logo-text">Pozitif<span>Klinik Yönetimi</span></div>
-            </a>
-        </div>
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="nav-section-title">Hizmetler</div>
-                <a href="patients.html" class="nav-link-custom"><i class="bi bi-person-heart"></i>Hastalar</a>
-                <a href="appointments.html" class="nav-link-custom active"><i
-                        class="bi bi-calendar-check"></i>Randevular</a>
-                <a href="clinic-dashboard.html" class="nav-link-custom"><i class="bi bi-people"></i>Personel</a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Kurumsal</div>
-                <a href="#" class="nav-link-custom"><i class="bi bi-gear"></i>Hizmet Tanımları</a>
-                <a href="#" class="nav-link-custom"><i class="bi bi-shield-check"></i>Güvenlik Ayarları</a>
-            </div>
-        </nav>
-    </aside>
+    <!-- Sidebar -->
+    <aside class="sidebar"></aside>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -64,18 +44,15 @@
 
         <div class="content-area">
             <!-- Stats -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="stat-card bg-gradient-primary">
-                        <div class="stat-value" id="todayCount">0</div>
-                        <div class="stat-label">Bugünkü Randevu</div>
-                    </div>
+            <!-- Stats -->
+            <div class="stats-grid mb-4">
+                <div class="stat-card bg-gradient-primary">
+                    <div class="stat-value" id="todayCount">0</div>
+                    <div class="stat-label">Bugünkü Randevu</div>
                 </div>
-                <div class="col-md-3">
-                    <div class="stat-card bg-gradient-success">
-                        <div class="stat-value" id="pendingCount">0</div>
-                        <div class="stat-label">Bekleyen İşlem</div>
-                    </div>
+                <div class="stat-card bg-gradient-success">
+                    <div class="stat-value" id="pendingCount">0</div>
+                    <div class="stat-label">Bekleyen İşlem</div>
                 </div>
             </div>
 
@@ -317,6 +294,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script src="js/config.js?v=4"></script>
+    <script src="js/sidebar.js?v=1"></script>
     <script src="js/appointments.js?v=4"></script>
 </body>
 

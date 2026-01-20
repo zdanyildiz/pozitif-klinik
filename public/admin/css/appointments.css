@@ -1,8 +1,4 @@
 /* appointments.css */
-:root {
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.4);
-}
 
 .appointment-status-pending {
     background: #f8f9fa;
@@ -127,9 +123,26 @@
     background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
 }
 
-.w-180 { width: 180px; }
-.w-100p { width: 100px; }
-.w-160p { width: 160px; }
-.w-120p { width: 120px; }
-.w-80p { width: 80px; }
-.w-50p { width: 50px; }
+.w-180 {
+    width: 180px;
+}
+
+.w-100p {
+    width: 100px;
+}
+
+.w-160p {
+    width: 160px;
+}
+
+.w-120p {
+    width: 120px;
+}
+
+.w-80p {
+    width: 80px;
+}
+
+.w-50p {
+    width: 50px;
+}
