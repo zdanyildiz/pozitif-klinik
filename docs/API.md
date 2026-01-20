@@ -144,3 +144,53 @@ Sistemdeki tüm klinikleri listeler.
     ]
 }
 ```
+
+---
+
+## Domain API (Hasta Yönetimi)
+
+Bu endpoint'ler klinik bazlı veri izolasyonu (Multi-Tenancy) sağlar. `clinic_id` JWT token'dan otomatik alınır.
+
+### `GET /api/patients`
+Aktif hastaları listeler (`status = 1`).
+
+### `POST /api/patients`
+Yeni hasta kaydı oluşturur.
+
+**Payload:**
+```json
+{
+  "name": "Ali Veli",
+  "tc_no": "12345678901",
+  "phone": "05551234567",
+  "email": "ali@example.com",
+  "birth_date": "1990-01-01",
+  "gender": "M",
+  "blood_type": "A+",
+  "address": "İstanbul, Türkiye",
+  "notes": "Alerjisi var"
+}
+```
+
+### `GET /api/patients/{id}`
+Hasta detayını ve son 5 yaşam bulgusu geçmişini (`vitals_history`) getirir.
+
+### `PUT /api/patients/{id}`
+Hasta bilgilerini günceller.
+
+### `PATCH /api/patients/{id}/archive`
+Hastayı arşivler (`status = 0`).
+
+### `POST /api/patients/{id}/vitals`
+Hastaya yaşam bulgusu (ölçüm) ekler.
+
+**Payload:**
+```json
+{
+  "height": 180,
+  "weight": 75.5,
+  "systolic_bp": 120,
+  "diastolic_bp": 80,
+  "heart_rate": 72
+}
+```

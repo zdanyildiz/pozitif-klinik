@@ -66,6 +66,17 @@
 
 ---
 
+### 8. Hasta ve Yaşam Bulguları (Vitals) Modülü (✅ Tamamlandı)
+**Tarih:** 2026-01-20
+- **Detaylı Hasta Kartı:** `ptn_cards` tablosu genişletilerek doğum tarihi, cinsiyet, kan grubu, adres ve notlar alanları eklendi.
+- **Vitals Takibi:** `ptn_vitals` tablosu ile hastaların boy, kilo, tansiyon ve nabız değerlerinin zaman damgalı takibi sağlandı.
+- **Repository Pattern:** `PatientRepository` ve `PatientVitalsRepository` ile veri erişim mantığı ayrıştırıldı.
+- **API Endpointleri:** Hasta listeleme, detay (vitals geçmişi ile), oluşturma, güncelleme, arşivleme ve yeni ölçüm ekleme endpoint'leri tamamlandı.
+- **Validation:** `Respect/Validation` ile tüm giriş verileri (TC No, Email, Enumlar vb.) sıkı bir şekilde doğrulandı.
+- **Migration:** Mevcut veritabanları için `20260120_add_patient_details_and_vitals.sql` migration dosyası hazırlandı.
+
+---
+
 ## Bekleyen Görevler
 
 - **Hasta Modülü Geliştirmeleri:** Detaylı hasta bilgileri, geçmiş ve dosya yönetimi.

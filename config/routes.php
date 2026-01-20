@@ -35,7 +35,11 @@ return function (App $app) {
             $patientGroup->get('/{id:[0-9]+}', \App\Domain\Patient\PatientController::class . ':getPatient');
             $patientGroup->post('', \App\Domain\Patient\PatientController::class . ':createPatient');
             $patientGroup->put('/{id:[0-9]+}', \App\Domain\Patient\PatientController::class . ':updatePatient');
+            $patientGroup->patch('/{id:[0-9]+}/archive', \App\Domain\Patient\PatientController::class . ':archivePatient');
             $patientGroup->delete('/{id:[0-9]+}', \App\Domain\Patient\PatientController::class . ':deletePatient');
+
+            // Vitals tracking
+            $patientGroup->post('/{id:[0-9]+}/vitals', \App\Domain\Patient\PatientController::class . ':addVital');
         });
     })->add(TenantMiddleware::class);
 };

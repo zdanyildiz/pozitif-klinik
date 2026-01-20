@@ -8,53 +8,182 @@ use App\Core\BaseController;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Respect\Validation\Validator as v;
+use Psr\Container\ContainerInterface;
 
+/**
+ * PatientController - Hasta Yönetimi ve Yaşam Bulguları
+ */
 class PatientController extends BaseController
 {
+    private PatientRepository $patientRepository;
+    private PatientVitalsRepository $vitalsRepository;
+
+    public function __construct(
+        ContainerInterface $container,
+        PatientRepository $patientRepository,
+        PatientVitalsRepository $vitalsRepository
+    ) {
+        parent::__construct($container);
+        $this->patientRepository = $patientRepository;
+        $this->vitalsRepository = $vitalsRepository;
+    }
+
+    /**
+     * Aktif hastaları listeler
+     */
     public function listPatients(Request $request, Response $response): Response
     {
-        // Placeholder
-        return $this->success($response, ['message' => 'List of patients']);
+        $clinicId = (int) $this->getClinicId($request);
+        $patients = $this->patientRepository->findAll($clinicId);
+
+        return $this->success($response, [
+            'count' => count($patients),
+            'patients' => $patients
+        ]);
     }
 
+    /**
+     * Hasta detayını ve son yaşam bulgularını getirir
+     */
     public function getPatient(Request $request, Response $response, array $args): Response
     {
+        $clinicId = (int) $this->getClinicId($request);
         $patientId = (int) $args['id'];
-        // Placeholder
-        return $this->success($response, ['message' => "Details of patient $patientId"]);
+
+        $patient = $this->patientRepository->findById($clinicId, $patientId);
+
+        if (!$patient) {
+            return $this->notFoundResponse($response, 'Hasta bulunamadı');
+        }
+
+        // Opsiyonel: Son 5 yaşam bulgusunu (vitals) yanıta ekle
+        $vitalsHistory = $this->vitalsRepository->getHistory($clinicId, $patientId, 5);
+        $patient['vitals_history'] = $vitalsHistory;
+
+        return $this->success($response, $patient);
     }
 
+    /**
+     * Yeni hasta kaydı oluşturur
+     */
     public function createPatient(Request $request, Response $response): Response
     {
+        $clinicId = (int) $this->getClinicId($request);
         $data = $request->getParsedBody();
 
-        $validator = v::key('first_name', v::stringType()->length(2, 100))
-            ->key('last_name', v::stringType()->length(2, 100))
-            ->key('email', v::email())
-            ->key('phone', v::oneOf(v::nullType(), v::phone()));
+        // Validasyon Kuralları
+        $validator = v::key('name', v::stringType()->length(3))
+            ->key('tc_no', v::digit()->length(11, 11))
+            ->key('phone', v::stringType())
+            ->key('email', v::optional(v::email()))
+            ->key('birth_date', v::optional(v::date()))
+            ->key('gender', v::optional(v::in(['M', 'F', 'U'])))
+            ->key('blood_type', v::optional(v::in(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'])))
+            ->key('address', v::optional(v::stringType()))
+            ->key('notes', v::optional(v::stringType()));
 
         try {
             $validator->assert($data);
-            // Placeholder for creation logic
-            return $this->createdResponse($response, ['message' => 'Patient created successfully']);
-        } catch (\Respect\Validation\Exceptions\NestedValidationException $exception) {
-            return $this->validationErrorResponse($response, $exception->getMessages());
+
+            $patientId = $this->patientRepository->create($clinicId, $data);
+
+            return $this->createdResponse($response, [
+                'id' => $patientId
+            ], 'Hasta başarıyla oluşturuldu');
+
+        } catch (\Respect\Validation\Exceptions\NestedValidationException $e) {
+            return $this->validationErrorResponse($response, $e->getMessages());
         }
     }
 
+    /**
+     * Hasta bilgilerini günceller
+     */
     public function updatePatient(Request $request, Response $response, array $args): Response
     {
+        $clinicId = (int) $this->getClinicId($request);
         $patientId = (int) $args['id'];
         $data = $request->getParsedBody();
 
-        // Placeholder for update logic
-        return $this->success($response, ['message' => "Patient $patientId updated successfully"]);
+        // Aynı validasyon kuralları geçerli
+        $validator = v::key('name', v::stringType()->length(3))
+            ->key('tc_no', v::digit()->length(11, 11))
+            ->key('phone', v::stringType())
+            ->key('email', v::optional(v::email()))
+            ->key('birth_date', v::optional(v::date()))
+            ->key('gender', v::optional(v::in(['M', 'F', 'U'])))
+            ->key('blood_type', v::optional(v::in(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'])))
+            ->key('address', v::optional(v::stringType()))
+            ->key('notes', v::optional(v::stringType()));
+
+        try {
+            $validator->assert($data);
+
+            $this->patientRepository->update($clinicId, $patientId, $data);
+
+            return $this->success($response, null, 'Hasta bilgileri güncellendi');
+
+        } catch (\Respect\Validation\Exceptions\NestedValidationException $e) {
+            return $this->validationErrorResponse($response, $e->getMessages());
+        }
     }
 
+    /**
+     * Hastaya yaşam bulgusu (Vital) ekler
+     */
+    public function addVital(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $patientId = (int) $args['id'];
+        $data = $request->getParsedBody();
+
+        // Validasyon
+        $validator = v::key('height', v::optional(v::intVal()->positive()))
+            ->key('weight', v::optional(v::numericVal()->positive()))
+            ->key('systolic_bp', v::optional(v::intVal()->positive()))
+            ->key('diastolic_bp', v::optional(v::intVal()->positive()))
+            ->key('heart_rate', v::optional(v::intVal()->positive()));
+
+        try {
+            $validator->assert($data);
+
+            // Ölçümü giren personel ID'sini (user_id) JWT payload'dan alabiliriz
+            $data['created_by'] = $this->getUserId($request);
+
+            $vitalId = $this->vitalsRepository->addVital($clinicId, $patientId, $data);
+
+            return $this->createdResponse($response, [
+                'id' => $vitalId
+            ], 'Yaşam bulgusu başarıyla eklendi');
+
+        } catch (\Respect\Validation\Exceptions\NestedValidationException $e) {
+            return $this->validationErrorResponse($response, $e->getMessages());
+        }
+    }
+
+    /**
+     * Hastayı arşivler (status = 0)
+     */
+    public function archivePatient(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $patientId = (int) $args['id'];
+
+        $this->patientRepository->archive($clinicId, $patientId);
+
+        return $this->success($response, null, 'Hasta arşivlendi');
+    }
+
+    /**
+     * Hastayı tamamen siler
+     */
     public function deletePatient(Request $request, Response $response, array $args): Response
     {
+        $clinicId = (int) $this->getClinicId($request);
         $patientId = (int) $args['id'];
-        // Placeholder for delete logic
-        return $this->success($response, ['message' => "Patient $patientId deleted successfully"]);
+
+        $this->patientRepository->delete($clinicId, $patientId);
+
+        return $this->success($response, null, 'Hasta tamamen silindi');
     }
 }

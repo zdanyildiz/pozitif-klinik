@@ -78,12 +78,34 @@ CREATE TABLE IF NOT EXISTS ptn_cards (
     name VARCHAR(100) NOT NULL,
     phone VARCHAR(20) NOT NULL,
     email VARCHAR(100),
+    birth_date DATE NULL,
+    gender ENUM('M', 'F', 'U') DEFAULT 'U' COMMENT 'M:Male, F:Female, U:Unknown',
+    blood_type ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-') NULL,
+    address TEXT NULL,
+    notes TEXT NULL COMMENT 'Personel özel notları',
+    status TINYINT(1) DEFAULT 1 COMMENT '1:Aktif, 0:Pasif (Arşiv)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id),
     INDEX idx_search (clinic_id, tc_no, phone)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. KVKK & Rıza Metinleri
+-- 7. Yaşam Bulguları (Vitals)
+CREATE TABLE IF NOT EXISTS ptn_vitals (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    clinic_id BIGINT UNSIGNED NOT NULL,
+    patient_id BIGINT UNSIGNED NOT NULL,
+    height SMALLINT UNSIGNED NULL COMMENT 'cm cinsinden',
+    weight DECIMAL(5,2) NULL COMMENT 'kg cinsinden',
+    systolic_bp SMALLINT UNSIGNED NULL COMMENT 'Büyük Tansiyon (mmHg)',
+    diastolic_bp SMALLINT UNSIGNED NULL COMMENT 'Küçük Tansiyon (mmHg)',
+    heart_rate SMALLINT UNSIGNED NULL COMMENT 'Nabız (bpm)',
+    measured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by BIGINT UNSIGNED NULL COMMENT 'Ölçümü giren personel ID',
+    FOREIGN KEY (clinic_id) REFERENCES sys_tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (patient_id) REFERENCES ptn_cards(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. KVKK & Rıza Metinleri
 CREATE TABLE IF NOT EXISTS ptn_kvkk_consents (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     clinic_id BIGINT UNSIGNED NOT NULL,
@@ -97,7 +119,7 @@ CREATE TABLE IF NOT EXISTS ptn_kvkk_consents (
     FOREIGN KEY (patient_id) REFERENCES ptn_cards(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. Muayene & Doktor Notları
+-- 9. Muayene & Doktor Notları
 CREATE TABLE IF NOT EXISTS cln_examinations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     clinic_id BIGINT UNSIGNED NOT NULL,
