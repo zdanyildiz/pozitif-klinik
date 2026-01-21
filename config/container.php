@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Psr\Container\ContainerInterface;
 use App\Core\Database;
 use App\Core\Security\CryptoService;
+use App\Core\Service\SessionService;
 use App\Domain\Email\EmailService;
 use App\Domain\Platform\TenantRepository;
 use App\Domain\Platform\TenantEmailConfigRepository;
@@ -87,5 +88,10 @@ return [
             $c->get(CryptoService::class),
             $c->get(EmailService::class)
         );
+    },
+
+        // Oturum Yönetim Servisi
+    SessionService::class => function (ContainerInterface $c) {
+        return new SessionService();
     },
 ];

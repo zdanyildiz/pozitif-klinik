@@ -9,6 +9,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Views\Twig;
 use App\Domain\User\UserRepository;
 use App\Core\Security\CryptoService;
+use App\Core\Service\SessionService;
 use App\Core\Attributes\Route;
 
 class AuthWebController
@@ -16,12 +17,18 @@ class AuthWebController
     private Twig $view;
     private UserRepository $userRepository;
     private CryptoService $cryptoService;
+    private SessionService $session;
 
-    public function __construct(Twig $view, UserRepository $userRepository, CryptoService $cryptoService)
-    {
+    public function __construct(
+        Twig $view,
+        UserRepository $userRepository,
+        CryptoService $cryptoService,
+        SessionService $session
+    ) {
         $this->view = $view;
         $this->userRepository = $userRepository;
         $this->cryptoService = $cryptoService;
+        $this->session = $session;
     }
 
     /**
@@ -30,12 +37,8 @@ class AuthWebController
     #[Route('GET', '/admin/login')]
     public function loginPage(Request $request, Response $response): Response
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         // Eğer zaten giriş yapmışsa dashboard'a yönlendir
-        if (!empty($_SESSION['user_id'])) {
+        if ($this->session->has('user_id')) {
             return $response
                 ->withHeader('Location', '/admin/patients')
                 ->withStatus(302);
@@ -103,18 +106,15 @@ class AuthWebController
 
         // --- GİRİŞ BAŞARILI ---
 
-        // Session başlat ve ID yenile (Fixation koruması)
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        session_regenerate_id(true);
+        // Session ID yenile (Fixation koruması)
+        $this->session->regenerate(true);
 
         // Session verilerini yaz
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['clinic_id'] = $user['clinic_id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['role'] = $user['role'];
-        $_SESSION['logged_in_at'] = time();
+        $this->session->set('user_id', $user['id']);
+        $this->session->set('clinic_id', $user['clinic_id']);
+        $this->session->set('username', $user['username']);
+        $this->session->set('role', $user['role']);
+        $this->session->set('logged_in_at', time());
 
         // Yönlendir
         return $response
@@ -128,25 +128,8 @@ class AuthWebController
     #[Route('GET', '/admin/logout')]
     public function logout(Request $request, Response $response): Response
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        // Session'ı temizle ve yok et
-        $_SESSION = [];
-        if (ini_get("session.use_cookies")) {
-            $params = session_get_cookie_params();
-            setcookie(
-                session_name(),
-                '',
-                time() - 42000,
-                $params["path"],
-                $params["domain"],
-                $params["secure"],
-                $params["httponly"]
-            );
-        }
-        session_destroy();
+        // Session'ı yok et
+        $this->session->destroy();
 
         // Login sayfasına yönlendir
         return $response
