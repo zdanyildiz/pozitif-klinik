@@ -5,6 +5,10 @@ declare(strict_types=1);
 use Psr\Container\ContainerInterface;
 use App\Core\Database;
 use App\Core\Security\CryptoService;
+use App\Domain\Email\EmailService;
+use App\Domain\Platform\TenantRepository;
+use App\Domain\Platform\TenantEmailConfigRepository;
+use App\Domain\Platform\TenantSettingsController;
 
 return [
     'settings' => function () {
@@ -40,5 +44,40 @@ return [
         }
 
         return new CryptoService($appKey);
+    },
+
+        // E-Posta Gönderim Servisi
+        // Multi-tenant SMTP yapılandırması destekler
+    EmailService::class => function (ContainerInterface $c) {
+        return new EmailService(
+            $c->get(Database::class),
+            $c->get(CryptoService::class),
+            $c->get(\Psr\Log\LoggerInterface::class)
+        );
+    },
+
+        // Tenant (Klinik) Repository
+    TenantRepository::class => function (ContainerInterface $c) {
+        return new TenantRepository(
+            $c->get(Database::class)
+        );
+    },
+
+        // Tenant E-posta Config Repository
+    TenantEmailConfigRepository::class => function (ContainerInterface $c) {
+        return new TenantEmailConfigRepository(
+            $c->get(Database::class)
+        );
+    },
+
+        // Tenant Ayarları Controller
+    TenantSettingsController::class => function (ContainerInterface $c) {
+        return new TenantSettingsController(
+            $c,
+            $c->get(TenantRepository::class),
+            $c->get(TenantEmailConfigRepository::class),
+            $c->get(CryptoService::class),
+            $c->get(EmailService::class)
+        );
     },
 ];

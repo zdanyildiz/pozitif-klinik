@@ -97,6 +97,28 @@ class TenantRepository
     }
 
     /**
+     * ID'ye göre klinik ve admin kullanıcısını birlikte getirir
+     */
+    public function findByIdWithAdmin(int $id): ?array
+    {
+        $clinic = $this->findById($id);
+
+        if (!$clinic) {
+            return null;
+        }
+
+        $adminSql = "SELECT id, username, name 
+                     FROM sys_users 
+                     WHERE clinic_id = ? AND role = 'admin' 
+                     LIMIT 1";
+        $admin = $this->db->fetch($adminSql, [$id]);
+
+        $clinic['admin'] = $admin ?: null;
+
+        return $clinic;
+    }
+
+    /**
      * Klinik ve Opsiyonel Olarak Yönetici Bilgilerini Günceller
      */
     public function update(int $id, array $tenantData, array $adminData = []): bool

@@ -96,9 +96,14 @@ function renderTenantRow(tenant) {
         </td>
         <td class="date-cell">${Utils.formatDate(tenant.created_at)}</td>
         <td class="text-end">
-            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(${tenant.id}, '${escapeHtml(tenant.name)}', '${escapeHtml(tenant.domain_prefix)}', ${isActive}, '${escapeHtml(adminUsername)}')">
-                <i class="bi bi-pencil"></i> Düzenle
-            </button>
+            <div class="btn-group" role="group">
+                <a href="clinic-settings.html?id=${tenant.id}" class="btn btn-sm btn-outline-secondary" title="Ayarlar">
+                    <i class="bi bi-gear"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(${tenant.id}, '${escapeHtml(tenant.name)}', '${escapeHtml(tenant.domain_prefix)}', ${isActive}, '${escapeHtml(adminUsername)}')" title="Düzenle">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            </div>
         </td>
     `;
     tenantsTableBody.appendChild(row);
