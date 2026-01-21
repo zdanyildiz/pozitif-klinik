@@ -8,6 +8,7 @@ use App\Core\Attributes\Route;
 use App\Core\Attributes\Group;
 use App\Core\BaseController;
 use App\Domain\User\UserRepository;
+use App\Core\Attributes\Middleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Firebase\JWT\JWT;
@@ -45,6 +46,7 @@ class AuthController extends BaseController
      * Kullanıcı girişi ve JWT token üretimi
      */
     #[Route('POST', '/login')]
+    #[Middleware(\App\Core\Middleware\RateLimitMiddleware::class)]
     public function login(Request $request, Response $response): Response
     {
         // 1. Request body'den verileri al

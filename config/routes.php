@@ -13,5 +13,10 @@ return function (App $app) {
 
     // 2. Yeni WEB Modülü (Web Controllers) - OTOMATİK KEŞİF
     // src/Web/Controllers altındaki #[Route] attribute'larını okur.
-    $registrar->registerFromNamespace('App\Web\Controllers', __DIR__ . '/../src/Web/Controllers');
+    $app->group('', function (\Slim\Routing\RouteCollectorProxy $group) {
+        $webRegistrar = new RouteRegistrar($group);
+        $webRegistrar->registerFromNamespace('App\Web\Controllers', __DIR__ . '/../src/Web/Controllers');
+    })
+        ->add(\Slim\Csrf\Guard::class)
+        ->add(\App\Core\Middleware\CsrfViewMiddleware::class);
 };

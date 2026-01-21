@@ -11,6 +11,7 @@ use App\Domain\User\UserRepository;
 use App\Core\Security\CryptoService;
 use App\Core\Service\SessionService;
 use App\Core\Attributes\Route;
+use App\Core\Attributes\Middleware;
 
 class AuthWebController
 {
@@ -51,6 +52,7 @@ class AuthWebController
      * Login işlemini yap (POST)
      */
     #[Route('POST', '/admin/login')]
+    #[Middleware(\App\Core\Middleware\RateLimitMiddleware::class)]
     public function loginPost(Request $request, Response $response): Response
     {
         $data = $request->getParsedBody();

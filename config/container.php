@@ -11,6 +11,8 @@ use App\Domain\Platform\TenantRepository;
 use App\Domain\Platform\TenantEmailConfigRepository;
 use App\Domain\Platform\TenantSettingsController;
 use Slim\Views\Twig;
+use Slim\Factory\AppFactory;
+use Psr\Http\Message\ResponseFactoryInterface;
 
 return [
         // Twig View Engine
@@ -93,5 +95,18 @@ return [
         // Oturum Yönetim Servisi
     SessionService::class => function (ContainerInterface $c) {
         return new SessionService();
+    },
+
+    // CSRF Koruması
+    \Slim\Csrf\Guard::class => function (ContainerInterface $c) {
+        $responseFactory = AppFactory::determineResponseFactory();
+        $guard = new \Slim\Csrf\Guard($responseFactory);
+        $guard->setPersistentTokenMode(true);
+        return $guard;
+    },
+
+    // Rate Limiting Middleware
+    \App\Core\Middleware\RateLimitMiddleware::class => function (ContainerInterface $c) {
+        return new \App\Core\Middleware\RateLimitMiddleware($c->get(Database::class));
     },
 ];

@@ -64,6 +64,9 @@ $app->addRoutingMiddleware();
 // Add Body Parsing Middleware (required for JSON request body parsing)
 $app->addBodyParsingMiddleware();
 
+// Add Security Headers Middleware
+$app->add(new \App\Core\Middleware\SecurityHeadersMiddleware());
+
 // CORS Middleware (Basic)
 $app->add(function ($request, $handler) {
     $response = $handler->handle($request);

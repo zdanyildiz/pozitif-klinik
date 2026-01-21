@@ -27,9 +27,9 @@ use Slim\Routing\RouteCollectorProxy;
  */
 class RouteRegistrar
 {
-    private App $app;
+    private \Slim\Routing\RouteCollectorProxy $app;
 
-    public function __construct(App $app)
+    public function __construct(\Slim\Routing\RouteCollectorProxy $app)
     {
         $this->app = $app;
     }

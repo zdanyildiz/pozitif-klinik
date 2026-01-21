@@ -41,6 +41,8 @@
             {% endif %}
 
             <form method="POST" action="{{ base_path }}/admin/login" autocomplete="off">
+                <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+                <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="clinic_code" name="clinic_code"
                         placeholder="örn: pozitif" value="{{ clinic_code }}" required autofocus>

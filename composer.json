@@ -14,7 +14,8 @@
         "monolog/monolog": "^3.8",
         "respect/validation": "^2.4",
         "phpmailer/phpmailer": "^7.0",
-        "slim/twig-view": "^3.4"
+        "slim/twig-view": "^3.4",
+        "slim/csrf": "^1.5"
     },
     "autoload": {
         "psr-4": {
