@@ -24,7 +24,7 @@ use Psr\Container\ContainerInterface;
  * NOT: Bu controller PlatformAdminMiddleware ile korunur.
  * Sadece Platform (Super) Admin'ler erişebilir.
  */
-#[Group('/admin/tenants')]
+#[Group('/platform-admin/tenants')]
 #[Middleware(PlatformAdminMiddleware::class)]
 class TenantController extends BaseController
 {

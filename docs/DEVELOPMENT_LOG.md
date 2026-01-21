@@ -207,6 +207,15 @@ PLATFORM_ADMIN_PASS=admin
 - **Adisyon Kolaylığı:** Hizmet ekleme (Swal) penceresine Tom Select entegre edilerek hizmet kataloğu içinde arama yapma yeteneği eklendi.
 - **Backend Search:** `PatientRepository` ve `PatientController` seviyesinde blind-index bazlı tam eşleşme arama (`/api/patients/search`) altyapısı kuruldu.
 
+### 19. Tam Web SSR Dönüşümü ve Mimari Sadeleştirme (✅ Tamamlandı)
+**Tarih:** 2026-01-21
+- **Platform Admin Dönüşümü:** Platform yöneticisi girişi ve dashboard sayfaları tamamen Twig şablonlarına (SSR) taşındı.
+- **Klinik Web Sayfaları:** Randevu yönetimi, personel listesi ve hasta işlemleri için `ClinicWebController` oluşturuldu ve tüm sayfalar SSR yapısına kavuşturuldu.
+- **Legacy Temizliği:** Proje kökündeki `legacy` ve `public/admin` klasörleri altındaki tüm statik HTML dosyaları silindi.
+- **Asset Reorganizasyonu:** Tüm CSS ve JS dosyaları `public/assets` altında merkezi ve profesyonel bir yapıda toplandı.
+- **Profesyonel Routing:** `.html` uzantılı URL'ler yerine `/platform/dashboard`, `/admin/appointments` gibi profesyonel rotalar atandı.
+- **Hibrit İletişim:** Sayfalar SSR ile yüklenirken, dinamik işlemler için hala API (Axios) kullanılarak performans ve kullanıcı deneyimi optimize edildi.
+
 ---
 
 ## Bekleyen Görevler

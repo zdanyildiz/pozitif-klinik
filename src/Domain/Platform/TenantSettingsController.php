@@ -27,7 +27,7 @@ use Psr\Container\ContainerInterface;
  * - POST /admin/tenants/{id}/settings/email - E-posta ayarlarını kaydet
  * - POST /admin/tenants/{id}/settings/email/test - E-posta bağlantı testi
  */
-#[Group('/admin/tenants')]
+#[Group('/platform-admin/tenants')]
 #[Middleware(PlatformAdminMiddleware::class)]
 class TenantSettingsController extends BaseController
 {

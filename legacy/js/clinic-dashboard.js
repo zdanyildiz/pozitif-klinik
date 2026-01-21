@@ -7,7 +7,7 @@ const token = localStorage.getItem('platform_token');
 const userType = localStorage.getItem('user_type');
 
 if (!token || userType !== 'clinic_user') {
-    window.location.href = 'index.html';
+    window.location.href = API_URL + '/platform/login';
 }
 
 // Global state
@@ -285,7 +285,7 @@ async function handleLogout() {
     if (result.isConfirmed) {
         localStorage.removeItem('platform_token');
         localStorage.removeItem('user_type');
-        window.location.href = 'index.html';
+        window.location.href = API_URL + '/platform/login';
     }
 }
 

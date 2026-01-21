@@ -19,7 +19,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  * 
  * NOT: Bu controller public'tir, middleware gerektirmez.
  */
-#[Group('/admin')]
+#[Group('/platform-admin')]
 class PlatformAuthController extends BaseController
 {
     private PlatformAdminRepository $platformAdminRepository;

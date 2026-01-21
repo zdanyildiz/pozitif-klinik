@@ -37,6 +37,17 @@ class RouteRegistrar
     /**
      * Belirtilen dizindeki tüm Controller'ları tarar ve rotaları kaydeder
      * 
+     * @param string $namespace Namespace (Şimdilik geriye dönük uyumluluk için var, otomatik tespit ediliyor)
+     * @param string $basePath Taranacak dizin
+     */
+    public function registerFromNamespace(string $namespace, string $basePath): void
+    {
+        $this->register($basePath);
+    }
+
+    /**
+     * Belirtilen dizindeki tüm Controller'ları tarar ve rotaları kaydeder
+     * 
      * @param string $basePath src/Domain dizininin tam yolu
      */
     public function register(string $basePath): void
@@ -213,13 +224,13 @@ class RouteRegistrar
         }
 
         // Slim group ile rotaları kaydet
-        $app = $this->app;
-
-        $group = $app->group($groupPrefix, function (RouteCollectorProxy $group) use ($routes) {
+        $groupPrefix = '/' . ltrim($groupPrefix, '/');
+        $group = $this->app->group($groupPrefix, function (RouteCollectorProxy $group) use ($routes) {
             foreach ($routes as $routeInfo) {
+                $path = '/' . ltrim($routeInfo['path'], '/');
                 $route = $group->map(
                     [$routeInfo['httpMethod']],
-                    $routeInfo['path'],
+                    $path,
                     $routeInfo['handler']
                 );
 
@@ -254,7 +265,7 @@ class RouteRegistrar
             }
 
             $httpMethod = strtoupper($routeAttribute->method);
-            $path = $routeAttribute->path;
+            $path = '/' . ltrim($routeAttribute->path, '/');
             $handler = $className . ':' . $method->getName();
 
             $route = $this->app->map([$httpMethod], $path, $handler);

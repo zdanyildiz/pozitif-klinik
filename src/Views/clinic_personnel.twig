@@ -1,0 +1,166 @@
+{% extends "layout.twig" %}
+
+{% block title %}Personel Yönetimi | Pozitif Klinik{% endblock %}
+{% block page_title %}Personel Yönetimi{% endblock %}
+
+{% block content %}
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon clinics">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-value" id="totalUsersCount">0</div>
+            <div class="stat-label">Toplam Personel</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon active">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <div class="stat-value" id="doctorCount">0</div>
+            <div class="stat-label">Doktor Sayısı</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon users">
+                <i class="bi bi-headset"></i>
+            </div>
+            <div class="stat-value" id="secretaryCount">0</div>
+            <div class="stat-label">Sekreter Sayısı</div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h2 class="table-card-title">
+                <i class="bi bi-person-lines-fill"></i>
+                Personel Listesi
+            </h2>
+            <button class="btn-add" id="btnAddUser">
+                <i class="bi bi-person-plus"></i>
+                Yeni Personel Ekle
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ad Soyad</th>
+                        <th>Kullanıcı Adı</th>
+                        <th>Rol</th>
+                        <th>Durum</th>
+                        <th>Kayıt Tarihi</th>
+                        <th class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr id="loadingRow">
+                        <td colspan="7">
+                            <div class="loading-state">
+                                <div class="loading-spinner"></div>
+                                <p>Personel listesi yükleniyor...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- New User Modal -->
+    <div class="modal fade" id="newUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Yeni Personel Kaydı</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newUserForm">
+                        <div class="mb-3">
+                            <label class="form-label">Ad Soyad</label>
+                            <input type="text" class="form-control" name="name" id="newName" placeholder="örn: Dr. Ahmet Yılmaz" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kullanıcı Adı</label>
+                            <input type="text" class="form-control" name="username" id="newUsername" placeholder="örn: drahmet" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Şifre</label>
+                            <input type="password" class="form-control" name="password" id="newPassword" placeholder="••••••••" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rol</label>
+                            <select class="form-select" name="role" id="newRole" required>
+                                <option value="" disabled selected>Rol Seçin</option>
+                                <option value="doctor">Doktor</option>
+                                <option value="secretary">Sekreter</option>
+                                <option value="admin">Yönetici</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-save" id="saveUserBtn">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-gear me-2"></i>Personel Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="mb-3">
+                            <label class="form-label">Ad Soyad</label>
+                            <input type="text" class="form-control" name="name" id="editName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kullanıcı Adı</label>
+                            <input type="text" class="form-control" name="username" id="editUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rol</label>
+                            <select class="form-select" name="role" id="editRole" required>
+                                <option value="doctor">Doktor</option>
+                                <option value="secretary">Sekreter</option>
+                                <option value="admin">Yönetici</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
+                            <input type="password" class="form-control" name="password" id="editPassword" placeholder="••••••••">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Durum</label>
+                            <select class="form-select" name="status" id="editStatus" required>
+                                <option value="active">Aktif</option>
+                                <option value="inactive">Pasif</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-save" id="updateUserBtn">Güncelle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ base_path }}/assets/js/clinic-dashboard.js"></script>
+{% endblock %}

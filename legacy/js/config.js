@@ -6,11 +6,11 @@
 // Örn: /pozitif-klinik/public/admin/index.html -> /pozitif-klinik/public
 const getBasePath = () => {
     const path = window.location.pathname;
-    if (path.includes('/admin/')) {
-        return path.split('/admin/')[0];
-    }
-    if (path.endsWith('/admin')) {
-        return path.substring(0, path.length - 6);
+    const markers = ['/admin', '/platform', '/api', '/auth'];
+    for (const marker of markers) {
+        if (path.includes(marker)) {
+            return path.split(marker)[0];
+        }
     }
     return '';
 };
@@ -26,6 +26,8 @@ const api = axios.create({
     },
     timeout: 10000
 });
+
+window.api = api;
 
 // Her istekte Token ekle (Request Interceptor)
 api.interceptors.request.use(
@@ -57,13 +59,12 @@ api.interceptors.response.use(
         // HTTP hatası olduysa (401, 500 vb.)
         if (error.response && error.response.status === 401) {
             // Sadece login sayfasında değilsek yönlendir
-            const isLoginPage = window.location.pathname.endsWith('index.html') ||
-                window.location.pathname.endsWith('/admin/') ||
-                window.location.pathname.endsWith('/admin');
+            const isLoginPage = window.location.pathname.endsWith('/platform/login') ||
+                window.location.pathname.endsWith('/admin/login');
 
             if (!isLoginPage) {
                 localStorage.removeItem('platform_token');
-                window.location.href = 'index.html';
+                window.location.href = API_URL + '/platform/login';
             }
         }
 
@@ -177,3 +178,5 @@ const Utils = {
         return result.isConfirmed;
     }
 };
+
+window.Utils = Utils;

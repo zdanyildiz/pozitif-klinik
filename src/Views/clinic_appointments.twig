@@ -1,0 +1,250 @@
+{% extends "layout.twig" %}
+
+{% block title %}Randevular | Pozitif Klinik{% endblock %}
+{% block page_title %}Randevu Yönetimi{% endblock %}
+
+{% block head %}
+    <!-- Tom Select CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <link href="{{ base_path }}/assets/css/appointments.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <!-- Stats -->
+    <div class="stats-grid mb-4">
+        <div class="stat-card bg-gradient-primary">
+            <div class="stat-value" id="todayCount">0</div>
+            <div class="stat-label">Bugünkü Randevu</div>
+        </div>
+        <div class="stat-card bg-gradient-success">
+            <div class="stat-value" id="pendingCount">0</div>
+            <div class="stat-label">Bekleyen İşlem</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <input type="date" id="filterDate" class="form-control form-control-sm w-180">
+                <button class="btn btn-sm btn-outline-primary" id="btnToday">Bugün</button>
+                <button class="btn btn-sm btn-primary" id="btnRefresh"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#typeModal">
+                    <i class="bi bi-tags me-1"></i> Randevu Türleri
+                </button>
+                <button class="btn btn-save btn-sm" id="btnNewAppointment">
+                    <i class="bi bi-calendar-plus me-1"></i> Yeni Randevu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover" id="appointmentsTable">
+                <thead>
+                    <tr>
+                        <th class="w-100p">Saat</th>
+                        <th>Hasta Adı</th>
+                        <th>Randevu Türü</th>
+                        <th>Doktor</th>
+                        <th class="w-160p">Durum</th>
+                        <th class="text-end w-120p">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="appointmentsTableBody">
+                    <tr id="loadingRow">
+                        <td colspan="6" class="text-center">Yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- NEW APPOINTMENT MODAL -->
+    <div class="modal fade" id="appointmentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title">Yeni Randevu Oluştur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-4">
+                    <form id="appointmentForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Hasta Seçin</label>
+                                <select class="form-select" name="patient_id" id="patientSelect" required></select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Randevu Türü</label>
+                                <select class="form-select" name="type_id" id="typeSelect" required></select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Doktor</label>
+                                <select class="form-select" name="doctor_id" id="doctorSelect"></select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-semibold">Tarih</label>
+                                <input type="date" class="form-control" name="date" id="appDate" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-semibold">Saat</label>
+                                <input type="time" class="form-control" name="time" id="appTime" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Notlar</label>
+                            <textarea class="form-control" name="notes" id="appNotes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-save" id="saveAppointmentBtn">Oluştur</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL MODAL (GENERAL + BILLING) -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Randevu Detayı</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-general">Genel Bilgiler</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-billing">Hizmetler & Ücretler</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- General Tab -->
+                        <div class="tab-pane fade show active" id="tab-general">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Hasta</label>
+                                    <div class="fw-bold" id="detailPatientName">-</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Randevu Türü</label>
+                                    <div id="detailTypeBadge">-</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Doktor</label>
+                                    <div class="fw-bold" id="detailDoctorName">-</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Tarih / Saat</label>
+                                    <div class="fw-bold" id="detailDateTime">-</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="text-muted small">Notlar</label>
+                                    <div class="p-2 bg-light rounded" id="detailNotes">-</div>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <label class="text-muted small mb-2 d-block">Randevu Durumu</label>
+                                    <select class="form-select" id="detailStatusSelect">
+                                        <option value="pending">Bekliyor</option>
+                                        <option value="waiting">Klinikte / Beklemede</option>
+                                        <option value="in_test">İşlemde</option>
+                                        <option value="completed">Tamamlandı</option>
+                                        <option value="cancelled">İptal Edildi</option>
+                                        <option value="no_show">Gelmedi</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Billing Tab -->
+                        <div class="tab-pane fade" id="tab-billing">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Uygulanan Hizmetler</h6>
+                                <button class="btn btn-sm btn-outline-primary" id="btnAddService">
+                                    <i class="bi bi-plus-lg"></i> Hizmet Ekle
+                                </button>
+                            </div>
+
+                            <table class="table billing-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hizmet / İşlem</th>
+                                        <th class="w-80p">Adet</th>
+                                        <th class="text-end w-120p">Birim Fiyat</th>
+                                        <th class="text-end w-120p">Toplam</th>
+                                        <th class="w-50p"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billingItemsBody"></tbody>
+                            </table>
+
+                            <div class="billing-total d-flex justify-content-between mt-4">
+                                <span>Genel Toplam</span>
+                                <span id="billingGrandTotal">0,00 ₺</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-save" id="btnUpdateDetails">Değişiklikleri Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TYPE MANAGEMENT MODAL -->
+    <div class="modal fade" id="typeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Randevu Türleri ve Ücretler</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="typeForm" class="mb-4">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Tür Adı</label>
+                                <input type="text" class="form-control form-control-sm" name="name" required placeholder="Örn: Botox">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-semibold">Renk</label>
+                                <input type="color" class="form-control form-control-sm form-control-color w-100" name="color_code" value="#3788d8">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-semibold">Süre (dk)</label>
+                                <input type="number" class="form-control form-control-sm" name="duration_minutes" value="30">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-semibold">Ücret (₺)</label>
+                                <input type="number" class="form-control form-control-sm" name="default_price" value="0" step="0.01">
+                            </div>
+                            <div class="col-12 mt-2 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Yeni Tür Ekle</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCancelTypeEdit" style="display:none;" onclick="resetTypeForm()">İptal</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="typeList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script src="{{ base_path }}/assets/js/appointments.js"></script>
+{% endblock %}

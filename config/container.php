@@ -9,8 +9,16 @@ use App\Domain\Email\EmailService;
 use App\Domain\Platform\TenantRepository;
 use App\Domain\Platform\TenantEmailConfigRepository;
 use App\Domain\Platform\TenantSettingsController;
+use Slim\Views\Twig;
 
 return [
+        // Twig View Engine
+    Twig::class => function (ContainerInterface $c) {
+        $settings = $c->get('settings');
+        // Cache false for development
+        return Twig::create(__DIR__ . '/../src/Views', ['cache' => false]);
+    },
+
     'settings' => function () {
         return require __DIR__ . '/settings.php';
     },

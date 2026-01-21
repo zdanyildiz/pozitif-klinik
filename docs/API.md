@@ -7,6 +7,8 @@
 **Authentication:** Tüm `/api/*` ve `/admin/*` endpoint'leri (login hariç) `Bearer <token>` JWT ile korunmaktadır.
 
 **Routing:** Tüm rotalar PHP 8 Attributes (`#[Route]`, `#[Group]`, `#[Middleware]`) ile Controller sınıflarında tanımlanır ve `RouteRegistrar` tarafından otomatik keşfedilir.
+- **API Rotaları:** `/api/*` (Domain) ve `/platform-admin/*` (Super Admin).
+- **Web Rotaları:** `/admin/*` (Klinik SSR) ve `/platform/*` (Super Admin SSR).
 
 ---
 
@@ -90,11 +92,11 @@ Giriş başarısız olduğunda dönen `message` alanı sorunun kaynağını beli
 
 ---
 
-## Platform API (Admin)
+## Platform API (Super Admin)
 
 Bu endpoint'ler, sadece platform yöneticisinin (root admin) erişebileceği, klinik yönetimiyle ilgili işlemler içindir.
 
-### `POST /admin/login`
+### `POST /platform-admin/login`
 
 Platform yöneticisinin (root) sisteme giriş yapmasını sağlar.
 
@@ -119,7 +121,7 @@ Platform yöneticisinin (root) sisteme giriş yapmasını sağlar.
 }
 ```
 
-### `POST /admin/tenants`
+### `POST /platform-admin/tenants`
 
 Yeni bir klinik (tenant) oluşturur.
 
@@ -149,7 +151,7 @@ Yeni bir klinik (tenant) oluşturur.
 }
 ```
 
-### `PUT /admin/tenants/{id}`
+### `PUT /platform-admin/tenants/{id}`
 
 Klinik bilgilerini ve opsiyonel olarak klinik yöneticisini günceller.
 
@@ -174,7 +176,7 @@ Klinik bilgilerini ve opsiyonel olarak klinik yöneticisini günceller.
 }
 ```
 
-### `GET /admin/tenants`
+### `GET /platform-admin/tenants`
 
 Sistemdeki tüm klinikleri listeler.
 
@@ -476,3 +478,25 @@ Randevuya hizmet/kalem ekler.
 
 ### `DELETE /api/appointments/{id}/items/{itemId}`
 Randevudan bir kalem siler.
+---
+
+## Web (SSR) Rotaları
+
+Bu rotalar tarayıcı üzerinden doğrudan erişilen, Twig ile render edilen HTML sayfalarıdır.
+
+### Platform Admin (Super Admin)
+
+| Rota | Açıklama |
+|------|----------|
+| /platform/login | Platform Admin giriş sayfası |
+| /platform/dashboard | Klinik listeleme ve yönetim paneli |
+| /platform/clinic-settings?id={id} | Belirli bir kliniğin ayarları |
+
+### Klinik Personeli
+
+| Rota | Açıklama |
+|------|----------|
+| /admin/login | Klinik personeli giriş sayfası |
+| /admin/patients | Hasta listesi ve kayıt sayfası |
+| /admin/appointments | Randevu yönetim sayfası |
+| /admin/personnel | Personel (Doktor/Sekreter) yönetim sayfası |

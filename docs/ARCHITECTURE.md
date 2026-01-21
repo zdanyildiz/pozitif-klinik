@@ -6,12 +6,11 @@ Pozitif Klinik, multi-tenant SaaS mimarisi üzerine kurulu bir klinik yönetim s
 
 ---
 
-## Mimarinin Ana Katmanları
-
-```
+## Mimarinin Ana Katmanları (Hibrit Mimari)
+ ```
 +-------------------+      +------------------------+      +---------------------+
 |    İSTEMCİLER     |      |    PLATFORM ADMIN      |      |   KLİNİK KULLANICI  |
-| (Web/Mobil App)   |      |      (Static UI)       |      |    (Web/Mobil App)  |
+|   (Mobil App)     |      |  (Web App - SSR/Twig)  |      | (Web App - SSR/Twig)|
 +-------------------+      +------------------------+      +---------------------+
          |                            |                             |
          +----------------------------+-----------------------------+
@@ -32,20 +31,29 @@ Pozitif Klinik, multi-tenant SaaS mimarisi üzerine kurulu bir klinik yönetim s
 |    +-----------------------------------------------------------+    |
 |                                |                                    |
 |    +-----------------------------------------------------------+    |
-|    |             ROUTING (Auto-Discovery + Attributes)         |    |
-|    |        RouteRegistrar: Controller'ları otomatik tarar     |    |
+|    |             ROUTING (Manual & Auto-Discovery)             |    |
+|    |        /api/... -> Domain Controllers (JSON)              |    |
+|    |        /admin/... -> Web Controllers (HTML/Twig)          |    |
 |    +-----------------------------------------------------------+    |
 |                                |                                    |
 |    +-----------------------------------------------------------+    |
 |    |                      DI CONTAINER (PHP-DI)                |    |
-|    |       (Controller'lara bağımlılıkları enjekte eder)       |    |
+|    |          Services: Twig, Database, Repositories           |    |
 |    +-----------------------------------------------------------+    |
-|                                |                                    |
-|    +-----------------------------------------------------------+    |
-|    |                       CONTROLLERS                         |    |
-|    |              (İstekleri alır, yanıtları döner)            |    |
-|    +-----------------------------------------------------------+    |
-|                                |                                    |
+|             /                                      \                |
+|  +---------------------+                 +------------------------+ |
+|  |   WEB CONTROLLERS   |                 |    DOMAIN CONTROLLERS  | |
+|  |  (src/Web/Controllers)|               |    (src/Domain/...)    | |
+|  +---------------------+                 +------------------------+ |
+|             |                                        |              |
+|             v                                        v              |
+|  +---------------------+                 +------------------------+ |
+|  |   VIEWS (Twig SSR)  |                 |    JSON RESPONSE       | |
+|  |     (src/Views)     |                 |                        | |
+|  +---------------------+                 +------------------------+ |
+|             \                                        /              |
+|              \------------------+-------------------/               |
+|                                 |                                   |
 |    +-----------------------------------------------------------+    |
 |    |                  REPOSITORIES / SERVICES                  |    |
 |    |                (İş mantığı ve veri erişimi)               |    |
@@ -63,9 +71,9 @@ Pozitif Klinik, multi-tenant SaaS mimarisi üzerine kurulu bir klinik yönetim s
 
 ## Standart Yanıt Yapısı (Pozitif JSON Anayasası)
 
-İstemci ile sunucu arasındaki tüm iletişim (başarılı veya hatalı), "Tek Zar, Tek Format" prensibi gereği aynı zarf yapısında gerçekleşir. Bu yapı `BaseController` ve `HttpErrorHandler` tarafından garanti altına alınmıştır.
+İstemci ile sunucu arasındaki tüm **API iletişimi**, "Tek Zar, Tek Format" prensibi gereği aynı zarf yapısında gerçekleşir. **Web (SSR) yanıtları** ise standart HTML döner ve bu JSON standartına tabi değildir.
 
-**Zarf Yapısı:**
+**API Zarf Yapısı:**
 ```json
 {
   "status": true,           // İşlem sonucu: true (başarılı) veya false (hatalı)
@@ -76,19 +84,23 @@ Pozitif Klinik, multi-tenant SaaS mimarisi üzerine kurulu bir klinik yönetim s
 
 - **Backend Koruması:** `BaseController` içindeki `success()` ve `error()` metodları bu formatı zorunlu kılar.
 - **Hata Koruması:** `HttpErrorHandler`, Framework veya veritabanı seviyesindeki her türlü hatayı otomatik olarak bu formata dönüştürür.
-- **Frontend Garantisi:** `config.js` içindeki Axios interceptor, gelen her yanıtın `status` alanını kontrol eder ve hataları merkezi olarak yönetir.
 
 ---
 
-## Frontend Yaklaşımı
+## Hibrit Frontend Yaklaşımı (SSR + API)
 
-Uygulama, "decoupled" (ayrık) bir frontend mimarisini benimser.
+Uygulama, hem SEO/Performans avantajları sağlayan SSR (Server-Side Rendering) hem de Mobil uyumluluk için API-First yaklaşımını birlikte kullanan hibrit bir mimariye geçiş yapmıştır.
 
-- **Backend (Bu Proje):** Saf bir JSON API'dir. HTML, CSS veya JavaScript render etmez. Görevi, veri işlemek, iş mantığını uygulamak ve sonuçları JSON formatında sunmaktır.
-- **Platform Admin Paneli:** `/public/admin` klasörü altında bulunan, tamamen statik bir web uygulamasıdır. `dashboard.html` üzerinden sistem genelindeki klinikleri yönetir.
-- **Klinik Yönetim Paneli:** Klinik personelinin kendi verilerini (personel, hasta vb.) yönettiği `clinic-dashboard.html` arayüzüdür. Giriş anında kullanıcı rolüne göre otomatik yönlendirme yapılır.
-- **API İletişimi:** Her iki panel de backend ile sadece Axios üzerinden API endpoint'lerini çağırarak haberleşir. Bu yapı, backend ve frontend geliştirmesinin bağımsız olarak yürütülmesine olanak tanır.
-- **Klinik Frontend'leri:** Gelecekte geliştirilecek olan mobil uygulamalar veya hasta portalları da bu backend API'sini tüketecektir.
+- **Web App (src/Web + src/Views):** Klinik ve Platform kullanıcıları için kullanılan yönetim panelleri. Veriyi sunucuda işler ve **Twig Template Engine** kullanarak hazır HTML gönderir. Bu sayede:
+    - İlk yükleme hızı artar.
+    - SEO uyumluluğu sağlanır (gerektiğinde).
+    - İstemci tarafında karmaşık JS mantığı (state management) ihtiyacı azalır.
+    - Tek bir master layout (`layout.twig`) ile tüm proje genelinde tasarım tutarlılığı sağlanır.
+- **Admin Panel (Platform):** Eski `/public/admin` ve `legacy` klasörleri altındaki statik HTML dosyaları tamamen temizlenmiş, projenin tamamı SSR/Twig yapısına dönüştürülmüştür.
+- **Statik Dosyalar (Assets):** Tüm CSS, JS ve imaj dosyaları `public/assets` klasörü altında merkezi olarak yönetilmektedir.
+- **İletişim:** 
+    - **Web:** Sayfa geçişleri ve form işlemleri sunucu üzerinden (SSR) yapılır. Dinamik etkileşimler (Modal işlemleri, anlık istatistikler) için yine API (Axios) kullanılır.
+    - **Mobil / API:** Tamamen RESTful endpoint'ler üzerinden haberleşir.
 
 ---
 

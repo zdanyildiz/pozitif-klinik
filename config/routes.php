@@ -1,35 +1,26 @@
 <?php
 
-declare(strict_types=1);
-
-/**
- * Pozitif Klinik - Otomatik Rota Keşfi (Auto-Discovery Routing)
- * 
- * Bu dosya artık manuel rota tanımları içermiyor.
- * Tüm rotalar Controller sınıflarındaki PHP 8 Attributes ile tanımlanır.
- * 
- * Desteklenen Attribute'lar:
- * - #[Group('/prefix')] - Controller sınıfına URL prefix ekler
- * - #[Middleware(Class::class)] - Sınıf/Metod seviyesinde koruma
- * - #[Route('METHOD', '/path')] - Endpoint tanımı
- * 
- * @see src/Core/RouteRegistrar.php
- * @see src/Core/Attributes/
- */
-
 use Slim\App;
 use App\Core\RouteRegistrar;
 
 return function (App $app) {
-
-    // ══════════════════════════════════════════════════════════════════════
-    // OTOMATİK ROTA KEŞFİ BAŞLAT
-    // ══════════════════════════════════════════════════════════════════════
-    // RouteRegistrar, src/Domain altındaki tüm *Controller.php dosyalarını
-    // tarar ve #[Route], #[Group], #[Middleware] attribute'larını okuyarak
-    // rotaları otomatik olarak kaydeder.
-    // ══════════════════════════════════════════════════════════════════════
-
     $registrar = new RouteRegistrar($app);
-    $registrar->register(__DIR__ . '/../src/Domain');
+
+    // 1. Mevcut API Modülü (Domain) - KORUNUYOR
+    $registrar->registerFromNamespace('App\Domain', __DIR__ . '/../src/Domain');
+
+    // 2. Yeni WEB Modülü (Web Controllers) - OTOMATİK KEŞİF
+    // src/Web/Controllers altındaki #[Route] attribute'larını okur.
+    $registrar->registerFromNamespace('App\Web\Controllers', __DIR__ . '/../src/Web/Controllers');
+
+    // /admin ana dizini için yönlendirme
+    $app->get('/admin', function ($request, $response) {
+        return $response->withHeader('Location', '/admin/login')->withStatus(302);
+    });
+
+    // Test rotası (Sorun analizi için)
+    $app->get('/ping', function ($request, $response) {
+        $response->getBody()->write('pong');
+        return $response;
+    });
 };

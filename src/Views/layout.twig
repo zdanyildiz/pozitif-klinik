@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pozitif Klinik Platform Yönetim Paneli">
+    <title>{% block title %}Pozitif Klinik Platform{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <!-- Note: Paths are relative to public/ so we might need to adjust them if we use slim views but usually they work if base ref is set or absolute paths used. For now assuming /admin/ base or similar structure. -->
+    <!-- Using absolute paths for assets to be safe -->
+    <link href="{{ base_path }}/assets/css/dashboard.css" rel="stylesheet">
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ base_path }}/admin/patients" class="sidebar-logo">
+                <div class="sidebar-logo-icon"><i class="bi bi-hospital"></i></div>
+                <div class="sidebar-logo-text">Pozitif<span>Klinik Yönetimi</span></div>
+            </a>
+            <button class="btn-close-sidebar d-lg-none"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Hizmetler</div>
+                <a href="{{ base_path }}/admin/patients" class="nav-link-custom {% if page == 'patients' %}active{% endif %}">
+                    <i class="bi bi-person-heart"></i>Hastalar
+                </a>
+                <a href="{{ base_path }}/admin/appointments" class="nav-link-custom {% if page == 'appointments' %}active{% endif %}">
+                    <i class="bi bi-calendar-check"></i>Randevular
+                </a>
+                <a href="{{ base_path }}/admin/personnel" class="nav-link-custom {% if page == 'personnel' %}active{% endif %}">
+                    <i class="bi bi-people"></i>Personel
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Kurumsal</div>
+                <a href="#" class="nav-link-custom">
+                    <i class="bi bi-list-check"></i>Hizmet Tanımları
+                </a>
+                <a href="#" class="nav-link-custom">
+                    <i class="bi bi-gear"></i>Klinik Ayarları
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+            <h1 class="navbar-title">{% block page_title %}Yönetim Paneli{% endblock %}</h1>
+
+            <div class="navbar-actions">
+                <div class="user-profile me-3 d-none d-md-flex">
+                    <div class="text-end me-2">
+                        <div class="fw-bold" id="userName">Klinik Personeli</div>
+                        <div class="small text-secondary" id="userRole">Yetkili</div>
+                    </div>
+                    <div class="avatar">
+                        <i class="bi bi-person-circle fs-2"></i>
+                    </div>
+                </div>
+                <button class="btn-logout" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Çıkış Yap
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Custom JS -->
+    <script src="{{ base_path }}/assets/js/config.js"></script>
+    
+    <!-- Sidebar Toggle Script (Inline for simplicity as it was in sidebar.js but sidebar.js is being removed/bypassed) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navbar = document.querySelector('.top-navbar');
+            if (navbar && !document.getElementById('sidebarToggle')) {
+                const toggleBtn = document.createElement('button');
+                toggleBtn.id = 'sidebarToggle';
+                toggleBtn.className = 'btn btn-link text-dark d-lg-none me-2';
+                toggleBtn.innerHTML = '<i class="bi bi-list fs-1"></i>';
+                navbar.insertBefore(toggleBtn, navbar.firstChild);
+                toggleBtn.addEventListener('click', () => {
+                    document.querySelector('.sidebar').classList.toggle('active');
+                });
+            }
+            // Close sidebar button
+            const closeBtn = document.querySelector('.btn-close-sidebar');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    document.querySelector('.sidebar').classList.remove('active');
+                });
+            }
+            
+            // Logout handler
+            const logoutBtn = document.getElementById('logoutBtn');
+            if(logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                     const result = await Swal.fire({
+                        title: 'Çıkış Yapılıyor',
+                        text: "Oturumunuzu kapatmak istediğinize emin misiniz?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, Çıkış Yap',
+                        cancelButtonText: 'İptal'
+                    });
+
+                    if (result.isConfirmed) {
+                        localStorage.removeItem('platform_token');
+                        localStorage.removeItem('user_type');
+                        window.location.href = '{{ base_path }}/admin/login'; // Adjust login path as needed
+                    }
+                });
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

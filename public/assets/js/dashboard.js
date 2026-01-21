@@ -7,7 +7,7 @@ const token = localStorage.getItem('platform_token');
 const userType = localStorage.getItem('user_type');
 
 if (!token || userType !== 'platform_admin') {
-    window.location.href = 'index.html';
+    window.location.href = API_URL + '/platform/login';
 }
 
 // DOM Elements
@@ -97,7 +97,7 @@ function renderTenantRow(tenant) {
         <td class="date-cell">${Utils.formatDate(tenant.created_at)}</td>
         <td class="text-end">
             <div class="btn-group" role="group">
-                <a href="clinic-settings.html?id=${tenant.id}" class="btn btn-sm btn-outline-secondary" title="Ayarlar">
+                <a href="${API_URL}/platform/clinic-settings?id=${tenant.id}" class="btn btn-sm btn-outline-secondary" title="Ayarlar">
                     <i class="bi bi-gear"></i>
                 </a>
                 <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(${tenant.id}, '${escapeHtml(tenant.name)}', '${escapeHtml(tenant.domain_prefix)}', ${isActive}, '${escapeHtml(adminUsername)}')" title="Düzenle">
@@ -305,7 +305,7 @@ async function handleLogout() {
     if (result.isConfirmed) {
         localStorage.removeItem('platform_token');
         localStorage.removeItem('user_type');
-        window.location.href = 'index.html';
+        window.location.href = API_URL + '/platform/login';
     }
 }
 

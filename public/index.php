@@ -41,6 +41,9 @@ $scriptName = $_SERVER['SCRIPT_NAME']; // /pozitif-klinik/public/index.php
 $basePath = str_replace('/index.php', '', $scriptName);
 $app->setBasePath($basePath);
 
+// Inject BasePath to Twig
+$container->get(\Slim\Views\Twig::class)->getEnvironment()->addGlobal('base_path', $basePath);
+
 // Add Error Middleware
 $displayErrorDetails = filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN);
 $logError = true;
@@ -70,13 +73,15 @@ $app->add(function ($request, $handler) {
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
 
-// Handle OPTIONS requests for CORS
-$app->options('/{routes:.+}', function ($request, $response, $args) {
-    return $response;
-});
+
 
 // Register routes
 $routes = require __DIR__ . '/../config/routes.php';
 $routes($app);
+
+// Handle OPTIONS requests for CORS (Catch-all)
+$app->options('/{routes:.+}', function ($request, $response, $args) {
+    return $response;
+});
 
 $app->run();
