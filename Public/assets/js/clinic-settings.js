@@ -24,6 +24,7 @@ const clinicDomain = document.getElementById('clinicDomain');
 const clinicNameBreadcrumb = document.getElementById('clinicNameBreadcrumb');
 const clinicStatusBadge = document.getElementById('clinicStatusBadge');
 const emailConfigBadge = document.getElementById('emailConfigBadge');
+const personnelTableBody = document.getElementById('personnelTableBody');
 
 // Form Elements
 const emailSettingsForm = document.getElementById('emailSettingsForm');
@@ -47,14 +48,17 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 // Modal
 let testEmailModal;
+let personnelModal;
 
 // State
 let currentEmailConfig = null;
 let hasExistingPassword = false;
+let currentPersonnelEditId = null;
 
 // Sayfa Yüklendiğinde
 document.addEventListener('DOMContentLoaded', () => {
     testEmailModal = new bootstrap.Modal(document.getElementById('testEmailModal'));
+    personnelModal = new bootstrap.Modal(document.getElementById('personnelModal'));
     loadClinicData();
     setupEventListeners();
     setupTabs();
@@ -84,6 +88,10 @@ function setupEventListeners() {
 
     // Logout
     logoutBtn.addEventListener('click', handleLogout);
+
+    // Personnel Events
+    document.getElementById('btnAddNewPersonnel').addEventListener('click', () => openPersonnelModal());
+    document.getElementById('savePersonnelBtn').addEventListener('click', handleSavePersonnel);
 }
 
 // Tab Navigasyonu
@@ -93,7 +101,8 @@ function setupTabs() {
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            const targetId = tab.dataset.tab + 'Panel';
+            const targetTab = tab.dataset.tab;
+            const targetId = targetTab + 'Panel';
 
             // Tüm tab ve panel'leri deaktif et
             tabs.forEach(t => t.classList.remove('active'));
@@ -102,6 +111,11 @@ function setupTabs() {
             // Seçili tab ve panel'i aktif et
             tab.classList.add('active');
             document.getElementById(targetId).classList.add('active');
+
+            // Eğer kullanıcılar sekmesi ise veriyi yükle
+            if (targetTab === 'users') {
+                loadPersonnel();
+            }
         });
     });
 }
@@ -370,4 +384,150 @@ async function handleLogout() {
         localStorage.removeItem('user_type');
         window.location.href = API_URL + '/platform/login';
     }
+}
+
+// --- Personel Yönetimi Fonksiyonları ---
+
+async function loadPersonnel() {
+    try {
+        const result = await api.get(`/platform-admin/tenants/${clinicId}/users`);
+        const users = result.data || [];
+
+        personnelTableBody.innerHTML = '';
+
+        if (users.length === 0) {
+            personnelTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Kayıtlı personel bulunamadı.</td></tr>';
+            return;
+        }
+
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            const isActive = user.is_active == 1;
+            row.innerHTML = `
+                <td>#${user.id}</td>
+                <td><span class="fw-medium">${escapeHtml(user.name || '-')}</span></td>
+                <td><code>${escapeHtml(user.username)}</code></td>
+                <td><span class="badge bg-light text-dark border">${translateRole(user.role)}</span></td>
+                <td>
+                    <span class="status-indicator ${isActive ? 'bg-success' : 'bg-danger'}"></span>
+                    ${isActive ? 'Aktif' : 'Pasif'}
+                </td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-primary" onclick="openPersonnelModal(${user.id}, '${escapeHtml(user.username)}', '${escapeHtml(user.name || '')}', '${user.role}', ${user.is_active})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deletePersonnel(${user.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            personnelTableBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Personel yükleme hatası:', error);
+        personnelTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Veriler yüklenemedi.</td></tr>';
+    }
+}
+
+window.openPersonnelModal = function (id = null, username = '', name = '', role = 'secretary', isActive = 1) {
+    currentPersonnelEditId = id;
+    document.getElementById('personnelModalTitle').textContent = id ? 'Personel Düzenle' : 'Yeni Personel Ekle';
+    document.getElementById('personnelId').value = id || '';
+    document.getElementById('personnelUsername').value = username;
+    document.getElementById('personnelName').value = name;
+    document.getElementById('personnelRole').value = role;
+    document.getElementById('personnelStatus').value = isActive ? "1" : "0";
+    document.getElementById('personnelPassword').value = '';
+
+    // Şifre ipucu
+    const hint = document.getElementById('personnelPasswordHint');
+    if (id) {
+        hint.textContent = 'Değiştirmek istemiyorsanız boş bırakın.';
+    } else {
+        hint.textContent = 'Yeni kullanıcı için şifre zorunludur.';
+    }
+
+    personnelModal.show();
+}
+
+async function handleSavePersonnel() {
+    const id = document.getElementById('personnelId').value;
+    const username = document.getElementById('personnelUsername').value.trim();
+    const name = document.getElementById('personnelName').value.trim();
+    const role = document.getElementById('personnelRole').value;
+    const password = document.getElementById('personnelPassword').value;
+    const isActive = document.getElementById('personnelStatus').value;
+
+    if (!username || (!id && !password)) {
+        Utils.showError('Lütfen gerekli alanları doldurun.');
+        return;
+    }
+
+    const saveBtn = document.getElementById('savePersonnelBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+
+    const payload = { username, name, role, is_active: isActive };
+    if (password) payload.password = password;
+
+    try {
+        if (id) {
+            await api.put(`/platform-admin/tenants/${clinicId}/users/${id}`, payload);
+        } else {
+            await api.post(`/platform-admin/tenants/${clinicId}/users`, payload);
+        }
+
+        personnelModal.hide();
+        await Swal.fire({
+            icon: 'success',
+            title: 'Başarılı',
+            text: 'Personel bilgileri kaydedildi.',
+            timer: 1500,
+            showConfirmButton: false
+        });
+        loadPersonnel();
+    } catch (error) {
+        Utils.showError(typeof error === 'string' ? error : 'Kaydedilemedi.');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Kaydet';
+    }
+}
+
+window.deletePersonnel = async function (id) {
+    const result = await Swal.fire({
+        title: 'Emin misiniz?',
+        text: "Bu personeli silmek istediğinize emin misiniz?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Evet, Sil',
+        cancelButtonText: 'İptal'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await api.delete(`/platform-admin/tenants/${clinicId}/users/${id}`);
+            Swal.fire('Silindi!', 'Kullanıcı silindi.', 'success');
+            loadPersonnel();
+        } catch (error) {
+            Utils.showError('Silme işlemi başarısız.');
+        }
+    }
+}
+
+function translateRole(role) {
+    const roles = {
+        'admin': 'Yönetici',
+        'doctor': 'Doktor',
+        'secretary': 'Sekreter'
+    };
+    return roles[role] || role;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }

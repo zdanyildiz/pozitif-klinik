@@ -295,6 +295,19 @@ LOG_LEVEL=DEBUG
   - Tıklanabilir log satırları ile detaylı Context/Extra ve Stack Trace görüntüleme.
 - **Navigasyon:** Platform Sidebar menüsündeki "Loglar" linki aktifleştirilerek tam entegrasyon sağlandı.
 
+---
+
+### 23. Platform ve Klinik Kullanıcı Yönetimi (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **Platform Yöneticileri CRUD:**
+  - `PlatformAdminRepository` ve `PlatformAdminController` genişletilerek sistem yöneticilerinin listelenmesi, eklenmesi ve düzenlenmesi sağlandı.
+  - `platform_users.twig` ve `platform-users.js` ile profesyonel bir yönetim arayüzü kuruldu.
+- **Klinik Personel Yönetimi (Tenant-Aware):**
+  - Klinik ayarları (`platform/clinic-settings`) sayfasına "Kullanıcılar" sekmesi eklendi.
+  - Platform admininin, her bir kliniğin kendi personellerini (doktor, sekreter, yönetici) görebilmesi ve müdahale edebilmesi sağlandı.
+  - `ClinicPersonnelController` ile kliniğe özel kullanıcı işlemleri (`/platform-admin/tenants/{id}/users`) API'ye eklendi.
+- **Navigasyon:** Tüm platform panellerindeki "Kullanıcılar" menüsü yeni platform kullanıcıları sayfasına yönlendirilecek şekilde aktifleştirildi.
+
 
 
 

@@ -54,4 +54,13 @@ class PlatformWebController
     {
         return $this->view->render($response, 'platform_logs.twig', []);
     }
+
+    /**
+     * Platform Yöneticileri Sayfası
+     */
+    #[Route('GET', '/platform/users')]
+    public function usersPage(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'platform_users.twig', []);
+    }
 }

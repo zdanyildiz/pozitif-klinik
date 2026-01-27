@@ -35,7 +35,7 @@
                 <a href="{{ base_path }}/platform/dashboard" class="nav-link-custom">
                     <i class="bi bi-building"></i>Klinikler
                 </a>
-                <a href="#" class="nav-link-custom"><i class="bi bi-people"></i>Kullanıcılar</a>
+                <a href="{{ base_path }}/platform/users" class="nav-link-custom"><i class="bi bi-people"></i>Kullanıcılar</a>
                 <a href="#" class="nav-link-custom"><i class="bi bi-bar-chart"></i>İstatistikler</a>
             </div>
             <div class="nav-section">
@@ -81,6 +81,7 @@
             <div class="settings-container">
                 <div class="settings-tabs">
                     <button class="settings-tab active" data-tab="email"><i class="bi bi-envelope"></i>E-posta Ayarları</button>
+                    <button class="settings-tab" data-tab="users"><i class="bi bi-people"></i>Kullanıcılar</button>
                     <button class="settings-tab" data-tab="general"><i class="bi bi-sliders"></i>Genel Ayarlar</button>
                     <button class="settings-tab" data-tab="notifications"><i class="bi bi-bell"></i>Bildirimler</button>
                 </div>
@@ -167,7 +168,67 @@
                         </div>
                     </form>
                 </div>
-                <!-- General & Notifications Panels (Coming Soon) -->
+
+                <div class="settings-panel" id="usersPanel">
+                    <div class="settings-panel-header">
+                        <div class="panel-header-info">
+                            <h2 class="panel-title"><i class="bi bi-people-fill"></i>Klinik Personelleri</h2>
+                            <p class="panel-description">Bu kliniğe tanımlı doktor, sekreter ve yöneticileri yönetin.</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm" id="btnAddNewPersonnel">
+                            <i class="bi bi-person-plus"></i> Yeni Personel
+                        </button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="personnelTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ad Soyad</th>
+                                    <th>Kullanıcı Adı</th>
+                                    <th>Rol</th>
+                                    <th>Durum</th>
+                                    <th class="text-end">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="personnelTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                                        Kullanıcılar yükleniyor...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="settings-panel" id="generalPanel">
+                    <div class="settings-panel-header">
+                        <div class="panel-header-info">
+                            <h2 class="panel-title"><i class="bi bi-sliders"></i>Genel Klinik Ayarları</h2>
+                            <p class="panel-description">Klinik temel bilgilerini ve uygulama tercihlerini yönetin.</p>
+                        </div>
+                    </div>
+                    <div class="p-5 text-center text-muted">
+                        <i class="bi bi-cone-striped fs-1 d-block mb-3"></i>
+                        <p>Genel ayarlar modülü yakında hizmete girecektir.</p>
+                    </div>
+                </div>
+
+                <div class="settings-panel" id="notificationsPanel">
+                    <div class="settings-panel-header">
+                        <div class="panel-header-info">
+                            <h2 class="panel-title"><i class="bi bi-bell-fill"></i>Bildirim Yapılandırması</h2>
+                            <p class="panel-description">SMS ve E-posta bildirim tercihlerini özelleştirin.</p>
+                        </div>
+                    </div>
+                    <div class="p-5 text-center text-muted">
+                        <i class="bi bi-cone-striped fs-1 d-block mb-3"></i>
+                        <p>Bildirim ayarları modülü yakında hizmete girecektir.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -183,12 +244,61 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Alıcı E-posta Adresi</label>
-                        <input type="email" class="form-control" id="testEmailAddress" required>
+                        <input type="email" class="form-control" id="testEmailAddress" placeholder="ornek@mail.com" required>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
                     <button type="button" class="btn btn-save" id="confirmSendTestBtn">Gönder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Personnel Modal -->
+    <div class="modal fade" id="personnelModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="personnelModalTitle">Yeni Personel Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="personnelForm">
+                        <input type="hidden" id="personnelId">
+                        <div class="mb-3">
+                            <label class="form-label">Ad Soyad</label>
+                            <input type="text" class="form-control" id="personnelName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kullanıcı Adı</label>
+                            <input type="text" class="form-control" id="personnelUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rol</label>
+                            <select class="form-select" id="personnelRole" required>
+                                <option value="admin">Yönetici</option>
+                                <option value="doctor">Doktor</option>
+                                <option value="secretary">Sekreter</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Şifre</label>
+                            <input type="password" class="form-control" id="personnelPassword" placeholder="Değiştirmek istemiyorsanız boş bırakın">
+                            <div id="personnelPasswordHint" class="form-text">Yeni kullanıcı için şifre zorunludur.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Durum</label>
+                            <select class="form-select" id="personnelStatus">
+                                <option value="1">Aktif</option>
+                                <option value="0">Pasif</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-save" id="savePersonnelBtn">Kaydet</button>
                 </div>
             </div>
         </div>
