@@ -37,7 +37,8 @@ class ServiceRepository
     public function findById(int $clinicId, int $serviceId): ?array
     {
         $sql = "SELECT * FROM cln_services WHERE clinic_id = ? AND id = ?";
-        return $this->db->fetch($sql, [$clinicId, $serviceId]);
+        $result = $this->db->fetch($sql, [$clinicId, $serviceId]);
+        return $result ?: null;
     }
 
     /**
@@ -46,7 +47,8 @@ class ServiceRepository
     public function findByCode(int $clinicId, string $code): ?array
     {
         $sql = "SELECT * FROM cln_services WHERE clinic_id = ? AND code = ? AND is_active = 1";
-        return $this->db->fetch($sql, [$clinicId, $code]);
+        $result = $this->db->fetch($sql, [$clinicId, $code]);
+        return $result ?: null;
     }
 
     /**
