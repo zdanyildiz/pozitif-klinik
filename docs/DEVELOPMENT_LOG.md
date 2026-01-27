@@ -278,6 +278,9 @@ LOG_LEVEL=DEBUG
 - **Core Fix:** `RouteRegistrar` sınıfındaki grouped routes path oluşturma mantığı düzeltildi. Boş path'lerin (`''`) gereksiz yere trailing slash (`/`) alması engellendi. Bu sayede `/platform-admin/tenants` gibi rotalarda yaşanan 405 hataları çözüldü.
 - **Logging Improvement:** `RequestLoggingMiddleware` sıralaması `ErrorMiddleware`'in dışına taşınarak, 404/500 hatalarının da doğru şekilde "Response Sent" olarak loglanması sağlandı.
 - **Frontend Fix:** `clinic-settings.js` dosyasındaki API çağrıları güncellendi. `/admin/tenants` yerine doğru prefix olan `/platform-admin/tenants` kullanılması sağlandı. Bu sayede klinik detay sayfası 405 hatası vermeden açılıyor.
+- **Cache Busting:** Tüm Twig şablonlarındaki `.css` ve `.js` dosyalarına `?v={{ version }}` parametresi eklendi. Bu parametre `config/settings.php` içindeki `time()` fonksiyonundan beslenerek her istekte güncel version numarası üretir, böylece tarayıcı önbellek sorunları giderildi.
+- **Frontend Fix:** `platform_clinic_settings.twig` dosyasına eksik olan `<div id="passwordHint">` elemanı eklendi. Bu sayede JS tarafındaki "Cannot read properties of null" hatası giderildi.
+
 
 
 

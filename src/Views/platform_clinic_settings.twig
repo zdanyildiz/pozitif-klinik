@@ -15,8 +15,8 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="{{ base_path }}/assets/css/dashboard.css" rel="stylesheet">
-    <link href="{{ base_path }}/assets/css/clinic-settings.css" rel="stylesheet">
+    <link href="{{ base_path }}/assets/css/dashboard.css?v={{ version }}" rel="stylesheet">
+    <link href="{{ base_path }}/assets/css/clinic-settings.css?v={{ version }}" rel="stylesheet">
 </head>
 
 <body>
@@ -121,6 +121,7 @@
                                         <input type="password" class="form-control" id="smtpPassword">
                                         <button type="button" class="btn btn-outline-secondary" id="togglePassword"><i class="bi bi-eye"></i></button>
                                     </div>
+                                    <div id="passwordHint" class="form-text text-warning mt-1" style="display:none;"></div>
                                 </div>
                             </div>
                             <div class="row g-3 mt-2">
@@ -198,7 +199,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Custom JS -->
-    <script src="{{ base_path }}/assets/js/config.js"></script>
-    <script src="{{ base_path }}/assets/js/clinic-settings.js"></script>
+    <script src="{{ base_path }}/assets/js/config.js?v={{ version }}"></script>
+    <script src="{{ base_path }}/assets/js/clinic-settings.js?v={{ version }}"></script>
 </body>
 </html>

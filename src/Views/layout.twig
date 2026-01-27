@@ -17,7 +17,7 @@
     <!-- Custom CSS -->
     <!-- Note: Paths are relative to public/ so we might need to adjust them if we use slim views but usually they work if base ref is set or absolute paths used. For now assuming /admin/ base or similar structure. -->
     <!-- Using absolute paths for assets to be safe -->
-    <link href="{{ base_path }}/assets/css/dashboard.css" rel="stylesheet">
+    <link href="{{ base_path }}/assets/css/dashboard.css?v={{ version }}" rel="stylesheet">
     
     {% block head %}{% endblock %}
 </head>
@@ -92,7 +92,7 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Custom JS -->
-    <script src="{{ base_path }}/assets/js/config.js"></script>
+    <script src="{{ base_path }}/assets/js/config.js?v={{ version }}"></script>
     
     <!-- Sidebar Toggle Script (Inline for simplicity as it was in sidebar.js but sidebar.js is being removed/bypassed) -->
     <script>
