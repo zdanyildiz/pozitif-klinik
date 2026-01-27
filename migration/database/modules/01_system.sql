@@ -58,9 +58,11 @@ CREATE TABLE `sys_users` (
   `password_hash` varchar(255) NOT NULL,
   `role` enum('admin','doctor','secretary') NOT NULL,
   `is_active` tinyint(1) DEFAULT 1,
+  `legacy_id` bigint(20) DEFAULT NULL COMMENT 'Old System TAKIPNO',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_user_per_clinic` (`clinic_id`,`username`),
+  KEY `idx_user_legacy_id` (`clinic_id`, `legacy_id`),
   CONSTRAINT `sys_users_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

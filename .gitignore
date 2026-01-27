@@ -62,3 +62,6 @@ yarn-error.log
 # VS Code
 .vscode/
 
+docs/migration_data.json
+docs/tablo-sql/
+*.json_export

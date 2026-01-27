@@ -29,7 +29,7 @@ class PatientRepository
     }
 
     /**
-     * Tüm aktif hastaları getirir (status = 1)
+     * Tüm aktif hastaları getirir (status = 1) - Son 20 kayıt ile sınırlı
      */
     public function findAll(int $clinicId): array
     {
@@ -38,7 +38,8 @@ class PatientRepository
                 LEFT JOIN sys_provinces pr ON p.province_id = pr.id
                 LEFT JOIN sys_districts d ON p.district_id = d.id
                 WHERE p.clinic_id = ? AND p.status = 1 
-                ORDER BY p.id DESC";
+                ORDER BY p.id DESC
+                LIMIT 20";
 
         $patients = $this->db->fetchAll($sql, [$clinicId]);
         return array_map([$this, 'decryptPatientData'], $patients);

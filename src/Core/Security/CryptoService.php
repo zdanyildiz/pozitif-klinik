@@ -44,7 +44,8 @@ class CryptoService
         $tag = substr($decoded, $ivLength, 16);
         $ciphertext = substr($decoded, $ivLength + 16);
 
-        return openssl_decrypt($ciphertext, $this->method, $this->key, OPENSSL_RAW_DATA, $iv, $tag);
+        $result = openssl_decrypt($ciphertext, $this->method, $this->key, OPENSSL_RAW_DATA, $iv, $tag);
+        return $result === false ? null : $result;
     }
 
     /**
