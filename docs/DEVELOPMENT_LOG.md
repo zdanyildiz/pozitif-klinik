@@ -307,6 +307,7 @@ LOG_LEVEL=DEBUG
   - Platform admininin, her bir kliniğin kendi personellerini (doktor, sekreter, yönetici) görebilmesi ve müdahale edebilmesi sağlandı.
   - `ClinicPersonnelController` ile kliniğe özel kullanıcı işlemleri (`/platform-admin/tenants/{id}/users`) API'ye eklendi.
 - **Navigasyon:** Tüm platform panellerindeki "Kullanıcılar" menüsü yeni platform kullanıcıları sayfasına yönlendirilecek şekilde aktifleştirildi.
+- **Dashboard İstatistikleri:** Platform dashboard'undaki "Toplam Kullanıcı" kartının çalışmaması (sadece "-" görünmesi) düzeltildi. `TenantRepository::getStats` API'si üzerinden gerçek veriler çekilmeye başlandı.
 
 
 

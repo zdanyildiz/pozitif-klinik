@@ -19,6 +19,7 @@ const logoutBtn = document.getElementById('logoutBtn');
 // Stats Elements
 const totalClinicsEl = document.getElementById('totalClinics');
 const activeClinicsEl = document.getElementById('activeClinics');
+const totalUsersEl = document.getElementById('totalUsers');
 
 // Modal
 let newTenantModal;
@@ -52,6 +53,9 @@ async function loadTenants() {
         totalClinicsEl.textContent = tenants.length;
         const activeCount = tenants.filter(t => t.is_active === 1 || t.is_active === '1' || t.is_active === true).length;
         activeClinicsEl.textContent = activeCount;
+
+        // İstatistikleri ayrı yükle (veya tek endpoint'e çekilebilir)
+        loadStats();
 
         // Loading'i kaldır
         tenantsTableBody.innerHTML = '';
@@ -306,6 +310,22 @@ async function handleLogout() {
         localStorage.removeItem('platform_token');
         localStorage.removeItem('user_type');
         window.location.href = API_URL + '/platform/login';
+    }
+}
+
+// İstatistikleri Yükle
+async function loadStats() {
+    try {
+        const result = await api.get('/platform-admin/tenants/stats');
+        const stats = result.data;
+
+        if (stats) {
+            totalClinicsEl.textContent = stats.total_clinics;
+            activeClinicsEl.textContent = stats.active_clinics;
+            totalUsersEl.textContent = stats.total_users;
+        }
+    } catch (error) {
+        console.error('İstatistikler yüklenirken hata:', error);
     }
 }
 

@@ -132,4 +132,14 @@ class TenantController extends BaseController
 
         return $this->success($response, null, 'Klinik bilgileri başarıyla güncellendi.');
     }
+
+    /**
+     * Dashboard İstatistiklerini Getir
+     */
+    #[Route('GET', '/stats')]
+    public function stats(Request $request, Response $response): Response
+    {
+        $stats = $this->tenantRepository->getStats();
+        return $this->success($response, $stats);
+    }
 }

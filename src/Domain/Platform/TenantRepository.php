@@ -179,4 +179,26 @@ class TenantRepository
             throw new Exception("Güncelleme hatası: " . $e->getMessage(), 0, $e);
         }
     }
+
+    /**
+     * Platform genel istatistiklerini getirir
+     */
+    public function getStats(): array
+    {
+        $stats = [];
+
+        // Toplam Klinik
+        $sql = "SELECT COUNT(*) as total FROM sys_tenants";
+        $stats['total_clinics'] = (int) $this->db->fetch($sql)['total'];
+
+        // Aktif Klinik
+        $sql = "SELECT COUNT(*) as total FROM sys_tenants WHERE is_active = 1";
+        $stats['active_clinics'] = (int) $this->db->fetch($sql)['total'];
+
+        // Toplam Kullanıcı (Tüm klinikler)
+        $sql = "SELECT COUNT(*) as total FROM sys_users";
+        $stats['total_users'] = (int) $this->db->fetch($sql)['total'];
+
+        return $stats;
+    }
 }
