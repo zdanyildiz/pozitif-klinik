@@ -149,11 +149,16 @@ CREATE TABLE IF NOT EXISTS `cln_services` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `clinic_id` bigint(20) unsigned NOT NULL,
   `name` varchar(255) NOT NULL,
+  `code` varchar(50) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `category` varchar(100) DEFAULT NULL,
   `price` decimal(10,2) DEFAULT 0.00,
+  `tax_rate` decimal(5,2) DEFAULT 0.00,
   `is_active` tinyint(1) DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `clinic_id` (`clinic_id`),
+  KEY `idx_code` (`clinic_id`, `code`),
   CONSTRAINT `cln_services_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -480,10 +480,71 @@ Randevu türünü pasif yapar (soft delete).
 
 ## Domain API (Hizmet Kataloğu)
 
-Bu endpoint'ler klinikte sunulan hizmetleri (Botox, Dolgu, Muayene vb.) yönetir.
+Bu endpoint'ler klinikte sunulan hizmetleri (Botox, Dolgu, Muayene vb.) yönetir. Her hizmete kod, kategori, açıklama ve KDV oranı tanımlanabilir.
 
 ### `GET /api/services`
 Aktif hizmetleri listeler.
+
+**Query Params:**
+- `includeInactive` (1|0): Pasif hizmetleri de dahil eder (varsayılan: 0)
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "message": "İşlem başarılı",
+  "data": [
+    {
+      "id": 1,
+      "clinic_id": 1,
+      "name": "Botox Uygulaması",
+      "code": "BTX-001",
+      "description": "Yüz bölgesi botox uygulaması",
+      "category": "Estetik",
+      "price": "1500.00",
+      "tax_rate": "20.00",
+      "is_active": 1,
+      "created_at": "2026-01-27 12:00:00"
+    }
+  ]
+}
+```
+
+### `GET /api/services/search`
+Hizmet adı, kodu veya açıklamasında arama yapar.
+
+**Query Params:**
+- `q` (string): Arama terimi (en az 2 karakter)
+
+### `GET /api/services/categories`
+Tanımlı hizmet kategorilerinin listesini döner.
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "data": ["Estetik", "Muayene", "Tedavi"]
+}
+```
+
+### `GET /api/services/stats`
+Hizmet istatistiklerini döner.
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "data": {
+    "total": 15,
+    "active": 12,
+    "inactive": 3,
+    "category_count": 4
+  }
+}
+```
+
+### `GET /api/services/{id}`
+Tek bir hizmetin detaylarını getirir.
 
 ### `POST /api/services`
 Yeni hizmet ekler.
@@ -492,17 +553,29 @@ Yeni hizmet ekler.
 ```json
 {
   "name": "Botox Uygulaması",
-  "code": "BTX-01",
-  "standard_price": 1500.00,
-  "tax_rate": 20.00
+  "code": "BTX-001",
+  "description": "Yüz bölgesi botox uygulaması",
+  "category": "Estetik",
+  "price": 1500.00,
+  "tax_rate": 20.00,
+  "is_active": 1
+}
+```
+
+**Başarılı Yanıt (201 Created):**
+```json
+{
+  "status": true,
+  "message": "Hizmet başarıyla oluşturuldu.",
+  "data": { "id": 5 }
 }
 ```
 
 ### `PUT /api/services/{id}`
-Hizmet bilgilerini günceller.
+Hizmet bilgilerini günceller. Payload POST ile aynıdır.
 
 ### `DELETE /api/services/{id}`
-Hizmeti pasif yapar.
+Hizmeti pasif yapar (soft delete).
 
 ---
 

@@ -322,3 +322,24 @@ LOG_LEVEL=DEBUG
   - `PlatformAdminMiddleware` güncellendi: Aynı hibrit destek platform yöneticileri için de eklendi.
   - Bu sayede web panelinden yapılan API çağrılarındaki (hasta detay, vitals vb.) 401 hataları çözüldü.
 
+---
+
+### 25. Hizmet Tanımları Modülü (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **Veritabanı Genişletme:** `cln_services` tablosuna `code`, `description`, `category` ve `tax_rate` alanları eklendi. Migration dosyası: `20260127_add_service_details.sql`
+- **API Geliştirmesi:**
+  - `ServiceRepository` genişletildi: Kategori filtreleme, arama, istatistik metodları eklendi.
+  - `ServiceController` genişletildi: `/api/services/search`, `/api/services/categories`, `/api/services/stats` endpoint'leri eklendi.
+  - Kod benzersizliği kontrolü eklendi.
+- **Web UI (SSR):**
+  - `clinic_services.twig` şablonu oluşturuldu: Premium tasarımlı hizmet yönetim sayfası.
+  - `services.js` oluşturuldu: CRUD işlemleri, anlık arama ve kategori filtreleme.
+  - `services.css` oluşturuldu: Gradient kartlar, animasyonlar ve modern tasarım.
+- **Navigasyon:** Layout menüsündeki "Hizmet Tanımları" linki `/admin/services` sayfasına yönlendirildi.
+- **Özellikler:**
+  - Hizmet kodu, kategori, açıklama ve KDV oranı tanımlama
+  - Anlık arama (isim, kod, açıklama)
+  - Kategori bazlı filtreleme
+  - Aktif/Pasif hizmet görüntüleme
+  - İstatistik kartları (Toplam, Aktif, Kategori sayısı)
+

@@ -1,0 +1,203 @@
+{% extends "layout.twig" %}
+
+{% block title %}Hizmet Tanımları | Pozitif Klinik{% endblock %}
+{% block page_title %}Hizmet Tanımları{% endblock %}
+
+{% block head %}
+    <link href="{{ base_path }}/assets/css/services.css?v={{ version }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <!-- Stats Grid -->
+    <div class="stats-grid mb-4">
+        <div class="stat-card bg-gradient-primary">
+            <div class="stat-icon">
+                <i class="bi bi-list-check"></i>
+            </div>
+            <div class="stat-value" id="totalServices">0</div>
+            <div class="stat-label">Toplam Hizmet</div>
+        </div>
+
+        <div class="stat-card bg-gradient-success">
+            <div class="stat-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-value" id="activeServices">0</div>
+            <div class="stat-label">Aktif Hizmet</div>
+        </div>
+
+        <div class="stat-card bg-gradient-info">
+            <div class="stat-icon">
+                <i class="bi bi-tags"></i>
+            </div>
+            <div class="stat-value" id="categoryCount">0</div>
+            <div class="stat-label">Kategori Sayısı</div>
+        </div>
+    </div>
+
+    <!-- Filter & Actions Bar -->
+    <div class="filter-bar mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3 flex-grow-1">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Hizmet ara...">
+                </div>
+                <select class="form-select w-auto" id="categoryFilter">
+                    <option value="">Tüm Kategoriler</option>
+                </select>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="showInactive">
+                    <label class="form-check-label" for="showInactive">Pasifleri Göster</label>
+                </div>
+            </div>
+            <button class="btn btn-save" id="btnNewService">
+                <i class="bi bi-plus-lg me-1"></i> Yeni Hizmet Ekle
+            </button>
+        </div>
+    </div>
+
+    <!-- Services Table -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover" id="servicesTable">
+                <thead>
+                    <tr>
+                        <th class="w-80p">Kod</th>
+                        <th>Hizmet Adı</th>
+                        <th>Kategori</th>
+                        <th class="text-end w-120p">Fiyat</th>
+                        <th class="text-end w-80p">KDV %</th>
+                        <th class="text-center w-100p">Durum</th>
+                        <th class="text-end w-120p">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="servicesTableBody">
+                    <tr id="loadingRow">
+                        <td colspan="7">
+                            <div class="loading-state">
+                                <div class="loading-spinner"></div>
+                                <p>Hizmetler yükleniyor...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state d-none" id="emptyState">
+        <i class="bi bi-clipboard-x"></i>
+        <h5>Henüz hizmet tanımlanmamış</h5>
+        <p>Kliniğinizde sunduğunuz hizmetleri buradan tanımlayabilirsiniz.</p>
+        <button class="btn btn-primary" onclick="document.getElementById('btnNewService').click()">
+            <i class="bi bi-plus-lg me-1"></i> İlk Hizmeti Ekle
+        </button>
+    </div>
+
+    <!-- New/Edit Service Modal -->
+    <div class="modal fade" id="serviceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        <span id="modalTitle">Yeni Hizmet Ekle</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="serviceForm">
+                        <input type="hidden" id="serviceId">
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label fw-semibold">Hizmet Adı <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="serviceName" name="name" 
+                                       placeholder="Örn: Botox Uygulaması" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Hizmet Kodu</label>
+                                <input type="text" class="form-control" id="serviceCode" name="code" 
+                                       placeholder="Örn: BTX-001">
+                                <div class="form-text">Benzersiz bir kod girebilirsiniz</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Kategori</label>
+                                <input type="text" class="form-control" id="serviceCategory" name="category" 
+                                       list="categoryList" placeholder="Örn: Estetik">
+                                <datalist id="categoryList"></datalist>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Fiyat (₺) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="servicePrice" name="price" 
+                                       step="0.01" min="0" value="0" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">KDV Oranı (%)</label>
+                                <select class="form-select" id="serviceTaxRate" name="tax_rate">
+                                    <option value="0">%0 - KDV Yok</option>
+                                    <option value="1">%1</option>
+                                    <option value="10">%10</option>
+                                    <option value="20" selected>%20</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Açıklama</label>
+                            <textarea class="form-control" id="serviceDescription" name="description" 
+                                      rows="3" placeholder="Hizmet hakkında detaylı açıklama..."></textarea>
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="serviceActive" name="is_active" checked>
+                            <label class="form-check-label" for="serviceActive">Hizmet Aktif</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-save" id="saveServiceBtn">
+                        <i class="bi bi-check-lg me-1"></i> Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Hizmeti Sil
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <input type="hidden" id="deleteServiceId">
+                    <p class="mb-0">
+                        <strong id="deleteServiceName"></strong> hizmetini silmek istediğinize emin misiniz?
+                    </p>
+                    <p class="text-muted small mt-2">Bu işlem hizmeti pasif duruma getirecektir.</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="bi bi-trash me-1"></i> Sil
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ base_path }}/assets/js/services.js?v={{ version }}"></script>
+{% endblock %}

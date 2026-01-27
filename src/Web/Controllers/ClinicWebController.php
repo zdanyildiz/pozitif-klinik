@@ -43,4 +43,16 @@ class ClinicWebController
             'page' => 'personnel'
         ]);
     }
+
+    /**
+     * Klinik Hizmet Tanımları
+     */
+    #[Route('GET', '/admin/services')]
+    #[Middleware(SessionAuthMiddleware::class)]
+    public function services(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'clinic_services.twig', [
+            'page' => 'services'
+        ]);
+    }
 }
