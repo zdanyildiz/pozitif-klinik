@@ -101,6 +101,9 @@ Uygulama, hem SEO/Performans avantajları sağlayan SSR (Server-Side Rendering) 
 - **İletişim:** 
     - **Web:** Sayfa geçişleri ve form işlemleri sunucu üzerinden (SSR) yapılır. Dinamik etkileşimler (Modal işlemleri, anlık istatistikler) için yine API (Axios) kullanılır.
     - **Mobil / API:** Tamamen RESTful endpoint'ler üzerinden haberleşir.
+- **Hibrit Kimlik Doğrulama:** Güvenlik middleware'leri (`TenantMiddleware`, `PlatformAdminMiddleware`) hem JWT token hem de Session tabanlı kimlik doğrulamayı destekler. Bu sayede:
+    - **Web Paneli:** Kullanıcı SSR ile (Session cookie) giriş yapar, ardından aynı oturumda frontend'den yapılan API çağrıları (hasta detayları vb.) middleware tarafından Session üzerinden doğrulanır.
+    - **Mobil Uygulama:** Stateless JWT Bearer Token kullanarak tüm API endpoint'lerine erişir.
 
 ---
 
@@ -184,9 +187,10 @@ Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını payl
 3.  **Yetkilendirme (Authorization)**: Rol tabanlı yetki kontrolü (RBAC), özel bir middleware aracılığıyla sağlanacaktır. JWT içindeki `role` claim'i (`platform_admin`, `clinic_admin`, `doctor` vb.) kullanılır.
 4.  **Veri İzolasyonu**: `clinic_id` ile tenant verilerinin birbirine karışması engellenir.
 5.  **Girdi Doğrulama (Input Validation)**: İstemciden gelen tüm veriler, `respect/validation` gibi bir kütüphane ile controller katmanında doğrulanmalıdır.
-6. **CSRF ve XSS Stratejisi (Stateless Security):**
-   - Sistem **Stateless (Durumsuz)** mimaride olduğu ve oturum bilgisi Cookie yerine `localStorage` (Bearer Token) içinde tutulduğu için, klasik **CSRF (Cross-Site Request Forgery)** saldırılarına karşı mimari olarak korumalıdır. Bu nedenle CSRF Token kullanılmaz.
-   - Bunun yerine, güvenliği sağlamak için **Strict CORS (Sıkı Köken Politikası)** ve **XSS (Cross-Site Scripting)** korumalarına odaklanılır. Production ortamında `Access-Control-Allow-Origin` sadece izin verilen domainlere açılır.
+6. **CSRF ve XSS Stratejisi (Hibrit Güvenlik):**
+   - **SSR (Web Paneli):** Twig şablonları üzerinden sunulan formlar (login, vb.) için `Slim\Csrf\Guard` middleware'i kullanılarak klasik CSRF token koruması sağlanır. Token'lar session'da tutulur ve her form gönderiminde doğrulanır.
+   - **API (Mobil/Stateless):** Mobil uygulamalar ve harici API istekleri JWT Bearer Token ile kimlik doğrulaması yapar. Bu istekler stateless olduğu için CSRF koruması gerekmez.
+   - **XSS Koruması:** `SecurityHeadersMiddleware` ile Content-Security-Policy başlıkları eklenir. Production ortamında strict policy uygulanır.
 7.  **Sıfır Hardcoded Sır Politikası**: Kod içinde hiçbir şekilde API key, JWT secret veya veritabanı şifresi (fallback olarak bile) bulundurulamaz. Tüm hassas veriler sadece `.env` dosyasından okunmalıdır. Aksi durum denetimlerde kritik hata olarak işaretlenir.
 8.  **Kriptografi ve Veri Şifreleme (Privacy by Design):**
     - **Depolama (AES-256-GCM):** Hasta hassas verileri (Ad Soyad, TC No, Telefon, Email, Adres) veritabanında AES-256-GCM algoritması ile şifrelenmiş olarak saklanır.

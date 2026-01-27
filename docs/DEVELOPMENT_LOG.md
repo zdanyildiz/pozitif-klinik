@@ -309,6 +309,16 @@ LOG_LEVEL=DEBUG
 - **Navigasyon:** Tüm platform panellerindeki "Kullanıcılar" menüsü yeni platform kullanıcıları sayfasına yönlendirilecek şekilde aktifleştirildi.
 - **Dashboard İstatistikleri:** Platform dashboard'undaki "Toplam Kullanıcı" kartının çalışmaması (sadece "-" görünmesi) düzeltildi. `TenantRepository::getStats` API'si üzerinden gerçek veriler çekilmeye başlandı.
 
+---
 
-
+### 24. CSRF Onarımı ve Hibrit Kimlik Doğrulama (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **CSRF Fix:** Klinik login sayfasındaki "Failed CSRF check!" hatası giderildi:
+  - `config/routes.php` dosyasındaki middleware sıralaması düzeltildi. `Slim\Csrf\Guard` artık `CsrfViewMiddleware`'den önce çalışarak token'ların doğru şekilde oluşturulması sağlandı.
+  - `config/container.php`'de CSRF Guard'a özel `setFailureHandler` eklenerek kullanıcıya Türkçe hata mesajı gösterilmesi ve loglanması sağlandı.
+- **UI Improvement:** Hasta yönetimi ekranındaki "Yeni Hasta Ekle" butonunun gereksiz yüksekliği düzeltildi. `white-space: nowrap` ve uyumlu padding değerleri ile buton, arama kutusuyla aynı hizaya getirildi.
+- **Hibrit Authentication (Session + JWT):**
+  - `TenantMiddleware` güncellendi: JWT token bulunamadığında session kontrolü yapılarak SSR ile giriş yapan kullanıcıların API endpoint'lerine erişimi sağlandı.
+  - `PlatformAdminMiddleware` güncellendi: Aynı hibrit destek platform yöneticileri için de eklendi.
+  - Bu sayede web panelinden yapılan API çağrılarındaki (hasta detay, vitals vb.) 401 hataları çözüldü.
 
