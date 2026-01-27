@@ -15,6 +15,7 @@ let currentAppointmentId = null;
 let currentTypeId = null; // Düzenleme için tür ID'si
 let patientTomSelect = null;
 let doctorTomSelect = null;
+let serviceTomSelect = null; // Hizmet seçimi için TomSelect
 
 document.addEventListener('DOMContentLoaded', async () => {
     detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
@@ -106,7 +107,7 @@ async function loadTypes() {
     appointmentTypes = res.data || [];
     renderTypeOptions();
     renderTypeList();
-    renderServiceOptionsForTypes(); // Hizmet dropdown'ını doldur
+    // NOT: renderServiceOptionsForTypes loadServices'dan sonra çağrılacak
 }
 
 async function loadPatients() {
@@ -156,8 +157,14 @@ async function loadDoctors() {
 }
 
 async function loadServices() {
-    const res = await api.get('/api/services');
-    services = res.data || [];
+    try {
+        const res = await api.get('/api/services');
+        services = res.data || [];
+        renderServiceOptionsForTypes(); // Hizmetler yüklendikten sonra dropdown'ı doldur
+    } catch (e) {
+        console.error('Hizmetler yüklenirken hata:', e);
+        services = [];
+    }
 }
 
 // ==========================================
@@ -329,11 +336,20 @@ function renderTypeList() {
     });
 }
 
-// Hizmet dropdown'ını randevu türleri modalına doldur
+// Hizmet dropdown'ını randevu türleri modalına doldur (TomSelect ile aranabilir)
+let serviceSelectInitialized = false;
+
 function renderServiceOptionsForTypes() {
     const sel = document.getElementById('typeServiceSelect');
     if (!sel) return;
 
+    // TomSelect varsa temizle ve yeniden doldur
+    if (serviceTomSelect) {
+        serviceTomSelect.destroy();
+        serviceTomSelect = null;
+    }
+
+    // Önce normal select'i doldur
     sel.innerHTML = '<option value="">-- Hizmet Seçin (Opsiyonel) --</option>';
     services.forEach(s => {
         const opt = document.createElement('option');
@@ -344,23 +360,41 @@ function renderServiceOptionsForTypes() {
         sel.appendChild(opt);
     });
 
-    // Hizmet seçildiğinde fiyatı otomatik doldur
-    sel.addEventListener('change', function () {
-        const selectedOption = this.options[this.selectedIndex];
-        const priceHint = document.getElementById('servicePriceHint');
-        const priceValue = document.getElementById('servicePriceValue');
-        const defaultPriceInput = document.getElementById('typeDefaultPrice');
+    // TomSelect başlat (aranabilir dropdown)
+    serviceTomSelect = new TomSelect('#typeServiceSelect', {
+        create: false,
+        sortField: { field: 'text', direction: 'asc' },
+        placeholder: 'Hizmet ara...',
+        allowEmptyOption: true,
+        render: {
+            option: function (data, escape) {
+                return `<div class="py-1">${escape(data.text)}</div>`;
+            }
+        },
+        onChange: function (value) {
+            handleServiceChange(value);
+        }
+    });
+}
 
-        if (this.value && selectedOption.dataset.price) {
-            const price = parseFloat(selectedOption.dataset.price).toFixed(2);
-            const taxRate = selectedOption.dataset.taxRate || 0;
+// Hizmet seçildiğinde fiyatı otomatik doldur
+function handleServiceChange(serviceId) {
+    const priceHint = document.getElementById('servicePriceHint');
+    const priceValue = document.getElementById('servicePriceValue');
+    const defaultPriceInput = document.getElementById('typeDefaultPrice');
+
+    if (serviceId) {
+        const service = services.find(s => s.id == serviceId);
+        if (service) {
+            const price = parseFloat(service.price).toFixed(2);
+            const taxRate = service.tax_rate || 0;
             priceHint.style.display = 'block';
             priceValue.textContent = `${price}₺ (KDV: %${taxRate})`;
             defaultPriceInput.value = price;
-        } else {
-            priceHint.style.display = 'none';
+            return;
         }
-    });
+    }
+    priceHint.style.display = 'none';
 }
 
 // ==========================================
@@ -601,10 +635,14 @@ function editType(id) {
     const form = document.getElementById('typeForm');
     form.querySelector('[name="id"]').value = type.id;
     form.querySelector('[name="name"]').value = type.name;
-    form.querySelector('[name="service_id"]').value = type.service_id || '';
     form.querySelector('[name="color_code"]').value = type.color_code;
     form.querySelector('[name="duration_minutes"]').value = type.duration_minutes;
     form.querySelector('[name="default_price"]').value = type.default_price;
+
+    // TomSelect ile hizmet seçimini ayarla
+    if (serviceTomSelect) {
+        serviceTomSelect.setValue(type.service_id || '', true); // silent=true
+    }
 
     // Hizmet seçiliyse fiyat bilgisini göster
     const priceHint = document.getElementById('servicePriceHint');
@@ -652,7 +690,11 @@ function resetTypeForm() {
     form.querySelector('[name="color_code"]').value = '#3788d8';
     form.querySelector('[name="duration_minutes"]').value = '30';
     form.querySelector('[name="default_price"]').value = '0';
-    form.querySelector('[name="service_id"]').value = '';
+
+    // TomSelect'i temizle
+    if (serviceTomSelect) {
+        serviceTomSelect.clear(true); // silent=true
+    }
 
     const submitBtn = document.getElementById('typeSubmitBtn');
     submitBtn.innerHTML = '<i class="bi bi-plus-lg me-1"></i> Yeni Tür Ekle';
