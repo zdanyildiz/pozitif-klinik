@@ -2,13 +2,8 @@
  * Pozitif Klinik - Clinic Dashboard Scripts
  */
 
-// Token Kontrolü
-const token = localStorage.getItem('platform_token');
-const userType = localStorage.getItem('user_type');
-
-if (!token || userType !== 'clinic_user') {
-    window.location.href = API_URL + '/admin/login';
-}
+// Authentication is handled server-side via SessionAuthMiddleware.
+// No client-side token check needed for SSR pages.
 
 // Global state
 let users = [];
