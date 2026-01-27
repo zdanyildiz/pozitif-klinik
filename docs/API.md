@@ -602,6 +602,75 @@ Tanımlı hizmet kategorilerinin listesini döner.
   "status": true,
   "data": ["Estetik", "Muayene", "Tedavi"]
 }
+
+### Klinik Ayarları (Tenant)
+
+Klinik yöneticisinin kendi klinik bilgilerini görüntülemesi ve düzenlemesi içindir.
+
+### `GET /api/clinic/settings`
+Klinik genel ayarlarını (iletişim, adres, vergi, çalışma saatleri) getirir.
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+    "status": true,
+    "data": {
+        "id": 1,
+        "name": "Pozitif Estetik Kliniği",
+        "domain_prefix": "pozitif",
+        "logo_url": null,
+        "phone": "0212 123 45 67",
+        "email": "info@pozitifklinik.com",
+        "website": "https://www.pozitifklinik.com",
+        "address": "Kadıköy, İstanbul",
+        "province_id": 34,
+        "district_id": 3423,
+        "tax_office": "Kadıköy Vergi Dairesi",
+        "tax_number": "1234567890",
+        "working_hours": {
+            "pazartesi": {"open": true, "start": "09:00", "end": "18:00"},
+            "sali": {"open": true, "start": "09:00", "end": "18:00"},
+            "pazar": {"open": false, "start": "09:00", "end": "18:00"}
+        },
+        "description": "İstanbul'un en iyi estetik kliniği",
+        "is_active": 1,
+        "province_name": "İstanbul",
+        "district_name": "Kadıköy"
+    }
+}
+```
+
+### `PUT /api/clinic/settings`
+Klinik ayarlarını günceller.
+
+**Payload:**
+```json
+{
+    "name": "Pozitif Estetik Kliniği",
+    "phone": "0212 123 45 67",
+    "email": "info@pozitifklinik.com",
+    "website": "https://www.pozitifklinik.com",
+    "address": "Bağdat Cad. No:123 Kadıköy",
+    "province_id": 34,
+    "district_id": 3423,
+    "tax_office": "Kadıköy Vergi Dairesi",
+    "tax_number": "1234567890",
+    "description": "İstanbul'un en iyi estetik kliniği",
+    "working_hours": {
+        "pazartesi": {"open": true, "start": "09:00", "end": "18:00"},
+        "sali": {"open": true, "start": "09:00", "end": "18:00"},
+        "pazar": {"open": false, "start": "09:00", "end": "18:00"}
+    }
+}
+```
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+    "status": true,
+    "message": "Klinik ayarları başarıyla güncellendi."
+}
+```
 ```
 
 ### `GET /api/services/stats`

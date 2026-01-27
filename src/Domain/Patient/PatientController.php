@@ -59,6 +59,17 @@ class PatientController extends BaseController
     }
 
     /**
+     * Hasta istatistiklerini getirir (Dashboard kartları için)
+     */
+    #[Route('GET', '/stats')]
+    public function getStats(Request $request, Response $response): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $stats = $this->patientRepository->getStats($clinicId);
+        return $this->success($response, $stats);
+    }
+
+    /**
      * Sadece ID ve İsim listesini döner (Dropdownlar için)
      */
     #[Route('GET', '/select-list')]

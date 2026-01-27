@@ -381,3 +381,15 @@ LOG_LEVEL=DEBUG
   - İl/İlçe dinamik dropdown entegrasyonu
 - **Şema Güncelleme:** `migration/database/modules/01_system.sql` ve `schema.sql` dosyaları güncellendi
 
+### 28. Klinik Kendi Ayarları Modülü (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **Backend API:**
+  - `src/Domain/Clinic/SettingsController.php` oluşturuldu. `/api/clinic/settings` (GET/PUT) endpoint'leri ile kliniklerin kendi bilgilerini yönetmesi sağlandı.
+  - `TenantMiddleware` ve `TenantRepository` ile güvenli ve izole veri erişimi.
+- **Frontend (Clinic Settings):**
+  - `src/Web/Controllers/ClinicWebController.php` güncellenerek `/admin/settings` rotası eklendi.
+  - `src/Views/clinic_settings.twig` oluşturuldu: Klinik personeli için ayar sayfası.
+  - `Public/assets/js/clinic_settings.js` oluşturuldu: Dinamik form yönetimi, il/ilçe yükleme ve çalışma saatleri düzenleme.
+- **Navigasyon:** Klinik panelindeki menüde "Klinik Ayarları" linki aktifleştirildi.
+
+

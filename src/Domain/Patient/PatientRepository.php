@@ -45,6 +45,21 @@ class PatientRepository
     }
 
     /**
+     * Hasta istatistiklerini getirir (Cinsiyet dağılımı)
+     */
+    public function getStats(int $clinicId): array
+    {
+        $sql = "SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN gender = 'M' THEN 1 ELSE 0 END) as male,
+                    SUM(CASE WHEN gender = 'F' THEN 1 ELSE 0 END) as female
+                FROM ptn_cards 
+                WHERE clinic_id = ? AND status = 1";
+
+        return $this->db->fetch($sql, [$clinicId]);
+    }
+
+    /**
      * Sadece ID ve İsim döndürür (Select-box yüklemeleri için)
      */
     public function getSelectList(int $clinicId): array

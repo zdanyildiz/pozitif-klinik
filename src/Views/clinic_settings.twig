@@ -1,0 +1,167 @@
+{% extends "layout.twig" %}
+
+{% block title %}Klinik Ayarları | Pozitif Klinik{% endblock %}
+{% block page_title %}Klinik Ayarları{% endblock %}
+
+{% block head %}
+<style>
+    .settings-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        border: 1px solid rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .settings-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #f0f0f0;
+        background: #fafafa;
+    }
+    .settings-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    .settings-body {
+        padding: 24px;
+    }
+    .day-row {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    .day-row:last-child {
+        border-bottom: none;
+    }
+    .day-label {
+        width: 120px;
+        font-weight: 500;
+    }
+    .day-times {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+    .day-toggle {
+        width: 150px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form id="settingsForm">
+    <div class="row">
+        <!-- Sol Kolon: Temel Bilgiler ve İletişim -->
+        <div class="col-lg-6">
+            <!-- Temel Bilgiler -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h5><i class="bi bi-info-circle me-2"></i>Genel Bilgiler</h5>
+                </div>
+                <div class="settings-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Klinik Adı</label>
+                        <input type="text" class="form-control" name="name" id="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Klinik Açıklaması</label>
+                        <textarea class="form-control" name="description" id="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Web Sitesi</label>
+                        <input type="url" class="form-control" name="website" id="website" placeholder="https://...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- İletişim Bilgileri -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h5><i class="bi bi-telephone me-2"></i>İletişim ve Adres</h5>
+                </div>
+                <div class="settings-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Telefon</label>
+                            <input type="text" class="form-control" name="phone" id="phone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">E-Posta</label>
+                            <input type="email" class="form-control" name="email" id="email">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">İl</label>
+                            <select class="form-select" name="province_id" id="provinceId">
+                                <option value="">Seçiniz...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">İlçe</label>
+                            <select class="form-select" name="district_id" id="districtId" disabled>
+                                <option value="">Önce İl Seçiniz</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Açık Adres</label>
+                        <textarea class="form-control" name="address" id="address" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vergi Bilgileri -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h5><i class="bi bi-receipt me-2"></i>Vergi Bilgileri</h5>
+                </div>
+                <div class="settings-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Vergi Dairesi</label>
+                            <input type="text" class="form-control" name="tax_office" id="taxOffice">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Vergi Numarası</label>
+                            <input type="text" class="form-control" name="tax_number" id="taxNumber">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Kolon: Çalışma Saatleri -->
+        <div class="col-lg-6">
+            <div class="settings-card">
+                <div class="settings-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-clock me-2"></i>Çalışma Saatleri</h5>
+                    <small class="text-muted">Günlük açılış/kapanış saatleri</small>
+                </div>
+                <div class="settings-body" id="workingHoursContainer">
+                    <!-- Javascript ile doldurulacak -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kaydet Butonu -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
+                    <i class="bi bi-check-circle me-2"></i>Ayarları Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ base_path }}/assets/js/clinic_settings.js?v={{ version }}"></script>
+{% endblock %}

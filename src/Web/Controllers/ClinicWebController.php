@@ -55,4 +55,16 @@ class ClinicWebController
             'page' => 'services'
         ]);
     }
+
+    /**
+     * Klinik Genel Ayarları
+     */
+    #[Route('GET', '/admin/settings')]
+    #[Middleware(SessionAuthMiddleware::class)]
+    public function settings(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'clinic_settings.twig', [
+            'page' => 'settings'
+        ]);
+    }
 }

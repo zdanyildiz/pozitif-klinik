@@ -352,8 +352,23 @@
             if (roleEl) roleEl.textContent = 'Yetkili';
 
             loadProvinces();
+            loadStats(); // İstatistikleri yükle
             setupEventListeners();
         });
+
+        // İstatistikleri Yükle
+        async function loadStats() {
+            try {
+                const response = await api.get('/api/patients/stats');
+                const stats = response.data;
+                
+                // document.getElementById('totalPatientsCount').textContent = stats.total || 0; // Zaten Twig ile geliyor, ama JS ile güncellemek istersek açabiliriz
+                document.getElementById('malePatientsCount').textContent = stats.male || 0;
+                document.getElementById('femalePatientsCount').textContent = stats.female || 0;
+            } catch (error) {
+                console.error('İstatistikler yüklenemedi', error);
+            }
+        }
 
         // Event Listeners
         function setupEventListeners() {
