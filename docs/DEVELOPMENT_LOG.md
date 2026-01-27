@@ -240,6 +240,8 @@ PLATFORM_ADMIN_PASS=admin
 - **Raporlama Modülü:** Hasta ve randevu istatistikleri.
 - **Dosya Yükleme:** Hasta evrakları ve görselleri.
 - **Unit ve Integration Testleri:** Kod kalitesini artırmak için testlerin yazılması.
+- **Global Platform Ayarları Modülü:** Platform genelindeki varsayılan SMTP, logo, başlık ve sistem parametrelerinin yönetilebileceği ayarlar sayfası.
+
 
 ---
 
