@@ -11,9 +11,17 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Slim\Psr7\Response as SlimResponse;
+use App\Core\Service\SessionService;
 
 class PlatformAdminMiddleware implements MiddlewareInterface
 {
+    private SessionService $session;
+
+    public function __construct(SessionService $session)
+    {
+        $this->session = $session;
+    }
+
     /**
      * @inheritDoc
      */
@@ -21,7 +29,24 @@ class PlatformAdminMiddleware implements MiddlewareInterface
     {
         $authHeader = $request->getHeaderLine('Authorization');
 
-        if (empty($authHeader) || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        if (empty($authHeader)) {
+            // SSR (Session) desteği
+            if ($this->session->has('user_id') && ($this->session->get('role') === 'platform_admin' || $this->session->get('role') === 'admin')) {
+                $userId = (int) $this->session->get('user_id');
+
+                // Fake payload for compatibility
+                $request = $request->withAttribute('jwt_payload', (object) [
+                    'sub' => $userId,
+                    'is_super_admin' => true,
+                    'role' => $this->session->get('role')
+                ]);
+
+                return $handler->handle($request);
+            }
+            return $this->errorResponse('Yetkilendirme başlığı eksik veya geçersiz', 401);
+        }
+
+        if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
             return $this->errorResponse('Yetkilendirme başlığı eksik veya geçersiz', 401);
         }
 

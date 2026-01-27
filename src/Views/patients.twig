@@ -1,5 +1,9 @@
 {% extends 'layout.twig' %}
 
+{% block head %}
+    <link href="{{ base_path }}/assets/css/patients.css?v={{ version }}" rel="stylesheet">
+{% endblock %}
+
 {% block page_title %}Hasta Yönetimi{% endblock %}
 
 {% block content %}

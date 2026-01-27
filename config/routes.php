@@ -17,6 +17,6 @@ return function (App $app) {
         $webRegistrar = new RouteRegistrar($group);
         $webRegistrar->registerFromNamespace('App\Web\Controllers', __DIR__ . '/../src/Web/Controllers');
     })
-        ->add(\Slim\Csrf\Guard::class)
-        ->add(\App\Core\Middleware\CsrfViewMiddleware::class);
+        ->add(\App\Core\Middleware\CsrfViewMiddleware::class)
+        ->add(\Slim\Csrf\Guard::class);
 };

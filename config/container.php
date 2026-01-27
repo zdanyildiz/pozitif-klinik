@@ -98,11 +98,25 @@ return [
         return new SessionService();
     },
 
-    // CSRF Koruması
     \Slim\Csrf\Guard::class => function (ContainerInterface $c) {
         $responseFactory = AppFactory::determineResponseFactory();
         $guard = new \Slim\Csrf\Guard($responseFactory);
         $guard->setPersistentTokenMode(true);
+
+        // CSRF başarısız olduğunda çalışacak özel hata işleyici
+        $guard->setFailureHandler(function ($request, $handler) use ($c, $responseFactory) {
+            $logger = $c->get(\Psr\Log\LoggerInterface::class);
+            $logger->error('CSRF Check Failed', [
+                'uri' => (string) $request->getUri(),
+                'method' => $request->getMethod(),
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+            ]);
+
+            $response = $responseFactory->createResponse();
+            $response->getBody()->write('Güvenlik doğrulaması (CSRF) başarısız oldu. Lütfen sayfayı yenileyip tekrar deneyin.');
+            return $response->withHeader('Content-Type', 'text/plain; charset=utf-8')->withStatus(400);
+        });
+
         return $guard;
     },
 

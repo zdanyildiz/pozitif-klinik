@@ -8,6 +8,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\SignatureInvalidException;
+use App\Core\Service\SessionService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -34,11 +35,17 @@ class TenantMiddleware implements MiddlewareInterface
     private LoggerInterface $logger;
 
     /**
+     * Session Service
+     */
+    private SessionService $session;
+
+    /**
      * Constructor
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, SessionService $session)
     {
         $this->logger = $logger;
+        $this->session = $session;
         $this->jwtSecret = $_ENV['JWT_SECRET'] ?? '';
 
         if (empty($this->jwtSecret)) {
@@ -59,6 +66,23 @@ class TenantMiddleware implements MiddlewareInterface
         $authHeader = $request->getHeaderLine('Authorization');
 
         if (empty($authHeader)) {
+            // SSR (Session) desteği ekle
+            if ($this->session->has('clinic_id')) {
+                $clinicId = (int) $this->session->get('clinic_id');
+                $userId = (int) $this->session->get('user_id');
+
+                $request = $request->withAttribute('clinic_id', $clinicId);
+
+                // BaseController::getUserId() ile uyumluluk için fake payload
+                $request = $request->withAttribute('jwt_payload', (object) [
+                    'sub' => $userId,
+                    'clinic_id' => $clinicId,
+                    'role' => $this->session->get('role')
+                ]);
+
+                return $handler->handle($request);
+            }
+
             return $this->unauthorizedResponse('Authorization header bulunamadı');
         }
 
