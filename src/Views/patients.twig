@@ -13,7 +13,7 @@
             <div class="stat-icon clinics">
                 <i class="bi bi-people"></i>
             </div>
-            <div class="stat-value" id="totalPatientsCount">{{ patients|length }}</div>
+            <div class="stat-value" id="totalPatientsCount">{{ stats.total|default(0) }}</div>
             <div class="stat-label">Toplam Hasta</div>
         </div>
         <div class="stat-card">
@@ -21,14 +21,14 @@
                 <i class="bi bi-gender-male"></i>
             </div>
             <!-- Note: Complex filtering in Twig is limited without custom extensions, using JS or backend for specific counts is better, but leaving placeholders or simple count -->
-            <div class="stat-value" id="malePatientsCount">-</div>
+            <div class="stat-value" id="malePatientsCount">{{ stats.male|default(0) }}</div>
             <div class="stat-label">Erkek Hasta</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon users">
                 <i class="bi bi-gender-female"></i>
             </div>
-            <div class="stat-value" id="femalePatientsCount">-</div>
+            <div class="stat-value" id="femalePatientsCount">{{ stats.female|default(0) }}</div>
             <div class="stat-label">Kadın Hasta</div>
         </div>
     </div>
@@ -38,7 +38,7 @@
         <div class="table-card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <h2 class="table-card-title mb-0">
                 <i class="bi bi-person-lines-fill me-2"></i>
-                Hasta Listesi
+                Hasta Listesi <small class="text-muted fs-6">(Son 20 Kayıt)</small>
             </h2>
 
             <div class="d-flex gap-2">
@@ -183,6 +183,9 @@
                                 <label class="info-label">İl</label>
                                 <select class="form-select" name="province_id" id="province_id">
                                     <option value="">İl Seçiniz</option>
+                                    {% for province in provinces %}
+                                        <option value="{{ province.id }}">{{ province.name }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -351,24 +354,14 @@
             const roleEl = document.getElementById('userRole');
             if (roleEl) roleEl.textContent = 'Yetkili';
 
-            loadProvinces();
-            loadStats(); // İstatistikleri yükle
+            // Sayfa açılışında gerekli olan veriler artık SSR (Twig) ile geliyor.
+            // loadProvinces(); // İPTAL: SSR ile geliyor
+            // loadStats(); // İPTAL: SSR ile geliyor
             setupEventListeners();
         });
 
-        // İstatistikleri Yükle
-        async function loadStats() {
-            try {
-                const response = await api.get('/api/patients/stats');
-                const stats = response.data;
-                
-                // document.getElementById('totalPatientsCount').textContent = stats.total || 0; // Zaten Twig ile geliyor, ama JS ile güncellemek istersek açabiliriz
-                document.getElementById('malePatientsCount').textContent = stats.male || 0;
-                document.getElementById('femalePatientsCount').textContent = stats.female || 0;
-            } catch (error) {
-                console.error('İstatistikler yüklenemedi', error);
-            }
-        }
+        // loadStats() ve loadProvinces() fonksiyonları silinebilir veya pasif bırakılabilir.
+        // Artık sayfa yüklenirken fetch işlemi yapılmıyor (Bkz: Mimari Kurallar Bölüm 1.3)
 
         // Event Listeners
         function setupEventListeners() {
@@ -401,29 +394,7 @@
             });
         }
 
-        // İlleri API'den Yükle
-        async function loadProvinces() {
-            try {
-                const response = await api.get('/api/general/provinces');
-                const provinces = response.data || [];
-                const provinceSelect = document.getElementById('province_id');
-
-                provinceSelect.innerHTML = '';
-                const defaultOpt = document.createElement('option');
-                defaultOpt.value = '';
-                defaultOpt.textContent = 'İl Seçiniz';
-                provinceSelect.appendChild(defaultOpt);
-
-                provinces.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.textContent = p.name;
-                    provinceSelect.appendChild(opt);
-                });
-            } catch (error) {
-                console.error('İller yüklenirken hata:', error);
-            }
-        }
+        // loadProvinces() fonksiyonu da artık Twig render ile yapılıyor.
 
         // İlçeleri API'den Yükle
         async function loadDistricts(provinceId, selectedDistrictId = null) {
