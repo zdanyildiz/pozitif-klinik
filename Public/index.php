@@ -16,6 +16,11 @@ require __DIR__ . '/../vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
+// Start Session globally
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Instantiate PHP-DI ContainerBuilder
 $containerBuilder = new ContainerBuilder();
 
@@ -42,9 +47,22 @@ $basePath = str_replace('/index.php', '', $scriptName);
 $app->setBasePath($basePath);
 
 // Inject BasePath to Twig
-$container->get(\Slim\Views\Twig::class)->getEnvironment()->addGlobal('base_path', $basePath);
+$twig = $container->get(\Slim\Views\Twig::class)->getEnvironment();
+$twig->addGlobal('base_path', $basePath);
+$twig->addGlobal('version', $container->get('settings')['settings']['version']);
 
-// Add Error Middleware
+/**
+ * Middleware Registration (LIFO - Last Added = First Executed / Outer Most)
+ * ORDER IS CRITICAL!
+ */
+
+// 1. Body Parsing (Inner-most logic helper)
+$app->addBodyParsingMiddleware();
+
+// 2. Routing (Maps URL to Controller)
+$app->addRoutingMiddleware();
+
+// 4. Error Middleware (Catches exceptions from inner layers like Routing 404s)
 $displayErrorDetails = filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN);
 $logError = true;
 $logErrorDetails = true;
@@ -58,16 +76,13 @@ $errorMiddleware->setDefaultErrorHandler(
     )
 );
 
-// Add Routing Middleware (required for Slim to resolve routes)
-$app->addRoutingMiddleware();
+// 3. Request Logging (Logs all requests, wraps Error Middleware to capture final response)
+$app->add(\App\Core\Middleware\RequestLoggingMiddleware::class);
 
-// Add Body Parsing Middleware (required for JSON request body parsing)
-$app->addBodyParsingMiddleware();
-
-// Add Security Headers Middleware
+// 5. Security Headers (Adds headers to ALL responses, including Errors)
 $app->add(new \App\Core\Middleware\SecurityHeadersMiddleware());
 
-// CORS Middleware (Basic)
+// 6. CORS (Handles cross-origin requests for everything)
 $app->add(function ($request, $handler) {
     $response = $handler->handle($request);
     return $response
@@ -75,8 +90,6 @@ $app->add(function ($request, $handler) {
         ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
-
-
 
 // Register routes
 $routes = require __DIR__ . '/../config/routes.php';

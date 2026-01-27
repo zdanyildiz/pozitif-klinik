@@ -42,7 +42,7 @@ Tüm yanıtlar (Başarılı `2xx` veya Hatalı `4xx`, `5xx`), "Tek Zar, Tek Form
 
 Bu endpoint'ler, klinik kullanıcılarının (doktor, resepsiyonist vb.) mobil veya web uygulamaları üzerinden erişimi içindir.
 
-### `GET /`
+### `GET /api`
 Sistem sağlık kontrolü (Health Check). Servisin ayakta olup olmadığını doğrular.
 
 **Başarılı Yanıt (200 OK):**

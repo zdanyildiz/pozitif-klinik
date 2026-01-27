@@ -109,4 +109,9 @@ return [
     \App\Core\Middleware\RateLimitMiddleware::class => function (ContainerInterface $c) {
         return new \App\Core\Middleware\RateLimitMiddleware($c->get(Database::class));
     },
+
+    // Request Logging Middleware
+    \App\Core\Middleware\RequestLoggingMiddleware::class => function (ContainerInterface $c) {
+        return new \App\Core\Middleware\RequestLoggingMiddleware($c->get(\Psr\Log\LoggerInterface::class));
+    },
 ];

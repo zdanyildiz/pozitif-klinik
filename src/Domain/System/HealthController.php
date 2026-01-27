@@ -15,7 +15,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  * 
  * API'nin çalışıp çalışmadığını kontrol eden endpoint.
  */
-#[Group('')]
+#[Group('/api')]
 class HealthController extends BaseController
 {
     /**

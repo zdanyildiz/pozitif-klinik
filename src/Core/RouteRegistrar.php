@@ -227,7 +227,9 @@ class RouteRegistrar
         $groupPrefix = '/' . ltrim($groupPrefix, '/');
         $group = $this->app->group($groupPrefix, function (RouteCollectorProxy $group) use ($routes) {
             foreach ($routes as $routeInfo) {
-                $path = '/' . ltrim($routeInfo['path'], '/');
+                $subPath = ltrim($routeInfo['path'], '/');
+                $path = $subPath === '' ? '' : '/' . $subPath;
+
                 $route = $group->map(
                     [$routeInfo['httpMethod']],
                     $path,

@@ -32,5 +32,6 @@ return [
             'filename' => 'app.log',
             'level' => ($_ENV['LOG_LEVEL'] ?? 'DEBUG') === 'DEBUG' ? \Monolog\Level::Debug : \Monolog\Level::Error,
         ],
+        'version' => time(), // Her deploy/restartta cache bust için timestamp kullanıyoruz (Geliştirme Modu)
     ],
 ];

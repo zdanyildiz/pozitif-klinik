@@ -45,7 +45,7 @@ function setupEventListeners() {
 // Klinikleri Yükle
 async function loadTenants() {
     try {
-        const result = await api.get('/admin/tenants');
+        const result = await api.get('/platform-admin/tenants');
         const tenants = result.data || [];
 
         // Stats güncelle
@@ -161,7 +161,7 @@ async function handleUpdateTenant() {
     }
 
     try {
-        await api.put(`/admin/tenants/${currentEditId}`, payload);
+        await api.put(`/platform-admin/tenants/${currentEditId}`, payload);
 
         editModal.hide();
         await Swal.fire({
@@ -257,7 +257,7 @@ async function handleSaveTenant() {
     saveTenantBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
 
     try {
-        await api.post('/admin/tenants', data);
+        await api.post('/platform-admin/tenants', data);
 
         // Modal'ı kapat
         newTenantModal.hide();

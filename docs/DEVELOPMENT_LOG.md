@@ -218,6 +218,22 @@ PLATFORM_ADMIN_PASS=admin
 
 ---
 
+### 20. Hata Giderme ve Kritik Sistem İyileştirmeleri (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **Gelişmiş Trafik Loglama (Traffic Visibility):**
+  - Sadece hataları kaydeden `HttpErrorHandler` yerine, sisteme giren her isteği (200, 404, 500) kaydeden `RequestLoggingMiddleware` geliştirildi.
+  - Hassas veriler (şifre vb.) loglanırken otomatik maskelendi.
+- **CSRF ve Session Onarımı:**
+  - `Slim\Csrf\Guard`'ın çalışabilmesi için `index.php`'de uygulama başlamadan önce `session_start()` eklendi.
+- **Root URL Yönlendirmesi:**
+  - `/` ana dizinine gelen kullanıcıları otomatik olarak `/admin/login` sayfasına yönlendiren `HomeWebController` eklendi.
+  - Bu değişiklikle çakışan Health Check endpoint'i `/` adresinden `/api` adresine taşındı.
+- **API Endpoint Düzeltmeleri:**
+  - Frontend (`dashboard.js`) tarafında yanlış kullanılan `/admin/tenants` endpoint'i doğrusu olan `/platform-admin/tenants` ile güncellendi.
+
+
+---
+
 ## Bekleyen Görevler
 
 - **SMS/Bildirim Modülü:** Randevu hatırlatma SMS'leri.
@@ -256,4 +272,10 @@ LOG_LEVEL=DEBUG
 ```bash
 /opt/lampp/bin/php tests/test_db.php
 ```
+### 21. Fixes & Improvements (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **Security Check:** CSP ayarları development ve legacy kütüphaneler (SweetAlert2 inline styles) için gevşetildi (`unsafe-eval`).
+- **Core Fix:** `RouteRegistrar` sınıfındaki grouped routes path oluşturma mantığı düzeltildi. Boş path'lerin (`''`) gereksiz yere trailing slash (`/`) alması engellendi. Bu sayede `/platform-admin/tenants` gibi rotalarda yaşanan 405 hataları çözüldü.
+- **Logging Improvement:** `RequestLoggingMiddleware` sıralaması `ErrorMiddleware`'in dışına taşınarak, 404/500 hatalarının da doğru şekilde "Response Sent" olarak loglanması sağlandı.
+
 
