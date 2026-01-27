@@ -277,5 +277,7 @@ LOG_LEVEL=DEBUG
 - **Security Check:** CSP ayarları development ve legacy kütüphaneler (SweetAlert2 inline styles) için gevşetildi (`unsafe-eval`).
 - **Core Fix:** `RouteRegistrar` sınıfındaki grouped routes path oluşturma mantığı düzeltildi. Boş path'lerin (`''`) gereksiz yere trailing slash (`/`) alması engellendi. Bu sayede `/platform-admin/tenants` gibi rotalarda yaşanan 405 hataları çözüldü.
 - **Logging Improvement:** `RequestLoggingMiddleware` sıralaması `ErrorMiddleware`'in dışına taşınarak, 404/500 hatalarının da doğru şekilde "Response Sent" olarak loglanması sağlandı.
+- **Frontend Fix:** `clinic-settings.js` dosyasındaki API çağrıları güncellendi. `/admin/tenants` yerine doğru prefix olan `/platform-admin/tenants` kullanılması sağlandı. Bu sayede klinik detay sayfası 405 hatası vermeden açılıyor.
+
 
 

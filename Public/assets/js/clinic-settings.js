@@ -110,7 +110,7 @@ function setupTabs() {
 async function loadClinicData() {
     try {
         // Klinik detayları
-        const clinicResult = await api.get(`/admin/tenants/${clinicId}`);
+        const clinicResult = await api.get(`/platform-admin/tenants/${clinicId}`);
         const clinic = clinicResult.data;
 
         // Header'ı güncelle
@@ -137,7 +137,7 @@ async function loadClinicData() {
 // E-posta Ayarlarını Yükle
 async function loadEmailSettings() {
     try {
-        const result = await api.get(`/admin/tenants/${clinicId}/settings/email`);
+        const result = await api.get(`/platform-admin/tenants/${clinicId}/settings/email`);
         currentEmailConfig = result.data;
 
         // Form'u doldur
@@ -233,7 +233,7 @@ async function handleSaveEmailSettings(e) {
     };
 
     try {
-        await api.post(`/admin/tenants/${clinicId}/settings/email`, payload);
+        await api.post(`/platform-admin/tenants/${clinicId}/settings/email`, payload);
 
         await Swal.fire({
             icon: 'success',
@@ -263,7 +263,7 @@ async function handleTestConnection() {
     testConnectionBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Test Ediliyor...';
 
     try {
-        await api.post(`/admin/tenants/${clinicId}/settings/email/test`);
+        await api.post(`/platform-admin/tenants/${clinicId}/settings/email/test`);
 
         await Swal.fire({
             icon: 'success',
@@ -296,7 +296,7 @@ async function handleSendTestEmail() {
     confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Gönderiliyor...';
 
     try {
-        await api.post(`/admin/tenants/${clinicId}/settings/email/send-test`, {
+        await api.post(`/platform-admin/tenants/${clinicId}/settings/email/send-test`, {
             to_email: testEmail
         });
 
@@ -335,7 +335,7 @@ async function handleResetToFallback() {
     if (!result.isConfirmed) return;
 
     try {
-        await api.delete(`/admin/tenants/${clinicId}/settings/email`);
+        await api.delete(`/platform-admin/tenants/${clinicId}/settings/email`);
 
         await Swal.fire({
             icon: 'success',
