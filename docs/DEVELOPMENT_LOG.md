@@ -343,3 +343,20 @@ LOG_LEVEL=DEBUG
   - Aktif/Pasif hizmet görüntüleme
   - İstatistik kartları (Toplam, Aktif, Kategori sayısı)
 
+---
+
+### 26. Randevu Türleri - Hizmet Kataloğu Entegrasyonu (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **Veritabanı:** `cln_appointment_types` tablosuna `service_id` FK eklendi. Randevu türleri artık hizmet kataloğuna bağlanabilir.
+- **Backend:**
+  - `AppointmentRepository` güncellendi: Tür oluşturma/güncelleme `service_id` destekliyor.
+  - `listTypes()` ve `findTypeById()` hizmet bilgilerini (fiyat, KDV) JOIN ile getiriyor.
+  - `createAppointment()` bağlı hizmetin fiyatını adisyona otomatik ekliyor.
+- **Frontend:**
+  - `clinic_appointments.twig`: Randevu türleri modalına "Bağlı Hizmet" dropdown'u eklendi.
+  - `appointments.js`: Hizmet seçildiğinde fiyat/KDV otomatik dolduruluyor, tür listesinde hizmet bilgisi gösteriliyor.
+- **Avantajlar:**
+  - Tek noktadan fiyat/KDV yönetimi
+  - Hizmet kataloğu ile tutarlılık
+  - Fatura/adisyon entegrasyonu kolaylaşır
+

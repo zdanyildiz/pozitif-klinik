@@ -32,11 +32,12 @@ class AppointmentRepository
 
     public function createType(int $clinicId, array $data): int
     {
-        $sql = "INSERT INTO cln_appointment_types (clinic_id, name, color_code, duration_minutes, default_price, is_active) 
-                VALUES (?, ?, ?, ?, ?, 1)";
+        $sql = "INSERT INTO cln_appointment_types (clinic_id, service_id, name, color_code, duration_minutes, default_price, is_active) 
+                VALUES (?, ?, ?, ?, ?, ?, 1)";
 
         $this->db->query($sql, [
             $clinicId,
+            $data['service_id'] ?? null,
             $data['name'],
             $data['color_code'] ?? '#3788d8',
             $data['duration_minutes'] ?? 30,
@@ -48,19 +49,27 @@ class AppointmentRepository
 
     public function listTypes(int $clinicId): array
     {
-        $sql = "SELECT * FROM cln_appointment_types WHERE clinic_id = ? AND is_active = 1 ORDER BY name ASC";
+        $sql = "SELECT t.*, s.price as service_price, s.tax_rate as service_tax_rate, s.name as service_name
+                FROM cln_appointment_types t
+                LEFT JOIN cln_services s ON t.service_id = s.id
+                WHERE t.clinic_id = ? AND t.is_active = 1 
+                ORDER BY t.name ASC";
         return $this->db->fetchAll($sql, [$clinicId]);
     }
 
     public function findTypeById(int $clinicId, int $typeId): ?array
     {
-        $sql = "SELECT * FROM cln_appointment_types WHERE clinic_id = ? AND id = ?";
+        $sql = "SELECT t.*, s.price as service_price, s.tax_rate as service_tax_rate, s.name as service_name
+                FROM cln_appointment_types t
+                LEFT JOIN cln_services s ON t.service_id = s.id
+                WHERE t.clinic_id = ? AND t.id = ?";
         return $this->db->fetch($sql, [$clinicId, $typeId]);
     }
 
     public function updateType(int $clinicId, int $typeId, array $data): bool
     {
         $sql = "UPDATE cln_appointment_types SET 
+                    service_id = ?,
                     name = ?,
                     color_code = ?,
                     duration_minutes = ?,
@@ -68,6 +77,7 @@ class AppointmentRepository
                 WHERE clinic_id = ? AND id = ?";
 
         $this->db->query($sql, [
+            $data['service_id'] ?? null,
             $data['name'],
             $data['color_code'] ?? '#3788d8',
             $data['duration_minutes'] ?? 30,
@@ -107,16 +117,24 @@ class AppointmentRepository
 
         $appointmentId = (int) $this->db->getConnection()->lastInsertId();
 
-        // 2. Eğer randevu türünün varsayılan fiyatı varsa, adisyona ilk kalemi ekle
+        // 2. Eğer randevu türünün bağlı hizmeti veya varsayılan fiyatı varsa, adisyona ilk kalemi ekle
         $type = $this->findTypeById($clinicId, (int) $data['type_id']);
-        if ($type && $type['default_price'] > 0) {
-            $this->addItem($clinicId, $appointmentId, [
-                'item_name' => $type['name'] . ' (Muayene)',
-                'quantity' => 1,
-                'unit_price' => $type['default_price'],
-                'total_price' => $type['default_price'],
-                'performer_id' => $data['doctor_id'] ?? null
-            ]);
+        if ($type) {
+            // Öncelik: bağlı hizmet fiyatı, yoksa default_price
+            $price = ($type['service_id'] && $type['service_price'])
+                ? $type['service_price']
+                : $type['default_price'];
+
+            if ($price > 0) {
+                $this->addItem($clinicId, $appointmentId, [
+                    'service_id' => $type['service_id'] ?? null,
+                    'item_name' => $type['name'] . ' (Muayene)',
+                    'quantity' => 1,
+                    'unit_price' => $price,
+                    'total_price' => $price,
+                    'performer_id' => $data['doctor_id'] ?? null
+                ]);
+            }
         }
 
         return $appointmentId;

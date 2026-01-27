@@ -106,6 +106,7 @@ async function loadTypes() {
     appointmentTypes = res.data || [];
     renderTypeOptions();
     renderTypeList();
+    renderServiceOptionsForTypes(); // Hizmet dropdown'ını doldur
 }
 
 async function loadPatients() {
@@ -296,6 +297,14 @@ function renderTypeList() {
     const list = document.getElementById('typeList');
     list.innerHTML = '';
     appointmentTypes.forEach(t => {
+        const priceDisplay = t.service_id && t.service_price
+            ? `${parseFloat(t.service_price).toFixed(2)}₺ (KDV: %${t.service_tax_rate || 0})`
+            : `${parseFloat(t.default_price).toFixed(2)}₺`;
+
+        const serviceInfo = t.service_name
+            ? `<small class="text-primary"><i class="bi bi-link-45deg"></i> ${escapeHtml(t.service_name)}</small>`
+            : '';
+
         const item = document.createElement('div');
         item.className = 'd-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded';
         item.innerHTML = `
@@ -303,7 +312,8 @@ function renderTypeList() {
                 <div style="width:12px; height:12px; border-radius:50%; background:${t.color_code}" class="me-2"></div>
                 <div>
                     <div class="fw-bold small">${escapeHtml(t.name)}</div>
-                    <small class="text-muted">${t.duration_minutes}dk - ${parseFloat(t.default_price).toFixed(2)}₺</small>
+                    <small class="text-muted">${t.duration_minutes}dk - ${priceDisplay}</small>
+                    ${serviceInfo}
                 </div>
             </div>
             <div class="btn-group btn-group-sm">
@@ -316,6 +326,40 @@ function renderTypeList() {
             </div>
         `;
         list.appendChild(item);
+    });
+}
+
+// Hizmet dropdown'ını randevu türleri modalına doldur
+function renderServiceOptionsForTypes() {
+    const sel = document.getElementById('typeServiceSelect');
+    if (!sel) return;
+
+    sel.innerHTML = '<option value="">-- Hizmet Seçin (Opsiyonel) --</option>';
+    services.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name} - ${parseFloat(s.price).toFixed(2)}₺ (KDV: %${s.tax_rate || 0})`;
+        opt.dataset.price = s.price;
+        opt.dataset.taxRate = s.tax_rate;
+        sel.appendChild(opt);
+    });
+
+    // Hizmet seçildiğinde fiyatı otomatik doldur
+    sel.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const priceHint = document.getElementById('servicePriceHint');
+        const priceValue = document.getElementById('servicePriceValue');
+        const defaultPriceInput = document.getElementById('typeDefaultPrice');
+
+        if (this.value && selectedOption.dataset.price) {
+            const price = parseFloat(selectedOption.dataset.price).toFixed(2);
+            const taxRate = selectedOption.dataset.taxRate || 0;
+            priceHint.style.display = 'block';
+            priceValue.textContent = `${price}₺ (KDV: %${taxRate})`;
+            defaultPriceInput.value = price;
+        } else {
+            priceHint.style.display = 'none';
+        }
     });
 }
 
@@ -528,6 +572,9 @@ async function handleSaveType(e) {
     const fd = new FormData(e.target);
     const data = Object.fromEntries(fd);
 
+    // service_id boşsa null olarak gönder
+    if (!data.service_id) data.service_id = null;
+
     const isEdit = !!currentTypeId;
 
     try {
@@ -552,13 +599,26 @@ function editType(id) {
     currentTypeId = id;
 
     const form = document.getElementById('typeForm');
+    form.querySelector('[name="id"]').value = type.id;
     form.querySelector('[name="name"]').value = type.name;
+    form.querySelector('[name="service_id"]').value = type.service_id || '';
     form.querySelector('[name="color_code"]').value = type.color_code;
     form.querySelector('[name="duration_minutes"]').value = type.duration_minutes;
     form.querySelector('[name="default_price"]').value = type.default_price;
 
+    // Hizmet seçiliyse fiyat bilgisini göster
+    const priceHint = document.getElementById('servicePriceHint');
+    const priceValue = document.getElementById('servicePriceValue');
+    if (type.service_id && type.service_price) {
+        priceHint.style.display = 'block';
+        priceValue.textContent = `${parseFloat(type.service_price).toFixed(2)}₺ (KDV: %${type.service_tax_rate || 0})`;
+    } else {
+        priceHint.style.display = 'none';
+    }
+
     // Buton metnini güncelle ve İptal butonunu göster
-    form.querySelector('button[type="submit"]').textContent = 'Türü Güncelle';
+    const submitBtn = document.getElementById('typeSubmitBtn');
+    submitBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Türü Güncelle';
     const cancelBtn = document.getElementById('btnCancelTypeEdit');
     if (cancelBtn) cancelBtn.style.display = 'block';
 }
@@ -588,12 +648,20 @@ function resetTypeForm() {
     currentTypeId = null;
     const form = document.getElementById('typeForm');
     form.reset();
+    form.querySelector('[name="id"]').value = '';
     form.querySelector('[name="color_code"]').value = '#3788d8';
     form.querySelector('[name="duration_minutes"]').value = '30';
     form.querySelector('[name="default_price"]').value = '0';
-    form.querySelector('button[type="submit"]').textContent = 'Yeni Tür Ekle';
+    form.querySelector('[name="service_id"]').value = '';
+
+    const submitBtn = document.getElementById('typeSubmitBtn');
+    submitBtn.innerHTML = '<i class="bi bi-plus-lg me-1"></i> Yeni Tür Ekle';
     const cancelBtn = document.getElementById('btnCancelTypeEdit');
     if (cancelBtn) cancelBtn.style.display = 'none';
+
+    // Fiyat hint'ini gizle
+    const priceHint = document.getElementById('servicePriceHint');
+    if (priceHint) priceHint.style.display = 'none';
 }
 
 async function refreshDetail() {

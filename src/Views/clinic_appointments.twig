@@ -206,7 +206,7 @@
 
     <!-- TYPE MANAGEMENT MODAL -->
     <div class="modal fade" id="typeModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-0">
                     <h5 class="modal-title">Randevu Türleri ve Ücretler</h5>
@@ -214,29 +214,43 @@
                 </div>
                 <div class="modal-body">
                     <form id="typeForm" class="mb-4">
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <label class="form-label small fw-semibold">Tür Adı</label>
-                                <input type="text" class="form-control form-control-sm" name="name" required placeholder="Örn: Botox">
+                        <input type="hidden" name="id" value="">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Tür Adı <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" name="name" required placeholder="Örn: Kontrol Muayenesi">
                             </div>
-                            <div class="col-4">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Bağlı Hizmet</label>
+                                <select class="form-select form-select-sm" name="service_id" id="typeServiceSelect">
+                                    <option value="">-- Hizmet Seçin (Opsiyonel) --</option>
+                                </select>
+                                <div class="form-text">Hizmet seçerseniz fiyat/KDV otomatik uygulanır</div>
+                            </div>
+                            <div class="col-4 col-md-2">
                                 <label class="form-label small fw-semibold">Renk</label>
                                 <input type="color" class="form-control form-control-sm form-control-color w-100" name="color_code" value="#3788d8">
                             </div>
-                            <div class="col-4">
+                            <div class="col-4 col-md-2">
                                 <label class="form-label small fw-semibold">Süre (dk)</label>
-                                <input type="number" class="form-control form-control-sm" name="duration_minutes" value="30">
+                                <input type="number" class="form-control form-control-sm" name="duration_minutes" value="30" min="5">
                             </div>
-                            <div class="col-4">
-                                <label class="form-label small fw-semibold">Ücret (₺)</label>
-                                <input type="number" class="form-control form-control-sm" name="default_price" value="0" step="0.01">
+                            <div class="col-4 col-md-3">
+                                <label class="form-label small fw-semibold">Varsayılan Ücret (₺)</label>
+                                <input type="number" class="form-control form-control-sm" name="default_price" id="typeDefaultPrice" value="0" step="0.01" min="0">
+                                <div class="form-text" id="servicePriceHint" style="display: none;">
+                                    <i class="bi bi-info-circle"></i> Hizmetten: <span id="servicePriceValue"></span>
+                                </div>
                             </div>
-                            <div class="col-12 mt-2 d-flex gap-2">
-                                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Yeni Tür Ekle</button>
+                            <div class="col-12 col-md-5 d-flex align-items-end gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm flex-grow-1" id="typeSubmitBtn">
+                                    <i class="bi bi-plus-lg me-1"></i> Yeni Tür Ekle
+                                </button>
                                 <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCancelTypeEdit" style="display:none;" onclick="resetTypeForm()">İptal</button>
                             </div>
                         </div>
                     </form>
+                    <hr>
                     <div id="typeList"></div>
                 </div>
             </div>
