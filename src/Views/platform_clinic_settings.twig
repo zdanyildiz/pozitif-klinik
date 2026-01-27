@@ -207,14 +207,113 @@
                 <div class="settings-panel" id="generalPanel">
                     <div class="settings-panel-header">
                         <div class="panel-header-info">
-                            <h2 class="panel-title"><i class="bi bi-sliders"></i>Genel Klinik Ayarları</h2>
-                            <p class="panel-description">Klinik temel bilgilerini ve uygulama tercihlerini yönetin.</p>
+                            <h2 class="panel-title"><i class="bi bi-building-gear"></i>Klinik Temel Bilgileri</h2>
+                            <p class="panel-description">Klinik iletişim bilgileri, adres ve çalışma saatlerini yönetin.</p>
                         </div>
                     </div>
-                    <div class="p-5 text-center text-muted">
-                        <i class="bi bi-cone-striped fs-1 d-block mb-3"></i>
-                        <p>Genel ayarlar modülü yakında hizmete girecektir.</p>
-                    </div>
+                    <form id="basicInfoForm" class="settings-form">
+                        <!-- Temel Bilgiler -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-info-circle"></i>Temel Bilgiler</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Klinik Adı <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="clinicName" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Web Sitesi</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-globe"></i></span>
+                                        <input type="url" class="form-control" id="clinicWebsite" placeholder="https://www.example.com">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-2">
+                                <div class="col-12">
+                                    <label class="form-label">Klinik Açıklaması / Slogan</label>
+                                    <textarea class="form-control" id="clinicDescription" rows="2" placeholder="Klinik hakkında kısa bir açıklama..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- İletişim Bilgileri -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-telephone"></i>İletişim Bilgileri</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Telefon</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                                        <input type="tel" class="form-control" id="clinicPhone" placeholder="0212 123 45 67">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">E-posta</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                        <input type="email" class="form-control" id="clinicEmail" placeholder="info@klinik.com">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Adres Bilgileri -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-geo-alt"></i>Adres Bilgileri</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">İl</label>
+                                    <select class="form-select" id="clinicProvince">
+                                        <option value="">Seçiniz</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">İlçe</label>
+                                    <select class="form-select" id="clinicDistrict" disabled>
+                                        <option value="">Önce il seçiniz</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-2">
+                                <div class="col-12">
+                                    <label class="form-label">Açık Adres</label>
+                                    <textarea class="form-control" id="clinicAddress" rows="2" placeholder="Mahalle, Cadde, Sokak, Numara..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vergi Bilgileri -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-receipt"></i>Vergi Bilgileri</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Vergi Dairesi</label>
+                                    <input type="text" class="form-control" id="clinicTaxOffice" placeholder="Kadıköy Vergi Dairesi">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Vergi Numarası</label>
+                                    <input type="text" class="form-control" id="clinicTaxNumber" placeholder="1234567890">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Çalışma Saatleri -->
+                        <div class="form-section">
+                            <h3 class="form-section-title"><i class="bi bi-clock"></i>Çalışma Saatleri</h3>
+                            <div class="working-hours-grid" id="workingHoursGrid">
+                                <!-- JS ile doldurulacak -->
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <div class="form-actions-left"></div>
+                            <div class="form-actions-right">
+                                <button type="submit" class="btn btn-primary" id="saveBasicInfoBtn">
+                                    <i class="bi bi-check-lg"></i> Kaydet
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
 
                 <div class="settings-panel" id="notificationsPanel">

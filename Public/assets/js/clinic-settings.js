@@ -116,6 +116,10 @@ function setupTabs() {
             if (targetTab === 'users') {
                 loadPersonnel();
             }
+            // Genel Ayarlar sekmesi
+            if (targetTab === 'general') {
+                loadBasicInfo();
+            }
         });
     });
 }
@@ -531,3 +535,246 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// --- Genel Ayarlar (Basic Info) Fonksiyonları ---
+
+const DAYS_OF_WEEK = [
+    { key: 'pazartesi', label: 'Pazartesi' },
+    { key: 'sali', label: 'Salı' },
+    { key: 'carsamba', label: 'Çarşamba' },
+    { key: 'persembe', label: 'Perşembe' },
+    { key: 'cuma', label: 'Cuma' },
+    { key: 'cumartesi', label: 'Cumartesi' },
+    { key: 'pazar', label: 'Pazar' }
+];
+
+let provincesLoaded = false;
+let currentBasicInfo = null;
+
+// Çalışma Saatleri Grid'ini Oluştur
+function renderWorkingHoursGrid(workingHours = null) {
+    const grid = document.getElementById('workingHoursGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    DAYS_OF_WEEK.forEach(day => {
+        const dayData = workingHours?.[day.key] || { open: true, start: '09:00', end: '18:00' };
+        const isOpen = dayData.open !== false;
+
+        const row = document.createElement('div');
+        row.className = `working-hours-row ${isOpen ? '' : 'closed'}`;
+        row.id = `day-${day.key}`;
+
+        row.innerHTML = `
+            <div class="day-label">
+                <input class="form-check-input" type="checkbox" id="check-${day.key}" ${isOpen ? 'checked' : ''}>
+                <label for="check-${day.key}">${day.label}</label>
+            </div>
+            <div class="hours-inputs">
+                ${isOpen ? `
+                    <input type="time" id="start-${day.key}" value="${dayData.start || '09:00'}">
+                    <span class="hours-separator">-</span>
+                    <input type="time" id="end-${day.key}" value="${dayData.end || '18:00'}">
+                ` : `
+                    <span class="closed-text"><i class="bi bi-x-circle me-1"></i>Kapalı</span>
+                `}
+            </div>
+        `;
+
+        grid.appendChild(row);
+
+        // Checkbox event listener
+        const checkbox = row.querySelector(`#check-${day.key}`);
+        checkbox.addEventListener('change', () => {
+            const currentData = getWorkingHoursData();
+            currentData[day.key].open = checkbox.checked;
+            renderWorkingHoursGrid(currentData);
+        });
+    });
+}
+
+// Çalışma Saatlerini Form'dan Al
+function getWorkingHoursData() {
+    const data = {};
+
+    DAYS_OF_WEEK.forEach(day => {
+        const checkbox = document.getElementById(`check-${day.key}`);
+        const startInput = document.getElementById(`start-${day.key}`);
+        const endInput = document.getElementById(`end-${day.key}`);
+
+        data[day.key] = {
+            open: checkbox?.checked ?? true,
+            start: startInput?.value || '09:00',
+            end: endInput?.value || '18:00'
+        };
+    });
+
+    return data;
+}
+
+// İlleri Yükle
+async function loadProvinces() {
+    if (provincesLoaded) return;
+
+    try {
+        const result = await api.get('/api/general/provinces');
+        const provinces = result.data || [];
+        const select = document.getElementById('clinicProvince');
+
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Seçiniz</option>';
+        provinces.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id;
+            option.textContent = p.name;
+            select.appendChild(option);
+        });
+
+        provincesLoaded = true;
+
+        // Province change event
+        select.addEventListener('change', () => {
+            loadDistricts(select.value);
+        });
+
+    } catch (error) {
+        console.error('İller yüklenirken hata:', error);
+    }
+}
+
+// İlçeleri Yükle
+async function loadDistricts(provinceId, selectedDistrictId = null) {
+    const districtSelect = document.getElementById('clinicDistrict');
+    if (!districtSelect) return;
+
+    if (!provinceId) {
+        districtSelect.innerHTML = '<option value="">Önce il seçiniz</option>';
+        districtSelect.disabled = true;
+        return;
+    }
+
+    districtSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+    districtSelect.disabled = true;
+
+    try {
+        const result = await api.get(`/api/general/districts?province_id=${provinceId}`);
+        const districts = result.data || [];
+
+        districtSelect.innerHTML = '<option value="">Seçiniz</option>';
+        districts.forEach(d => {
+            const option = document.createElement('option');
+            option.value = d.id;
+            option.textContent = d.name;
+            if (selectedDistrictId && d.id == selectedDistrictId) {
+                option.selected = true;
+            }
+            districtSelect.appendChild(option);
+        });
+
+        districtSelect.disabled = false;
+
+    } catch (error) {
+        console.error('İlçeler yüklenirken hata:', error);
+        districtSelect.innerHTML = '<option value="">Hata oluştu</option>';
+    }
+}
+
+// Temel Bilgileri Yükle
+async function loadBasicInfo() {
+    try {
+        // İlleri yükle
+        await loadProvinces();
+
+        // Klinik bilgilerini yükle
+        const result = await api.get(`/platform-admin/tenants/${clinicId}/basic-info`);
+        currentBasicInfo = result.data;
+
+        // Form alanlarını doldur
+        document.getElementById('clinicName').value = currentBasicInfo.name || '';
+        document.getElementById('clinicWebsite').value = currentBasicInfo.website || '';
+        document.getElementById('clinicDescription').value = currentBasicInfo.description || '';
+        document.getElementById('clinicPhone').value = currentBasicInfo.phone || '';
+        document.getElementById('clinicEmail').value = currentBasicInfo.email || '';
+        document.getElementById('clinicAddress').value = currentBasicInfo.address || '';
+        document.getElementById('clinicTaxOffice').value = currentBasicInfo.tax_office || '';
+        document.getElementById('clinicTaxNumber').value = currentBasicInfo.tax_number || '';
+
+        // İl/İlçe seçimi
+        if (currentBasicInfo.province_id) {
+            document.getElementById('clinicProvince').value = currentBasicInfo.province_id;
+            await loadDistricts(currentBasicInfo.province_id, currentBasicInfo.district_id);
+        }
+
+        // Çalışma saatleri
+        renderWorkingHoursGrid(currentBasicInfo.working_hours);
+
+    } catch (error) {
+        console.error('Temel bilgiler yüklenirken hata:', error);
+        Utils.showError('Klinik bilgileri yüklenemedi');
+    }
+}
+
+// Temel Bilgileri Kaydet
+async function handleSaveBasicInfo(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('clinicName').value.trim();
+    if (!name) {
+        Utils.showError('Klinik adı zorunludur');
+        document.getElementById('clinicName').focus();
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveBasicInfoBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+
+    const payload = {
+        name: name,
+        website: document.getElementById('clinicWebsite').value.trim() || null,
+        description: document.getElementById('clinicDescription').value.trim() || null,
+        phone: document.getElementById('clinicPhone').value.trim() || null,
+        email: document.getElementById('clinicEmail').value.trim() || null,
+        address: document.getElementById('clinicAddress').value.trim() || null,
+        province_id: document.getElementById('clinicProvince').value || null,
+        district_id: document.getElementById('clinicDistrict').value || null,
+        tax_office: document.getElementById('clinicTaxOffice').value.trim() || null,
+        tax_number: document.getElementById('clinicTaxNumber').value.trim() || null,
+        working_hours: getWorkingHoursData()
+    };
+
+    try {
+        await api.put(`/platform-admin/tenants/${clinicId}/basic-info`, payload);
+
+        // Header'ı güncelle
+        document.getElementById('clinicTitle').textContent = name;
+        document.getElementById('clinicNameBreadcrumb').textContent = name;
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Başarılı!',
+            text: 'Klinik bilgileri kaydedildi.',
+            timer: 2000,
+            showConfirmButton: false,
+            timerProgressBar: true
+        });
+
+    } catch (error) {
+        console.error('Kaydetme hatası:', error);
+        Utils.showError(typeof error === 'string' ? error : 'Bilgiler kaydedilemedi');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check-lg"></i> Kaydet';
+    }
+}
+
+// Genel Ayarlar Form Event Listener
+document.addEventListener('DOMContentLoaded', () => {
+    const basicInfoForm = document.getElementById('basicInfoForm');
+    if (basicInfoForm) {
+        basicInfoForm.addEventListener('submit', handleSaveBasicInfo);
+    }
+});
+

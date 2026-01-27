@@ -29,10 +29,24 @@ CREATE TABLE IF NOT EXISTS `sys_tenants` (
   `domain_prefix` varchar(50) NOT NULL,
   `name` varchar(100) NOT NULL,
   `logo_url` varchar(255) DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `website` varchar(255) DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `province_id` int(10) unsigned DEFAULT NULL,
+  `district_id` int(10) unsigned DEFAULT NULL,
+  `tax_office` varchar(100) DEFAULT NULL,
+  `tax_number` varchar(20) DEFAULT NULL,
+  `working_hours` JSON DEFAULT NULL,
+  `description` text DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `domain_prefix` (`domain_prefix`)
+  UNIQUE KEY `domain_prefix` (`domain_prefix`),
+  KEY `fk_tenant_province` (`province_id`),
+  KEY `fk_tenant_district` (`district_id`),
+  CONSTRAINT `fk_tenant_province` FOREIGN KEY (`province_id`) REFERENCES `sys_provinces` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_tenant_district` FOREIGN KEY (`district_id`) REFERENCES `sys_districts` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `sys_users` (

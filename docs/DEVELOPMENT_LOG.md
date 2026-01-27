@@ -360,3 +360,24 @@ LOG_LEVEL=DEBUG
   - Hizmet kataloğu ile tutarlılık
   - Fatura/adisyon entegrasyonu kolaylaşır
 
+---
+
+### 27. Platform Klinik Temel Bilgileri Modülü (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **Veritabanı Genişletme:** `sys_tenants` tablosuna klinik temel bilgileri alanları eklendi:
+  - `phone`, `email`, `website`: İletişim bilgileri
+  - `address`, `province_id`, `district_id`: Adres bilgileri
+  - `tax_office`, `tax_number`: Vergi bilgileri
+  - `working_hours`: JSON formatında haftalık çalışma saatleri
+  - `description`: Klinik açıklaması/sloganı
+- **Backend API:**
+  - `GET /platform-admin/tenants/{id}`: Tek klinik detayı
+  - `GET /platform-admin/tenants/{id}/basic-info`: Klinik temel bilgileri
+  - `PUT /platform-admin/tenants/{id}/basic-info`: Temel bilgileri güncelleme
+- **Frontend (Platform Klinik Ayarları):**
+  - "Genel Ayarlar" sekmesi tamamen yeniden tasarlandı
+  - Temel Bilgiler, İletişim, Adres, Vergi Bilgileri ve Çalışma Saatleri bölümleri
+  - Çalışma saatleri için interaktif gün/saat grid'i
+  - İl/İlçe dinamik dropdown entegrasyonu
+- **Şema Güncelleme:** `migration/database/modules/01_system.sql` ve `schema.sql` dosyaları güncellendi
+

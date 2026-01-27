@@ -201,4 +201,104 @@ class TenantRepository
 
         return $stats;
     }
+
+    /**
+     * Klinik temel bilgilerini getirir (iletişim, adres, çalışma saatleri vb.)
+     */
+    public function getBasicInfo(int $clinicId): ?array
+    {
+        $sql = "SELECT 
+                    t.id,
+                    t.name,
+                    t.domain_prefix,
+                    t.logo_url,
+                    t.phone,
+                    t.email,
+                    t.website,
+                    t.address,
+                    t.province_id,
+                    t.district_id,
+                    t.tax_office,
+                    t.tax_number,
+                    t.working_hours,
+                    t.description,
+                    t.is_active,
+                    p.name as province_name,
+                    d.name as district_name
+                FROM sys_tenants t
+                LEFT JOIN sys_provinces p ON t.province_id = p.id
+                LEFT JOIN sys_districts d ON t.district_id = d.id
+                WHERE t.id = ?";
+
+        $result = $this->db->fetch($sql, [$clinicId]);
+
+        if ($result && $result['working_hours']) {
+            $result['working_hours'] = json_decode($result['working_hours'], true);
+        }
+
+        return $result ?: null;
+    }
+
+    /**
+     * Klinik temel bilgilerini günceller
+     */
+    public function updateBasicInfo(int $clinicId, array $data): bool
+    {
+        $allowedFields = [
+            'name',
+            'logo_url',
+            'phone',
+            'email',
+            'website',
+            'address',
+            'province_id',
+            'district_id',
+            'tax_office',
+            'tax_number',
+            'working_hours',
+            'description'
+        ];
+
+        $updates = [];
+        $params = [];
+
+        foreach ($allowedFields as $field) {
+            if (array_key_exists($field, $data)) {
+                $value = $data[$field];
+
+                // JSON alanı için özel işlem
+                if ($field === 'working_hours' && is_array($value)) {
+                    $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+                }
+
+                // Null değerler için
+                if ($value === '' || $value === null) {
+                    $updates[] = "$field = NULL";
+                } else {
+                    $updates[] = "$field = ?";
+                    $params[] = $value;
+                }
+            }
+        }
+
+        if (empty($updates)) {
+            return false;
+        }
+
+        $params[] = $clinicId;
+        $sql = "UPDATE sys_tenants SET " . implode(', ', $updates) . " WHERE id = ?";
+
+        $this->db->query($sql, $params);
+        return true;
+    }
+
+    /**
+     * Logo URL'sini günceller
+     */
+    public function updateLogo(int $clinicId, ?string $logoUrl): bool
+    {
+        $sql = "UPDATE sys_tenants SET logo_url = ? WHERE id = ?";
+        $this->db->query($sql, [$logoUrl, $clinicId]);
+        return true;
+    }
 }

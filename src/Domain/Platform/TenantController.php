@@ -142,4 +142,71 @@ class TenantController extends BaseController
         $stats = $this->tenantRepository->getStats();
         return $this->success($response, $stats);
     }
+
+    /**
+     * Klinik Temel Bilgilerini Getir (Genel Ayarlar Sekmesi)
+     */
+    #[Route('GET', '/{id:[0-9]+}/basic-info')]
+    public function getBasicInfo(Request $request, Response $response, array $args): Response
+    {
+        $id = (int) $args['id'];
+        $info = $this->tenantRepository->getBasicInfo($id);
+
+        if (!$info) {
+            return $this->error($response, 'Klinik bulunamadı.', 404);
+        }
+
+        return $this->success($response, $info);
+    }
+
+    /**
+     * Klinik Temel Bilgilerini Güncelle (Genel Ayarlar Sekmesi)
+     */
+    #[Route('PUT', '/{id:[0-9]+}/basic-info')]
+    public function updateBasicInfo(Request $request, Response $response, array $args): Response
+    {
+        $id = (int) $args['id'];
+        $body = $request->getParsedBody();
+
+        // Klinik var mı?
+        $existing = $this->tenantRepository->findById($id);
+        if (!$existing) {
+            return $this->error($response, 'Klinik bulunamadı.', 404);
+        }
+
+        // İzin verilen alanları filtrele
+        $allowedFields = [
+            'name',
+            'phone',
+            'email',
+            'website',
+            'address',
+            'province_id',
+            'district_id',
+            'tax_office',
+            'tax_number',
+            'working_hours',
+            'description'
+        ];
+
+        $data = [];
+        foreach ($allowedFields as $field) {
+            if (array_key_exists($field, $body)) {
+                $data[$field] = $body[$field];
+            }
+        }
+
+        if (empty($data)) {
+            return $this->error($response, 'Güncellenecek alan bulunamadı.', 400);
+        }
+
+        // Klinik adı zorunlu
+        if (isset($data['name']) && empty(trim($data['name']))) {
+            return $this->error($response, 'Klinik adı boş olamaz.', 400);
+        }
+
+        $this->tenantRepository->updateBasicInfo($id, $data);
+
+        return $this->success($response, null, 'Klinik bilgileri başarıyla güncellendi.');
+    }
 }
