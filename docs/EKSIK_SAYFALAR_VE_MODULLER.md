@@ -1,0 +1,61 @@
+# Eksik Sayfalar ve Modül Analizi
+
+Büyük veri aktarımı sonrası, mevcut sistemdeki verilerin (özellikle tıbbi geçmiş ve detaylı işlemler) kullanıcıya sunulması ve yeni verilerin girilmesi için gereken eksik sayfalar/modüller aşağıda listelenmiştir.
+
+## 1. Tıbbi Muayene ve Doktor Çalışma Alanı (Workspace)
+Mevcut randevu listesinde "Bekliyor", "İşlemde" gibi durumlar var ancak doktorun muayene notlarını gireceği kapsamlı bir ekran bulunmuyor.
+
+*   **Sayfa Adı:** `Muayene Ekranı`
+*   **İşlev:** Doktorun randevu listesinden seçtiği hasta için anamnez, bulgular, tanı (ICD-10 uyumlu), tedavi ve sonuç notlarını gireceği alan.
+*   **İlişkili Tablo:** `cln_examinations`
+*   **Özellikler:**
+    *   Hızlı tanı ekleme (Sık kullanılan tanılar).
+    *   Önceki muayene notlarını aynı ekranda görme (Karşılaştırmalı).
+    *   Hizmet/Ücret girişine hızlı erişim.
+
+## 2. Detaylı Hasta Kayıt Defteri ve Zaman Tüneli
+`patients.twig` sayfası şu an sadece liste bazlı. Bir hastanın tüm tıbbi geçmişini tek ekranda görmek kritik önemde.
+
+*   **Sayfa Adı:** `Hasta Detay / Timeline` (Örn: `/admin/patients/{id}`)
+*   **İşlev:** 
+    *   Hastanın tüm gelişlerinin (visit) kronolojik listesi.
+    *   Her gelişte yapılan işlemler ve alınan notlar.
+    *   Hastanın borç/alacak durumu.
+    *   Yüklenen dökümanlar/görüntüler.
+*   **İlişkili Tablolar:** `ptn_cards`, `cln_appointments`, `cln_examinations`.
+
+## 3. Finansal Yönetim ve Tahsilat Modülü
+Randevu detayında "Hizmetler & Ücretler" sekmesi olsa da kliniğin genel finansal akışını yöneten bir ekran eksik.
+
+*   **Sayfa Adı:** `Kasa / Tahsilat Yönetimi`
+*   **İşlev:**
+    *   Bekleyen ödemeler (Borçlu listesi).
+    *   Yapılan tahsilatların girişi (Nakit, Kredi Kartı, Havale).
+    *   Günlük/Aylık ciro raporları.
+    *   Fatura/Makbuz kesme entegrasyonu.
+*   **İlişkili Tablolar:** `cln_appointment_items`, `cln_payments` (Henüz oluşturulmadı, `HST_ODEMELER`'den beslenecek).
+
+## 4. Laboratuvar Sonuçları Modülü
+MSSQL'den aktarılan veya yeni girilecek olan laboratuvar verilerinin takibi.
+
+*   **Sayfa Adı:** `Laboratuvar Sonuçları`
+*   **İşlev:**
+    *   Biyokimya, hemogram vb. sonuçların listelenmesi.
+    *   Referans değerlerin dışındaki (yüksek/düşük) sonuçların işaretlenmesi.
+    *   Sonuçların PDF olarak basılması.
+*   **İlişkili Tablo:** `cln_lab_results` (Eski `HST_LAB_BIYOKIMYA`).
+
+## 5. Raporlama ve İstatistik Ekranı
+Yönetimsel kararlar için verilerin görselleştirilmesi.
+
+*   **Sayfa Adı:** `İstatistik Dashboard`
+*   **İşlev:**
+    *   En çok yapılan işlemler.
+    *   Doktor bazlı hasta sayıları ve performans.
+    *   Klinik doluluk oranları.
+    *   Demografik raporlar (Yaş/Cinsiyet/Bölge dağılımı).
+
+---
+
+## Öncelikli Öneri
+Öncelikle **Muayene Ekranı** ve **Detaylı Hasta Timeline** sayfasının yapılması, aktarılan 82.000 tıbbi kaydın anlamlı hale gelmesini sağlayacaktır.
