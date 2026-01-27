@@ -45,4 +45,13 @@ class PlatformWebController
     {
         return $this->view->render($response, 'platform_clinic_settings.twig', []);
     }
+
+    /**
+     * Platform Log Görüntüleme Sayfası
+     */
+    #[Route('GET', '/platform/logs')]
+    public function logsPage(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'platform_logs.twig', []);
+    }
 }

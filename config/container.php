@@ -10,6 +10,7 @@ use App\Domain\Email\EmailService;
 use App\Domain\Platform\TenantRepository;
 use App\Domain\Platform\TenantEmailConfigRepository;
 use App\Domain\Platform\TenantSettingsController;
+use App\Core\Service\LogReaderService;
 use Slim\Views\Twig;
 use Slim\Factory\AppFactory;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -113,5 +114,11 @@ return [
     // Request Logging Middleware
     \App\Core\Middleware\RequestLoggingMiddleware::class => function (ContainerInterface $c) {
         return new \App\Core\Middleware\RequestLoggingMiddleware($c->get(\Psr\Log\LoggerInterface::class));
+    },
+
+        // Log Okuyucu Servisi
+    LogReaderService::class => function (ContainerInterface $c) {
+        $settings = $c->get('settings');
+        return new LogReaderService($settings['settings']['logger']['path']);
     },
 ];

@@ -281,6 +281,18 @@ LOG_LEVEL=DEBUG
 - **Cache Busting:** Tüm Twig şablonlarındaki `.css` ve `.js` dosyalarına `?v={{ version }}` parametresi eklendi. Bu parametre `config/settings.php` içindeki `time()` fonksiyonundan beslenerek her istekte güncel version numarası üretir, böylece tarayıcı önbellek sorunları giderildi.
 - **Frontend Fix:** `platform_clinic_settings.twig` dosyasına eksik olan `<div id="passwordHint">` elemanı eklendi. Bu sayede JS tarafındaki "Cannot read properties of null" hatası giderildi.
 
+---
+
+### 22. Gelişmiş Platform Log Görüntüleyici (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **LogReaderService:** PHP ile Monolog dosyalarını (`app-YYYY-MM-DD.log`) okuyan, tarih/seviye/arama filtrelemesi yapabilen merkezi servis yazıldı.
+- **LogController (API):** `/platform-admin/logs` ve `/platform-admin/logs/available-dates` endpoint'leri ile log verilerine güvenli erişim sağlandı.
+- **Premium UI (`platform_logs.twig`):** 
+  - Koyu (dark) terminal temalı, JetBrains Mono fontlu profesyonel log izleme arayüzü.
+  - Anlık arama (debounced), tarih seçimi ve log seviyesi filtrelemesi.
+  - Tıklanabilir log satırları ile detaylı Context/Extra ve Stack Trace görüntüleme.
+- **Navigasyon:** Platform Sidebar menüsündeki "Loglar" linki aktifleştirilerek tam entegrasyon sağlandı.
+
 
 
 

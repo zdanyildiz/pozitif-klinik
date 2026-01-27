@@ -197,6 +197,54 @@ Sistemdeki tüm klinikleri listeler.
         }
     ]
 }
+
+---
+
+### Platform Log Yönetimi (Super Admin)
+
+Bu endpoint'ler sistem loglarının izlenmesi ve analiz edilmesi içindir.
+
+#### `GET /platform-admin/logs`
+Filtrelenmiş log listesini döner.
+
+**Query Params:**
+- `date` (YYYY-MM-DD): Hangi güne ait logların okunacağı (varsayılan: bugün).
+- `level` (string): Log seviyesi (INFO, ERROR, WARNING, DEBUG, ALL).
+- `search` (string): Mesaj içeriğinde, context'te veya trace ID'de arama.
+- `limit` (int): Maksimum dönecek kayıt sayısı (varsayılan: 500).
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+    "status": true,
+    "message": "İşlem başarılı",
+    "data": {
+        "logs": [
+            {
+                "timestamp": "2026-01-27T16:26:06.824923+01:00",
+                "level": "INFO",
+                "message": "Incoming Request: [GET] ...",
+                "context": { "ip": "::1", "trace_id": "5d8988b6" },
+                "extra": { "uid": "a887b8c" }
+            }
+        ],
+        "date": "2026-01-27",
+        "level": "ALL",
+        "count": 1
+    }
+}
+```
+
+#### `GET /platform-admin/logs/available-dates`
+Sistemde log dosyası bulunan tarihlerin listesini döner.
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+    "status": true,
+    "data": ["2026-01-27", "2026-01-26"]
+}
+```
 ```
 
 ---
