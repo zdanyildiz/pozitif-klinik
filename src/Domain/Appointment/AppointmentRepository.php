@@ -221,6 +221,26 @@ class AppointmentRepository
         return array_map([$this, 'decryptAppointmentPatientName'], $results);
     }
 
+    public function listAppointmentsByRange(int $clinicId, string $startDate, string $endDate): array
+    {
+        $sql = "SELECT 
+                    a.*, 
+                    p.name as patient_name_encrypted, 
+                    t.name as type_name, 
+                    t.color_code,
+                    u.name as doctor_name
+                FROM cln_appointments a
+                JOIN ptn_cards p ON a.patient_id = p.id
+                JOIN cln_appointment_types t ON a.type_id = t.id
+                LEFT JOIN sys_users u ON a.doctor_id = u.id
+                WHERE a.clinic_id = ? AND DATE(a.appointment_date) BETWEEN ? AND ?
+                ORDER BY a.appointment_date ASC";
+
+        $results = $this->db->fetchAll($sql, [$clinicId, $startDate, $endDate]);
+
+        return array_map([$this, 'decryptAppointmentPatientName'], $results);
+    }
+
     public function getStats(int $clinicId, string $date): array
     {
         // 1. Bugunkü toplam randevu sayısı

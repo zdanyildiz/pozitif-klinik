@@ -392,4 +392,14 @@ LOG_LEVEL=DEBUG
   - `Public/assets/js/clinic_settings.js` oluşturuldu: Dinamik form yönetimi, il/ilçe yükleme ve çalışma saatleri düzenleme.
 - **Navigasyon:** Klinik panelindeki menüde "Klinik Ayarları" linki aktifleştirildi.
 
+### 29. Randevu Takvim İyileştirmeleri (✅ Tamamlandı)
+**Tarih:** 2026-01-27
+- **UI Geliştirmesi:** Randevu filtreleme alanına "Bugün" butonunun yanına "Yarın" ve "Bu Hafta" butonları eklendi.
+- **Filtreleme Mantığı:**
+  - `btnTomorrow`: Tek tıkla yarına ("Current Date + 1") odaklanma.
+  - `btnThisWeek`: Tek tıkla içinde bulunulan haftayı (Pazartesi - Pazar) seçme.
+  - `GET /api/appointments` çağrısı, `start_date` ve `end_date` parametreleri ile tarih aralığı filtrelemesi yapacak şekilde güncellendi.
+- **UX İyileştirmesi:** Butonların aktif durumu ("btn-primary" vs "btn-outline-primary") görsel olarak ayrıştırıldı, kullanıcı hangi filtrede olduğunu net görebiliyor.
+
+
 

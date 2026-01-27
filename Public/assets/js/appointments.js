@@ -16,6 +16,7 @@ let currentTypeId = null; // Düzenleme için tür ID'si
 let patientTomSelect = null;
 let doctorTomSelect = null;
 let serviceTomSelect = null; // Hizmet seçimi için TomSelect
+let filterMode = 'date'; // 'date' | 'week'
 
 document.addEventListener('DOMContentLoaded', async () => {
     detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
@@ -49,11 +50,53 @@ function setupFilters() {
     const filterDate = document.getElementById('filterDate');
     filterDate.value = today;
 
-    filterDate.addEventListener('change', loadAppointments);
-    document.getElementById('btnToday').addEventListener('click', () => {
-        filterDate.value = today;
+    // Helper to toggle active state
+    const setActiveBtn = (btnId) => {
+        ['btnToday', 'btnTomorrow', 'btnThisWeek'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            if (id === btnId) {
+                btn.classList.remove('btn-outline-primary');
+                btn.classList.add('btn-primary');
+            } else {
+                btn.classList.add('btn-outline-primary');
+                btn.classList.remove('btn-primary');
+            }
+        });
+    };
+
+    // Initial state
+    setActiveBtn('btnToday');
+
+    filterDate.addEventListener('change', () => {
+        filterMode = 'date';
+        setActiveBtn(null);
         loadAppointments();
     });
+
+    document.getElementById('btnToday').addEventListener('click', () => {
+        filterMode = 'date';
+        filterDate.value = new Date().toISOString().split('T')[0];
+        setActiveBtn('btnToday');
+        loadAppointments();
+    });
+
+    document.getElementById('btnTomorrow').addEventListener('click', () => {
+        filterMode = 'date';
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        filterDate.value = d.toISOString().split('T')[0];
+        setActiveBtn('btnTomorrow');
+        loadAppointments();
+    });
+
+    document.getElementById('btnThisWeek').addEventListener('click', () => {
+        filterMode = 'week';
+        filterDate.value = ''; // Clear specific date
+        setActiveBtn('btnThisWeek');
+        loadAppointments();
+    });
+
     document.getElementById('btnRefresh').addEventListener('click', loadAppointments);
 }
 
@@ -89,17 +132,50 @@ async function loadStats() {
 }
 
 async function loadAppointments() {
-    const date = document.getElementById('filterDate').value;
     const tbody = document.getElementById('appointmentsTableBody');
     tbody.innerHTML = '<tr><td colspan="6" class="text-center">Yükleniyor...</td></tr>';
 
+    let params = {};
+    if (filterMode === 'week') {
+        const { start, end } = getWeekRange();
+        params = { start_date: start, end_date: end };
+    } else {
+        const date = document.getElementById('filterDate').value;
+        if (!date) {
+            // If date is empty but mode is date (fallback to today)
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filterDate').value = today;
+            params = { date: today };
+        } else {
+            params = { date };
+        }
+    }
+
     try {
-        const res = await api.get('/api/appointments', { params: { date } });
+        const res = await api.get('/api/appointments', { params });
         appointments = res.data.appointments || [];
         renderAppointments();
     } catch (e) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Hata oluştu</td></tr>';
     }
+}
+
+function getWeekRange() {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat)
+    const numDay = now.getDate();
+
+    const start = new Date(now);
+    // Pazartesi'yi haftanın başı kabul et (TR standardı)
+    start.setDate(numDay - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6); // Pazar
+
+    return {
+        start: start.toISOString().split('T')[0],
+        end: end.toISOString().split('T')[0]
+    };
 }
 
 async function loadTypes() {

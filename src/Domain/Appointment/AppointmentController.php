@@ -39,6 +39,14 @@ class AppointmentController extends BaseController
         $clinicId = (int) $this->getClinicId($request);
         $params = $request->getQueryParams();
 
+        if (isset($params['start_date']) && isset($params['end_date'])) {
+            $appointments = $this->repository->listAppointmentsByRange($clinicId, $params['start_date'], $params['end_date']);
+            return $this->success($response, [
+                'range' => ['start' => $params['start_date'], 'end' => $params['end_date']],
+                'appointments' => $appointments
+            ]);
+        }
+
         $date = $params['date'] ?? date('Y-m-d');
         $appointments = $this->repository->listDailyAppointments($clinicId, $date);
 
