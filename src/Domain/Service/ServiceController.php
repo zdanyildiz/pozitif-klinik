@@ -125,6 +125,12 @@ class ServiceController extends BaseController
         }
 
         $id = $this->repository->create($clinicId, $data);
+
+        $this->getLogger($clinicId)->info('Service created', [
+            'service_id' => $id,
+            'user_id' => $this->getUserId($request)
+        ]);
+
         return $this->success($response, ['id' => $id], 'Hizmet başarıyla oluşturuldu.', 201);
     }
 
@@ -157,6 +163,12 @@ class ServiceController extends BaseController
         }
 
         $this->repository->update($clinicId, $serviceId, $data);
+
+        $this->getLogger($clinicId)->info('Service updated', [
+            'service_id' => $serviceId,
+            'user_id' => $this->getUserId($request)
+        ]);
+
         return $this->success($response, null, 'Hizmet güncellendi.');
     }
 
@@ -175,6 +187,12 @@ class ServiceController extends BaseController
         }
 
         $this->repository->delete($clinicId, $serviceId);
+
+        $this->getLogger($clinicId)->warning('Service deleted', [
+            'service_id' => $serviceId,
+            'user_id' => $this->getUserId($request)
+        ]);
+
         return $this->success($response, null, 'Hizmet silindi.');
     }
 }

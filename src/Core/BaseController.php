@@ -197,4 +197,15 @@ abstract class BaseController
     {
         return $this->error($response, 'Doğrulama hatası', 422, $errors);
     }
+
+    /**
+     * Get Logger Service
+     *
+     * @param int|null $clinicId
+     * @return \Psr\Log\LoggerInterface
+     */
+    protected function getLogger(?int $clinicId = null): \Psr\Log\LoggerInterface
+    {
+        return $this->container->get(\App\Core\Service\LoggerService::class)->getLogger($clinicId);
+    }
 }
