@@ -235,8 +235,9 @@ class PatientController extends BaseController
     {
         $clinicId = (int) $this->getClinicId($request);
         $patientId = (int) $args['id'];
+        $userId = (int) $this->getUserId($request);
 
-        $this->patientRepository->archive($clinicId, $patientId);
+        $this->patientRepository->archive($clinicId, $patientId, $userId);
 
         return $this->success($response, null, 'Hasta arşivlendi');
     }
@@ -249,8 +250,9 @@ class PatientController extends BaseController
     {
         $clinicId = (int) $this->getClinicId($request);
         $patientId = (int) $args['id'];
+        $userId = (int) $this->getUserId($request);
 
-        $this->patientRepository->delete($clinicId, $patientId);
+        $this->patientRepository->delete($clinicId, $patientId, $userId);
 
         return $this->success($response, null, 'Hasta tamamen silindi');
     }

@@ -6,6 +6,7 @@ namespace App\Domain\Patient;
 
 use App\Core\Database;
 use App\Core\Security\CryptoService;
+use App\Domain\Activity\ActivityLogger;
 
 /**
  * PatientRepository - Hasta Veritabanı İşlemleri
@@ -21,11 +22,13 @@ class PatientRepository
 {
     private Database $db;
     private CryptoService $crypto;
+    private ActivityLogger $logger;
 
-    public function __construct(Database $db, CryptoService $crypto)
+    public function __construct(Database $db, CryptoService $crypto, ActivityLogger $logger)
     {
         $this->db = $db;
         $this->crypto = $crypto;
+        $this->logger = $logger;
     }
 
     /**
@@ -159,17 +162,50 @@ class PatientRepository
     /**
      * Arşivleme ve Silme metodları (Aynı kalabilir)
      */
-    public function archive(int $clinicId, int $patientId): bool
+    public function archive(int $clinicId, int $patientId, ?int $userId = null): bool
     {
+        $oldPatient = $this->findById($clinicId, $patientId);
+
         $sql = "UPDATE ptn_cards SET status = 0 WHERE clinic_id = ? AND id = ?";
         $this->db->query($sql, [$clinicId, $patientId]);
+
+        if ($oldPatient) {
+            $this->logger->log(
+                clinicId: $clinicId,
+                action: 'PATIENT_ARCHIVE',
+                module: 'PATIENT',
+                userId: $userId,
+                recordId: $patientId,
+                recordType: 'Patient',
+                oldValues: ['status' => 1],
+                newValues: ['status' => 0],
+                description: "{$oldPatient['name']} isimli hasta arşivlendi."
+            );
+        }
+
         return true;
     }
 
-    public function delete(int $clinicId, int $patientId): bool
+    public function delete(int $clinicId, int $patientId, ?int $userId = null): bool
     {
+        $oldPatient = $this->findById($clinicId, $patientId);
+
         $sql = "DELETE FROM ptn_cards WHERE clinic_id = ? AND id = ?";
         $this->db->query($sql, [$clinicId, $patientId]);
+
+        if ($oldPatient) {
+            $this->logger->log(
+                clinicId: $clinicId,
+                action: 'PATIENT_DELETE',
+                module: 'PATIENT',
+                userId: $userId,
+                recordId: $patientId,
+                recordType: 'Patient',
+                oldValues: $oldPatient,
+                description: "{$oldPatient['name']} isimli hasta kalıcı olarak silindi."
+            );
+        }
+
         return true;
     }
 

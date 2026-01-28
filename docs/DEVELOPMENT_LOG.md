@@ -414,5 +414,17 @@ LOG_LEVEL=DEBUG
   - `TenantRepository`, `UserRepository`, `AuthController` içindeki tüm "raw password" ve "hashed password" loglamaları temizlendi veya `DEBUG` seviyesine çekilip güvenli hale getirildi.
   - Hassas verilerin log dosyalarına yazılması engellendi.
 
+---
+
+### 31. Kritik İşlem Kayıtları (Activity Logs) (✅ Tamamlandı)
+**Tarih:** 2026-01-28
+- **Veritabanı:** `cln_activity_logs` tablosu oluşturuldu (JSON destekli, klinik bazlı).
+- **Core Servis:** `App\Domain\Activity\ActivityLogger` servisi yazılarak loglama işlemleri merkezileştirildi. Hataların iş akışını bozmaması için "Silent Fail" yapısı kuruldu.
+- **Repository Entegrasyonu:**
+  - `PatientRepository`: Hasta silme (`archive`, `delete`) işlemleri loglanıyor.
+  - `AppointmentRepository`: Randevu silme, durum güncelleme (`updateStatus`) ve adisyon kalemi ekleme/silme (`addItem`, `removeItem`) işlemleri loglanıyor.
+- **Controller Güncellemeleri:** Kullanıcı ID (`user_id`) bilgisi JWT'den alınıp repository katmanına iletiliyor.
+- **Yeni Endpoint:** Eksik olan `DELETE /api/appointments/{id}` endpoint'i implemente edildi.
+
 
 

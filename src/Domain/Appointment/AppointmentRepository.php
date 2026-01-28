@@ -6,6 +6,7 @@ namespace App\Domain\Appointment;
 
 use App\Core\Database;
 use App\Core\Security\CryptoService;
+use App\Domain\Activity\ActivityLogger;
 
 /**
  * AppointmentRepository - Randevu Veritabanı İşlemleri
@@ -19,11 +20,13 @@ class AppointmentRepository
 {
     private Database $db;
     private CryptoService $crypto;
+    private ActivityLogger $logger;
 
-    public function __construct(Database $db, CryptoService $crypto)
+    public function __construct(Database $db, CryptoService $crypto, ActivityLogger $logger)
     {
         $this->db = $db;
         $this->crypto = $crypto;
+        $this->logger = $logger;
     }
 
     // ==========================================
@@ -173,10 +176,27 @@ class AppointmentRepository
         return $appointment;
     }
 
-    public function updateStatus(int $clinicId, int $appointmentId, string $status): bool
+    public function updateStatus(int $clinicId, int $appointmentId, string $status, ?int $userId = null): bool
     {
+        $oldAppointment = $this->findById($clinicId, $appointmentId);
+
         $sql = "UPDATE cln_appointments SET status = ? WHERE clinic_id = ? AND id = ?";
         $this->db->query($sql, [$status, $clinicId, $appointmentId]);
+
+        if ($oldAppointment) {
+            $this->logger->log(
+                clinicId: $clinicId,
+                action: 'APPOINTMENT_STATUS_UPDATE',
+                module: 'APPOINTMENT',
+                userId: $userId,
+                recordId: $appointmentId,
+                recordType: 'Appointment',
+                oldValues: ['status' => $oldAppointment['status']],
+                newValues: ['status' => $status],
+                description: "Randevu durumu '{$oldAppointment['status']}' -> '{$status}' olarak değiştirildi."
+            );
+        }
+
         return true;
     }
 
@@ -197,6 +217,29 @@ class AppointmentRepository
             $clinicId,
             $appointmentId
         ]);
+
+        return true;
+    }
+
+    public function deleteAppointment(int $clinicId, int $appointmentId, ?int $userId = null): bool
+    {
+        $oldAppointment = $this->findById($clinicId, $appointmentId);
+
+        $sql = "DELETE FROM cln_appointments WHERE clinic_id = ? AND id = ?";
+        $this->db->query($sql, [$clinicId, $appointmentId]);
+
+        if ($oldAppointment) {
+            $this->logger->log(
+                clinicId: $clinicId,
+                action: 'APPOINTMENT_DELETE',
+                module: 'APPOINTMENT',
+                userId: $userId,
+                recordId: $appointmentId,
+                recordType: 'Appointment',
+                oldValues: $oldAppointment,
+                description: "Randevu silindi (Tarih: {$oldAppointment['appointment_date']})"
+            );
+        }
 
         return true;
     }
@@ -277,7 +320,7 @@ class AppointmentRepository
         return $this->db->fetchAll($sql, [$clinicId, $appointmentId]);
     }
 
-    public function addItem(int $clinicId, int $appointmentId, array $data): int
+    public function addItem(int $clinicId, int $appointmentId, array $data, ?int $userId = null): int
     {
         $sql = "INSERT INTO cln_appointment_items (
                     clinic_id, appointment_id, service_id, item_name, 
@@ -295,13 +338,41 @@ class AppointmentRepository
             $data['performer_id'] ?? null
         ]);
 
-        return (int) $this->db->getConnection()->lastInsertId();
+        $itemId = (int) $this->db->getConnection()->lastInsertId();
+
+        $this->logger->log(
+            clinicId: $clinicId,
+            action: 'APPOINTMENT_ITEM_ADD',
+            module: 'FINANCE',
+            userId: $userId,
+            recordId: $appointmentId,
+            recordType: 'AppointmentItem',
+            newValues: $data,
+            description: "Randevuya '{$data['item_name']}' kalemi eklendi. Tutar: {$data['total_price']}"
+        );
+
+        return $itemId;
     }
 
-    public function removeItem(int $clinicId, int $appointmentId, int $itemId): bool
+    public function removeItem(int $clinicId, int $appointmentId, int $itemId, ?int $userId = null): bool
     {
+        // Silinen kalemi bul (Log için)
+        // Burada basit bir SELECT yapılabilir veya loga sadece ID yazılabilir.
+        // Hızlı olması için detaylı select yapmıyorum, sadece siliyoruz.
         $sql = "DELETE FROM cln_appointment_items WHERE clinic_id = ? AND appointment_id = ? AND id = ?";
         $this->db->query($sql, [$clinicId, $appointmentId, $itemId]);
+
+        $this->logger->log(
+            clinicId: $clinicId,
+            action: 'APPOINTMENT_ITEM_REMOVE',
+            module: 'FINANCE',
+            userId: $userId,
+            recordId: $appointmentId,
+            recordType: 'AppointmentItem',
+            oldValues: ['id' => $itemId],
+            description: "Randevudan #{$itemId} nolu kalem silindi."
+        );
+
         return true;
     }
 

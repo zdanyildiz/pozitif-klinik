@@ -96,7 +96,8 @@ class AppointmentController extends BaseController
             return $this->error($response, 'Durum bilgisi eksik.', 400);
         }
 
-        $this->repository->updateStatus($clinicId, $appointmentId, $data['status']);
+        $userId = (int) $this->getUserId($request);
+        $this->repository->updateStatus($clinicId, $appointmentId, $data['status'], $userId);
         return $this->success($response, null, 'Randevu durumu güncellendi.');
     }
 
@@ -113,6 +114,17 @@ class AppointmentController extends BaseController
 
         $this->repository->updateAppointment($clinicId, $appointmentId, $data);
         return $this->success($response, null, 'Randevu güncellendi.');
+    }
+
+    #[Route('DELETE', '/{id:[0-9]+}')]
+    public function delete(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $appointmentId = (int) $args['id'];
+        $userId = (int) $this->getUserId($request);
+
+        $this->repository->deleteAppointment($clinicId, $appointmentId, $userId);
+        return $this->success($response, null, 'Randevu silindi.');
     }
 
     // ==========================================
@@ -132,7 +144,8 @@ class AppointmentController extends BaseController
 
         $data['total_price'] = ($data['unit_price'] * ($data['quantity'] ?? 1));
 
-        $itemId = $this->repository->addItem($clinicId, $appointmentId, $data);
+        $userId = (int) $this->getUserId($request);
+        $itemId = $this->repository->addItem($clinicId, $appointmentId, $data, $userId);
         return $this->success($response, ['id' => $itemId], 'Hizmet eklendi.');
     }
 
@@ -142,8 +155,9 @@ class AppointmentController extends BaseController
         $clinicId = (int) $this->getClinicId($request);
         $appointmentId = (int) $args['id'];
         $itemId = (int) $args['itemId'];
+        $userId = (int) $this->getUserId($request);
 
-        $this->repository->removeItem($clinicId, $appointmentId, $itemId);
+        $this->repository->removeItem($clinicId, $appointmentId, $itemId, $userId);
         return $this->success($response, null, 'Hizmet silindi.');
     }
 
