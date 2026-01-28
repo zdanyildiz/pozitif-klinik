@@ -81,7 +81,8 @@ class AppointmentController extends BaseController
             return $this->error($response, 'Eksik bilgi: Hasta, Tür ve Tarih zorunludur.', 400);
         }
 
-        $id = $this->repository->createAppointment($clinicId, $data);
+        $userId = (int) $this->getUserId($request);
+        $id = $this->repository->createAppointment($clinicId, $data, $userId);
         return $this->success($response, ['id' => $id], 'Randevu oluşturuldu.', 201);
     }
 

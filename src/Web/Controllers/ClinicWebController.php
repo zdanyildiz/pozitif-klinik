@@ -67,4 +67,16 @@ class ClinicWebController
             'page' => 'settings'
         ]);
     }
+
+    /**
+     * İşlem Geçmişi (Denetim Kayıtları)
+     */
+    #[Route('GET', '/admin/logs')]
+    #[Middleware(SessionAuthMiddleware::class)]
+    public function logs(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'clinic_logs.twig', [
+            'page' => 'logs'
+        ]);
+    }
 }

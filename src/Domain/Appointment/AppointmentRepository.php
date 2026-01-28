@@ -103,7 +103,7 @@ class AppointmentRepository
     // RANDEVULAR
     // ==========================================
 
-    public function createAppointment(int $clinicId, array $data): int
+    public function createAppointment(int $clinicId, array $data, ?int $userId = null): int
     {
         // 1. Randevuyu oluştur
         $sql = "INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, notes) 
@@ -119,6 +119,18 @@ class AppointmentRepository
         ]);
 
         $appointmentId = (int) $this->db->getConnection()->lastInsertId();
+
+        // Loglama
+        $this->logger->log(
+            clinicId: $clinicId,
+            action: 'APPOINTMENT_CREATE',
+            module: 'APPOINTMENT',
+            userId: $userId,
+            recordId: $appointmentId,
+            recordType: 'Appointment',
+            newValues: $data,
+            description: "Yeni randevu oluşturuldu (Tarih: {$data['appointment_date']})"
+        );
 
         // 2. Eğer randevu türünün bağlı hizmeti veya varsayılan fiyatı varsa, adisyona ilk kalemi ekle
         $type = $this->findTypeById($clinicId, (int) $data['type_id']);
@@ -136,7 +148,7 @@ class AppointmentRepository
                     'unit_price' => $price,
                     'total_price' => $price,
                     'performer_id' => $data['doctor_id'] ?? null
-                ]);
+                ], $userId); // userId'yi buraya da iletiyoruz
             }
         }
 
