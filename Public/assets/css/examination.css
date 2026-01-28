@@ -235,3 +235,33 @@ textarea.form-control-exam {
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
 }
+
+/* Billing Modal Styles */
+.billing-table th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.billing-total {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 1px solid #e2e8f0;
+}
+
+.w-80p {
+    width: 80px;
+}
+
+.w-120p {
+    width: 120px;
+}
+
+.w-50p {
+    width: 50px;
+}

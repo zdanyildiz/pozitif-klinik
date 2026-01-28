@@ -34,3 +34,4 @@ Bir YZ ajanı projeye başladığında sırasıyla şunları incelemelidir:
 3. **Güvenlik**: Hassas verilere erişen tüm endpointler `TenantMiddleware` veya ilgili auth katmanı ile korunmalıdır.
 4. **Loglama**: Yapılan her kritik işlem `LoggerService` üzerinden, özellikle klinik özelinde loglanmalıdır.
 5. **Geri Dönülebilirlik**: Herhangi bir şema değişikliği teklif edildiğinde, bunun `rollback` planı hazır olmalıdır.
+6. **GELİŞTİRME GÜNLÜĞÜ VE LOGLAMA (KRİTİK)**: Yeni bir geliştirme yapılırken Gelen İstek (Request), Dönen Veri (Response Payload), hangi Endpoint'in çağrıldığı ve tüm ara süreçler detaylıca loglanacaktır. Tüm geliştirme sorunsuz tamamlandığında gereksiz loglar kaldırılacaktır. Geliştirme aşamasında "Karanlık Nokta" kalmamalıdır.

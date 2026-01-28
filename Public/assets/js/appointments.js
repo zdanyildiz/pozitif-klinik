@@ -329,34 +329,40 @@ function renderAppointments() {
 
         // Actions Column
         const tdActions = document.createElement('td');
-        tdActions.className = 'text-end';
+        const actionWrapper = document.createElement('div');
+        actionWrapper.className = 'd-flex justify-content-end align-items-center gap-2';
 
-        const btnGroup = document.createElement('div');
-        btnGroup.className = 'btn-group';
-
+        // 1. Muayene Butonu (Primary Action)
         const btnExam = document.createElement('button');
-        btnExam.className = 'btn btn-sm btn-outline-success';
-        btnExam.innerHTML = '<i class="bi bi-person-pulse"></i>';
+        btnExam.className = 'btn btn-sm btn-exam-action';
+        btnExam.innerHTML = '<i class="bi bi-person-pulse me-1"></i> Muayene';
         btnExam.title = 'Muayene Ekranı';
         btnExam.onclick = (e) => {
             e.stopPropagation();
             window.location.href = `${API_URL}/admin/examination?appointment_id=${app.id}`;
         };
-        btnGroup.appendChild(btnExam);
+        actionWrapper.appendChild(btnExam);
+
+        // 2. Diğer İşlemler (Secondary Actions)
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'btn-group';
 
         const btnEdit = document.createElement('button');
         btnEdit.className = 'btn btn-sm btn-outline-warning';
         btnEdit.innerHTML = '<i class="bi bi-pencil"></i>';
+        btnEdit.title = 'Düzenle';
         btnEdit.onclick = (e) => editAppointment(app.id, e);
         btnGroup.appendChild(btnEdit);
 
         const btnView = document.createElement('button');
         btnView.className = 'btn btn-sm btn-outline-primary';
         btnView.innerHTML = '<i class="bi bi-eye"></i>';
+        btnView.title = 'Detaylar';
         btnView.onclick = (e) => viewDetail(app.id, e);
         btnGroup.appendChild(btnView);
 
-        tdActions.appendChild(btnGroup);
+        actionWrapper.appendChild(btnGroup);
+        tdActions.appendChild(actionWrapper);
         row.appendChild(tdActions);
 
         row.onclick = (e) => viewDetail(app.id, e);
