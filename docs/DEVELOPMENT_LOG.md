@@ -447,3 +447,12 @@ LOG_LEVEL=DEBUG
   - `{% block scripts %}`: Sayfa özel JS
   - `{% block navbar_content %}`: Özel navbar içeriği (breadcrumb vb.)
 
+---
+
+### 33. Hasta Seçim Listesi Performans Optimizasyonu (✅ Tamamlandı)
+**Tarih:** 2026-01-28
+- **Problem:** Randevu oluşturma ekranındaki hasta seçim dropdown'u (`TomSelect`) sayfa yüklendiğinde tüm hastaları bir anda çekiyordu. Bu, yüzlerce/binlerce hasta olan kliniklerde performans sorunu yaratıyordu.
+- **Çözüm:** `/api/patients/select-list` endpoint'ine `LIMIT 100` eklendi. En son kayıtlı 100 hasta ile sınırlandırıldı.
+- **Etkilenen Dosyalar:** `src/Domain/Patient/PatientRepository.php` - `getSelectList()` metodu
+- **Not:** Listede görünmeyen hastalar için mevcut `/api/patients/search` endpoint'i kullanılabilir. TomSelect bileşeni arama fonksiyonunu desteklemektedir.
+

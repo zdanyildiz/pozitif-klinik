@@ -65,10 +65,12 @@ class PatientRepository
 
     /**
      * Sadece ID ve İsim döndürür (Select-box yüklemeleri için)
+     * Performans için en son eklenen 100 hasta ile sınırlıdır.
+     * Daha fazla hasta için arama fonksiyonu kullanılmalıdır.
      */
     public function getSelectList(int $clinicId): array
     {
-        $sql = "SELECT id, name, tc_no FROM ptn_cards WHERE clinic_id = ? AND status = 1 ORDER BY id DESC";
+        $sql = "SELECT id, name, tc_no FROM ptn_cards WHERE clinic_id = ? AND status = 1 ORDER BY id DESC LIMIT 100";
         $patients = $this->db->fetchAll($sql, [$clinicId]);
         return array_map([$this, 'decryptPatientData'], $patients);
     }

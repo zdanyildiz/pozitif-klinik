@@ -346,7 +346,13 @@ Belirli bir ile ait ilçeleri listeler.
 Bu endpoint'ler klinik bazlı veri izolasyonu (Multi-Tenancy) sağlar. `clinic_id` JWT token'dan otomatik alınır.
 
 ### `GET /api/patients`
-Aktif hastaları listeler (`status = 1`).
+Aktif hastaları listeler (`status = 1`). Performans için son 20 kayıt ile sınırlıdır.
+
+### `GET /api/patients/select-list`
+Dropdown/select-box yüklemeleri için sadece `id`, `name` ve `tc_no` alanlarını döner. Performans için **en son eklenen 100 hasta** ile sınırlıdır. Daha fazla hasta aramak için `/api/patients/search` endpoint'i kullanılmalıdır.
+
+### `GET /api/patients/search?q={query}`
+Hastaları TC No, Telefon veya İsim ile arar (Blind Index eşleşmesi). Arama için en az 2 karakter gereklidir.
 
 ### `POST /api/patients`
 Yeni hasta kaydı oluşturur.
