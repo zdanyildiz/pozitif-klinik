@@ -10,10 +10,24 @@ use Throwable;
 use Slim\Exception\HttpException;
 use Slim\Exception\HttpNotFoundException;
 use Psr\Log\LoggerInterface;
+use App\Core\Service\LoggerService;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Slim\Interfaces\CallableResolverInterface;
 
 class HttpErrorHandler extends ErrorHandler
 {
     private ?string $traceId = null;
+    private LoggerService $loggerService;
+
+    public function __construct(
+        CallableResolverInterface $callableResolver,
+        ResponseFactoryInterface $responseFactory,
+        LoggerService $loggerService,
+        ?LoggerInterface $logger = null
+    ) {
+        parent::__construct($callableResolver, $responseFactory, $logger ?? $loggerService->getMainLogger());
+        $this->loggerService = $loggerService;
+    }
 
     /**
      * @inheritdoc
@@ -26,7 +40,7 @@ class HttpErrorHandler extends ErrorHandler
         // Determine log level
         $level = 'error';
         if ($exception instanceof HttpNotFoundException) {
-            $level = 'info';
+            $level = 'debug'; // Gereksiz 404 loglarını debug'a çekelim
         }
 
         // Prepare context
@@ -48,8 +62,9 @@ class HttpErrorHandler extends ErrorHandler
         if ($userId)
             $context['user_id'] = $userId;
 
-        // Log the error
-        $this->logger->log($level, $exception->getMessage(), $context);
+        // Uygun logger'ı seç (Klinik bazlı mı yoksa ana sistem mi?)
+        $logger = $this->loggerService->getLogger($clinicId ? (int) $clinicId : null);
+        $logger->log($level, $exception->getMessage(), $context);
     }
 
     /**

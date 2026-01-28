@@ -128,7 +128,18 @@ return [
 
     // Request Logging Middleware
     \App\Core\Middleware\RequestLoggingMiddleware::class => function (ContainerInterface $c) {
-        return new \App\Core\Middleware\RequestLoggingMiddleware($c->get(\Psr\Log\LoggerInterface::class));
+        return new \App\Core\Middleware\RequestLoggingMiddleware(
+            $c->get(\App\Core\Service\LoggerService::class)
+        );
+    },
+
+    // Logger Service
+    \App\Core\Service\LoggerService::class => function (ContainerInterface $c) {
+        $settings = $c->get('settings');
+        return new \App\Core\Service\LoggerService(
+            $c->get(\Psr\Log\LoggerInterface::class),
+            $settings['settings']['logger']
+        );
     },
 
         // Log Okuyucu Servisi

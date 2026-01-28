@@ -25,4 +25,22 @@ class LoggerFactory
 
         return $logger;
     }
+
+    /**
+     * Klinik bazlı özelleştirilmiş logger oluşturur.
+     * Logları var/logs/clinic_{id}/app.log formatında saklar.
+     */
+    public static function createForClinic(int $clinicId, array $settings): LoggerInterface
+    {
+        $clinicPath = sprintf('%s/clinic_%d', rtrim($settings['path'], '/'), $clinicId);
+
+        if (!is_dir($clinicPath)) {
+            mkdir($clinicPath, 0777, true);
+        }
+
+        $settings['path'] = $clinicPath;
+        $settings['name'] = "Clinic_{$clinicId}";
+
+        return self::create($settings);
+    }
 }

@@ -72,7 +72,7 @@ $errorMiddleware->setDefaultErrorHandler(
     new \App\Core\HttpErrorHandler(
         $app->getCallableResolver(),
         $app->getResponseFactory(),
-        $container->get(\Psr\Log\LoggerInterface::class)
+        $container->get(\App\Core\Service\LoggerService::class)
     )
 );
 

@@ -401,5 +401,18 @@ LOG_LEVEL=DEBUG
   - `GET /api/appointments` çağrısı, `start_date` ve `end_date` parametreleri ile tarih aralığı filtrelemesi yapacak şekilde güncellendi.
 - **UX İyileştirmesi:** Butonların aktif durumu ("btn-primary" vs "btn-outline-primary") görsel olarak ayrıştırıldı, kullanıcı hangi filtrede olduğunu net görebiliyor.
 
+---
+
+### 30. Loglama Optimizasyonu ve Güvenlik Sıkılaştırma (✅ Tamamlandı)
+**Tarih:** 2026-01-28
+- **Klinik Bazlı Loglama:** `LoggerFactory` ve `LoggerService` ile her kliniğin loglarının kendi klasörüne (`var/logs/clinic_{id}/`) yazılması sağlandı. Bu sayede log yönetimi ve izolasyonu güçlendirildi.
+- **Seviye Optimizasyonu (Prod Ready):**
+  - `RequestLoggingMiddleware`: Standart 200 OK istekleri `DEBUG` seviyesine çekildi.
+  - `HttpErrorHandler`: Rutin 404 hataları `DEBUG` seviyesine çekildi.
+  - Bu değişiklikler, canlı ortamda diskin gereksiz şişmesini ve I/O darboğazını engeller.
+- **Güvenlik Temizliği:**
+  - `TenantRepository`, `UserRepository`, `AuthController` içindeki tüm "raw password" ve "hashed password" loglamaları temizlendi veya `DEBUG` seviyesine çekilip güvenli hale getirildi.
+  - Hassas verilerin log dosyalarına yazılması engellendi.
+
 
 

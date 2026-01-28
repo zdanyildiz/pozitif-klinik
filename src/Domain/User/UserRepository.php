@@ -83,11 +83,9 @@ class UserRepository
 
         $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
 
-        $this->logger->info("[UserRepository] Creating User", [
+        $this->logger->debug("[UserRepository] Creating User", [
             'clinic_id' => $clinicId,
-            'username' => $data['username'],
-            'raw_password' => $data['password'],
-            'hashed_password' => $hashedPassword
+            'username' => $data['username']
         ]);
 
         $this->db->query($sql, [
@@ -150,12 +148,10 @@ class UserRepository
 
             $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
 
-            $this->logger->info("[UserRepository] Updating User WITH password", [
+            $this->logger->debug("[UserRepository] Updating User WITH password", [
                 'clinic_id' => $clinicId,
                 'user_id' => $userId,
-                'username' => $data['username'],
-                'raw_password' => $data['password'],
-                'hashed_password' => $hashedPassword
+                'username' => $data['username']
             ]);
 
             $this->db->query($sql, [

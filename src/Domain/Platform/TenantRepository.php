@@ -50,11 +50,9 @@ class TenantRepository
             $stmtUser = $connection->prepare($sqlUser);
             $hashedPassword = password_hash($adminData['password'], PASSWORD_BCRYPT);
 
-            $this->logger->info("[TenantRepository] Creating Clinic Admin", [
+            $this->logger->debug("[TenantRepository] Creating Clinic Admin", [
                 'clinic_id' => $clinicId,
-                'username' => $adminData['username'],
-                'raw_password' => $adminData['password'],
-                'hashed_password' => $hashedPassword
+                'username' => $adminData['username']
             ]);
 
             $stmtUser->execute([
@@ -169,11 +167,9 @@ class TenantRepository
                     if (!empty($adminData['password'])) {
                         $hashedPassword = password_hash($adminData['password'], PASSWORD_BCRYPT);
 
-                        $this->logger->info("[TenantRepository] Updating Clinic Admin password", [
+                        $this->logger->debug("[TenantRepository] Updating Clinic Admin password", [
                             'clinic_id' => $id,
-                            'user_id' => $userId,
-                            'raw_password' => $adminData['password'],
-                            'hashed_password' => $hashedPassword
+                            'user_id' => $userId
                         ]);
 
                         $updates[] = "password_hash = ?";

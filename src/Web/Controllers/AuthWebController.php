@@ -63,11 +63,9 @@ class AuthWebController
         $username = trim($data['username'] ?? '');
         $password = $data['password'] ?? '';
 
-        $this->logger->info("[DEBUG] Login raw data", [
-            'raw_clinic_code' => $data['clinic_code'] ?? 'null',
-            'raw_username' => $data['username'] ?? 'null',
-            'raw_password' => $password,
-            'processed_clinic' => $clinicCode
+        $this->logger->debug("Login attempt data", [
+            'clinic_code' => $clinicCode,
+            'username' => $username
         ]);
 
         if (empty($clinicCode) || empty($username) || empty($password)) {
@@ -103,9 +101,9 @@ class AuthWebController
 
         $passwordVerify = password_verify($password, $user['password_hash']);
 
-        $this->logger->info("[DEBUG] Login Auth Check", [
-            'db_hash' => $user['password_hash'],
-            'verify_result' => $passwordVerify ? 'MATCH' : 'MISMATCH'
+        $this->logger->debug("Login Auth Verification Result", [
+            'verify_result' => $passwordVerify ? 'MATCH' : 'MISMATCH',
+            'clinic_id' => $user['clinic_id']
         ]);
 
         // Şifre kontrolü

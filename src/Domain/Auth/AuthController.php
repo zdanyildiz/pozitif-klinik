@@ -100,10 +100,8 @@ class AuthController extends BaseController
         // 4. Şifre kontrolü
         $passwordVerify = password_verify($password, $user['password_hash']);
 
-        $this->logger->info("[DEBUG] API Login VerificationResult", [
+        $this->logger->debug("API Login Verification Result", [
             'username' => $username,
-            'input_password' => $password,
-            'db_hash' => $user['password_hash'],
             'match' => $passwordVerify ? 'YES' : 'NO'
         ]);
 

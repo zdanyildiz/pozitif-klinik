@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
-use Psr\Log\LoggerInterface;
+use App\Core\Service\LoggerService;
 
 /**
  * RequestLoggingMiddleware
@@ -18,11 +18,11 @@ use Psr\Log\LoggerInterface;
  */
 class RequestLoggingMiddleware implements MiddlewareInterface
 {
-    private LoggerInterface $logger;
+    private LoggerService $loggerService;
 
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerService $loggerService)
     {
-        $this->logger = $logger;
+        $this->loggerService = $loggerService;
     }
 
     public function process(Request $request, RequestHandler $handler): Response
@@ -35,12 +35,15 @@ class RequestLoggingMiddleware implements MiddlewareInterface
 
         // Body'den şifre gibi hassas verileri gizle
         $body = $request->getParsedBody();
-        if (isset($body['password']))
-            $body['password'] = '***';
-        if (isset($body['admin_password']))
-            $body['admin_password'] = '***';
+        if (is_array($body)) {
+            if (isset($body['password']))
+                $body['password'] = '***';
+            if (isset($body['admin_password']))
+                $body['admin_password'] = '***';
+        }
 
-        $this->logger->info("Incoming Request: [$method] $uri", [
+        // İlk girişte ana sistem loguna debug seviyesinde yaz
+        $this->loggerService->getMainLogger()->debug("Incoming Request: [$method] $uri", [
             'ip' => $ip,
             'body' => $body
         ]);
@@ -52,9 +55,14 @@ class RequestLoggingMiddleware implements MiddlewareInterface
         $duration = round((microtime(true) - $startTime) * 1000, 2);
         $statusCode = $response->getStatusCode();
 
-        $this->logger->info("Response Sent: [$statusCode] in {$duration}ms", [
+        // Eğer TenantMiddleware tarafından clinic_id atanmışsa, klinik bazlı logla
+        $clinicId = $request->getAttribute('clinic_id');
+        $logger = $this->loggerService->getLogger($clinicId ? (int) $clinicId : null);
+
+        $logger->debug("Response Sent: [$statusCode] in {$duration}ms", [
             'method' => $method,
-            'uri' => $uri
+            'uri' => $uri,
+            'clinic_id' => $clinicId
         ]);
 
         return $response;

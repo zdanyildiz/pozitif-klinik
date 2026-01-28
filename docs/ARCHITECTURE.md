@@ -112,12 +112,29 @@ Uygulama, hem SEO/Performans avantajları sağlayan SSR (Server-Side Rendering) 
 Etkili hata takibi ve sistem analizi için yapılandırılmış (structured) bir loglama stratejisi benimsenmiştir.
 
 - **Monolog Kütüphanesi:** Tüm loglama işlemleri için endüstri standardı olan Monolog kullanılır.
-- **Trace ID:** Sisteme gelen her bir HTTP isteği için benzersiz bir `trace_id` (UUID) oluşturulur. Bu `trace_id`, o isteğin yaşam döngüsü boyunca tüm log kayıtlarına eklenir. Bu sayede, belirli bir kullanıcının veya işlemin yarattığı tüm logları kolayca filtrelemek ve takip etmek mümkün olur.
-- **Global Hata Yakalama (HttpErrorHandler):** Slim Framework'ün varsayılan `ErrorHandler`'ı, daha fazla detay loglayacak şekilde genişletilmiştir. Yakalanan herhangi bir `Exception` veya `Error`, standart bir JSON formatında ve ilgili `trace_id` ile birlikte log dosyasına yazılır. Bu, production ortamında hiçbir hatanın gözden kaçmamasını sağlar.
+- **Klinik Bazlı Loglama (Tenant-Aware Logging):**
+    - Her kliniğin logları `var/logs/clinic_{id}/` altında izole edilmiş klasörlerde tutulur.
+    - Ana sistem logları (login öncesi veya global hatalar) `var/logs/app.log` dosyasına yazılır.
+    - `LoggerService` servisi, isteğin bağlamına göre (context) doğru log dosyasını otomatik seçer.
+- **Log Seviyeleri ve Optimizasyon:**
+    - **Canlı Ortam (Production):** Varsayılan log seviyesi `WARNING` veya `ERROR` olarak ayarlanır. Gereksiz I/O yükünü önlemek için başarılı istekler (200 OK) ve rutin 404 hataları `DEBUG` seviyesine çekilmiştir.
+    - **Geliştirme Ortamı:** Tüm detaylar görüntülenebilir.
+- **Trace ID:** Sisteme gelen her bir HTTP isteği için benzersiz bir `trace_id` (UUID) oluşturulur.
+- **Güvenlik (Sensitive Data Stripping):** Loglarda _asla_ açık şifre, hash veya hassas kişisel veri bulunmaz. Kod tabanındaki tüm "raw password" loglamaları temizlenmiştir.
 
-**Örnek Log Kaydı (var/logs/app.log):**
+**Örnek Log Yapısı:**
 ```
-[2026-01-20T14:30:00.123456+03:00] app.ERROR: Veritabanı bağlantı hatası {"code":500,"message":"SQLSTATE[HY000] [2002] Connection refused"} {"url":"/api/patients","method":"GET","ip":"127.0.0.1","trace_id":"ab123cd-45ef-67gh-89ij-klm012nop345"}
+var/logs/
+├── app-2026-01-28.log          # Global/Sistem logları
+├── clinic_1/
+│   └── app-2026-01-28.log      # ID:1 Kliniğine ait loglar
+└── clinic_2/
+    └── app-2026-01-28.log      # ID:2 Kliniğine ait loglar
+```
+
+**Örnek Log Kaydı:**
+```json
+[2026-01-28T09:15:00] Clinic_1.DEBUG: Response Sent: [200] in 45.2ms {"method":"GET","uri":"/api/appointments","clinic_id":1,"trace_id":"ab123..."}
 ```
 
 ---
