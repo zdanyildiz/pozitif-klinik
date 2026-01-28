@@ -1,22 +1,10 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Pozitif Klinik - Sistem Logları">
-    <title>Sistem Logları | Pozitif Klinik Platform</title>
+{% extends "platform_layout.twig" %}
 
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- SweetAlert2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link href="{{ base_path }}/assets/css/dashboard.css?v={{ version }}" rel="stylesheet">
-    
+{% block meta_description %}Pozitif Klinik - Sistem Logları{% endblock %}
+{% block title %}Sistem Logları | Pozitif Klinik Platform{% endblock %}
+{% block page_title %}Sistem Logları{% endblock %}
+
+{% block head %}
     <style>
         .filter-card {
             background: white;
@@ -165,115 +153,72 @@
             padding-left: 36px;
         }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <a href="{{ base_path }}/platform/dashboard" class="sidebar-logo">
-                <div class="sidebar-logo-icon"><i class="bi bi-hospital"></i></div>
-                <div class="sidebar-logo-text">Pozitif<span>Platform Yönetimi</span></div>
-            </a>
-        </div>
-
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="nav-section-title">Ana Menü</div>
-                <a href="{{ base_path }}/platform/dashboard" class="nav-link-custom">
-                    <i class="bi bi-building"></i>Klinikler
-                </a>
-                <a href="{{ base_path }}/platform/users" class="nav-link-custom"><i class="bi bi-people"></i>Kullanıcılar</a>
-                <a href="#" class="nav-link-custom"><i class="bi bi-bar-chart"></i>İstatistikler</a>
+{% block content %}
+    <!-- Filter Section -->
+    <div class="filter-card">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Tarih</label>
+                <select class="form-select" id="logDateSelect">
+                    <option value="{{ "now"|date("Y-m-d") }}">Bugün ({{ "now"|date("d.m.Y") }})</option>
+                </select>
             </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Sistem</div>
-                <a href="#" class="nav-link-custom"><i class="bi bi-gear"></i>Ayarlar</a>
-                <a href="{{ base_path }}/platform/logs" class="nav-link-custom active"><i class="bi bi-file-text"></i>Loglar</a>
+            <div class="col-md-2">
+                <label class="form-label">Log Türü</label>
+                <select class="form-select" id="logLevelSelect">
+                    <option value="ALL">Tümü</option>
+                    <option value="ERROR">Hatalar</option>
+                    <option value="WARNING">Uyarılar</option>
+                    <option value="INFO">Bilgi</option>
+                    <option value="DEBUG">Debug</option>
+                </select>
             </div>
-        </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <header class="top-navbar">
-            <h1 class="navbar-title">Sistem Logları</h1>
-            <div class="navbar-actions">
-                <button class="btn-logout" id="logoutBtn"><i class="bi bi-box-arrow-right"></i>Çıkış Yap</button>
-            </div>
-        </header>
-
-        <div class="content-area">
-            <!-- Filter Section -->
-            <div class="filter-card">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Tarih</label>
-                        <select class="form-select" id="logDateSelect">
-                            <option value="{{ "now"|date("Y-m-d") }}">Bugün ({{ "now"|date("d.m.Y") }})</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Log Türü</label>
-                        <select class="form-select" id="logLevelSelect">
-                            <option value="ALL">Tümü</option>
-                            <option value="ERROR">Hatalar</option>
-                            <option value="WARNING">Uyarılar</option>
-                            <option value="INFO">Bilgi</option>
-                            <option value="DEBUG">Debug</option>
-                        </select>
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label">Arama</label>
-                        <div class="search-container">
-                            <i class="bi bi-search"></i>
-                            <input type="text" class="form-control" id="logSearchInput" placeholder="Mesaj veya Trace ID ile ara...">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">&nbsp;</label>
-                        <button class="btn btn-save w-100" id="refreshLogsBtn">
-                            <i class="bi bi-arrow-clockwise me-2"></i>Tazele
-                        </button>
-                    </div>
+            <div class="col-md-5">
+                <label class="form-label">Arama</label>
+                <div class="search-container">
+                    <i class="bi bi-search"></i>
+                    <input type="text" class="form-control" id="logSearchInput" placeholder="Mesaj veya Trace ID ile ara...">
                 </div>
             </div>
-
-            <!-- Log Viewer Container -->
-            <div class="log-container">
-                <div class="log-header">
-                    <h2 class="log-header-title">
-                        Uygulama Logları 
-                        <span class="badge-count" id="logCount">0 kayıt</span>
-                    </h2>
-                    <div>
-                        <button class="btn btn-sm btn-outline-secondary text-white-50 border-secondary me-2" id="clearSearchBtn">
-                            Filtreleri Temizle
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary" id="expandAllBtn">
-                            Hepsini Aç
-                        </button>
-                    </div>
-                </div>
-                <div class="log-body" id="logBody">
-                    <!-- Logs will be loaded here -->
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Yükleniyor...</span>
-                        </div>
-                        <p class="text-secondary mt-3">Loglar yükleniyor...</p>
-                    </div>
-                </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-save w-100" id="refreshLogsBtn">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Tazele
+                </button>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Custom JS -->
-    <script src="{{ base_path }}/assets/js/config.js?v={{ version }}"></script>
+    <!-- Log Viewer Container -->
+    <div class="log-container">
+        <div class="log-header">
+            <h2 class="log-header-title">
+                Uygulama Logları 
+                <span class="badge-count" id="logCount">0 kayıt</span>
+            </h2>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary text-white-50 border-secondary me-2" id="clearSearchBtn">
+                    Filtreleri Temizle
+                </button>
+                <button class="btn btn-sm btn-outline-primary" id="expandAllBtn">
+                    Hepsini Aç
+                </button>
+            </div>
+        </div>
+        <div class="log-body" id="logBody">
+            <!-- Logs will be loaded here -->
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Yükleniyor...</span>
+                </div>
+                <p class="text-secondary mt-3">Loglar yükleniyor...</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
     <script src="{{ base_path }}/assets/js/platform_logs.js?v={{ version }}"></script>
-</body>
-</html>
+{% endblock %}

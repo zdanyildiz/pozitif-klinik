@@ -426,5 +426,24 @@ LOG_LEVEL=DEBUG
 - **Controller Güncellemeleri:** Kullanıcı ID (`user_id`) bilgisi JWT'den alınıp repository katmanına iletiliyor.
 - **Yeni Endpoint:** Eksik olan `DELETE /api/appointments/{id}` endpoint'i implemente edildi.
 
+---
 
+### 32. Platform Şablon Refactoring - DRY Prensibi (✅ Tamamlandı)
+**Tarih:** 2026-01-28
+- **Platform Layout Oluşturma:** `platform_layout.twig` dosyası oluşturularak platform paneli sayfaları için ortak şablon altyapısı kuruldu.
+- **CDN Yönetimi Merkezileştirildi:** Bootstrap, Axios, SweetAlert2 gibi kütüphaneler artık tek bir dosyadan yükleniyor. Bu sayede:
+  - Kütüphane versiyonları tek noktadan güncellenebilir
+  - Kod tekrarı (~280 satır) ortadan kalktı
+  - Bakım maliyeti azaldı
+- **Refactor Edilen Sayfalar:**
+  - `platform_dashboard.twig`: 246 → 172 satır
+  - `platform_users.twig`: 194 → 116 satır
+  - `platform_logs.twig`: 280 → 210 satır
+  - `platform_clinic_settings.twig`: 415 → 340 satır
+- **Controller Güncellemeleri:** `PlatformWebController` içindeki tüm metodlara `page` değişkeni eklenerek sidebar menü aktif durumu dinamikleştirildi.
+- **Blok Yapısı:** 
+  - `{% block content %}`: Sayfa içeriği
+  - `{% block head %}`: Sayfa özel CSS/style
+  - `{% block scripts %}`: Sayfa özel JS
+  - `{% block navbar_content %}`: Özel navbar içeriği (breadcrumb vb.)
 

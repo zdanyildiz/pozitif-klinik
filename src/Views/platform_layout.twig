@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}Pozitif Klinik Platform Yönetim Paneli{% endblock %}">
+    <title>{% block title %}Pozitif Klinik Platform{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ base_path }}/assets/css/dashboard.css?v={{ version }}" rel="stylesheet">
+    
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ base_path }}/platform/dashboard" class="sidebar-logo">
+                <div class="sidebar-logo-icon"><i class="bi bi-hospital"></i></div>
+                <div class="sidebar-logo-text">Pozitif<span>Platform Yönetimi</span></div>
+            </a>
+            <button class="btn-close-sidebar d-lg-none"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Ana Menü</div>
+                <a href="{{ base_path }}/platform/dashboard" class="nav-link-custom {% if page == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-building"></i>Klinikler
+                </a>
+                <a href="{{ base_path }}/platform/users" class="nav-link-custom {% if page == 'users' %}active{% endif %}">
+                    <i class="bi bi-people"></i>Kullanıcılar
+                </a>
+                <a href="#" class="nav-link-custom {% if page == 'statistics' %}active{% endif %}">
+                    <i class="bi bi-bar-chart"></i>İstatistikler
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Sistem</div>
+                <a href="#" class="nav-link-custom {% if page == 'settings' %}active{% endif %}">
+                    <i class="bi bi-gear"></i>Ayarlar
+                </a>
+                <a href="{{ base_path }}/platform/logs" class="nav-link-custom {% if page == 'logs' %}active{% endif %}">
+                    <i class="bi bi-file-text"></i>Loglar
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+            {% block navbar_content %}
+            <h1 class="navbar-title">{% block page_title %}Yönetim Paneli{% endblock %}</h1>
+            {% endblock %}
+
+            <div class="navbar-actions">
+                <button class="btn-logout" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Çıkış Yap
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Custom JS -->
+    <script src="{{ base_path }}/assets/js/config.js?v={{ version }}"></script>
+    
+    <!-- Sidebar Toggle & Logout Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Sidebar toggle for mobile
+            const navbar = document.querySelector('.top-navbar');
+            if (navbar && !document.getElementById('sidebarToggle')) {
+                const toggleBtn = document.createElement('button');
+                toggleBtn.id = 'sidebarToggle';
+                toggleBtn.className = 'btn btn-link text-dark d-lg-none me-2';
+                toggleBtn.innerHTML = '<i class="bi bi-list fs-1"></i>';
+                navbar.insertBefore(toggleBtn, navbar.firstChild);
+                toggleBtn.addEventListener('click', () => {
+                    document.querySelector('.sidebar').classList.toggle('active');
+                });
+            }
+            
+            // Close sidebar button
+            const closeBtn = document.querySelector('.btn-close-sidebar');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    document.querySelector('.sidebar').classList.remove('active');
+                });
+            }
+            
+            // Logout handler
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    const result = await Swal.fire({
+                        title: 'Çıkış Yapılıyor',
+                        text: "Oturumunuzu kapatmak istediğinize emin misiniz?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, Çıkış Yap',
+                        cancelButtonText: 'İptal'
+                    });
+
+                    if (result.isConfirmed) {
+                        localStorage.removeItem('platform_token');
+                        localStorage.removeItem('user_type');
+                        window.location.href = '{{ base_path }}/platform/logout';
+                    }
+                });
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -34,7 +34,9 @@ class PlatformWebController
     public function dashboard(Request $request, Response $response): Response
     {
         // Not: Token kontrolü JS tarafında yapılıyor (Legacy uyumluluk)
-        return $this->view->render($response, 'platform_dashboard.twig', []);
+        return $this->view->render($response, 'platform_dashboard.twig', [
+            'page' => 'dashboard'
+        ]);
     }
 
     /**
@@ -43,7 +45,9 @@ class PlatformWebController
     #[Route('GET', '/platform/clinic-settings')]
     public function clinicSettings(Request $request, Response $response): Response
     {
-        return $this->view->render($response, 'platform_clinic_settings.twig', []);
+        return $this->view->render($response, 'platform_clinic_settings.twig', [
+            'page' => 'settings'
+        ]);
     }
 
     /**
@@ -52,7 +56,9 @@ class PlatformWebController
     #[Route('GET', '/platform/logs')]
     public function logsPage(Request $request, Response $response): Response
     {
-        return $this->view->render($response, 'platform_logs.twig', []);
+        return $this->view->render($response, 'platform_logs.twig', [
+            'page' => 'logs'
+        ]);
     }
 
     /**
@@ -61,6 +67,8 @@ class PlatformWebController
     #[Route('GET', '/platform/users')]
     public function usersPage(Request $request, Response $response): Response
     {
-        return $this->view->render($response, 'platform_users.twig', []);
+        return $this->view->render($response, 'platform_users.twig', [
+            'page' => 'users'
+        ]);
     }
 }

@@ -23,8 +23,18 @@ Bu kurallar **kesindir** ve esnetilemez. Ajana önce bunları okutmalısın.
 * Web rotaları için ileride Session/Cookie tabanlı `WebAuthMiddleware` kullanılacaktır (Şu an geçici olarak sabit clinic_id=1 kullanılmakta).
 
 5. **Twig Şablon Yapısı (Layouts):**
-* Her sayfa `layout.twig` şablonundan türetilmelidir (`{% extends 'layout.twig' %}`).
-* Kod tekrarını önlemek için ortak HTML parçaları (Menü, Header) layout içinde veya `partials/` altında tutulmalıdır.
+* **Klinik Sayfaları:** `layout.twig` şablonundan türetilir (`{% extends 'layout.twig' %}`).
+* **Platform Sayfaları:** `platform_layout.twig` şablonundan türetilir (`{% extends 'platform_layout.twig' %}`).
+* **Login Sayfaları:** Standalone kalabilir veya özel `login_layout.twig` kullanabilir.
+* Kod tekrarını önlemek için ortak HTML parçaları (Menü, Header, CDN kütüphaneleri) layout içinde tutulmalıdır.
+* Layout'lar şu blokları sağlar:
+  - `{% block content %}`: Sayfa ana içeriği
+  - `{% block head %}`: Sayfa özel CSS/style
+  - `{% block scripts %}`: Sayfa özel JavaScript
+  - `{% block page_title %}`: Sayfa başlığı
+  - `{% block navbar_content %}`: Özel navbar içeriği (opsiyonel)
+
+
 
 
 
