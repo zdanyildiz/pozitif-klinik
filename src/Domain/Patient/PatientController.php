@@ -148,6 +148,11 @@ class PatientController extends BaseController
 
             $patientId = $this->patientRepository->create($clinicId, $data);
 
+            $this->getLogger($clinicId)->info('Patient created', [
+                'patient_id' => $patientId,
+                'user_id' => $this->getUserId($request)
+            ]);
+
             return $this->createdResponse($response, [
                 'id' => $patientId
             ], 'Hasta başarıyla oluşturuldu');
@@ -185,6 +190,11 @@ class PatientController extends BaseController
 
             $this->patientRepository->update($clinicId, $patientId, $data);
 
+            $this->getLogger($clinicId)->info('Patient updated', [
+                'patient_id' => $patientId,
+                'user_id' => $this->getUserId($request)
+            ]);
+
             return $this->success($response, null, 'Hasta bilgileri güncellendi');
 
         } catch (\Respect\Validation\Exceptions\NestedValidationException $e) {
@@ -218,6 +228,12 @@ class PatientController extends BaseController
 
             $vitalId = $this->vitalsRepository->addVital($clinicId, $patientId, $data);
 
+            $this->getLogger($clinicId)->info('Vital added to patient', [
+                'patient_id' => $patientId,
+                'vital_id' => $vitalId,
+                'user_id' => $this->getUserId($request)
+            ]);
+
             return $this->createdResponse($response, [
                 'id' => $vitalId
             ], 'Yaşam bulgusu başarıyla eklendi');
@@ -239,6 +255,11 @@ class PatientController extends BaseController
 
         $this->patientRepository->archive($clinicId, $patientId, $userId);
 
+        $this->getLogger($clinicId)->info('Patient archived', [
+            'patient_id' => $patientId,
+            'user_id' => $userId
+        ]);
+
         return $this->success($response, null, 'Hasta arşivlendi');
     }
 
@@ -253,6 +274,11 @@ class PatientController extends BaseController
         $userId = (int) $this->getUserId($request);
 
         $this->patientRepository->delete($clinicId, $patientId, $userId);
+
+        $this->getLogger($clinicId)->warning('Patient deleted permanently', [
+            'patient_id' => $patientId,
+            'user_id' => $userId
+        ]);
 
         return $this->success($response, null, 'Hasta tamamen silindi');
     }

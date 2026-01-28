@@ -152,6 +152,12 @@ class AppointmentController extends BaseController
 
         $userId = (int) $this->getUserId($request);
         $id = $this->repository->createAppointment($clinicId, $data, $userId);
+
+        $this->getLogger($clinicId)->info('Appointment created', [
+            'appointment_id' => $id,
+            'user_id' => $userId
+        ]);
+
         return $this->success($response, ['id' => $id], 'Randevu oluşturuldu.', 201);
     }
 
@@ -168,6 +174,13 @@ class AppointmentController extends BaseController
 
         $userId = (int) $this->getUserId($request);
         $this->repository->updateStatus($clinicId, $appointmentId, $data['status'], $userId);
+
+        $this->getLogger($clinicId)->info('Appointment status updated', [
+            'appointment_id' => $appointmentId,
+            'status' => $data['status'],
+            'user_id' => $userId
+        ]);
+
         return $this->success($response, null, 'Randevu durumu güncellendi.');
     }
 
@@ -218,6 +231,12 @@ class AppointmentController extends BaseController
         }
 
         $this->repository->updateAppointment($clinicId, $appointmentId, $data);
+
+        $this->getLogger($clinicId)->info('Appointment updated', [
+            'appointment_id' => $appointmentId,
+            'user_id' => $this->getUserId($request)
+        ]);
+
         return $this->success($response, null, 'Randevu güncellendi.');
     }
 
@@ -229,6 +248,12 @@ class AppointmentController extends BaseController
         $userId = (int) $this->getUserId($request);
 
         $this->repository->deleteAppointment($clinicId, $appointmentId, $userId);
+
+        $this->getLogger($clinicId)->warning('Appointment deleted', [
+            'appointment_id' => $appointmentId,
+            'user_id' => $userId
+        ]);
+
         return $this->success($response, null, 'Randevu silindi.');
     }
 
@@ -251,6 +276,13 @@ class AppointmentController extends BaseController
 
         $userId = (int) $this->getUserId($request);
         $itemId = $this->repository->addItem($clinicId, $appointmentId, $data, $userId);
+
+        $this->getLogger($clinicId)->info('Appointment item added', [
+            'appointment_id' => $appointmentId,
+            'item_id' => $itemId,
+            'user_id' => $userId
+        ]);
+
         return $this->success($response, ['id' => $itemId], 'Hizmet eklendi.');
     }
 
@@ -263,6 +295,13 @@ class AppointmentController extends BaseController
         $userId = (int) $this->getUserId($request);
 
         $this->repository->removeItem($clinicId, $appointmentId, $itemId, $userId);
+
+        $this->getLogger($clinicId)->info('Appointment item removed', [
+            'appointment_id' => $appointmentId,
+            'item_id' => $itemId,
+            'user_id' => $userId
+        ]);
+
         return $this->success($response, null, 'Hizmet silindi.');
     }
 
@@ -289,6 +328,12 @@ class AppointmentController extends BaseController
         }
 
         $id = $this->repository->createType($clinicId, $data);
+
+        $this->getLogger($clinicId)->info('Appointment type created', [
+            'type_id' => $id,
+            'user_id' => $this->getUserId($request)
+        ]);
+
         return $this->success($response, ['id' => $id], 'Randevu türü oluşturuldu.', 201);
     }
 
@@ -304,6 +349,12 @@ class AppointmentController extends BaseController
         }
 
         $this->repository->updateType($clinicId, $typeId, $data);
+
+        $this->getLogger($clinicId)->info('Appointment type updated', [
+            'type_id' => $typeId,
+            'user_id' => $this->getUserId($request)
+        ]);
+
         return $this->success($response, null, 'Randevu türü güncellendi.');
     }
 
@@ -315,6 +366,12 @@ class AppointmentController extends BaseController
 
         try {
             $this->repository->deleteType($clinicId, $typeId);
+
+            $this->getLogger($clinicId)->warning('Appointment type deleted', [
+                'type_id' => $typeId,
+                'user_id' => $this->getUserId($request)
+            ]);
+
             return $this->success($response, null, 'Randevu türü silindi.');
         } catch (\Exception $e) {
             return $this->error($response, 'Bu tür silinemez, kullanımda olabilir.', 400);
