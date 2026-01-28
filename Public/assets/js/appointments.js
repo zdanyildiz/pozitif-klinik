@@ -117,6 +117,35 @@ function setupEventListeners() {
 
     document.getElementById('btnAddService').addEventListener('click', handleAddServiceToBilling);
     document.getElementById('btnUpdateDetails').addEventListener('click', handleSaveDetails);
+
+    // ==========================================
+    // SLOT GRID EVENT LISTENERS
+    // ==========================================
+
+    // Tarih değiştiğinde slotları yükle
+    document.getElementById('appDate').addEventListener('change', loadAvailableSlots);
+
+    // Tür seçildiğinde slotları yeniden yükle (süre farklı olabilir)
+    document.getElementById('typeSelect').addEventListener('change', loadAvailableSlots);
+
+    // Doktor seçildiğinde slotları yeniden yükle
+    document.getElementById('doctorSelect').addEventListener('change', loadAvailableSlots);
+
+    // Quick date buttons
+    document.querySelectorAll('.quick-date').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const offset = parseInt(btn.dataset.offset, 10);
+            const date = new Date();
+            date.setDate(date.getDate() + offset);
+            document.getElementById('appDate').value = date.toISOString().split('T')[0];
+
+            // Update active state
+            document.querySelectorAll('.quick-date').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            loadAvailableSlots();
+        });
+    });
 }
 
 // ==========================================
@@ -802,7 +831,8 @@ function escapeHtml(text) {
 function resetAppointmentForm() {
     currentAppointmentId = null;
     document.querySelector('#appointmentModal .modal-title').textContent = 'Yeni Randevu Oluştur';
-    document.getElementById('saveAppointmentBtn').textContent = 'Oluştur';
+    document.getElementById('saveAppointmentBtn').innerHTML = '<i class="bi bi-calendar-check me-1"></i> Randevu Oluştur';
+    document.getElementById('saveAppointmentBtn').disabled = true;
 
     const f = document.getElementById('appointmentForm');
     f.reset();
@@ -811,10 +841,184 @@ function resetAppointmentForm() {
         patientTomSelect.enable();
     }
     if (doctorTomSelect) doctorTomSelect.clear();
-    document.getElementById('appDate').value = document.getElementById('filterDate').value;
-    document.getElementById('appTime').value = new Date().toTimeString().substring(0, 5);
+
+    // Tarihi bugün yap
+    document.getElementById('appDate').value = document.getElementById('filterDate').value || new Date().toISOString().split('T')[0];
+    document.getElementById('appTime').value = '';
+    document.getElementById('selectedSlot').value = '';
+
+    // Slot grid'i temizle
+    resetSlotGrid();
+
+    // Quick date butonlarını resetle
+    document.querySelectorAll('.quick-date').forEach(b => b.classList.remove('active'));
+
+    // Working hours info'yu gizle
+    document.getElementById('workingHoursInfo').style.display = 'none';
 }
 
+// ==========================================
+// SLOT GRID FUNCTIONS
+// ==========================================
+
+let currentSlots = [];
+let selectedSlotData = null;
+
+async function loadAvailableSlots() {
+    const date = document.getElementById('appDate').value;
+    const typeId = document.getElementById('typeSelect').value;
+    const doctorId = document.getElementById('doctorSelect')?.value || '';
+
+    const container = document.getElementById('slotGridContainer');
+
+    if (!date) {
+        resetSlotGrid();
+        return;
+    }
+
+    // Loading state
+    container.innerHTML = `
+        <div class="slot-loading">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <div class="text-muted">Uygun saatler yükleniyor...</div>
+        </div>
+    `;
+
+    try {
+        const params = { date };
+        if (typeId) params.type_id = typeId;
+        if (doctorId) params.doctor_id = doctorId;
+
+        const res = await api.get('/api/appointments/available-slots', { params });
+        const data = res.data;
+
+        currentSlots = data.slots || [];
+
+        // Update counts
+        document.getElementById('availableSlotCount').textContent = `${data.available_count || 0} uygun`;
+        document.getElementById('occupiedSlotCount').textContent = `${data.occupied_count || 0} dolu`;
+
+        // Working hours info
+        if (data.working_hours) {
+            const dayNames = ['pazar', 'pazartesi', 'sali', 'carsamba', 'persembe', 'cuma', 'cumartesi'];
+            const dateObj = new Date(date);
+            const dayName = dayNames[dateObj.getDay()];
+            const daySchedule = data.working_hours[dayName];
+
+            if (daySchedule && daySchedule.open) {
+                document.getElementById('workingHoursText').textContent = `${daySchedule.start} - ${daySchedule.end}`;
+                document.getElementById('workingHoursInfo').style.display = 'block';
+            }
+        }
+
+        // Check if day is closed
+        if (data.is_closed) {
+            container.innerHTML = `
+                <div class="slot-closed-day">
+                    <i class="bi bi-calendar-x d-block"></i>
+                    <strong>${data.closed_message || 'Bu gün klinik kapalıdır.'}</strong>
+                    <p class="mb-0 mt-2 small">Lütfen başka bir gün seçin.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Render slot grid
+        renderSlotGrid();
+
+    } catch (e) {
+        console.error('Slot yükleme hatası:', e);
+        container.innerHTML = `
+            <div class="slot-grid-placeholder text-center text-danger py-5">
+                <i class="bi bi-exclamation-circle fs-1 mb-3 d-block"></i>
+                <p>Slotlar yüklenirken hata oluştu</p>
+            </div>
+        `;
+    }
+}
+
+function renderSlotGrid() {
+    const container = document.getElementById('slotGridContainer');
+
+    if (!currentSlots.length) {
+        container.innerHTML = `
+            <div class="slot-grid-placeholder text-center text-muted py-5">
+                <i class="bi bi-calendar-x fs-1 mb-3 d-block opacity-50"></i>
+                <p>Bu gün için uygun slot bulunamadı</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '<div class="slot-grid">';
+
+    currentSlots.forEach((slot, index) => {
+        const statusClass = slot.available ? 'available' : 'occupied';
+        const isSelected = selectedSlotData && selectedSlotData.time === slot.time;
+        const selectedClass = isSelected ? ' selected' : '';
+        const clickHandler = slot.available ? `onclick="selectSlot(${index})"` : '';
+        const tooltip = slot.occupied_by
+            ? `title="${slot.occupied_by.patient_name} - ${slot.occupied_by.type_name}"`
+            : '';
+
+        html += `
+            <div class="slot-item ${statusClass}${selectedClass}" ${clickHandler} ${tooltip}>
+                <span class="slot-time">${slot.time}</span>
+                <span class="slot-end">- ${slot.end_time}</span>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function selectSlot(index) {
+    const slot = currentSlots[index];
+    if (!slot || !slot.available) return;
+
+    selectedSlotData = slot;
+
+    // Update hidden inputs
+    document.getElementById('appTime').value = slot.time;
+    document.getElementById('selectedSlot').value = slot.datetime;
+
+    // Re-render grid to show selection
+    renderSlotGrid();
+
+    // Enable save button if all required fields are filled
+    validateAppointmentForm();
+}
+
+function resetSlotGrid() {
+    selectedSlotData = null;
+    currentSlots = [];
+
+    const container = document.getElementById('slotGridContainer');
+    container.innerHTML = `
+        <div class="slot-grid-placeholder text-center text-muted py-5">
+            <i class="bi bi-calendar3 fs-1 mb-3 d-block opacity-50"></i>
+            <p>Uygun slotları görmek için tarih seçin</p>
+        </div>
+    `;
+
+    document.getElementById('availableSlotCount').textContent = '0 uygun';
+    document.getElementById('occupiedSlotCount').textContent = '0 dolu';
+    document.getElementById('workingHoursInfo').style.display = 'none';
+}
+
+function validateAppointmentForm() {
+    const patientId = patientTomSelect ? patientTomSelect.getValue() : document.getElementById('patientSelect').value;
+    const typeId = document.getElementById('typeSelect').value;
+    const time = document.getElementById('appTime').value;
+    const date = document.getElementById('appDate').value;
+
+    const isValid = patientId && typeId && time && date;
+    document.getElementById('saveAppointmentBtn').disabled = !isValid;
+}
+
+// Expose to global scope
+window.selectSlot = selectSlot;
 window.viewDetail = viewDetail;
 window.removeBillingItem = removeBillingItem;
 window.editType = editType;

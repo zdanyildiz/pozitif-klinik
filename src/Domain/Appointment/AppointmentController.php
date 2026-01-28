@@ -56,6 +56,41 @@ class AppointmentController extends BaseController
         ]);
     }
 
+    /**
+     * Belirli bir gün için uygun randevu slotlarını döner
+     * 
+     * Query Params:
+     *   - date (zorunlu): YYYY-MM-DD formatında tarih
+     *   - doctor_id (opsiyonel): Doktor filtresi
+     *   - type_id (opsiyonel): Slot süresini randevu türüne göre belirle
+     *   - slot_duration (opsiyonel): Özel slot süresi (dakika, varsayılan: 30)
+     */
+    #[Route('GET', '/available-slots')]
+    public function getAvailableSlots(Request $request, Response $response): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $params = $request->getQueryParams();
+
+        $date = $params['date'] ?? date('Y-m-d');
+        $doctorId = !empty($params['doctor_id']) ? (int) $params['doctor_id'] : null;
+
+        // Slot süresini belirle
+        $slotDuration = 30; // Varsayılan
+
+        if (!empty($params['type_id'])) {
+            $type = $this->repository->findTypeById($clinicId, (int) $params['type_id']);
+            if ($type && $type['duration_minutes']) {
+                $slotDuration = (int) $type['duration_minutes'];
+            }
+        } elseif (!empty($params['slot_duration'])) {
+            $slotDuration = (int) $params['slot_duration'];
+        }
+
+        $slots = $this->repository->getAvailableSlots($clinicId, $date, $doctorId, $slotDuration);
+
+        return $this->success($response, $slots);
+    }
+
     #[Route('GET', '/{id:[0-9]+}')]
     public function get(Request $request, Response $response, array $args): Response
     {
@@ -79,6 +114,40 @@ class AppointmentController extends BaseController
 
         if (empty($data['patient_id']) || empty($data['type_id']) || empty($data['appointment_date'])) {
             return $this->error($response, 'Eksik bilgi: Hasta, Tür ve Tarih zorunludur.', 400);
+        }
+
+        // Randevu türünün süresini al
+        $type = $this->repository->findTypeById($clinicId, (int) $data['type_id']);
+        $durationMinutes = $type ? ((int) $type['duration_minutes'] ?: 30) : 30;
+
+        // 1. Çalışma Saatleri Kontrolü
+        $workingHoursCheck = $this->repository->validateWorkingHours(
+            $clinicId,
+            $data['appointment_date'],
+            $durationMinutes
+        );
+
+        if (!$workingHoursCheck['valid']) {
+            return $this->error($response, $workingHoursCheck['message'], 400);
+        }
+
+        // 2. Çakışma Kontrolü (Doktor bazlı)
+        $doctorId = isset($data['doctor_id']) ? (int) $data['doctor_id'] : null;
+        $conflict = $this->repository->hasConflict(
+            $clinicId,
+            $doctorId,
+            $data['appointment_date'],
+            $durationMinutes
+        );
+
+        if ($conflict) {
+            $message = sprintf(
+                'Bu doktorun %s saatleri arasında "%s" için randevusu var (%s).',
+                $conflict['existing_time_range'],
+                $conflict['patient_name'],
+                $conflict['type_name']
+            );
+            return $this->error($response, $message, 409);
         }
 
         $userId = (int) $this->getUserId($request);
@@ -111,6 +180,41 @@ class AppointmentController extends BaseController
 
         if (empty($data['type_id']) || empty($data['appointment_date'])) {
             return $this->error($response, 'Eksik bilgi: Tür ve Tarih zorunludur.', 400);
+        }
+
+        // Randevu türünün süresini al
+        $type = $this->repository->findTypeById($clinicId, (int) $data['type_id']);
+        $durationMinutes = $type ? ((int) $type['duration_minutes'] ?: 30) : 30;
+
+        // 1. Çalışma Saatleri Kontrolü
+        $workingHoursCheck = $this->repository->validateWorkingHours(
+            $clinicId,
+            $data['appointment_date'],
+            $durationMinutes
+        );
+
+        if (!$workingHoursCheck['valid']) {
+            return $this->error($response, $workingHoursCheck['message'], 400);
+        }
+
+        // 2. Çakışma Kontrolü (Doktor bazlı, mevcut randevu hariç)
+        $doctorId = isset($data['doctor_id']) ? (int) $data['doctor_id'] : null;
+        $conflict = $this->repository->hasConflict(
+            $clinicId,
+            $doctorId,
+            $data['appointment_date'],
+            $durationMinutes,
+            $appointmentId // Mevcut randevuyu hariç tut
+        );
+
+        if ($conflict) {
+            $message = sprintf(
+                'Bu doktorun %s saatleri arasında "%s" için randevusu var (%s).',
+                $conflict['existing_time_range'],
+                $conflict['patient_name'],
+                $conflict['type_name']
+            );
+            return $this->error($response, $message, 409);
         }
 
         $this->repository->updateAppointment($clinicId, $appointmentId, $data);

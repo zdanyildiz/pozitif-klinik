@@ -68,7 +68,7 @@
 
     <!-- NEW APPOINTMENT MODAL -->
     <div class="modal fade" id="appointmentModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title">Yeni Randevu Oluştur</h5>
@@ -76,39 +76,88 @@
                 </div>
                 <div class="modal-body pt-4">
                     <form id="appointmentForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Hasta Seçin</label>
+                        <!-- Step 1: Hasta ve Tür Seçimi -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Hasta Seçin <span class="text-danger">*</span></label>
                                 <select class="form-select" name="patient_id" id="patientSelect" required></select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Randevu Türü</label>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Randevu Türü <span class="text-danger">*</span></label>
                                 <select class="form-select" name="type_id" id="typeSelect" required></select>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold">Doktor</label>
                                 <select class="form-select" name="doctor_id" id="doctorSelect"></select>
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label fw-semibold">Tarih</label>
-                                <input type="date" class="form-control" name="date" id="appDate" required>
+                        </div>
+
+                        <!-- Step 2: Tarih Seçimi ve Slot Grid -->
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="slot-date-picker">
+                                    <label class="form-label fw-semibold mb-3">Tarih Seçin</label>
+                                    <input type="date" class="form-control mb-3" name="date" id="appDate" required>
+                                    
+                                    <!-- Quick Date Buttons -->
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm quick-date" data-offset="0">
+                                            <i class="bi bi-calendar-day me-1"></i> Bugün
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm quick-date" data-offset="1">
+                                            <i class="bi bi-calendar-plus me-1"></i> Yarın
+                                        </button>
+                                    </div>
+
+                                    <!-- Working Hours Info -->
+                                    <div class="mt-3 p-2 bg-light rounded small" id="workingHoursInfo" style="display: none;">
+                                        <div class="text-muted mb-1"><i class="bi bi-clock"></i> Çalışma Saatleri</div>
+                                        <div id="workingHoursText">-</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label fw-semibold">Saat</label>
-                                <input type="time" class="form-control" name="time" id="appTime" required>
+                            <div class="col-md-9">
+                                <label class="form-label fw-semibold mb-3">
+                                    Uygun Saat Seçin
+                                    <span class="badge bg-success ms-2" id="availableSlotCount">0 uygun</span>
+                                    <span class="badge bg-secondary" id="occupiedSlotCount">0 dolu</span>
+                                </label>
+                                
+                                <!-- Slot Grid Container -->
+                                <div id="slotGridContainer">
+                                    <div class="slot-grid-placeholder text-center text-muted py-5">
+                                        <i class="bi bi-calendar3 fs-1 mb-3 d-block opacity-50"></i>
+                                        <p>Uygun slotları görmek için tarih seçin</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Slot Grid Legend -->
+                                <div class="slot-legend mt-3 d-flex gap-3 small">
+                                    <span><span class="slot-legend-box available"></span> Uygun</span>
+                                    <span><span class="slot-legend-box occupied"></span> Dolu</span>
+                                    <span><span class="slot-legend-box selected"></span> Seçili</span>
+                                </div>
+
+                                <!-- Hidden time input -->
+                                <input type="hidden" name="time" id="appTime">
+                                <input type="hidden" name="selected_slot" id="selectedSlot">
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Notlar</label>
-                            <textarea class="form-control" name="notes" id="appNotes" rows="2"></textarea>
+
+                        <!-- Step 3: Notlar -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Notlar</label>
+                                <textarea class="form-control" name="notes" id="appNotes" rows="2" placeholder="Opsiyonel randevu notu..."></textarea>
+                            </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
-                    <button type="button" class="btn btn-save" id="saveAppointmentBtn">Oluştur</button>
+                    <button type="button" class="btn btn-save" id="saveAppointmentBtn" disabled>
+                        <i class="bi bi-calendar-check me-1"></i> Randevu Oluştur
+                    </button>
                 </div>
             </div>
         </div>

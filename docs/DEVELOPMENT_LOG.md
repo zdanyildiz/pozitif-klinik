@@ -456,3 +456,45 @@ LOG_LEVEL=DEBUG
 - **Etkilenen Dosyalar:** `src/Domain/Patient/PatientRepository.php` - `getSelectList()` metodu
 - **Not:** Listede görünmeyen hastalar için mevcut `/api/patients/search` endpoint'i kullanılabilir. TomSelect bileşeni arama fonksiyonunu desteklemektedir.
 
+---
+
+### 34. Randevu Çakışma ve Çalışma Saatleri Kontrolü (✅ Tamamlandı)
+**Tarih:** 2026-01-28
+- **Çakışma Kontrolü (Doktor Bazlı):**
+  - Aynı doktor için aynı zaman diliminde birden fazla randevu oluşturulması engellendi.
+  - Randevu türünün süresi (`duration_minutes`) dikkate alınarak zaman aralığı çakışması kontrol ediliyor.
+  - İptal (`cancelled`) ve gelmedi (`no_show`) statüsündeki randevular çakışma kontrolünden hariç.
+  - Çakışma durumunda detaylı hata mesajı: "Bu doktorun 14:00 - 14:30 saatleri arasında Ahmet Yılmaz için randevusu var (Muayene)."
+- **Çalışma Saatleri Kontrolü:**
+  - Klinik ayarlarındaki `working_hours` JSON alanı kullanılarak randevu saati doğrulanıyor.
+  - Kapalı günlerde randevu oluşturulamıyor (örn: "Pazar günü klinik kapalıdır.").
+  - Çalışma saatleri dışında randevu oluşturulamıyor (örn: "Randevu saati çalışma saatlerinden önce. Klinik 09:00'de açılıyor.").
+  - Çalışma saatleri tanımlı değilse kontrol atlanır.
+- **Etkilenen Dosyalar:**
+  - `src/Domain/Appointment/AppointmentRepository.php`: `hasConflict()`, `getClinicWorkingHours()`, `validateWorkingHours()` metodları eklendi.
+  - `src/Domain/Appointment/AppointmentController.php`: `create()` ve `update()` metodları güncellendi.
+- **HTTP Kodları:** Çalışma saatleri hatası `400 Bad Request`, çakışma hatası `409 Conflict` olarak dönüyor.
+
+---
+
+### 35. Slot Bazlı Randevu Seçim Arayüzü (✅ Tamamlandı)
+**Tarih:** 2026-01-28
+- **Problem:** Randevu oluştururken kullanıcı tarih ve saat ayrı ayrı seçiyor, dolu slotları göremiyordu. Kaydet dedikten sonra çakışma hatası alıyordu.
+- **Çözüm:** Görsel slot grid arayüzü oluşturuldu. Kullanıcı tarih seçtiğinde uygun ve dolu slotları görüyor.
+- **Yeni API Endpoint:** `GET /api/appointments/available-slots`
+  - Parametreler: `date`, `doctor_id`, `type_id`, `slot_duration`
+  - Dönüş: Slotlar, çalışma saatleri, uygun/dolu sayıları
+- **Frontend Özellikleri:**
+  - Slot grid: Yeşil = uygun, kırmızı = dolu, mor = seçili
+  - Hızlı tarih seçimi: Bugün/Yarın butonları
+  - Çalışma saatleri bilgisi gösterimi
+  - Kapalı gün uyarısı
+  - Slot seçilmeden kaydet butonu devre dışı
+- **Etkilenen Dosyalar:**
+  - `src/Domain/Appointment/AppointmentRepository.php`: `getAvailableSlots()`, `getDayAppointmentsForSlotCalculation()` metodları eklendi
+  - `src/Domain/Appointment/AppointmentController.php`: `getAvailableSlots()` endpoint'i eklendi
+  - `src/Views/clinic_appointments.twig`: Modal genişletildi, slot grid HTML eklendi
+  - `Public/assets/css/appointments.css`: Slot grid stilleri eklendi
+  - `Public/assets/js/appointments.js`: Slot fonksiyonları eklendi
+- **Bug Fix:** `doctor_id` boş string olarak geldiğinde SQL hatası oluşuyordu. `createAppointment()` ve `updateAppointment()` metodlarında düzeltildi.
+

@@ -468,6 +468,67 @@ Belirli tarihteki randevuları hasta adı, tür ve doktor bilgisi ile listeler.
 ### `GET /api/appointments/{id}`
 Tek bir randevuyu detaylarıyla getirir.
 
+### `GET /api/appointments/available-slots`
+Belirli bir gün için uygun ve dolu randevu slotlarını döner. Slot bazlı randevu seçimi için kullanılır.
+
+**Query Params:**
+- `date` (zorunlu): YYYY-MM-DD formatında tarih
+- `doctor_id` (opsiyonel): Doktor filtresi - sadece bu doktorun randevularını kontrol eder
+- `type_id` (opsiyonel): Slot süresini randevu türüne göre belirler
+- `slot_duration` (opsiyonel): Özel slot süresi (dakika, varsayılan: 30)
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "data": {
+    "date": "2026-01-28",
+    "doctor_id": 3,
+    "slot_duration": 30,
+    "is_closed": false,
+    "available_count": 12,
+    "occupied_count": 4,
+    "working_hours": {
+      "pazartesi": {"open": true, "start": "09:00", "end": "18:00"},
+      "sali": {"open": true, "start": "09:00", "end": "18:00"}
+    },
+    "slots": [
+      {
+        "time": "09:00",
+        "end_time": "09:30",
+        "datetime": "2026-01-28 09:00:00",
+        "available": true,
+        "occupied_by": null
+      },
+      {
+        "time": "09:30",
+        "end_time": "10:00",
+        "datetime": "2026-01-28 09:30:00",
+        "available": false,
+        "occupied_by": {
+          "patient_name": "Ahmet Yılmaz",
+          "type_name": "Muayene",
+          "time_range": "09:30 - 10:00"
+        }
+      }
+    ]
+  }
+}
+```
+
+**Kapalı Gün Yanıtı:**
+```json
+{
+  "status": true,
+  "data": {
+    "date": "2026-01-26",
+    "is_closed": true,
+    "closed_message": "Pazar günü klinik kapalıdır.",
+    "slots": []
+  }
+}
+```
+
 ### `POST /api/appointments`
 Yeni randevu oluşturur.
 
@@ -482,16 +543,35 @@ Yeni randevu oluşturur.
 }
 ```
 
-**Hata Durumu (409 Conflict):**
+**Validasyonlar:**
+1. **Çalışma Saatleri Kontrolü:** Randevu saati, klinik ayarlarındaki çalışma saatleri içinde olmalıdır. Klinik kapalı günlerde veya çalışma saatleri dışında randevu oluşturulamaz.
+2. **Çakışma Kontrolü:** Aynı doktor için aynı zaman diliminde başka bir aktif randevu varsa çakışma hatası döner. İptal edilmiş (`cancelled`) ve gelmemiş (`no_show`) randevular çakışma sayılmaz.
+
+**Hata Durumu (400 Bad Request - Çalışma Saatleri):**
 ```json
 {
   "status": false,
-  "message": "Bu zaman diliminde doktorun başka bir randevusu var"
+  "message": "Pazar günü klinik kapalıdır."
+}
+```
+veya
+```json
+{
+  "status": false,
+  "message": "Randevu saati çalışma saatlerinden önce. Klinik 09:00'de açılıyor."
+}
+```
+
+**Hata Durumu (409 Conflict - Çakışma):**
+```json
+{
+  "status": false,
+  "message": "Bu doktorun 14:00 - 14:30 saatleri arasında \"Ahmet Yılmaz\" için randevusu var (Muayene)."
 }
 ```
 
 ### `PUT /api/appointments/{id}`
-Randevu bilgilerini günceller.
+Randevu bilgilerini günceller. Aynı validasyonlar (çalışma saatleri ve çakışma kontrolü) uygulanır.
 
 ### `PUT /api/appointments/{id}/status`
 Randevu durumunu günceller (Auto-save için tasarlandı).

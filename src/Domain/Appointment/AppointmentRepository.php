@@ -30,6 +30,368 @@ class AppointmentRepository
     }
 
     // ==========================================
+    // RANDEVU VALİDASYON METODLARİ
+    // ==========================================
+
+    /**
+     * Doktor bazlı randevu çakışmasını kontrol eder
+     * 
+     * @param int $clinicId Klinik ID
+     * @param int|null $doctorId Doktor ID (null ise kontrol atlanır)
+     * @param string $appointmentDate Randevu tarihi (YYYY-MM-DD HH:mm:ss)
+     * @param int $durationMinutes Randevu süresi (dakika)
+     * @param int|null $excludeAppointmentId Güncelleme sırasında mevcut randevuyu hariç tut
+     * @return array|null Çakışan randevu bilgisi veya null
+     */
+    public function hasConflict(
+        int $clinicId,
+        ?int $doctorId,
+        string $appointmentDate,
+        int $durationMinutes = 30,
+        ?int $excludeAppointmentId = null
+    ): ?array {
+        // Doktor seçilmediyse çakışma kontrolü yapılmaz
+        if (!$doctorId) {
+            return null;
+        }
+
+        $startTime = new \DateTime($appointmentDate);
+        $endTime = (clone $startTime)->modify("+{$durationMinutes} minutes");
+
+        // Aktif statüler (iptal ve gelmedi olanlar hariç)
+        $activeStatuses = ['pending', 'confirmed', 'waiting', 'in_test'];
+        $statusPlaceholders = implode(',', array_fill(0, count($activeStatuses), '?'));
+
+        $sql = "SELECT 
+                    a.id,
+                    a.appointment_date,
+                    t.duration_minutes,
+                    t.name as type_name,
+                    p.name as patient_name_encrypted
+                FROM cln_appointments a
+                JOIN cln_appointment_types t ON a.type_id = t.id
+                JOIN ptn_cards p ON a.patient_id = p.id
+                WHERE a.clinic_id = ?
+                AND a.doctor_id = ?
+                AND a.status IN ($statusPlaceholders)";
+
+        $params = [$clinicId, $doctorId, ...$activeStatuses];
+
+        // Güncelleme sırasında mevcut randevuyu hariç tut
+        if ($excludeAppointmentId) {
+            $sql .= " AND a.id != ?";
+            $params[] = $excludeAppointmentId;
+        }
+
+        $appointments = $this->db->fetchAll($sql, $params);
+
+        foreach ($appointments as $existing) {
+            $existingStart = new \DateTime($existing['appointment_date']);
+            $existingDuration = (int) ($existing['duration_minutes'] ?? 30);
+            $existingEnd = (clone $existingStart)->modify("+{$existingDuration} minutes");
+
+            // Çakışma kontrolü: Yeni randevunun başlangıç veya bitişi mevcut randevu aralığında mı?
+            // veya mevcut randevunun başlangıç veya bitişi yeni randevu aralığında mı?
+            $hasOverlap = (
+                ($startTime >= $existingStart && $startTime < $existingEnd) || // Yeni başlangıç mevcut aralıkta
+                ($endTime > $existingStart && $endTime <= $existingEnd) ||     // Yeni bitiş mevcut aralıkta
+                ($startTime <= $existingStart && $endTime >= $existingEnd)      // Yeni randevu mevcut olanı kapsıyor
+            );
+
+            if ($hasOverlap) {
+                // Hasta adını çöz
+                $patientName = 'Hasta';
+                if (!empty($existing['patient_name_encrypted'])) {
+                    $decrypted = $this->crypto->decrypt($existing['patient_name_encrypted']);
+                    $patientName = $decrypted ?? 'Hasta';
+                }
+
+                return [
+                    'appointment_id' => $existing['id'],
+                    'appointment_date' => $existing['appointment_date'],
+                    'type_name' => $existing['type_name'],
+                    'patient_name' => $patientName,
+                    'existing_time_range' => $existingStart->format('H:i') . ' - ' . $existingEnd->format('H:i')
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Klinik çalışma saatlerini getirir
+     */
+    public function getClinicWorkingHours(int $clinicId): ?array
+    {
+        $sql = "SELECT working_hours FROM sys_tenants WHERE id = ?";
+        $result = $this->db->fetch($sql, [$clinicId]);
+
+        if (!$result || empty($result['working_hours'])) {
+            return null;
+        }
+
+        return json_decode($result['working_hours'], true);
+    }
+
+    /**
+     * Randevu saatinin çalışma saatleri içinde olup olmadığını kontrol eder
+     * 
+     * @param int $clinicId Klinik ID
+     * @param string $appointmentDate Randevu tarihi (YYYY-MM-DD HH:mm:ss)
+     * @param int $durationMinutes Randevu süresi (dakika)
+     * @return array ['valid' => bool, 'message' => string, 'working_hours' => array|null]
+     */
+    public function validateWorkingHours(int $clinicId, string $appointmentDate, int $durationMinutes = 30): array
+    {
+        $workingHours = $this->getClinicWorkingHours($clinicId);
+
+        // Çalışma saatleri tanımlanmamışsa, kontrol atlanır (kabul et)
+        if (!$workingHours) {
+            return ['valid' => true, 'message' => '', 'working_hours' => null];
+        }
+
+        $dateTime = new \DateTime($appointmentDate);
+        $endTime = (clone $dateTime)->modify("+{$durationMinutes} minutes");
+
+        // Türkçe gün adları (küçük harf)
+        $dayNames = [
+            0 => 'pazar',
+            1 => 'pazartesi',
+            2 => 'sali',
+            3 => 'carsamba',
+            4 => 'persembe',
+            5 => 'cuma',
+            6 => 'cumartesi'
+        ];
+
+        $dayOfWeek = (int) $dateTime->format('w');
+        $dayName = $dayNames[$dayOfWeek];
+
+        // Gün için çalışma saati tanımlı mı?
+        if (!isset($workingHours[$dayName])) {
+            return [
+                'valid' => false,
+                'message' => 'Bu gün için çalışma saati tanımlanmamış.',
+                'working_hours' => $workingHours
+            ];
+        }
+
+        $daySchedule = $workingHours[$dayName];
+
+        // Gün kapalı mı?
+        if (empty($daySchedule['open']) || $daySchedule['open'] === false) {
+            $dayNameTr = ucfirst($dayName);
+            return [
+                'valid' => false,
+                'message' => "{$dayNameTr} günü klinik kapalıdır.",
+                'working_hours' => $workingHours
+            ];
+        }
+
+        // Çalışma saatleri kontrolü
+        $workStart = $daySchedule['start'] ?? '09:00';
+        $workEnd = $daySchedule['end'] ?? '18:00';
+
+        $appointmentTime = $dateTime->format('H:i');
+        $appointmentEndTime = $endTime->format('H:i');
+
+        // Randevu başlangıcı çalışma saatinden önce mi?
+        if ($appointmentTime < $workStart) {
+            return [
+                'valid' => false,
+                'message' => "Randevu saati çalışma saatlerinden önce. Klinik {$workStart}'de açılıyor.",
+                'working_hours' => $workingHours
+            ];
+        }
+
+        // Randevu bitişi çalışma saatinden sonra mı?
+        if ($appointmentEndTime > $workEnd) {
+            return [
+                'valid' => false,
+                'message' => "Randevu bitişi çalışma saatlerini aşıyor. Klinik {$workEnd}'de kapanıyor.",
+                'working_hours' => $workingHours
+            ];
+        }
+
+        return ['valid' => true, 'message' => '', 'working_hours' => $workingHours];
+    }
+
+    /**
+     * Belirli bir gün için uygun randevu slotlarını hesaplar
+     * 
+     * @param int $clinicId Klinik ID
+     * @param string $date Tarih (YYYY-MM-DD formatında)
+     * @param int|null $doctorId Doktor ID (null ise tüm klinik bazlı)
+     * @param int $slotDurationMinutes Slot süresi (varsayılan: 30 dakika)
+     * @return array ['slots' => array, 'working_hours' => array, 'is_closed' => bool]
+     */
+    public function getAvailableSlots(
+        int $clinicId,
+        string $date,
+        ?int $doctorId = null,
+        int $slotDurationMinutes = 30
+    ): array {
+        $result = [
+            'date' => $date,
+            'doctor_id' => $doctorId,
+            'slot_duration' => $slotDurationMinutes,
+            'is_closed' => false,
+            'working_hours' => null,
+            'slots' => []
+        ];
+
+        // 1. Çalışma saatlerini al
+        $workingHours = $this->getClinicWorkingHours($clinicId);
+
+        if (!$workingHours) {
+            // Çalışma saatleri tanımlı değilse varsayılan kullan
+            $workingHours = [
+                'pazartesi' => ['open' => true, 'start' => '09:00', 'end' => '18:00'],
+                'sali' => ['open' => true, 'start' => '09:00', 'end' => '18:00'],
+                'carsamba' => ['open' => true, 'start' => '09:00', 'end' => '18:00'],
+                'persembe' => ['open' => true, 'start' => '09:00', 'end' => '18:00'],
+                'cuma' => ['open' => true, 'start' => '09:00', 'end' => '18:00'],
+                'cumartesi' => ['open' => false, 'start' => '09:00', 'end' => '14:00'],
+                'pazar' => ['open' => false, 'start' => '09:00', 'end' => '18:00']
+            ];
+        }
+
+        $result['working_hours'] = $workingHours;
+
+        // 2. Hangi gün olduğunu bul
+        $dateTime = new \DateTime($date);
+        $dayNames = [
+            0 => 'pazar',
+            1 => 'pazartesi',
+            2 => 'sali',
+            3 => 'carsamba',
+            4 => 'persembe',
+            5 => 'cuma',
+            6 => 'cumartesi'
+        ];
+        $dayOfWeek = (int) $dateTime->format('w');
+        $dayName = $dayNames[$dayOfWeek];
+
+        // 3. Gün kapalı mı kontrol et
+        if (!isset($workingHours[$dayName]) || empty($workingHours[$dayName]['open'])) {
+            $result['is_closed'] = true;
+            $result['closed_message'] = ucfirst($dayName) . ' günü klinik kapalıdır.';
+            return $result;
+        }
+
+        $daySchedule = $workingHours[$dayName];
+        $workStart = $daySchedule['start'] ?? '09:00';
+        $workEnd = $daySchedule['end'] ?? '18:00';
+
+        // 4. O gün için mevcut randevuları al (sadece aktif olanlar)
+        $existingAppointments = $this->getDayAppointmentsForSlotCalculation($clinicId, $date, $doctorId);
+
+        // 5. Slotları oluştur
+        $slots = [];
+        $currentSlot = new \DateTime("{$date} {$workStart}");
+        $endTime = new \DateTime("{$date} {$workEnd}");
+
+        while ($currentSlot < $endTime) {
+            $slotStart = clone $currentSlot;
+            $slotEnd = (clone $slotStart)->modify("+{$slotDurationMinutes} minutes");
+
+            // Slot bitiş saati çalışma saatini aşıyorsa durma
+            if ($slotEnd > $endTime) {
+                break;
+            }
+
+            $slotStartStr = $slotStart->format('H:i');
+            $slotEndStr = $slotEnd->format('H:i');
+
+            // Bu slot dolu mu kontrol et
+            $isOccupied = false;
+            $occupiedBy = null;
+
+            foreach ($existingAppointments as $appointment) {
+                $appStart = new \DateTime($appointment['appointment_date']);
+                $appDuration = (int) ($appointment['duration_minutes'] ?? 30);
+                $appEnd = (clone $appStart)->modify("+{$appDuration} minutes");
+
+                // Çakışma kontrolü
+                $hasOverlap = (
+                    ($slotStart >= $appStart && $slotStart < $appEnd) ||
+                    ($slotEnd > $appStart && $slotEnd <= $appEnd) ||
+                    ($slotStart <= $appStart && $slotEnd >= $appEnd)
+                );
+
+                if ($hasOverlap) {
+                    $isOccupied = true;
+                    // Hasta adını çöz
+                    $patientName = 'Dolu';
+                    if (!empty($appointment['patient_name_encrypted'])) {
+                        $decrypted = $this->crypto->decrypt($appointment['patient_name_encrypted']);
+                        $patientName = $decrypted ?? 'Dolu';
+                    }
+                    $occupiedBy = [
+                        'patient_name' => $patientName,
+                        'type_name' => $appointment['type_name'] ?? 'Randevu',
+                        'time_range' => $appStart->format('H:i') . ' - ' . $appEnd->format('H:i')
+                    ];
+                    break;
+                }
+            }
+
+            $slots[] = [
+                'time' => $slotStartStr,
+                'end_time' => $slotEndStr,
+                'datetime' => "{$date} {$slotStartStr}:00",
+                'available' => !$isOccupied,
+                'occupied_by' => $occupiedBy
+            ];
+
+            // Sonraki slot'a geç
+            $currentSlot->modify("+{$slotDurationMinutes} minutes");
+        }
+
+        $result['slots'] = $slots;
+        $result['available_count'] = count(array_filter($slots, fn($s) => $s['available']));
+        $result['occupied_count'] = count(array_filter($slots, fn($s) => !$s['available']));
+
+        return $result;
+    }
+
+    /**
+     * Slot hesaplaması için gün randevularını getirir
+     */
+    private function getDayAppointmentsForSlotCalculation(int $clinicId, string $date, ?int $doctorId = null): array
+    {
+        $activeStatuses = ['pending', 'confirmed', 'waiting', 'in_test'];
+        $statusPlaceholders = implode(',', array_fill(0, count($activeStatuses), '?'));
+
+        $sql = "SELECT 
+                    a.id,
+                    a.appointment_date,
+                    a.doctor_id,
+                    t.duration_minutes,
+                    t.name as type_name,
+                    p.name as patient_name_encrypted
+                FROM cln_appointments a
+                JOIN cln_appointment_types t ON a.type_id = t.id
+                JOIN ptn_cards p ON a.patient_id = p.id
+                WHERE a.clinic_id = ?
+                AND DATE(a.appointment_date) = ?
+                AND a.status IN ($statusPlaceholders)";
+
+        $params = [$clinicId, $date, ...$activeStatuses];
+
+        // Doktor filtresi
+        if ($doctorId) {
+            $sql .= " AND a.doctor_id = ?";
+            $params[] = $doctorId;
+        }
+
+        $sql .= " ORDER BY a.appointment_date ASC";
+
+        return $this->db->fetchAll($sql, $params);
+    }
+
+    // ==========================================
     // RANDEVU TÜRLERİ
     // ==========================================
 
@@ -105,6 +467,9 @@ class AppointmentRepository
 
     public function createAppointment(int $clinicId, array $data, ?int $userId = null): int
     {
+        // Boş string değerleri NULL'a çevir
+        $doctorId = !empty($data['doctor_id']) ? (int) $data['doctor_id'] : null;
+
         // 1. Randevuyu oluştur
         $sql = "INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, notes) 
                 VALUES (?, ?, ?, ?, ?, 'pending', ?)";
@@ -112,7 +477,7 @@ class AppointmentRepository
         $this->db->query($sql, [
             $clinicId,
             $data['patient_id'],
-            $data['doctor_id'] ?? null,
+            $doctorId,
             $data['type_id'],
             $data['appointment_date'],
             $data['notes'] ?? null
@@ -214,6 +579,9 @@ class AppointmentRepository
 
     public function updateAppointment(int $clinicId, int $appointmentId, array $data): bool
     {
+        // Boş string değerleri NULL'a çevir
+        $doctorId = !empty($data['doctor_id']) ? (int) $data['doctor_id'] : null;
+
         $sql = "UPDATE cln_appointments SET 
                     doctor_id = ?,
                     type_id = ?,
@@ -222,7 +590,7 @@ class AppointmentRepository
                 WHERE clinic_id = ? AND id = ?";
 
         $this->db->query($sql, [
-            $data['doctor_id'] ?? null,
+            $doctorId,
             $data['type_id'],
             $data['appointment_date'],
             $data['notes'] ?? null,

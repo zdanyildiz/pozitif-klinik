@@ -146,3 +146,148 @@
 .w-50p {
     width: 50px;
 }
+
+/* ==========================================
+   SLOT GRID STYLES
+   ========================================== */
+
+.slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 0.5rem;
+    max-height: 350px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+}
+
+.slot-item {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.slot-item.available {
+    background: white;
+    color: #2e7d32;
+    border-color: #a5d6a7;
+}
+
+.slot-item.available:hover {
+    background: #e8f5e9;
+    border-color: #4caf50;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+}
+
+.slot-item.occupied {
+    background: #ffebee;
+    color: #c62828;
+    border-color: #ef9a9a;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.slot-item.occupied::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: #c62828;
+    opacity: 0.4;
+}
+
+.slot-item.selected {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.slot-item .slot-time {
+    display: block;
+    font-size: 0.9rem;
+}
+
+.slot-item .slot-end {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+/* Slot Legend */
+.slot-legend-box {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.slot-legend-box.available {
+    background: white;
+    border: 2px solid #a5d6a7;
+}
+
+.slot-legend-box.occupied {
+    background: #ffebee;
+    border: 2px solid #ef9a9a;
+}
+
+.slot-legend-box.selected {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid #667eea;
+}
+
+/* Slot Grid Placeholder */
+.slot-grid-placeholder {
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    border: 2px dashed #dee2e6;
+}
+
+/* Closed Day Alert */
+.slot-closed-day {
+    background: #fff3e0;
+    border-radius: 0.75rem;
+    padding: 2rem;
+    text-align: center;
+    color: #e65100;
+}
+
+.slot-closed-day i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Loading State */
+.slot-loading {
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    padding: 2rem;
+    text-align: center;
+}
+
+.slot-loading .spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* Quick Date Buttons */
+.quick-date.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
