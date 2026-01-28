@@ -339,6 +339,45 @@ Belirli bir ile ait ilçeleri listeler.
 **Query Params:**
 - `province_id` (int): İlin plakası veya ID'si.
 
+### `GET /api/general/diagnoses`
+ICD-10 tanılarını listeler veya arar. Klinik bazlı favorileri önceliklendirir.
+
+**Gerekli Yetki:** Klinik Kullanıcısı
+**Query Params:**
+- `q` (string): Tanı adı veya kodu (opsiyonel). Boş bırakılırsa favoriler ve sık kullanılanlar döner.
+
+---
+
+## Domain API (Muayene İşlemleri)
+
+Doktorlar için muayene notlarının yönetimi.
+
+### `GET /api/examinations/patient/{patientId}`
+Bir hastanın tüm muayene geçmişini döner.
+
+### `GET /api/examinations/appointment/{appointmentId}`
+Belirli bir randevuya ait muayene kaydını (varsa) döner.
+
+### `POST /api/examinations`
+Yeni muayene kaydı oluşturur.
+
+**Payload:**
+```json
+{
+  "appointment_id": 123,
+  "patient_id": 456,
+  "complaint": "Baş ağrısı",
+  "anamnez": "Son 3 gündür şiddetli...",
+  "bulgular": "Normal bulgular...",
+  "diagnosis": "G43 - Migren",
+  "treatment": "Dinlenme, Ağrı kesici...",
+  "result_note": "Kontrole gelecek"
+}
+```
+
+### `PUT /api/examinations/{id}`
+Mevcut muayene kaydını günceller.
+
 ---
 
 ## Domain API (Hasta Yönetimi)

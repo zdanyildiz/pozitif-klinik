@@ -498,3 +498,15 @@ LOG_LEVEL=DEBUG
   - `Public/assets/js/appointments.js`: Slot fonksiyonları eklendi
 - **Bug Fix:** `doctor_id` boş string olarak geldiğinde SQL hatası oluşuyordu. `createAppointment()` ve `updateAppointment()` metodlarında düzeltildi.
 
+---
+
+### 36. Tıbbi Muayene Modülü ve Tanı Yönetimi (✅ Tamamlandı)
+**Tarih:** 2026-01-28
+- **Muayene Ekranı (`clinic_examination.twig`):** Doktorlar için kapsamlı, modern ve iki sütunlu muayene giriş ekranı.
+- **ICD-10 Entegrasyonu:** `sys_icd10` tablosu ile standart tanı kütüphanesi altyapısı kuruldu.
+- **Branş Duyarlı Tanı Sistemi:** `cln_diagnosis_favorites` tablosu eklendi. Klinikler kendi uzmanlık alanlarına göre sık kullanılan tanıları belirleyebiliyor.
+- **Backend:** `ExaminationRepository` ve `ExaminationController` (Tenant-Aware) oluşturuldu.
+- **Frontend Veri Entegrasyonu:** `examination.js` ile hasta bilgileri, randevu detayları ve geçmiş muayene kayıtları anlık olarak yükleniyor.
+- **Randevu Entegrasyonu:** Randevu listesine doğrudan muayene ekranına yönlendiren kısayol eklendi.
+- **Güvenlik & Kurallar:** `gemini.md` dosyası oluşturularak ajanın izinsiz DB değişikliği yapması yasaklandı ve uyulması gereken mimari standartlar dökümante edildi.
+- **SQL Güncellemeleri:** Tüm yeni tablo ve kolon yapıları master SQL dosyalarına (`01_system.sql`, `03_clinic.sql`) işlendi.

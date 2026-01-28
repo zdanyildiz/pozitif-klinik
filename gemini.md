@@ -16,6 +16,10 @@ Bir YZ ajanı projeye başladığında sırasıyla şunları incelemelidir:
 
 1. **`.env` Dosyası**: Veritabanı bağlantısı, API anahtarları ve global çalışma ortamı.
 2. **`docs/` Dizini**: 
+   - `Mimari_Kurallar.md`: (KRİTİK) Yazılım standartları ve kesin yasaklar.
+   - `ARCHITECTURE.md`: Sistemin genel işleyişi ve katmanları.
+   - `API.md`: Mevcut endpointler ve yanıt formatları.
+   - `DEVELOPMENT_LOG.md`: Projenin geçmişi ve bugüne kadar yapılanlar.
    - `EKSIK_TABLOLAR.md`: Mevcut olmayan ama planlanan yapılar.
    - `EKSIK_SAYFALAR_VE_MODULLER.md`: Projenin yol haritası.
    - `VERI_ANALIZ_RAPORU.md`: Veri yapısı ve ilişkileri.
