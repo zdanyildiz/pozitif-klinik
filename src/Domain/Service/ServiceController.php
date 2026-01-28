@@ -30,12 +30,17 @@ class ServiceController extends BaseController
     public function list(Request $request, Response $response): Response
     {
         $clinicId = (int) $request->getAttribute('clinic_id');
-        $queryParams = $request->getQueryParams();
-        $includeInactive = isset($queryParams['includeInactive']) && $queryParams['includeInactive'] === '1';
+        $params = $request->getQueryParams();
 
-        $services = $this->repository->findAll($clinicId, $includeInactive);
+        $page = isset($params['page']) ? (int) $params['page'] : 1;
+        $limit = isset($params['limit']) ? (int) $params['limit'] : 20;
+        $search = $params['q'] ?? null;
+        $category = $params['category'] ?? null;
+        $includeInactive = isset($params['includeInactive']) && $params['includeInactive'] === '1';
 
-        return $this->success($response, $services);
+        $result = $this->repository->findAllPaginated($clinicId, $page, $limit, $search, $category, $includeInactive);
+
+        return $this->success($response, $result);
     }
 
     /**

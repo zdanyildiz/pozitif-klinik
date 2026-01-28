@@ -124,11 +124,26 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="mb-0">Uygulanan Hizmetler & İşlemler</h6>
-                    <button class="btn btn-sm btn-outline-primary" id="btnAddServiceDirect">
-                        <i class="bi bi-plus-lg me-1"></i> Hizmet Ekle
-                    </button>
+                <div class="d-flex flex-column gap-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Uygulanan Hizmetler & İşlemler</h6>
+                        <button class="btn btn-sm btn-outline-primary" id="btnToggleServicePanel">
+                            <i class="bi bi-plus-lg me-1"></i> Hizmet Ekle
+                        </button>
+                    </div>
+
+                    <!-- Inline Service Selection Panel -->
+                    <div id="serviceSelectionPanel" class="bg-light p-3 rounded" style="display: none;">
+                        <label class="form-label small fw-bold text-muted">Hizmet Seçiniz:</label>
+                        <div class="d-flex gap-2">
+                            <div class="flex-grow-1">
+                                <select id="inlineServiceSelect" class="form-select" placeholder="Hizmet adı veya kodu ile arayın..."></select>
+                            </div>
+                            <button class="btn btn-success" id="btnConfirmAddService">
+                                <i class="bi bi-check-lg"></i> Ekle
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="table-responsive">

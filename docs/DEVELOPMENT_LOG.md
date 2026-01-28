@@ -510,3 +510,23 @@ LOG_LEVEL=DEBUG
 - **Randevu Entegrasyonu:** Randevu listesine doğrudan muayene ekranına yönlendiren kısayol eklendi.
 - **Güvenlik & Kurallar:** `gemini.md` dosyası oluşturularak ajanın izinsiz DB değişikliği yapması yasaklandı ve uyulması gereken mimari standartlar dökümante edildi.
 - **SQL Güncellemeleri:** Tüm yeni tablo ve kolon yapıları master SQL dosyalarına (`01_system.sql`, `03_clinic.sql`) işlendi.
+
+---
+
+### 37. Hizmet Listesi Sayfalama ve Performans İyileştirmesi (✅ Tamamlandı)
+**Tarih:** 2026-01-28
+- **Service Pagination:** `ServiceRepository::findAllPaginated` metodu eklenerek binlerce hizmet kaydının tek seferde çekilmesinin önüne geçildi.
+- **Backend API:** `/api/services` endpoint'i `page`, `limit`, `q` ve `category` parametrelerini destekleyecek şekilde güncellendi.
+- **Frontend UI:** `services.js` ve `clinic_services.twig` güncellenerek tablo altına sayfalama (pagination) kontrolleri eklendi. Client-side filtreleme kaldırılarak Server-side filtrelemeye geçildi.
+- **Hata Giderme:**
+  - `ServiceController` içerisinde tekrarlanan `#[Route]` attribute hatası ("Attribute must not be repeated") giderildi.
+  - `services.js` içerisindeki eksik fonksiyon tanımları (`loadStats` vb.) tamamlandı.
+  - Backend yanıt formatı (`items` array) ile Frontend beklenen formatı arasındaki uyumsuzluk giderildi.
+
+### 38. Muayene Ekranı Hizmet Arama Optimizasyonu (✅ Tamamlandı)
+**Tarih:** 2026-01-28
+- **Problem:** Muayene ekranında "Hizmet Ekle" butonuna basıldığında tüm hizmet listesi yüklendiği için tarayıcı donuyordu.
+- **Çözüm (Remote Search):** Hizmet seçimi (`TomSelect`) "Remote Search" moduna geçirildi.
+- **Inline Panel:** Modal içinde modal açılması (SweetAlert + Bootstrap) sonucu oluşan `z-index` ve odaklanma sorunları, inline (satır içi) açılır panel kullanılarak çözüldü.
+- **Performans:** Kullanıcı arama kutusuna en az 2 karakter yazdığında sunucuya istek atılarak (`/api/services/search`) sadece eşleşen sonuçlar getiriliyor.
+

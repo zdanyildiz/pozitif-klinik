@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
 let allServices = [];
 let categories = [];
 let serviceModal, deleteModal;
+let currentPage = 1;
+const limit = 20;
+let totalItems = 0;
+let totalPages = 1;
 
 /**
  * Sayfa başlangıç işlemleri
@@ -48,19 +52,45 @@ function setupEventListeners() {
     let searchTimeout;
     document.getElementById('searchInput').addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => filterServices(), 300);
+        searchTimeout = setTimeout(() => {
+            currentPage = 1; // Reset to page 1 on search
+            loadServices();
+        }, 500);
     });
 
     // Category filter
-    document.getElementById('categoryFilter').addEventListener('change', filterServices);
+    document.getElementById('categoryFilter').addEventListener('change', () => {
+        currentPage = 1; // Reset to page 1 on filter
+        loadServices();
+    });
 
     // Show inactive checkbox
-    document.getElementById('showInactive').addEventListener('change', loadServices);
+    document.getElementById('showInactive').addEventListener('change', () => {
+        currentPage = 1;
+        loadServices();
+    });
 
     // Form submit prevention
     document.getElementById('serviceForm').addEventListener('submit', (e) => {
         e.preventDefault();
         saveService();
+    });
+
+    // Pagination buttons
+    document.getElementById('btnPrevPage').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentPage > 1) {
+            currentPage--;
+            loadServices();
+        }
+    });
+
+    document.getElementById('btnNextPage').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadServices();
+        }
     });
 }
 
@@ -70,7 +100,6 @@ function setupEventListeners() {
 async function loadStats() {
     try {
         const response = await api.get('/api/services/stats');
-        // api interceptor zaten response.data döndürüyor, yani response = {status, message, data}
         if (response.status) {
             const stats = response.data;
             document.getElementById('totalServices').textContent = stats.total || 0;
@@ -79,61 +108,6 @@ async function loadStats() {
         }
     } catch (error) {
         console.error('Stats yüklenirken hata:', error);
-    }
-}
-
-/**
- * Hizmetleri yükle
- */
-async function loadServices() {
-    const tableBody = document.getElementById('servicesTableBody');
-    const emptyState = document.getElementById('emptyState');
-    const tableCard = document.querySelector('.table-card');
-    const showInactive = document.getElementById('showInactive').checked;
-
-    tableBody.innerHTML = `
-        <tr id="loadingRow">
-            <td colspan="7">
-                <div class="loading-state">
-                    <div class="loading-spinner"></div>
-                    <p>Hizmetler yükleniyor...</p>
-                </div>
-            </td>
-        </tr>
-    `;
-
-    try {
-        const url = showInactive
-            ? '/api/services?includeInactive=1'
-            : '/api/services';
-
-        const response = await api.get(url);
-
-        if (response.status) {
-            allServices = response.data || [];
-
-            if (allServices.length === 0) {
-                tableCard.classList.add('d-none');
-                emptyState.classList.remove('d-none');
-            } else {
-                tableCard.classList.remove('d-none');
-                emptyState.classList.add('d-none');
-                renderServices(allServices);
-            }
-
-            // Refresh stats
-            loadStats();
-        }
-    } catch (error) {
-        console.error('Hizmetler yüklenirken hata:', error);
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center text-danger py-4">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    Hizmetler yüklenirken bir hata oluştu.
-                </td>
-            </tr>
-        `;
     }
 }
 
@@ -158,10 +132,12 @@ async function loadCategories() {
 function updateCategoryFilters() {
     // Filter dropdown
     const filterSelect = document.getElementById('categoryFilter');
+    const currentVal = filterSelect.value;
     filterSelect.innerHTML = '<option value="">Tüm Kategoriler</option>';
     categories.forEach(cat => {
         filterSelect.innerHTML += `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`;
     });
+    filterSelect.value = currentVal;
 
     // Datalist for form
     const datalist = document.getElementById('categoryList');
@@ -231,30 +207,133 @@ function renderServices(services) {
 }
 
 /**
- * Hizmetleri filtrele
+ * Hizmetleri yükle
  */
-function filterServices() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+async function loadServices() {
+    const tableBody = document.getElementById('servicesTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const tableCard = document.querySelector('.table-card');
+
+    // Filtreleri al
+    const showInactive = document.getElementById('showInactive').checked;
+    const searchTerm = document.getElementById('searchInput').value.trim();
     const categoryFilter = document.getElementById('categoryFilter').value;
 
-    let filtered = allServices;
+    tableBody.innerHTML = `
+        <tr id="loadingRow">
+            <td colspan="7">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Hizmetler yükleniyor...</p>
+                </div>
+            </td>
+        </tr>
+    `;
 
-    // Search filter
-    if (searchTerm) {
-        filtered = filtered.filter(service =>
-            (service.name && service.name.toLowerCase().includes(searchTerm)) ||
-            (service.code && service.code.toLowerCase().includes(searchTerm)) ||
-            (service.description && service.description.toLowerCase().includes(searchTerm))
-        );
+    try {
+        const queryParams = new URLSearchParams({
+            page: currentPage,
+            limit: limit,
+            includeInactive: showInactive ? '1' : '0'
+        });
+
+        if (searchTerm) queryParams.append('q', searchTerm);
+        if (categoryFilter) queryParams.append('category', categoryFilter);
+
+        const response = await api.get(`/api/services?${queryParams.toString()}`);
+
+        if (response.status) {
+            const result = response.data;
+
+            // Backend'den gelen yapı: 
+            // result = { items: [], total: 100, page: 1, limit: 20, pages: 5 }
+            // VEYA eski yapı (array) dönerse onu handle et
+            if (Array.isArray(result)) {
+                // Backward compatibility (if backend not updated yet)
+                allServices = result;
+                totalItems = result.length;
+                totalPages = 1;
+            } else {
+                // Burada result.items'ın undefined olma ihtimaline karşı kontrol ekliyoruz
+                // Backend'den gelen veri yapısı { items: [...], total: X, ... } şeklinde olmalı
+                // Ama bazen bir sebepten data direk items array'i olmadan gelebiliyorsa burası patlamasın.
+
+                // Eğer result bir obje ise ve items property'si varsa:
+                if (result && result.items) {
+                    allServices = result.items;
+                } else if (Array.isArray(result.data)) {
+                    // Bazen response.data.data şeklinde gelebilir (Laravel pagination benzeri)
+                    allServices = result.data;
+                } else {
+                    allServices = [];
+                }
+
+                totalItems = result.total || 0;
+                totalPages = result.pages || 1;
+                currentPage = result.page || 1;
+            }
+
+            if (allServices.length === 0 && currentPage === 1 && !searchTerm && !categoryFilter) {
+                // Hiç kayıt yok
+                tableCard.classList.add('d-none');
+                emptyState.classList.remove('d-none');
+            } else {
+                tableCard.classList.remove('d-none');
+                emptyState.classList.add('d-none');
+                renderServices(allServices);
+                renderPagination();
+            }
+
+            // Refresh stats only on first load or meaningful changes
+            // loadStats(); 
+        }
+    } catch (error) {
+        console.error('Hizmetler yüklenirken hata:', error);
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Hizmetler yüklenirken bir hata oluştu.
+                </td>
+            </tr>
+        `;
     }
-
-    // Category filter
-    if (categoryFilter) {
-        filtered = filtered.filter(service => service.category === categoryFilter);
-    }
-
-    renderServices(filtered);
 }
+
+function renderPagination() {
+    const prevBtn = document.getElementById('btnPrevPage');
+    const nextBtn = document.getElementById('btnNextPage');
+    const pageDisplay = document.getElementById('currentPageDisplay');
+    const infoDisplay = document.getElementById('paginationInfo');
+
+    pageDisplay.textContent = currentPage;
+
+    // Info text
+    const start = (currentPage - 1) * limit + 1;
+    const end = Math.min(start + limit - 1, totalItems);
+
+    if (totalItems > 0) {
+        infoDisplay.textContent = `Toplam ${totalItems} hizmetten ${start}-${end} arası gösteriliyor`;
+    } else {
+        infoDisplay.textContent = 'Kayıt bulunamadı';
+    }
+
+    // Button states
+    if (currentPage <= 1) {
+        prevBtn.classList.add('disabled');
+    } else {
+        prevBtn.classList.remove('disabled');
+    }
+
+    if (currentPage >= totalPages) {
+        nextBtn.classList.add('disabled');
+    } else {
+        nextBtn.classList.remove('disabled');
+    }
+}
+
+// filterServices fonksiyonunu kaldırdık çünkü artık loadServices içinde server-side yapıyoruz.
+// filterServices referanslarını kaldırdık.
 
 /**
  * Hizmet modal'ını aç (yeni veya düzenleme)

@@ -18,6 +18,74 @@ class ServiceRepository
     /**
      * Tüm aktif hizmetleri listeler
      */
+    /**
+     * Tüm aktif hizmetleri listeler (Pagination desteği ile)
+     */
+    public function findAllPaginated(int $clinicId, int $page = 1, int $limit = 20, ?string $search = null, ?string $category = null, bool $includeInactive = false): array
+    {
+        $offset = ($page - 1) * $limit;
+        $params = [$clinicId];
+
+        $sql = "SELECT * FROM cln_services WHERE clinic_id = ?";
+
+        if (!$includeInactive) {
+            $sql .= " AND is_active = 1";
+        }
+
+        if ($search) {
+            $sql .= " AND (name LIKE ? OR code LIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        if ($category) {
+            $sql .= " AND category = ?";
+            $params[] = $category;
+        }
+
+        $sql .= " ORDER BY is_active DESC, name ASC LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+
+        $items = $this->db->fetchAll($sql, $params);
+        $total = $this->countAll($clinicId, $search, $category, $includeInactive);
+
+        return [
+            'items' => $items,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'pages' => ceil($total / $limit)
+        ];
+    }
+
+    public function countAll(int $clinicId, ?string $search = null, ?string $category = null, bool $includeInactive = false): int
+    {
+        $sql = "SELECT COUNT(*) as total FROM cln_services WHERE clinic_id = ?";
+        $params = [$clinicId];
+
+        if (!$includeInactive) {
+            $sql .= " AND is_active = 1";
+        }
+
+        if ($search) {
+            $sql .= " AND (name LIKE ? OR code LIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        if ($category) {
+            $sql .= " AND category = ?";
+            $params[] = $category;
+        }
+
+        $result = $this->db->fetch($sql, $params);
+        return (int) ($result['total'] ?? 0);
+    }
+
+    /**
+     * Tüm aktif hizmetleri listeler (Legacy)
+     */
     public function findAll(int $clinicId, bool $includeInactive = false): array
     {
         $sql = "SELECT * FROM cln_services WHERE clinic_id = ?";

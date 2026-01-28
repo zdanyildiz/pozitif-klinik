@@ -21,38 +21,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     setupDiagnosisSearch();
-    await loadInitialData();
     setupEventListeners();
+
+    // Start loading process
+    await initPageData();
 });
 
-async function loadInitialData() {
-    try {
-        Utils.showLoading('Bilgiler yükleniyor...');
+async function initPageData() {
+    Utils.showLoading('Veriler yükleniyor...');
 
-        // 1. Load appointment & patient info
+    try {
+        // 1. Critical: Load appointment & patient info first
         const appRes = await api.get(`/api/appointments/${currentAppointmentId}`);
         const appointment = appRes.data;
         currentPatientId = appointment.patient_id;
-
         renderPatientInfo(appointment);
+    } catch (e) {
+        Utils.showError('Randevu detayları yüklenemedi. Lütfen sayfayı yenileyin.');
+        console.error('Critical load error:', e);
+        Utils.closeLoading();
+        return; // Stop execution if critical data is missing
+    }
 
-        // 2. Load current examination for this appointment (if exists)
+    // 2. Load other data in parallel (independent of each other)
+    // Even if history fails, services should load
+    const promises = [
+        loadServices(),
+        loadCurrentExamination(),
+        loadHistory()
+    ];
+
+    await Promise.allSettled(promises);
+
+    Utils.closeLoading();
+}
+
+async function loadCurrentExamination() {
+    try {
         const examRes = await api.get(`/api/examinations/appointment/${currentAppointmentId}`);
         if (examRes.data) {
             fillExaminationForm(examRes.data);
             currentExaminationId = examRes.data.id;
         }
-
-        // 3. Load previous examinations
-        await loadHistory();
-
-        // 4. Load all available services for billing
-        await loadServices();
-
-        Utils.closeLoading();
     } catch (e) {
-        Utils.showError('Veriler yüklenirken bir hata oluştu');
-        console.error(e);
+        console.error('Examination load error:', e);
+        // Silent fail is acceptable here, maybe it's a new examination
     }
 }
 
@@ -97,21 +110,22 @@ async function loadHistory() {
 }
 
 async function loadServices() {
-    console.log('[EXAM] Loading services from /api/services...');
     try {
         const res = await api.get('/api/services');
-        console.log('[EXAM] API Response Status:', res.status, 'Message:', res.message);
-        console.log('[EXAM] Raw Data Received:', res.data);
 
-        // Standardize the response data access
-        allServices = res.data || [];
-        console.log('[EXAM] Final allServices array length:', allServices.length);
-
-        if (allServices.length === 0) {
-            console.warn('[EXAM] WARNING: allServices is empty!');
+        // Backend pagination support: handle array or object response
+        if (Array.isArray(res.data)) {
+            allServices = res.data;
+        } else if (res.data && res.data.items) {
+            allServices = res.data.items;
+        } else {
+            allServices = [];
         }
+
     } catch (e) {
         console.error('[EXAM] Services load error:', e);
+        const errorMsg = typeof e === 'string' ? e : (e.message || 'Bilinmeyen hata');
+        Utils.showToast(`Hizmet listesi yüklenemedi: ${errorMsg}`, 'warning');
         allServices = [];
     }
 }
@@ -139,7 +153,7 @@ function renderBillingItems(items, total) {
     tbody.innerHTML = '';
 
     if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Henüz hizmet eklenmemiş</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><i class="bi bi-info-circle me-2"></i>Bu randevuya ait işlem kaydı bulunmuyor.</td></tr>';
     } else {
         items.forEach(item => {
             const row = document.createElement('tr');
@@ -161,76 +175,129 @@ function renderBillingItems(items, total) {
     document.getElementById('billingGrandTotal').textContent = parseFloat(total).toFixed(2) + ' ₺';
 }
 
-async function handleAddService() {
-    console.log('[EXAM] handleAddService clicked. Current allServices count:', allServices.length);
-    // List boşsa tekrar yüklemeyi dene
-    if (allServices.length === 0) {
-        console.log('[EXAM] allServices is empty, re-loading...');
-        await loadServices();
-    }
-    console.log('[EXAM] Final list for TomSelect:', allServices);
+// Global variable for Service TomSelect
+let serviceSelectInstance = null;
 
-    const { value: serviceId } = await Swal.fire({
-        title: 'Hizmet Seçin',
-        html: '<select id="swalServiceSelect" class="form-select"></select>',
-        showCancelButton: true,
-        confirmButtonText: 'Ekle',
-        cancelButtonText: 'İptal',
-        didOpen: () => {
-            console.log('[EXAM] Initializing TomSelect with', allServices.length, 'services');
-            try {
-                const tsOptions = allServices.map(s => ({
-                    id: s.id,
-                    name: s.name || 'İsimsiz',
-                    price: parseFloat(s.price || 0),
-                    code: s.code || s.legacy_code || '',
-                    category: s.category || ''
-                }));
+async function toggleServicePanel() {
+    const panel = document.getElementById('serviceSelectionPanel');
+    const isHidden = panel.style.display === 'none';
 
-                new TomSelect('#swalServiceSelect', {
-                    options: tsOptions,
-                    valueField: 'id',
-                    labelField: 'name',
-                    searchField: ['name', 'code', 'category'],
-                    placeholder: 'Hizmet veya kod ara...',
-                    maxOptions: 100, // Varsayılan 50'yi artırıyoruz
-                    render: {
-                        option: (d, e) => `
-                            <div class="py-2 border-bottom">
-                                <div class="fw-bold text-primary">${e(d.name)}</div>
-                                <div class="d-flex justify-content-between align-items-center mt-1">
-                                    <div class="small">
-                                        ${d.category ? `<span class="badge bg-secondary-subtle text-secondary me-1">${e(d.category)}</span>` : ''}
-                                        ${d.code ? `<span class="badge bg-light text-dark border me-1">${e(d.code)}</span>` : ''}
-                                    </div>
-                                    <div class="fw-bold text-success">${d.price.toFixed(2)} ₺</div>
-                                </div>
-                            </div>`,
-                        item: (d, e) => `<div>${e(d.name)}</div>`,
-                        no_results: (data, escape) => `<div class="no-results">"${escape(data.input)}" için sonuç bulunamadı</div>`
-                    }
-                });
-                console.log('[EXAM] TomSelect initialized successfully');
-            } catch (tsError) {
-                console.error('[EXAM] TomSelect initialization failed:', tsError);
-            }
-        },
-        preConfirm: () => document.getElementById('swalServiceSelect').value
-    });
+    // Toggle visibility
+    panel.style.display = isHidden ? 'block' : 'none';
 
-    if (serviceId) {
-        const s = allServices.find(x => x.id == serviceId);
-        try {
-            await api.post(`/api/appointments/${currentAppointmentId}/items`, {
-                service_id: s.id,
-                item_name: s.name,
-                unit_price: s.price,
-                quantity: 1
-            });
-            refreshBilling();
-        } catch (e) {
-            Utils.showError('Hizmet eklenemedi');
+    if (isHidden) {
+        if (!serviceSelectInstance) {
+            initServiceSelect();
+        } else {
+            serviceSelectInstance.clear();
+            serviceSelectInstance.focus();
         }
+    }
+}
+
+function initServiceSelect() {
+    try {
+        serviceSelectInstance = new TomSelect('#inlineServiceSelect', {
+            valueField: 'id',
+            labelField: 'name',
+            searchField: ['name', 'code'],
+            // Preload kapalı, sadece arama yapınca yükle
+            preload: false,
+            // Yazmaya başladıktan sonra bekleme süresi (debounce)
+            loadThrottle: 500,
+            placeholder: 'Hizmet veya kod arayın (min 2 karakter)...',
+            maxOptions: 50,
+
+            // Sunucu taraflı arama fonksiyonu
+            load: function (query, callback) {
+                if (query.length < 2) return callback();
+
+                const url = `/api/services/search?q=${encodeURIComponent(query)}`;
+
+                api.get(url)
+                    .then(res => {
+                        // API yanıt formatını kontrol et
+                        if (res.data && Array.isArray(res.data)) {
+                            // Fiyatları number'a çevir
+                            const results = res.data.map(s => ({
+                                id: s.id,
+                                name: s.name,
+                                price: parseFloat(s.price || 0),
+                                code: s.code || '',
+                                category: s.category || ''
+                            }));
+                            callback(results);
+                        } else {
+                            callback();
+                        }
+                    })
+                    .catch((err) => {
+                        console.error('Service search error:', err);
+                        callback();
+                    });
+            },
+
+            render: {
+                option: (d, e) => `
+                    <div class="py-2 border-bottom px-2">
+                        <div class="fw-bold text-primary">${e(d.name)}</div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <div class="small">
+                                ${d.category ? `<span class="badge bg-secondary-subtle text-secondary me-1">${e(d.category)}</span>` : ''}
+                                ${d.code ? `<span class="badge bg-light text-dark border me-1">${e(d.code)}</span>` : ''}
+                            </div>
+                            <div class="fw-bold text-success">${d.price.toFixed(2)} ₺</div>
+                        </div>
+                    </div>`,
+                item: (d, e) => `<div>${e(d.name)} <span class="text-muted ms-2">(${parseFloat(d.price).toFixed(2)} ₺)</span></div>`,
+                no_results: (data, escape) => `<div class="no-results p-2">"${escape(data.input)}" için sonuç bulunamadı</div>`,
+                loading: (data, escape) => `<div class="spinner-border spinner-border-sm text-primary m-2" role="status"></div> Aranıyor...`
+            }
+        });
+    } catch (e) {
+        console.error('TomSelect init error', e);
+        Utils.showToast('Arama kutusu yüklenemedi', 'error');
+    }
+}
+
+async function handleConfirmAddService() {
+    if (!serviceSelectInstance) return;
+    const serviceId = serviceSelectInstance.getValue();
+
+    if (!serviceId) {
+        Utils.showToast('Lütfen bir hizmet seçin', 'warning');
+        return;
+    }
+
+    // Seçilen öğenin verisini TomSelect seçeneklerinden al
+    const s = serviceSelectInstance.options[serviceId];
+    if (!s) return;
+
+    try {
+        const btn = document.getElementById('btnConfirmAddService');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        await api.post(`/api/appointments/${currentAppointmentId}/items`, {
+            service_id: s.id,
+            item_name: s.name,
+            unit_price: s.price,
+            quantity: 1
+        });
+
+        Utils.showToast('Hizmet eklendi', 'success');
+        refreshBilling();
+
+        // Reset selection but keep panel open for multiple additions
+        serviceSelectInstance.clear();
+        serviceSelectInstance.focus();
+
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    } catch (e) {
+        Utils.showError('Hizmet eklenemedi');
+        document.getElementById('btnConfirmAddService').disabled = false;
     }
 }
 
@@ -315,7 +382,13 @@ function setupDiagnosisSearch() {
 function setupEventListeners() {
     document.getElementById('btnSaveExamination').addEventListener('click', handleSave);
     document.getElementById('btnShowBilling').addEventListener('click', handleShowBilling);
-    document.getElementById('btnAddServiceDirect').addEventListener('click', handleAddService);
+
+    // Updated listeners for inline panel
+    const btnToggle = document.getElementById('btnToggleServicePanel');
+    if (btnToggle) btnToggle.addEventListener('click', toggleServicePanel);
+
+    const btnAdd = document.getElementById('btnConfirmAddService');
+    if (btnAdd) btnAdd.addEventListener('click', handleConfirmAddService);
 }
 
 async function handleSave() {
