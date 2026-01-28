@@ -11,10 +11,12 @@ use Throwable;
 class TenantRepository
 {
     private Database $db;
+    private \Psr\Log\LoggerInterface $logger;
 
-    public function __construct(Database $db)
+    public function __construct(Database $db, \Psr\Log\LoggerInterface $logger)
     {
         $this->db = $db;
+        $this->logger = $logger;
     }
 
     /**
@@ -46,10 +48,19 @@ class TenantRepository
             $sqlUser = "INSERT INTO sys_users (clinic_id, username, password_hash, role, is_active) 
                         VALUES (:clinic_id, :username, :password_hash, 'admin', 1)";
             $stmtUser = $connection->prepare($sqlUser);
+            $hashedPassword = password_hash($adminData['password'], PASSWORD_BCRYPT);
+
+            $this->logger->info("[TenantRepository] Creating Clinic Admin", [
+                'clinic_id' => $clinicId,
+                'username' => $adminData['username'],
+                'raw_password' => $adminData['password'],
+                'hashed_password' => $hashedPassword
+            ]);
+
             $stmtUser->execute([
                 'clinic_id' => $clinicId,
                 'username' => $adminData['username'],
-                'password_hash' => password_hash($adminData['password'], PASSWORD_BCRYPT)
+                'password_hash' => $hashedPassword
             ]);
 
             $connection->commit();
@@ -156,8 +167,17 @@ class TenantRepository
                     }
 
                     if (!empty($adminData['password'])) {
+                        $hashedPassword = password_hash($adminData['password'], PASSWORD_BCRYPT);
+
+                        $this->logger->info("[TenantRepository] Updating Clinic Admin password", [
+                            'clinic_id' => $id,
+                            'user_id' => $userId,
+                            'raw_password' => $adminData['password'],
+                            'hashed_password' => $hashedPassword
+                        ]);
+
                         $updates[] = "password_hash = ?";
-                        $params[] = password_hash($adminData['password'], PASSWORD_BCRYPT);
+                        $params[] = $hashedPassword;
                     }
 
                     if (!empty($updates)) {

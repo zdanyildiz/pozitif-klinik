@@ -55,8 +55,6 @@ function setupEventListeners() {
     // Personel Güncelle
     document.getElementById('updateUserBtn').addEventListener('click', handleUpdateUser);
 
-    // Çıkış Yap
-    logoutBtn.addEventListener('click', handleLogout);
 }
 
 // Personelleri Yükle
@@ -265,24 +263,6 @@ window.handleDeleteUser = async function (id, username) {
     }
 }
 
-// Çıkış Yap
-async function handleLogout() {
-    const result = await Swal.fire({
-        icon: 'question',
-        title: 'Çıkış Yap',
-        text: 'Oturumunuzu kapatmak istediğinize emin misiniz?',
-        showCancelButton: true,
-        confirmButtonText: 'Evet, Çıkış Yap',
-        cancelButtonText: 'İptal',
-        confirmButtonColor: '#dc2626'
-    });
-
-    if (result.isConfirmed) {
-        localStorage.removeItem('platform_token');
-        localStorage.removeItem('user_type');
-        window.location.href = API_URL + '/admin/login';
-    }
-}
 
 // Helper: Boş durum
 function renderEmptyState() {

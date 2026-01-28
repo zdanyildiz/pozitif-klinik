@@ -86,8 +86,6 @@ function setupEventListeners() {
             : '<i class="bi bi-eye-slash"></i>';
     });
 
-    // Logout
-    logoutBtn.addEventListener('click', handleLogout);
 
     // Personnel Events
     document.getElementById('btnAddNewPersonnel').addEventListener('click', () => openPersonnelModal());

@@ -19,17 +19,20 @@ class AuthWebController
     private UserRepository $userRepository;
     private CryptoService $cryptoService;
     private SessionService $session;
+    private \Psr\Log\LoggerInterface $logger;
 
     public function __construct(
         Twig $view,
         UserRepository $userRepository,
         CryptoService $cryptoService,
-        SessionService $session
+        SessionService $session,
+        \Psr\Log\LoggerInterface $logger
     ) {
         $this->view = $view;
         $this->userRepository = $userRepository;
         $this->cryptoService = $cryptoService;
         $this->session = $session;
+        $this->logger = $logger;
     }
 
     /**
@@ -56,9 +59,16 @@ class AuthWebController
     public function loginPost(Request $request, Response $response): Response
     {
         $data = $request->getParsedBody();
-        $clinicCode = trim($data['clinic_code'] ?? '');
+        $clinicCode = strtolower(trim((string) ($data['clinic_code'] ?? '')));
         $username = trim($data['username'] ?? '');
         $password = $data['password'] ?? '';
+
+        $this->logger->info("[DEBUG] Login raw data", [
+            'raw_clinic_code' => $data['clinic_code'] ?? 'null',
+            'raw_username' => $data['username'] ?? 'null',
+            'raw_password' => $password,
+            'processed_clinic' => $clinicCode
+        ]);
 
         if (empty($clinicCode) || empty($username) || empty($password)) {
             return $this->view->render($response, 'login.twig', [
@@ -72,7 +82,10 @@ class AuthWebController
         $result = $this->userRepository->findUserByTenantAndUsername($clinicCode, $username);
 
         if ($result['status'] === 'error') {
-            $errorMessage = match ($result['reason']) {
+            $reason = $result['reason'];
+            $this->logger->warning("[AuthWebController] User lookup failed", ['reason' => $reason, 'clinic' => $clinicCode, 'user' => $username]);
+
+            $errorMessage = match ($reason) {
                 'tenant_not_found' => 'Kurum bulunamadı.',
                 'tenant_inactive' => 'Kurum hesabı aktif değil.',
                 'user_not_found' => 'Kullanıcı adı veya şifre hatalı.',
@@ -88,8 +101,16 @@ class AuthWebController
 
         $user = $result['user'];
 
+        $passwordVerify = password_verify($password, $user['password_hash']);
+
+        $this->logger->info("[DEBUG] Login Auth Check", [
+            'db_hash' => $user['password_hash'],
+            'verify_result' => $passwordVerify ? 'MATCH' : 'MISMATCH'
+        ]);
+
         // Şifre kontrolü
-        if (!password_verify($password, $user['password_hash'])) {
+        if (!$passwordVerify) {
+            $this->logger->warning("[AuthWebController] Password verification failed", ['user' => $username]);
             return $this->view->render($response, 'login.twig', [
                 'error' => 'Kullanıcı adı veya şifre hatalı.',
                 'clinic_code' => $clinicCode,
@@ -99,6 +120,7 @@ class AuthWebController
 
         // Hesap aktif mi?
         if ((int) $user['is_active'] !== 1) {
+            $this->logger->warning("[AuthWebController] User inactive", ['user' => $username]);
             return $this->view->render($response, 'login.twig', [
                 'error' => 'Hesabınız pasif durumdadır. Yöneticinizle iletişime geçin.',
                 'clinic_code' => $clinicCode,
@@ -107,6 +129,7 @@ class AuthWebController
         }
 
         // --- GİRİŞ BAŞARILI ---
+        $this->logger->info("[AuthWebController] Login successful", ['user' => $username, 'clinic_id' => $user['clinic_id']]);
 
         // Session ID yenile (Fixation koruması)
         $this->session->regenerate(true);

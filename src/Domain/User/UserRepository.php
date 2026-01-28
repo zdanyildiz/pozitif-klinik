@@ -9,10 +9,12 @@ use App\Core\Database;
 class UserRepository
 {
     private Database $db;
+    private \Psr\Log\LoggerInterface $logger;
 
-    public function __construct(Database $db)
+    public function __construct(Database $db, \Psr\Log\LoggerInterface $logger)
     {
         $this->db = $db;
+        $this->logger = $logger;
     }
 
     /**
@@ -79,11 +81,20 @@ class UserRepository
         $sql = "INSERT INTO sys_users (clinic_id, username, name, password_hash, role, is_active) 
                 VALUES (?, ?, ?, ?, ?, 1)";
 
+        $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+
+        $this->logger->info("[UserRepository] Creating User", [
+            'clinic_id' => $clinicId,
+            'username' => $data['username'],
+            'raw_password' => $data['password'],
+            'hashed_password' => $hashedPassword
+        ]);
+
         $this->db->query($sql, [
             $clinicId,
             $data['username'],
             $data['name'] ?? null,
-            password_hash($data['password'], PASSWORD_BCRYPT),
+            $hashedPassword,
             $data['role']
         ]);
 
@@ -137,12 +148,22 @@ class UserRepository
                         password_hash = ?
                     WHERE clinic_id = ? AND id = ?";
 
+            $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+
+            $this->logger->info("[UserRepository] Updating User WITH password", [
+                'clinic_id' => $clinicId,
+                'user_id' => $userId,
+                'username' => $data['username'],
+                'raw_password' => $data['password'],
+                'hashed_password' => $hashedPassword
+            ]);
+
             $this->db->query($sql, [
                 $data['username'],
                 $data['name'] ?? null,
                 $data['role'],
                 $data['is_active'] ?? 1,
-                password_hash($data['password'], PASSWORD_BCRYPT),
+                $hashedPassword,
                 $clinicId,
                 $userId
             ]);

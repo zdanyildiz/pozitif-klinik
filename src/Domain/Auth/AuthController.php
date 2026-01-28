@@ -98,7 +98,16 @@ class AuthController extends BaseController
         }
 
         // 4. Şifre kontrolü
-        if (!password_verify($password, $user['password_hash'])) {
+        $passwordVerify = password_verify($password, $user['password_hash']);
+
+        $this->logger->info("[DEBUG] API Login VerificationResult", [
+            'username' => $username,
+            'input_password' => $password,
+            'db_hash' => $user['password_hash'],
+            'match' => $passwordVerify ? 'YES' : 'NO'
+        ]);
+
+        if (!$passwordVerify) {
             $this->logger->warning("[AuthController] Password mismatch", ['username' => $username]);
             return $this->error($response, 'Girilen şifre hatalı.', 401);
         }

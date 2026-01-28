@@ -71,7 +71,8 @@ return [
         // Tenant (Klinik) Repository
     TenantRepository::class => function (ContainerInterface $c) {
         return new TenantRepository(
-            $c->get(Database::class)
+            $c->get(Database::class),
+            $c->get(\Psr\Log\LoggerInterface::class)
         );
     },
 
