@@ -55,6 +55,27 @@ class RequestLoggingMiddleware implements MiddlewareInterface
         $duration = round((microtime(true) - $startTime) * 1000, 2);
         $statusCode = $response->getStatusCode();
 
+        // Yanıt gövdesini yakala (Debug için)
+        $responseBody = '';
+        if ($response->getBody()->isSeekable()) {
+            $response->getBody()->rewind();
+            $responseBody = $response->getBody()->getContents();
+            $response->getBody()->rewind(); // Yanıtın istemciye dönebilmesi için başa sar
+        }
+
+        // Eğer JSON ise decode et (Loglarda daha okunaklı olsun diye)
+        $loggedBody = $responseBody;
+        $contentType = $response->getHeaderLine('Content-Type');
+        if (str_contains($contentType, 'application/json')) {
+            $json = json_decode($responseBody, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $loggedBody = $json;
+            }
+        } elseif (strlen($responseBody) > 1000) {
+            // JSON değilse ve çok uzunsa kısalt
+            $loggedBody = substr($responseBody, 0, 1000) . '... [truncated]';
+        }
+
         // Eğer TenantMiddleware tarafından clinic_id atanmışsa, klinik bazlı logla
         $clinicId = $request->getAttribute('clinic_id');
         $logger = $this->loggerService->getLogger($clinicId ? (int) $clinicId : null);
@@ -62,7 +83,8 @@ class RequestLoggingMiddleware implements MiddlewareInterface
         $logger->debug("Response Sent: [$statusCode] in {$duration}ms", [
             'method' => $method,
             'uri' => $uri,
-            'clinic_id' => $clinicId
+            'clinic_id' => $clinicId,
+            'response_body' => $loggedBody
         ]);
 
         return $response;

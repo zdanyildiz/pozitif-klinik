@@ -36,7 +36,7 @@ class ActivityLogController extends BaseController
 
         // Sayfalama
         $page = isset($params['page']) ? (int) $params['page'] : 1;
-        $limit = isset($params['limit']) ? (int) $params['limit'] : 20;
+        $limit = isset($params['limit']) ? (int) $params['limit'] : 30;
         $offset = ($page - 1) * $limit;
 
         // Filtreler

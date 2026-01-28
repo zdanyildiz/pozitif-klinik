@@ -66,10 +66,12 @@ class TenantMiddleware implements MiddlewareInterface
         $authHeader = $request->getHeaderLine('Authorization');
 
         if (empty($authHeader)) {
+            $this->logger->warning("[TenantMiddleware] Authorization header is EMPTY.");
             // SSR (Session) desteği ekle
             if ($this->session->has('clinic_id')) {
                 $clinicId = (int) $this->session->get('clinic_id');
                 $userId = (int) $this->session->get('user_id');
+                $this->logger->debug("[TenantMiddleware] Session based auth used. ClinicID: $clinicId, UserID: $userId");
 
                 $request = $request->withAttribute('clinic_id', $clinicId);
 
@@ -88,21 +90,30 @@ class TenantMiddleware implements MiddlewareInterface
 
         // 2. Bearer token formatını kontrol et
         if (!preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
+            $this->logger->error("[TenantMiddleware] Invalid Bearer format. Header: $authHeader");
             return $this->unauthorizedResponse('Geçersiz Authorization header formatı');
         }
 
         $token = $matches[1];
+        // Debugging Token (Last 10 chars visible)
+        $tokenDebug = substr($token, -10);
+        $this->logger->debug("[TenantMiddleware] Processing Token ending with ...$tokenDebug");
 
         try {
             // 3. Token'ı decode et
             $decoded = JWT::decode($token, new Key($this->jwtSecret, 'HS256'));
 
+            // LOG THE DECODED PAYLOAD
+            $this->logger->debug("[TenantMiddleware] Token Decoded Successfully.", ['payload' => (array) $decoded]);
+
             // 4. clinic_id claim'ini kontrol et
             if (!isset($decoded->clinic_id)) {
+                $this->logger->critical("[TenantMiddleware] 'clinic_id' claim MISSING in token payload!");
                 return $this->forbiddenResponse('Klinik kimliği bulunamadı');
             }
 
             $clinicId = (int) $decoded->clinic_id;
+            $this->logger->info("[TenantMiddleware] Clinic ID resolved: $clinicId");
 
             // 5. clinic_id'yi request attribute olarak ekle
             $request = $request->withAttribute('clinic_id', $clinicId);
@@ -111,10 +122,13 @@ class TenantMiddleware implements MiddlewareInterface
             $request = $request->withAttribute('jwt_payload', $decoded);
 
         } catch (ExpiredException $e) {
+            $this->logger->warning("[TenantMiddleware] Token EXPIRED: " . $e->getMessage());
             return $this->unauthorizedResponse('Token süresi dolmuş');
         } catch (SignatureInvalidException $e) {
+            $this->logger->critical("[TenantMiddleware] Token SIGNATURE INVALID: " . $e->getMessage());
             return $this->unauthorizedResponse('Geçersiz token imzası');
         } catch (\Exception $e) {
+            $this->logger->error("[TenantMiddleware] Token Verification Failed: " . $e->getMessage());
             return $this->unauthorizedResponse('Token doğrulama hatası: ' . $e->getMessage());
         }
 

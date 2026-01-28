@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Query string oluştur
         const params = new URLSearchParams({
             page: page,
-            limit: 20
+            limit: 30
         });
 
         if (module) params.append('module', module);
@@ -48,24 +48,25 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         try {
-            console.log("Fetching logs from:", `${API_BASE_URL}/logs?${params.toString()}`);
-            const response = await axios.get(`${API_BASE_URL}/logs?${params.toString()}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('platform_token')}` }
-            });
+            // "api" nesnesi config.js'den gelir ve BaseURL + Token otomatik eklenir.
+            // Endpoint: /api/logs
+            const response = await api.get('/api/logs', { params: params });
 
-            console.log("Logs Response:", response.data);
+            if (response.status) {
+                // api interceptor response.data döndürüyor olabilir, kontrol et
+                // config.js'de: status === true ise return response.data diyor.
+                // bu durumda response değişkeni direkt { status: true, data: { logs: ... } } olacaktır.
 
-            if (response.data.status) {
-                renderTable(response.data.data.logs);
-                renderPagination(response.data.data.pagination);
+                renderTable(response.data.logs);
+                renderPagination(response.data.pagination);
             } else {
-                console.error("API Error Status:", response.data);
-                showError('Kayıtlar yüklenemedi: ' + response.data.message);
+                // Interceptor error fırlatacağı için buraya düşmeyebilir ama güvenlik için
+                Utils.showError('Kayıtlar yüklenemedi.');
             }
         } catch (error) {
-            console.error("Axios Error:", error);
-            handleApiError(error);
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Veri yüklenirken hata oluştu. Konsolu kontrol edin.</td></tr>';
+            // Config.js'deki interceptor mesajı string olarak reject ediyor
+            Utils.showError(typeof error === 'string' ? error : 'Veri yüklenirken hata oluştu');
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Veri yüklenirken hata oluştu.</td></tr>';
         }
     }
 
