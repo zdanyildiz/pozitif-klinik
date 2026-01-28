@@ -20,9 +20,7 @@ Bir YZ ajanı projeye başladığında sırasıyla şunları incelemelidir:
    - `ARCHITECTURE.md`: Sistemin genel işleyişi ve katmanları.
    - `API.md`: Mevcut endpointler ve yanıt formatları.
    - `DEVELOPMENT_LOG.md`: Projenin geçmişi ve bugüne kadar yapılanlar.
-   - `EKSIK_TABLOLAR.md`: Mevcut olmayan ama planlanan yapılar.
-   - `EKSIK_SAYFALAR_VE_MODULLER.md`: Projenin yol haritası.
-   - `VERI_ANALIZ_RAPORU.md`: Veri yapısı ve ilişkileri.
+   - `EKSIK_SAYFALAR_VE_MODULLER.md`: Projenin yol haritası (Roadmap).
 3. **`migration/database/`**: Veritabanı şeması ve modüllerin (sys_, ptn_, cln_) nasıl ayrıldığı.
 4. **Mevcut Kod Standartları**:
    - `src/Core/BaseController.php`: API yanıt standartları.
