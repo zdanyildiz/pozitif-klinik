@@ -92,6 +92,7 @@ CREATE TABLE `cln_examinations` (
   `clinic_id` bigint(20) unsigned NOT NULL,
   `patient_id` bigint(20) unsigned NOT NULL,
   `doctor_user_id` bigint(20) unsigned NOT NULL,
+  `appointment_id` bigint(20) unsigned DEFAULT NULL,
   `anamnez` text DEFAULT NULL,
   `complaint` text DEFAULT NULL COMMENT 'Şikayetler',
   `story` text DEFAULT NULL COMMENT 'Hikayesi',
@@ -105,9 +106,22 @@ CREATE TABLE `cln_examinations` (
   KEY `clinic_id` (`clinic_id`),
   KEY `patient_id` (`patient_id`),
   KEY `doctor_user_id` (`doctor_user_id`),
+  KEY `appointment_id` (`appointment_id`),
   CONSTRAINT `cln_examinations_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`),
   CONSTRAINT `cln_examinations_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `ptn_cards` (`id`),
-  CONSTRAINT `cln_examinations_ibfk_3` FOREIGN KEY (`doctor_user_id`) REFERENCES `sys_users` (`id`)
+  CONSTRAINT `cln_examinations_ibfk_3` FOREIGN KEY (`doctor_user_id`) REFERENCES `sys_users` (`id`),
+  CONSTRAINT `cln_examinations_ibfk_4` FOREIGN KEY (`appointment_id`) REFERENCES `cln_appointments` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. Klinik Tanı Favorileri
+DROP TABLE IF EXISTS `cln_diagnosis_favorites`;
+CREATE TABLE `cln_diagnosis_favorites` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `icd_code` varchar(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `clinic_icd` (`clinic_id`, `icd_code`),
+  CONSTRAINT `cln_diag_fav_clinic` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

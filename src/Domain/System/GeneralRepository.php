@@ -33,4 +33,26 @@ class GeneralRepository
         $stmt->execute(['province_id' => $provinceId]);
         return $stmt->fetchAll();
     }
+    /**
+     * ICD-10 tanılarını arar veya sık kullanılanları getirir.
+     * Klinik bazlı favorileri önceliklendirir.
+     */
+    public function searchDiagnoses(int $clinicId, ?string $query = null): array
+    {
+        $sql = "SELECT i.code, i.name, (f.id IS NOT NULL) as is_favorite
+                FROM sys_icd10 i
+                LEFT JOIN cln_diagnosis_favorites f ON i.code = f.icd_code AND f.clinic_id = :clinic_id";
+
+        if (empty($query)) {
+            $sql .= " WHERE f.id IS NOT NULL OR i.is_common = 1 ORDER BY is_favorite DESC, i.name ASC LIMIT 50";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['clinic_id' => $clinicId]);
+        } else {
+            $sql .= " WHERE i.name LIKE :q OR i.code LIKE :q 
+                     ORDER BY is_favorite DESC, i.name ASC LIMIT 50";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['clinic_id' => $clinicId, 'q' => "%$query%"]);
+        }
+        return $stmt->fetchAll();
+    }
 }

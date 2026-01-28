@@ -79,4 +79,17 @@ class ClinicWebController
             'page' => 'logs'
         ]);
     }
+
+    /**
+     * Muayene Ekranı
+     */
+    #[Route('GET', '/admin/examination')]
+    #[Middleware(SessionAuthMiddleware::class)]
+    public function examination(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'clinic_examination.twig', [
+            'page' => 'examination',
+            'appointment_id' => $request->getQueryParams()['appointment_id'] ?? null
+        ]);
+    }
 }

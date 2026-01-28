@@ -1,0 +1,137 @@
+{% extends "layout.twig" %}
+
+{% block title %}Muayene Ekranı | Pozitif Klinik{% endblock %}
+{% block page_title %}Tıbbi Muayene ve Çalışma Alanı{% endblock %}
+
+{% block head %}
+    <link href="{{ base_path }}/assets/css/examination.css?v={{ version }}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="examination-container" id="examApp">
+    <!-- Main Examination Sidebar (Left/Center) -->
+    <div class="main-exam-card">
+        <div class="exam-header">
+            <div class="patient-brief">
+                <div class="patient-avatar-circle" id="patientInitial">?</div>
+                <div>
+                    <h5 class="mb-0 fw-bold" id="patientNameDisplay">Yükleniyor...</h5>
+                    <small class="text-muted" id="patientSubInfo">Randevu ID: #{{ appointment_id }}</small>
+                </div>
+            </div>
+            <div class="exam-actions">
+                <button class="btn btn-outline-primary btn-sm me-2" id="btnShowBilling">
+                    <i class="bi bi-receipt me-1"></i> Hizmet & Ücret
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="history.back()">
+                    <i class="bi bi-arrow-left me-1"></i> Geri Dön
+                </button>
+            </div>
+        </div>
+
+        <div class="exam-body">
+            <form id="examinationForm">
+                <input type="hidden" name="appointment_id" value="{{ appointment_id }}">
+                <input type="hidden" name="patient_id" id="patientIdInput">
+                <input type="hidden" name="id" id="examinationIdInput">
+
+                <!-- Şikayet ve Öykü -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="exam-section">
+                            <label class="section-title"><i class="bi bi-chat-dots"></i> Şikayet</label>
+                            <textarea class="form-control-exam w-100" name="complaint" id="complaint" placeholder="Hastanın geliş sebebi..."></textarea>
+                            <div class="quick-btns">
+                                <button type="button" class="btn-quick" onclick="addText('complaint', 'Rutin kontrol')">Rutin kontrol</button>
+                                <button type="button" class="btn-quick" onclick="addText('complaint', 'Ağrı şikayeti')">Ağrı şikayeti</button>
+                                <button type="button" class="btn-quick" onclick="addText('complaint', 'Tetkik sonuç gösterme')">Tetkik sonuç</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="exam-section">
+                            <label class="section-title"><i class="bi bi-journal-medical"></i> Hikaye (Anamnez)</label>
+                            <textarea class="form-control-exam w-100" name="anamnez" id="anamnez" placeholder="Tıbbi geçmiş, alerjiler, alışkanlıklar..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulgular -->
+                <div class="exam-section">
+                    <label class="section-title"><i class="bi bi-stethoscope"></i> Muayene Bulguları</label>
+                    <textarea class="form-control-exam w-100" name="bulgular" id="bulgular" placeholder="Fiziksel muayene sonuçları..."></textarea>
+                </div>
+
+                <!-- Tanı ve ICD-10 -->
+                <div class="exam-section">
+                    <label class="section-title"><i class="bi bi-patch-check"></i> Tanı (ICD-10)</label>
+                    <div class="mb-3">
+                        <select id="diagnosisSelect" class="form-select" placeholder="Tanı ara veya yaz..."></select>
+                    </div>
+                    <textarea class="form-control-exam w-100" name="diagnosis" id="diagnosis" placeholder="Kesin veya ön tanı..."></textarea>
+                    <div class="quick-btns">
+                        <button type="button" class="btn-quick" onclick="addText('diagnosis', 'Esansiyel (primer) hipertansiyon')">Hipertansiyon</button>
+                        <button type="button" class="btn-quick" onclick="addText('diagnosis', 'Tip 2 diyabetes mellitüs')">Diyabet</button>
+                        <button type="button" class="btn-quick" onclick="addText('diagnosis', 'Akut üst solunum yolu enfeksiyonu')">ÜSYE</button>
+                    </div>
+                </div>
+
+                <!-- Tedavi Planı -->
+                <div class="exam-section">
+                    <label class="section-title"><i class="bi bi-capsule-pill"></i> Tedavi ve Plan</label>
+                    <textarea class="form-control-exam w-100" name="treatment" id="treatment" placeholder="İlaçlar, öneriler, istenecek tetkikler..."></textarea>
+                </div>
+
+                <!-- Sonuç Notu -->
+                <div class="exam-section">
+                    <label class="section-title"><i class="bi bi-flag"></i> Sonuç Notu</label>
+                    <textarea class="form-control-exam w-100" name="result_note" id="result_note" placeholder="Kontrol tarihi, sevk durumu vb..."></textarea>
+                </div>
+            </form>
+        </div>
+
+        <div class="exam-footer">
+            <div class="me-auto text-muted small mt-2">
+                <i class="bi bi-clock-history"></i> Son Kaydetme: <span id="lastSavedTime">-</span>
+            </div>
+            <button class="btn btn-save-exam" id="btnSaveExamination">
+                <i class="bi bi-check-circle me-1"></i> Muayeneyi Kaydet
+            </button>
+        </div>
+    </div>
+
+    <!-- History Sidebar (Right) -->
+    <div class="history-sidebar">
+        <div class="history-header">
+            <i class="bi bi-clock-history"></i> Önceki Muayeneler
+        </div>
+        <div class="history-list" id="historyList">
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-hourglass-split mb-2 fs-3"></i>
+                <p class="small">Yükleniyor...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Billing Modal (Shortcut) -->
+<div class="modal fade" id="billingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Hizmetler ve Ücretlendirme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="billingModalBody">
+                <!-- Will load from appointment API -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script src="{{ base_path }}/assets/js/examination.js?v={{ version }}"></script>
+{% endblock %}

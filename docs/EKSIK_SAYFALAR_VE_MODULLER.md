@@ -2,16 +2,17 @@
 
 Büyük veri aktarımı sonrası, mevcut sistemdeki verilerin (özellikle tıbbi geçmiş ve detaylı işlemler) kullanıcıya sunulması ve yeni verilerin girilmesi için gereken eksik sayfalar/modüller aşağıda listelenmiştir.
 
-## 1. Tıbbi Muayene ve Doktor Çalışma Alanı (Workspace)
+## 1. Tıbbi Muayene ve Doktor Çalışma Alanı (Workspace) [TAMAMLANDI]
 Mevcut randevu listesinde "Bekliyor", "İşlemde" gibi durumlar var ancak doktorun muayene notlarını gireceği kapsamlı bir ekran bulunmuyor.
 
 *   **Sayfa Adı:** `Muayene Ekranı`
 *   **İşlev:** Doktorun randevu listesinden seçtiği hasta için anamnez, bulgular, tanı (ICD-10 uyumlu), tedavi ve sonuç notlarını gireceği alan.
-*   **İlişkili Tablo:** `cln_examinations`
+*   **İlişkili Tablolar:** `cln_examinations`, `sys_icd10`, `cln_diagnosis_favorites`
 *   **Özellikler:**
-    *   Hızlı tanı ekleme (Sık kullanılan tanılar).
-    *   Önceki muayene notlarını aynı ekranda görme (Karşılaştırmalı).
-    *   Hizmet/Ücret girişine hızlı erişim.
+    *   Hızlı tanı ekleme (Veritabanı bağlantılı ICD-10 arama).
+    *   Klinik bazlı favori tanı yönetimi (Branş uyumlu).
+    *   Önceki muayene notlarını aynı ekranda görme (History Sidebar).
+    *   Randevu listesinden doğrudan erişim.
 
 ## 2. Detaylı Hasta Kayıt Defteri ve Zaman Tüneli
 `patients.twig` sayfası şu an sadece liste bazlı. Bir hastanın tüm tıbbi geçmişini tek ekranda görmek kritik önemde.

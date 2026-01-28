@@ -48,4 +48,16 @@ class GeneralController extends BaseController
         $districts = $this->repository->getDistricts($provinceId);
         return $this->success($response, $districts);
     }
+    /**
+     * ICD-10 tanılarını listeler
+     */
+    #[Route('GET', '/diagnoses')]
+    #[Middleware(\App\Middleware\TenantMiddleware::class)]
+    public function listDiagnoses(Request $request, Response $response): Response
+    {
+        $clinicId = (int) $request->getAttribute('clinic_id');
+        $query = $request->getQueryParams()['q'] ?? null;
+        $diagnoses = $this->repository->searchDiagnoses($clinicId, $query);
+        return $this->success($response, $diagnoses);
+    }
 }

@@ -334,6 +334,16 @@ function renderAppointments() {
         const btnGroup = document.createElement('div');
         btnGroup.className = 'btn-group';
 
+        const btnExam = document.createElement('button');
+        btnExam.className = 'btn btn-sm btn-outline-success';
+        btnExam.innerHTML = '<i class="bi bi-person-pulse"></i>';
+        btnExam.title = 'Muayene Ekranı';
+        btnExam.onclick = (e) => {
+            e.stopPropagation();
+            window.location.href = `${API_URL}/admin/examination?appointment_id=${app.id}`;
+        };
+        btnGroup.appendChild(btnExam);
+
         const btnEdit = document.createElement('button');
         btnEdit.className = 'btn btn-sm btn-outline-warning';
         btnEdit.innerHTML = '<i class="bi bi-pencil"></i>';

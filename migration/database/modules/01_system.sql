@@ -57,6 +57,7 @@ CREATE TABLE `sys_users` (
   `name` varchar(100) DEFAULT NULL,
   `password_hash` varchar(255) NOT NULL,
   `role` enum('admin','doctor','secretary') NOT NULL,
+  `specialty` varchar(100) DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT 1,
   `legacy_id` bigint(20) DEFAULT NULL COMMENT 'Old System TAKIPNO',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -92,5 +93,17 @@ CREATE TABLE `sys_sms_logs` (
   CONSTRAINT `sys_sms_logs_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+-- 6. Tıbbi Tanımlar (ICD-10)
+DROP TABLE IF EXISTS `sys_icd10`;
+CREATE TABLE `sys_icd10` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(10) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `is_common` tinyint(1) DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`),
+  KEY `idx_icd_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
