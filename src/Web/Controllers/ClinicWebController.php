@@ -14,10 +14,34 @@ use App\Web\Middleware\SessionAuthMiddleware;
 class ClinicWebController
 {
     private Twig $view;
+    private \App\Core\Service\SessionService $session;
+    private \App\Domain\Appointment\AppointmentRepository $appointmentRepository;
 
-    public function __construct(Twig $view)
-    {
+    public function __construct(
+        Twig $view,
+        \App\Core\Service\SessionService $session,
+        \App\Domain\Appointment\AppointmentRepository $appointmentRepository
+    ) {
         $this->view = $view;
+        $this->session = $session;
+        $this->appointmentRepository = $appointmentRepository;
+    }
+
+    /**
+     * Klinik Dashboard
+     */
+    #[Route('GET', '/admin/dashboard')]
+    #[Middleware(SessionAuthMiddleware::class)]
+    public function dashboard(Request $request, Response $response): Response
+    {
+        $clinicId = (int) $this->session->get('clinic_id');
+        $dashboardStats = $this->appointmentRepository->getDashboardStats($clinicId);
+
+        return $this->view->render($response, 'clinic_dashboard.twig', [
+            'page' => 'dashboard',
+            'stats' => $dashboardStats['stats'],
+            'next_appointment' => $dashboardStats['next_appointment']
+        ]);
     }
 
     /**

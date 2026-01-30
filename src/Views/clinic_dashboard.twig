@@ -1,0 +1,203 @@
+{% extends "layout.twig" %}
+
+{% block title %}Özet Akış - Pozitif Klinik{% endblock %}
+
+{% block page_title %}Özet Akış ve Durum{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- İstatistik Kartları -->
+    <div class="row g-4 mb-4">
+        <!-- Toplam Randevu -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-calendar-check fs-3 text-primary"></i>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                <li><a class="dropdown-item" href="{{ base_path }}/admin/appointments">Randevulara Git</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1">Bugünkü Randevular</h6>
+                        <h2 class="fw-bold mb-0 text-dark">{{ stats.total }}</h2>
+                        <small class="text-success fw-medium">
+                            <i class="bi bi-graph-up-arrow me-1"></i>Aktif Gün
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bekleyen -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-hourglass-split fs-3 text-warning"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1">Bekleyen/Onaysız</h6>
+                        <h2 class="fw-bold mb-0 text-dark">{{ stats.pending }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onaylanan -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="bg-success bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-check-circle fs-3 text-success"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1">Onaylanmış</h6>
+                        <h2 class="fw-bold mb-0 text-dark">{{ stats.confirmed }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tamamlanan -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="bg-info bg-opacity-10 p-3 rounded-4">
+                            <i class="bi bi-clipboard-check fs-3 text-info"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1">Tamamlanan</h6>
+                        <h2 class="fw-bold mb-0 text-dark">{{ stats.completed }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Sıradaki Randevu -->
+        <div class="col-12 col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0 fw-bold text-dark">
+                            <i class="bi bi-clock-history me-2 text-primary"></i>Sıradaki Randevu
+                        </h5>
+                        <a href="{{ base_path }}/admin/appointments" class="btn btn-sm btn-light text-primary fw-medium">
+                            Tümünü Gör
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% if next_appointment %}
+                        <div class="d-flex flex-column flex-md-row align-items-center bg-light bg-opacity-50 p-4 rounded-4 border border-secondary border-opacity-10">
+                            <div class="text-center text-md-start mb-4 mb-md-0 me-md-5">
+                                <div class="display-5 fw-bold text-primary mb-1">
+                                    {{ next_appointment.appointment_date|date('H:i') }}
+                                </div>
+                                <div class="text-muted">{{ next_appointment.appointment_date|date('d.m.Y') }}</div>
+                            </div>
+                            <div class="flex-grow-1 text-center text-md-start">
+                                <h4 class="fw-bold mb-2">{{ next_appointment.patient_name }}</h4>
+                                <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-3 mb-3">
+                                    <span class="badge bg-white text-dark border shadow-sm px-3 py-2 rounded-pill">
+                                        <i class="bi bi-tag-fill me-2 text-primary"></i>{{ next_appointment.type_name }}
+                                    </span>
+                                    {% if next_appointment.doctor_name %}
+                                    <span class="badge bg-white text-dark border shadow-sm px-3 py-2 rounded-pill">
+                                        <i class="bi bi-person-fill me-2 text-info"></i>{{ next_appointment.doctor_name }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% if next_appointment.notes %}
+                                <div class="bg-white p-3 rounded-3 border border-secondary border-opacity-10 text-muted fst-italic">
+                                    <i class="bi bi-chat-left-quote me-2"></i>{{ next_appointment.notes }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="bg-light d-inline-block p-4 rounded-circle mb-3">
+                                <i class="bi bi-calendar2-x fs-1 text-muted"></i>
+                            </div>
+                            <h5 class="text-muted mb-1">Sırada Bekleyen Randevu Yok</h5>
+                            <p class="text-secondary small mb-3">Bugün veya yakın tarihte bekleyen randevu bulunmuyor.</p>
+                            <button class="btn btn-primary" onclick="window.location.href='{{ base_path }}/admin/appointments'">
+                                <i class="bi bi-plus-lg me-2"></i>Yeni Randevu Oluştur
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Hızlı İşlemler -->
+        <div class="col-12 col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="mb-0 fw-bold text-dark">Hızlı İşlemler</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-grid gap-3">
+                        <a href="{{ base_path }}/admin/appointments?action=new" class="btn btn-primary btn-lg py-3 text-start px-4 rounded-3 d-flex align-items-center justify-content-between group-hover">
+                            <div>
+                                <i class="bi bi-calendar-plus fs-4 me-3"></i>
+                                <span class="fw-semibold">Yeni Randevu Oluştur</span>
+                            </div>
+                            <i class="bi bi-chevron-right opacity-50"></i>
+                        </a>
+                        
+                        <a href="{{ base_path }}/admin/patients" class="btn btn-light btn-lg py-3 text-start px-4 rounded-3 d-flex align-items-center justify-content-between border group-hover text-dark">
+                            <div>
+                                <i class="bi bi-person-plus fs-4 me-3 text-primary"></i>
+                                <span class="fw-semibold">Yeni Hasta Kaydı</span>
+                            </div>
+                            <i class="bi bi-chevron-right opacity-50"></i>
+                        </a>
+
+                        <a href="{{ base_path }}/admin/examination" class="btn btn-light btn-lg py-3 text-start px-4 rounded-3 d-flex align-items-center justify-content-between border group-hover text-dark">
+                            <div>
+                                <i class="bi bi-heart-pulse fs-4 me-3 text-danger"></i>
+                                <span class="fw-semibold">Hızlı Muayene Ekranı</span>
+                            </div>
+                            <i class="bi bi-chevron-right opacity-50"></i>
+                        </a>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-top">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="text-muted small fw-medium text-uppercase ls-1">Sistem Durumu</span>
+                            <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill">Aktif</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">SMS Bakiyesi</h6>
+                                <small class="text-muted">Kalan Hakkınız</small>
+                            </div>
+                            <div class="text-end">
+                                <h5 class="mb-0 fw-bold text-dark">1.250</h5>
+                                <small class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Yeterli</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

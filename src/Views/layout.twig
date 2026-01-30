@@ -34,6 +34,9 @@
         <nav class="sidebar-nav">
             <div class="nav-section">
                 <div class="nav-section-title">Hizmetler</div>
+                <a href="{{ base_path }}/admin/dashboard" class="nav-link-custom {% if page == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i>Özet Akış
+                </a>
                 <a href="{{ base_path }}/admin/patients" class="nav-link-custom {% if page == 'patients' %}active{% endif %}">
                     <i class="bi bi-person-heart"></i>Hastalar
                 </a>

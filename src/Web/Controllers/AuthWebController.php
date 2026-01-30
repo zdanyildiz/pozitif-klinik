@@ -44,7 +44,7 @@ class AuthWebController
         // Eğer zaten giriş yapmışsa dashboard'a yönlendir
         if ($this->session->has('user_id')) {
             return $response
-                ->withHeader('Location', '/admin/patients')
+                ->withHeader('Location', '/admin/dashboard')
                 ->withStatus(302);
         }
 
@@ -141,7 +141,7 @@ class AuthWebController
 
         // Yönlendir
         return $response
-            ->withHeader('Location', '/admin/patients')
+            ->withHeader('Location', '/admin/dashboard')
             ->withStatus(302);
     }
 

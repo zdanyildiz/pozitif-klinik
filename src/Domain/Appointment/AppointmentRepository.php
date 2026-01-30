@@ -684,6 +684,46 @@ class AppointmentRepository
         ];
     }
 
+    public function getDashboardStats(int $clinicId): array
+    {
+        $date = date('Y-m-d');
+        
+        // 1. Günlük İstatistikler
+        $sqlStats = "SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
+            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+            FROM cln_appointments 
+            WHERE clinic_id = ? AND DATE(appointment_date) = ?";
+            
+        $stats = $this->db->fetch($sqlStats, [$clinicId, $date]);
+        
+        // 2. Sıradaki Randevu (Şu andan sonraki ilk randevu)
+        $now = date('Y-m-d H:i:s');
+        $sqlNext = "SELECT a.*, p.name as patient_name_encrypted, t.name as type_name
+                    FROM cln_appointments a
+                    JOIN ptn_cards p ON a.patient_id = p.id
+                    JOIN cln_appointment_types t ON a.type_id = t.id
+                    WHERE a.clinic_id = ? 
+                    AND a.appointment_date >= ? 
+                    AND a.status NOT IN ('cancelled', 'completed')
+                    ORDER BY a.appointment_date ASC 
+                    LIMIT 1";
+                    
+        $nextAppointment = $this->db->fetch($sqlNext, [$clinicId, $now]);
+        
+        if ($nextAppointment) {
+            $nextAppointment = $this->decryptAppointmentPatientName($nextAppointment);
+        }
+
+        return [
+            'stats' => $stats,
+            'next_appointment' => $nextAppointment
+        ];
+    }
+
     // ==========================================
     // RANDEVU KALEMLERİ (ADİSYON)
     // ==========================================
