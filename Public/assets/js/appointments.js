@@ -8,6 +8,7 @@ let appointmentTypes = [];
 let patients = [];
 let doctors = [];
 let services = [];
+let appointmentStatuses = [];
 let detailModal;
 let appointmentModal;
 let typeModal;
@@ -29,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await Promise.all([
         loadTypes(),
+        loadStatuses(),
         loadPatients(),
         loadDoctors(),
         loadServices(),
@@ -271,6 +273,15 @@ async function loadServices() {
         services = [];
     }
 }
+async function loadStatuses() {
+    try {
+        const res = await api.get('/api/appointments/statuses');
+        appointmentStatuses = res.data || [];
+        renderStatusOptions();
+    } catch (e) {
+        console.error('Statüler yüklenirken hata:', e);
+    }
+}
 
 // ==========================================
 // RENDERERS
@@ -322,8 +333,19 @@ function renderAppointments() {
         // Status Column
         const tdStatus = document.createElement('td');
         const statusBadge = document.createElement('span');
-        statusBadge.className = `badge appointment-status-${app.status}`;
-        statusBadge.textContent = getStatusLabel(app.status);
+
+        // Dinamik statü bilgilerini kullan (varsa)
+        if (app.status_name) {
+            statusBadge.className = 'badge';
+            statusBadge.style.backgroundColor = `${app.status_color}20`;
+            statusBadge.style.color = app.status_color;
+            statusBadge.style.border = `1px solid ${app.status_color}40`;
+            statusBadge.innerHTML = `<i class="bi ${app.status_icon} me-1"></i> ${app.status_name}`;
+        } else {
+            statusBadge.className = `badge appointment-status-${app.status}`;
+            statusBadge.textContent = getStatusLabel(app.status);
+        }
+
         tdStatus.appendChild(statusBadge);
         row.appendChild(tdStatus);
 
@@ -419,6 +441,31 @@ function renderDoctorOptions() {
         opt.textContent = d.name || d.username;
         sel.appendChild(opt);
     });
+}
+
+function renderStatusOptions() {
+    const sel = document.getElementById('detailStatusSelect');
+    const sel2 = document.getElementById('createStatusSelect');
+
+    if (sel) {
+        sel.innerHTML = '';
+        appointmentStatuses.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.status_code;
+            opt.textContent = s.name;
+            sel.appendChild(opt);
+        });
+    }
+
+    if (sel2) {
+        sel2.innerHTML = '';
+        appointmentStatuses.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.status_code;
+            opt.textContent = s.name;
+            sel2.appendChild(opt);
+        });
+    }
 }
 
 function renderTypeList() {
@@ -578,6 +625,7 @@ async function editAppointment(id, e) {
         document.getElementById('appDate').value = date;
         document.getElementById('appTime').value = time.substring(0, 5);
         document.getElementById('appNotes').value = app.notes || '';
+        document.getElementById('createStatusSelect').value = app.status;
 
         appointmentModal.show();
     } catch (e) {
@@ -834,6 +882,9 @@ async function refreshDetail() {
 
 // HELPERS
 function getStatusLabel(s) {
+    const status = appointmentStatuses.find(x => x.status_code === s);
+    if (status) return status.name;
+
     const labels = { pending: 'Bekliyor', waiting: 'Klinikte', in_test: 'İşlemde', completed: 'Tamamlandı', cancelled: 'İptal', no_show: 'Gelmedi' };
     return labels[s] || s;
 }

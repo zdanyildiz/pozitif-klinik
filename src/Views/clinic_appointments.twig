@@ -78,17 +78,23 @@
                     <form id="appointmentForm">
                         <!-- Step 1: Hasta ve Tür Seçimi -->
                         <div class="row mb-4">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-semibold">Hasta Seçin <span class="text-danger">*</span></label>
                                 <select class="form-select" name="patient_id" id="patientSelect" required></select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-semibold">Randevu Türü <span class="text-danger">*</span></label>
                                 <select class="form-select" name="type_id" id="typeSelect" required></select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-semibold">Doktor</label>
                                 <select class="form-select" name="doctor_id" id="doctorSelect"></select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Durum</label>
+                                <select class="form-select" name="status" id="createStatusSelect">
+                                    <!-- Dynamically populated -->
+                                </select>
                             </div>
                         </div>
 
@@ -208,12 +214,7 @@
                                 <div class="col-12 mt-4">
                                     <label class="text-muted small mb-2 d-block">Randevu Durumu</label>
                                     <select class="form-select" id="detailStatusSelect">
-                                        <option value="pending">Bekliyor</option>
-                                        <option value="waiting">Klinikte / Beklemede</option>
-                                        <option value="in_test">İşlemde</option>
-                                        <option value="completed">Tamamlandı</option>
-                                        <option value="cancelled">İptal Edildi</option>
-                                        <option value="no_show">Gelmedi</option>
+                                        <!-- Dynamically populated -->
                                     </select>
                                 </div>
                             </div>

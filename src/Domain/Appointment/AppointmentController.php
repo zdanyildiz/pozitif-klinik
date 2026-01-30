@@ -305,6 +305,13 @@ class AppointmentController extends BaseController
         return $this->success($response, null, 'Hizmet silindi.');
     }
 
+    #[Route('GET', '/statuses')]
+    public function listStatuses(Request $request, Response $response): Response
+    {
+        $statuses = $this->repository->listStatuses();
+        return $this->success($response, $statuses);
+    }
+
     // ==========================================
     // RANDEVU TÜRLERİ
     // ==========================================

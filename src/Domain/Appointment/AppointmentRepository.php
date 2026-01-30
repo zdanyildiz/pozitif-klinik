@@ -461,6 +461,12 @@ class AppointmentRepository
         return true;
     }
 
+    public function listStatuses(): array
+    {
+        $sql = "SELECT status_code, name, color_code, icon_class FROM sys_appointment_statuses WHERE is_active = 1 ORDER BY sort_order ASC";
+        return $this->db->fetchAll($sql);
+    }
+
     // ==========================================
     // RANDEVULAR
     // ==========================================
@@ -470,9 +476,11 @@ class AppointmentRepository
         // Boş string değerleri NULL'a çevir
         $doctorId = !empty($data['doctor_id']) ? (int) $data['doctor_id'] : null;
 
+        $status = !empty($data['status']) ? $data['status'] : 'pending';
+
         // 1. Randevuyu oluştur
         $sql = "INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, notes) 
-                VALUES (?, ?, ?, ?, ?, 'pending', ?)";
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $this->db->query($sql, [
             $clinicId,
@@ -480,6 +488,7 @@ class AppointmentRepository
             $doctorId,
             $data['type_id'],
             $data['appointment_date'],
+            $status,
             $data['notes'] ?? null
         ]);
 
@@ -527,11 +536,15 @@ class AppointmentRepository
                     p.name as patient_name_encrypted, 
                     t.name as type_name, 
                     t.color_code,
-                    u.name as doctor_name
+                    u.name as doctor_name,
+                    s.name as status_name,
+                    s.color_code as status_color,
+                    s.icon_class as status_icon
                 FROM cln_appointments a
                 JOIN ptn_cards p ON a.patient_id = p.id
                 JOIN cln_appointment_types t ON a.type_id = t.id
                 LEFT JOIN sys_users u ON a.doctor_id = u.id
+                LEFT JOIN sys_appointment_statuses s ON a.status = s.status_code
                 WHERE a.clinic_id = ? AND a.id = ?";
 
         $result = $this->db->fetch($sql, [$clinicId, $appointmentId]);
@@ -586,6 +599,7 @@ class AppointmentRepository
                     doctor_id = ?,
                     type_id = ?,
                     appointment_date = ?,
+                    status = ?,
                     notes = ?
                 WHERE clinic_id = ? AND id = ?";
 
@@ -593,6 +607,7 @@ class AppointmentRepository
             $doctorId,
             $data['type_id'],
             $data['appointment_date'],
+            $data['status'] ?? 'pending',
             $data['notes'] ?? null,
             $clinicId,
             $appointmentId
@@ -631,11 +646,15 @@ class AppointmentRepository
                     p.name as patient_name_encrypted, 
                     t.name as type_name, 
                     t.color_code,
-                    u.name as doctor_name
+                    u.name as doctor_name,
+                    s.name as status_name,
+                    s.color_code as status_color,
+                    s.icon_class as status_icon
                 FROM cln_appointments a
                 JOIN ptn_cards p ON a.patient_id = p.id
                 JOIN cln_appointment_types t ON a.type_id = t.id
                 LEFT JOIN sys_users u ON a.doctor_id = u.id
+                LEFT JOIN sys_appointment_statuses s ON a.status = s.status_code
                 WHERE a.clinic_id = ? AND DATE(a.appointment_date) = ?
                 ORDER BY a.appointment_date ASC";
 
@@ -651,11 +670,15 @@ class AppointmentRepository
                     p.name as patient_name_encrypted, 
                     t.name as type_name, 
                     t.color_code,
-                    u.name as doctor_name
+                    u.name as doctor_name,
+                    s.name as status_name,
+                    s.color_code as status_color,
+                    s.icon_class as status_icon
                 FROM cln_appointments a
                 JOIN ptn_cards p ON a.patient_id = p.id
                 JOIN cln_appointment_types t ON a.type_id = t.id
                 LEFT JOIN sys_users u ON a.doctor_id = u.id
+                LEFT JOIN sys_appointment_statuses s ON a.status = s.status_code
                 WHERE a.clinic_id = ? AND DATE(a.appointment_date) BETWEEN ? AND ?
                 ORDER BY a.appointment_date ASC";
 
@@ -687,7 +710,7 @@ class AppointmentRepository
     public function getDashboardStats(int $clinicId): array
     {
         $date = date('Y-m-d');
-        
+
         // 1. Günlük İstatistikler
         $sqlStats = "SELECT 
             COUNT(*) as total,
@@ -697,9 +720,9 @@ class AppointmentRepository
             SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
             FROM cln_appointments 
             WHERE clinic_id = ? AND DATE(appointment_date) = ?";
-            
+
         $stats = $this->db->fetch($sqlStats, [$clinicId, $date]);
-        
+
         // 2. Sıradaki Randevu (Şu andan sonraki ilk randevu)
         $now = date('Y-m-d H:i:s');
         $sqlNext = "SELECT a.*, p.name as patient_name_encrypted, t.name as type_name
@@ -711,9 +734,9 @@ class AppointmentRepository
                     AND a.status NOT IN ('cancelled', 'completed')
                     ORDER BY a.appointment_date ASC 
                     LIMIT 1";
-                    
+
         $nextAppointment = $this->db->fetch($sqlNext, [$clinicId, $now]);
-        
+
         if ($nextAppointment) {
             $nextAppointment = $this->decryptAppointmentPatientName($nextAppointment);
         }

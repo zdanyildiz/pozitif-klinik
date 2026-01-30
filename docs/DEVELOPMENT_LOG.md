@@ -538,9 +538,14 @@ LOG_LEVEL=DEBUG
 - **Platform Admin CRUD:** 
   - Statülerin isim, renk, ikon ve sıralama (`sort_order`) özelliklerinin yönetilebileceği arayüz eklendi.
   - Sistem statülerinin (pending, confirmed vb.) silinmesi veya kodunun değiştirilmesi engellenerek sistem kararlılığı korundu.
+- **Klinik Entegrasyonu:**
+  - Randevu listesinde statüler dinamik renk ve ikonlarla gösterilmeye başlandı.
+  - Randevu oluşturma ve düzenleme modalına dinamik statü seçimi eklendi.
+  - Sabit statü etiketleri kaldırılarak veritabanı kontrollü yapıya geçildi.
 - **Teknik Mimari:**
-  - `AppointmentStatusRepository` ve `AppointmentStatusController` oluşturuldu.
-  - `PlatformWebController` ve `platform_appointment_statuses.twig` ile SSR tabanlı yönetim arayüzü kuruldu.
-  - `Public/assets/js/config.js` güncellenerek tüm API isteklerine (POST/PUT/DELETE) otomatik CSRF token enjeksiyonu eklendi.
-- **Hata Giderme:** Sayfa yüklemelerinde yaşanan 401 JSON hata sorunu, web kontrollerindeki gereksiz middleware'lerin kaldırılmasıyla çözüldü.
+  - `AppointmentStatusRepository` ve `AppointmentStatusController` ile dinamik yönetim altyapısı kuruldu.
+  - Klinik tarafı için `AppointmentRepository` ve `AppointmentController` güncellendi (`JOIN` işlemleri ve yeni `/api/appointments/statuses` endpoint'i).
+  - `Public/assets/js/appointments.js` güncellenerek statülerin dinamik yüklenmesi ve badge render mantığı entegre edildi.
+  - `Public/assets/js/config.js` üzerinden otomatik CSRF token enjeksiyonu sağlandı.
+- **Hata Giderme:** Sayfa yüklemelerinde yaşanan 401 JSON hata sorunu giderildi.
 
