@@ -1,0 +1,314 @@
+{% extends "platform_layout.twig" %}
+
+{% block title %}Randevu Durumları Yönetimi - Pozitif Klinik{% endblock %}
+
+{% block head %}
+<meta name="csrf-name" content="{{ csrf.name }}">
+<meta name="csrf-value" content="{{ csrf.value }}">
+<style>
+    .status-preview {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .status-preview i {
+        font-size: 1.1rem;
+    }
+    .sort-handle {
+        cursor: grab;
+        color: #94a3b8;
+    }
+    .sort-handle:active {
+        cursor: grabbing;
+    }
+    .color-indicator {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        border: 2px solid white;
+        box-shadow: 0 0 0 1px #e2e8f0;
+        display: inline-block;
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}Randevu Durumları{% endblock %}
+
+{% block content %}
+<div class="table-card">
+    <div class="table-card-header">
+        <h2 class="table-card-title">
+            <i class="bi bi-tags"></i> Statü Listesi
+        </h2>
+        <button class="btn-add" onclick="statusManager.openAddModal()">
+            <i class="bi bi-plus-lg"></i> Yeni Statü Ekle
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table" id="statusTable">
+            <thead>
+                <tr>
+                    <th width="50">#</th>
+                    <th>Statü Adı / Kod</th>
+                    <th>Önizleme</th>
+                    <th>İkon</th>
+                    <th>Renk</th>
+                    <th>Sıralama</th>
+                    <th>Durum</th>
+                    <th width="150">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody id="statusTableBody">
+                <!-- Data will be loaded via JS -->
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content text-start">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Statü Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <form id="statusForm">
+                <input type="hidden" name="id" id="statusId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Statü Adı</label>
+                        <input type="text" name="name" id="statusName" class="form-control" placeholder="Örn: Bekleyen" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Statü Kodu</label>
+                        <input type="text" name="status_code" id="statusCode" class="form-control" placeholder="Örn: pending" required>
+                        <div class="form-text">Lütfen boşluk bırakmadan küçük harfler kullanın.</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Renk</label>
+                            <div class="input-group">
+                                <input type="color" name="color_code" id="statusColor" class="form-control form-control-color" value="#6c757d">
+                                <input type="text" id="statusColorText" class="form-control" value="#6c757d" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">İkon (Bootstrap Icons)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i id="iconPreview" class="bi bi-circle"></i></span>
+                                <input type="text" name="icon_class" id="statusIcon" class="form-control" value="bi-circle" placeholder="bi-circle">
+                            </div>
+                            <div class="form-text"><a href="https://icons.getbootstrap.com/" target="_blank">İkon Listesi</a></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sıralama</label>
+                            <input type="number" name="sort_order" id="statusSortOrder" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Durum</label>
+                            <select name="is_active" id="statusIsActive" class="form-select">
+                                <option value="1">Aktif</option>
+                                <option value="0">Pasif</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="systemWarning" class="alert alert-warning d-none">
+                        <i class="bi bi-exclamation-triangle"></i> Bu bir <strong>sistem statüsü</strong> olduğundan kodu değiştirilemez.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary" id="btnSave">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const statusManager = {
+    modal: null,
+    form: null,
+    tableBody: null,
+
+    init() {
+        this.modal = new bootstrap.Modal(document.getElementById('statusModal'));
+        this.form = document.getElementById('statusForm');
+        this.tableBody = document.getElementById('statusTableBody');
+
+        this.loadStatuses();
+        this.bindEvents();
+    },
+
+    bindEvents() {
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        
+        document.getElementById('statusColor').addEventListener('input', (e) => {
+            document.getElementById('statusColorText').value = e.target.value;
+        });
+
+        document.getElementById('statusIcon').addEventListener('input', (e) => {
+            document.getElementById('iconPreview').className = 'bi ' + e.target.value;
+        });
+    },
+
+    async loadStatuses() {
+        try {
+            const response = await api.get('/platform-admin/appointment-statuses');
+            this.renderTable(response.data);
+        } catch (error) {
+            Utils.showError('Statüler yüklenirken bir hata oluştu: ' + error);
+        }
+    },
+
+    renderTable(statuses) {
+        if (!statuses || statuses.length === 0) {
+            this.tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-5">Henüz statü tanımlanmamış.</td></tr>';
+            return;
+        }
+
+        this.tableBody.innerHTML = statuses.map(status => `
+            <tr>
+                <td class="text-secondary">${status.sort_order}</td>
+                <td>
+                    <div class="fw-bold">${status.name}</div>
+                    <code class="small text-muted">${status.status_code}</code>
+                    ${status.is_system ? '<span class="badge bg-light text-dark ms-1">Sistem</span>' : ''}
+                </td>
+                <td>
+                    <span class="status-preview" style="background-color: ${status.color_code}15; color: ${status.color_code}; border: 1px solid ${status.color_code}30">
+                        <i class="bi ${status.icon_class}"></i>
+                        ${status.name}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="stat-icon-preview fs-4" style="color: ${status.color_code}">
+                        <i class="bi ${status.icon_class}"></i>
+                    </div>
+                </td>
+                <td>
+                    <div class="color-indicator" style="background-color: ${status.color_code}"></div>
+                    <span class="ms-1 small">${status.color_code}</span>
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark">${status.sort_order}</span>
+                </td>
+                <td>${Utils.getStatusBadge(status.is_active)}</td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="statusManager.openEditModal(${JSON.stringify(status).replace(/"/g, '&quot;')})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        ${!status.is_system ? `
+                            <button class="btn btn-sm btn-outline-danger" onclick="statusManager.deleteStatus(${status.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        ` : `
+                            <button class="btn btn-sm btn-outline-secondary" disabled title="Sistem statüleri silinemez">
+                                <i class="bi bi-lock-fill"></i>
+                            </button>
+                        `}
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    },
+
+    openAddModal() {
+        this.form.reset();
+        document.getElementById('statusId').value = '';
+        document.getElementById('modalTitle').innerText = 'Yeni Statü Ekle';
+        document.getElementById('statusCode').readOnly = false;
+        document.getElementById('systemWarning').classList.add('d-none');
+        document.getElementById('statusColor').value = '#6c757d';
+        document.getElementById('statusColorText').value = '#6c757d';
+        document.getElementById('statusIcon').value = 'bi-circle';
+        document.getElementById('iconPreview').className = 'bi bi-circle';
+        this.modal.show();
+    },
+
+    openEditModal(status) {
+        this.form.reset();
+        document.getElementById('statusId').value = status.id;
+        document.getElementById('statusName').value = status.name;
+        document.getElementById('statusCode').value = status.status_code;
+        document.getElementById('statusCode').readOnly = status.is_system == 1;
+        document.getElementById('statusColor').value = status.color_code || '#6c757d';
+        document.getElementById('statusColorText').value = status.color_code || '#6c757d';
+        document.getElementById('statusIcon').value = status.icon_class || 'bi-circle';
+        document.getElementById('iconPreview').className = 'bi ' + (status.icon_class || 'bi-circle');
+        document.getElementById('statusSortOrder').value = status.sort_order;
+        document.getElementById('statusIsActive').value = status.is_active;
+        
+        if (status.is_system == 1) {
+            document.getElementById('systemWarning').classList.remove('d-none');
+        } else {
+            document.getElementById('systemWarning').classList.add('d-none');
+        }
+
+        document.getElementById('modalTitle').innerText = 'Statü Düzenle';
+        this.modal.show();
+    },
+
+    async handleSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(this.form);
+        const data = Object.fromEntries(formData.entries());
+        const id = data.id;
+        delete data.id;
+
+        Utils.showLoading('Kaydediliyor...');
+
+        try {
+            if (id) {
+                await api.put(`/platform-admin/appointment-statuses/${id}`, data);
+                Utils.showToast('Statü başarıyla güncellendi.');
+            } else {
+                await api.post('/platform-admin/appointment-statuses', data);
+                Utils.showToast('Yeni statü başarıyla eklendi.');
+            }
+            this.modal.hide();
+            this.loadStatuses();
+        } catch (error) {
+            Utils.showError(error);
+        } finally {
+            Utils.closeLoading();
+        }
+    },
+
+    async deleteStatus(id) {
+        if (await Utils.showConfirm('Silme Onayı', 'Bu statüyü silmek istediğinize emin misiniz?')) {
+            Utils.showLoading('Siliniyor...');
+            try {
+                await api.delete(`/platform-admin/appointment-statuses/${id}`);
+                Utils.showToast('Statü silindi.');
+                this.loadStatuses();
+            } catch (error) {
+                Utils.showError(error);
+            } finally {
+                Utils.closeLoading();
+            }
+        }
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => statusManager.init());
+</script>
+{% endblock %}

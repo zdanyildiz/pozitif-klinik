@@ -530,3 +530,17 @@ LOG_LEVEL=DEBUG
 - **Inline Panel:** Modal içinde modal açılması (SweetAlert + Bootstrap) sonucu oluşan `z-index` ve odaklanma sorunları, inline (satır içi) açılır panel kullanılarak çözüldü.
 - **Performans:** Kullanıcı arama kutusuna en az 2 karakter yazdığında sunucuya istek atılarak (`/api/services/search`) sadece eşleşen sonuçlar getiriliyor.
 
+---
+
+### 39. Dinamik Randevu Statüleri Yönetimi (Platform Admin) (✅ Tamamlandı)
+**Tarih:** 2026-01-30
+- **Dinamik Statü Sistemi:** Randevu durumları ENUM yerine `sys_appointment_statuses` tablosuna bağlandı. Statüler artık dinamik olarak yönetilebiliyor.
+- **Platform Admin CRUD:** 
+  - Statülerin isim, renk, ikon ve sıralama (`sort_order`) özelliklerinin yönetilebileceği arayüz eklendi.
+  - Sistem statülerinin (pending, confirmed vb.) silinmesi veya kodunun değiştirilmesi engellenerek sistem kararlılığı korundu.
+- **Teknik Mimari:**
+  - `AppointmentStatusRepository` ve `AppointmentStatusController` oluşturuldu.
+  - `PlatformWebController` ve `platform_appointment_statuses.twig` ile SSR tabanlı yönetim arayüzü kuruldu.
+  - `Public/assets/js/config.js` güncellenerek tüm API isteklerine (POST/PUT/DELETE) otomatik CSRF token enjeksiyonu eklendi.
+- **Hata Giderme:** Sayfa yüklemelerinde yaşanan 401 JSON hata sorunu, web kontrollerindeki gereksiz middleware'lerin kaldırılmasıyla çözüldü.
+

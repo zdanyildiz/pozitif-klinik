@@ -9,6 +9,12 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Views\Twig;
 use App\Core\Attributes\Route;
 
+/**
+ * Platform (Süper Admin) Web Arayüzü
+ * 
+ * NOT: Bu controller üzerindeki rotalar CSRF korumalıdır (routes.php üzerinden).
+ * Yetkilendirme kontrolü JS tarafında localStorage üzerinden yapılmaktadır.
+ */
 class PlatformWebController
 {
     private Twig $view;
@@ -19,7 +25,7 @@ class PlatformWebController
     }
 
     /**
-     * Platform (Süper Admin) Giriş Sayfası
+     * Platform Giriş Sayfası
      */
     #[Route('GET', '/platform/login')]
     public function loginPage(Request $request, Response $response): Response
@@ -28,14 +34,24 @@ class PlatformWebController
     }
 
     /**
-     * Platform (Süper Admin) Dashboard
+     * Platform Dashboard
      */
     #[Route('GET', '/platform/dashboard')]
     public function dashboard(Request $request, Response $response): Response
     {
-        // Not: Token kontrolü JS tarafında yapılıyor (Legacy uyumluluk)
         return $this->view->render($response, 'platform_dashboard.twig', [
             'page' => 'dashboard'
+        ]);
+    }
+
+    /**
+     * Randevu Durumları Yönetimi
+     */
+    #[Route('GET', '/platform/appointment-statuses')]
+    public function appointmentStatusesPage(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'platform_appointment_statuses.twig', [
+            'page' => 'appointment-statuses'
         ]);
     }
 

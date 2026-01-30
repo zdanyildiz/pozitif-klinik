@@ -35,3 +35,4 @@ Bir YZ ajanı projeye başladığında sırasıyla şunları incelemelidir:
 4. **Loglama**: Yapılan her kritik işlem `LoggerService` üzerinden, özellikle klinik özelinde loglanmalıdır.
 5. **Geri Dönülebilirlik**: Herhangi bir şema değişikliği teklif edildiğinde, bunun `rollback` planı hazır olmalıdır.
 6. **GELİŞTİRME GÜNLÜĞÜ VE LOGLAMA (KRİTİK)**: Yeni bir geliştirme yapılırken Gelen İstek (Request), Dönen Veri (Response Payload), hangi Endpoint'in çağrıldığı ve tüm ara süreçler detaylıca loglanacaktır. Tüm geliştirme sorunsuz tamamlandığında gereksiz loglar kaldırılacaktır. Geliştirme aşamasında "Karanlık Nokta" kalmamalıdır.
+7. **MEVCUT ŞEMAYI TEYİT ETME (KRİTİK)**: Yeni bir tablo veya kolon eklemeden önce `migration/database/migrations/` altındaki ana şema dosyaları mutlaka satır satır incelenmelidir. Halihazırda var olan bir tabloyu tekrar oluşturmaya çalışmak (Örn: `sys_appointment_statuses`) sistem bütünlüğünü bozar ve hataya yol açar.

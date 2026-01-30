@@ -45,7 +45,7 @@ CREATE TABLE `cln_appointments` (
   `doctor_id` bigint(20) unsigned DEFAULT NULL,
   `type_id` bigint(20) unsigned NOT NULL,
   `appointment_date` datetime NOT NULL,
-  `status` enum('pending','confirmed','waiting','completed','cancelled') DEFAULT 'pending',
+  `status` varchar(50) DEFAULT 'pending',
   `notes` text DEFAULT NULL,
   `legacy_visit_id` bigint(20) DEFAULT NULL COMMENT 'Old System GELISNO',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -58,7 +58,8 @@ CREATE TABLE `cln_appointments` (
   CONSTRAINT `cln_appointments_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE,
   CONSTRAINT `cln_appointments_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `ptn_cards` (`id`) ON DELETE CASCADE,
   CONSTRAINT `cln_appointments_ibfk_3` FOREIGN KEY (`doctor_id`) REFERENCES `sys_users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `cln_appointments_ibfk_4` FOREIGN KEY (`type_id`) REFERENCES `cln_appointment_types` (`id`)
+  CONSTRAINT `cln_appointments_ibfk_4` FOREIGN KEY (`type_id`) REFERENCES `cln_appointment_types` (`id`),
+  CONSTRAINT `fk_appointment_status` FOREIGN KEY (`status`) REFERENCES `sys_appointment_statuses` (`status_code`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. Randevu Kalemleri (Adisyon)

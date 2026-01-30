@@ -106,4 +106,29 @@ CREATE TABLE `sys_icd10` (
   KEY `idx_icd_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 7. Randevu Durumları (Dinamik Statü Sistemi)
+DROP TABLE IF EXISTS `sys_appointment_statuses`;
+CREATE TABLE `sys_appointment_statuses` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `status_code` varchar(50) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `color_code` varchar(20) DEFAULT '#6c757d',
+  `icon_class` varchar(50) DEFAULT 'bi-circle',
+  `sort_order` int(11) DEFAULT 0,
+  `is_system` tinyint(1) DEFAULT 0,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `status_code` (`status_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `sys_appointment_statuses` (`status_code`, `name`, `color_code`, `icon_class`, `is_system`, `sort_order`) VALUES
+('pending', 'Bekliyor', '#ffc107', 'bi-hourglass-split', 1, 1),
+('confirmed', 'Onaylandı', '#0d6efd', 'bi-check-lg', 1, 2),
+('waiting', 'Klinikte Bekliyor', '#fd7e14', 'bi-person-check', 1, 3),
+('in_test', 'İşlemde/Muayenede', '#0dcaf0', 'bi-heart-pulse', 1, 4),
+('completed', 'Tamamlandı', '#198754', 'bi-check-circle-fill', 1, 5),
+('cancelled', 'İptal Edildi', '#dc3545', 'bi-x-circle', 1, 6),
+('did_not_come', 'Gelmedi', '#6c757d', 'bi-dash-circle', 1, 7);
+
 SET FOREIGN_KEY_CHECKS = 1;

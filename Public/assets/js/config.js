@@ -29,13 +29,31 @@ const api = axios.create({
 
 window.api = api;
 
-// Her istekte Token ekle (Request Interceptor)
+// Her istekte Token ve CSRF ekle (Request Interceptor)
 api.interceptors.request.use(
     config => {
+        // Platform Token
         const token = localStorage.getItem('platform_token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // CSRF Token (POST, PUT, DELETE istekleri için)
+        if (['post', 'put', 'delete', 'patch'].includes(config.method.toLowerCase())) {
+            const csrfName = document.querySelector('meta[name="csrf-name"]')?.getAttribute('content');
+            const csrfValue = document.querySelector('meta[name="csrf-value"]')?.getAttribute('content');
+
+            if (csrfName && csrfValue) {
+                // Hem header hem de body'ye eklemek en güvenlisi
+                config.headers['X-CSRF-TOKEN'] = csrfValue; // Bazı yapılar için
+
+                // Eğer data nesne ise ona da ekle (Slim Guard body'de arayabilir)
+                if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
+                    config.data[csrfName] = csrfValue;
+                }
+            }
+        }
+
         return config;
     },
     error => {

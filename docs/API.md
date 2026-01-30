@@ -322,7 +322,38 @@ Sistemde log dosyası bulunan tarihlerin listesini döner.
     "data": ["2026-01-27", "2026-01-26"]
 }
 ```
+
+---
+
+### Randevu Statüsü Yönetimi (Platform Admin)
+
+Bu endpoint'ler randevu durumlarının (statülerin) dinamik olarak yönetilmesini sağlar.
+
+#### `GET /platform-admin/appointment-statuses`
+Tüm randevu statülerini sıralı olarak listeler.
+
+#### `POST /platform-admin/appointment-statuses`
+Yeni bir randevu statüsü oluşturur.
+
+**Payload:**
+```json
+{
+  "status_code": "checked_in",
+  "name": "Giriş Yaptı",
+  "color_code": "#007bff",
+  "icon_class": "bi-person-check",
+  "sort_order": 5,
+  "is_active": 1
+}
 ```
+
+#### `PUT /platform-admin/appointment-statuses/{id}`
+Mevcut bir statüyü günceller.
+> **Not:** Sistem statülerinin kodu değiştirilemez.
+
+#### `DELETE /platform-admin/appointment-statuses/{id}`
+Bir statüyü siler.
+> **Kısıtlama:** Sistem statüleri silinemez.
 
 ---
 
