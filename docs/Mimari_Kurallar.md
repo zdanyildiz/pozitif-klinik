@@ -39,6 +39,10 @@ Bu kurallar **kesindir** ve esnetilemez. Ajana önce bunları okutmalısın.
 
 
 
+6. **Frontend & UX Kuralları:**
+* **Modal İçinde Modal Yasak:** Bootstrap Modal içinde asla SweetAlert (Input içeren) veya ikinci bir Bootstrap Modal açılmamalıdır. Bu durum "Focus Trap" sorunlarına ve mobil uyumsuzluklara yol açar.
+* **Inline Panel Kullanımı:** Modal içinde ek bir işlem (örn: Hizmet Ekleme) gerekiyorsa, yeni bir pencere açmak yerine "Inline Panel" (Sayfa içi gizli/açılır div) kullanılmalıdır.
+* **JS Bağımlılıkları:** jQuery kullanımı minimize edilmeli, DOM manipülasyonları mümkün olduğunca Vanilla JS ile yapılmalıdır.
 ---
 
 ### 📋 BÖLÜM 2: GELİŞTİRME TALİMATI (PROMPT)

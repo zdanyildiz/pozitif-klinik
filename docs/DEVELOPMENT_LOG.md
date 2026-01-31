@@ -549,3 +549,15 @@ LOG_LEVEL=DEBUG
   - `Public/assets/js/config.js` üzerinden otomatik CSRF token enjeksiyonu sağlandı.
 - **Hata Giderme:** Sayfa yüklemelerinde yaşanan 401 JSON hata sorunu giderildi.
 
+
+---
+
+### 40. Randevu Ekranı Hizmet Seçimi UX İyileştirmesi (✅ Tamamlandı)
+**Tarih:** 2026-01-31
+- **Problem:** Randevu detay ekranında (Detail Modal) "Hizmet Ekle" butonuna basıldığında açılan SweetAlert modalı, Bootstrap'ın focus trap (odak hapsi) özelliği nedeniyle input erişimini engelliyordu. Kullanıcılar hizmet arama kutusuna yazamıyordu.
+- **Teknik Teşhis:** Bootstrap modalları açıldığında `tabindex="-1"` kuralı nedeniyle odağı kendi içinde hapseder. SweetAlert ikinci bir modal olarak açıldığında, `TomSelect` input'u Bootstrap modalının dışında kaldığı (veya DOM hiyerarşisinde yönetilemediği) için odaklanılamaz hale geliyordu.
+- **Çözüm (UX & Mimari):**
+  - **Inline Panel Entegrasyonu:** SweetAlert kullanımı tamamen kaldırılarak, Doktor Ekranı'nda (`clinic_examination.twig`) başarıyla kullanılan "Inline Panel" yapısı Randevu detay modalına (`clinic_appointments.twig`) taşındı.
+  - **Focus Fix (Vanilla JS):** jQuery bağımlılığı olmadan, panel açıldığında ilgili modalın `tabindex` özelliği kaldırılarak (`removeAttribute('tabindex')`) Bootstrap'ın odak hapsi devre dışı bırakıldı.
+  - **Lazy Initialization:** `TomSelect` bileşeni artık sayfa yüklendiğinde değil, sadece kullanıcı "Hizmet Ekle" panelini açtığında başlatılıyor.
+- **Sonuç:** Kullanıcılar randevu detaylarında hizmet eklerken sorunsuz bir arama ve seçim deneyimine kavuştu. Kod yapısı sadeleştirildi ve Doktor ekranı ile tutarlı hale getirildi.
