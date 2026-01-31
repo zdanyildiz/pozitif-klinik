@@ -20,18 +20,22 @@ use Slim\Exception\HttpNotFoundException;
  * 
  * Dosya yükleme ve erişim işlemleri için API uçları.
  */
+use App\Domain\Patient\PatientRepository;
+
 #[Group('/api/files')]
 #[Middleware(TenantMiddleware::class)]
 class FileController extends BaseController
 {
     private FileService $fileService;
     private LoggerInterface $logger;
+    private PatientRepository $patientRepository;
 
     public function __construct(ContainerInterface $container)
     {
         parent::__construct($container);
         $this->fileService = $container->get(FileService::class);
         $this->logger = $container->get(LoggerInterface::class);
+        $this->patientRepository = $container->get(PatientRepository::class);
     }
 
     /**
@@ -90,6 +94,43 @@ class FileController extends BaseController
                 'clinic_id' => $clinicId
             ]);
             return $this->error($response, 'Dosya yüklenirken hata oluştu: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Dosya Arama Endpoint'i
+     * GET /api/files/search
+     */
+    #[Route('GET', '/search')]
+    public function search(Request $request, Response $response): Response
+    {
+        $clinicId = $this->getClinicId($request);
+        $queryParams = $request->getQueryParams();
+
+        $filters = [
+            'module' => $queryParams['module'] ?? null,
+            'type' => $queryParams['type'] ?? null,
+            'limit' => $queryParams['limit'] ?? 50
+        ];
+
+        if (!empty($queryParams['q'])) {
+            $patients = $this->patientRepository->search($clinicId, $queryParams['q']);
+            if (!empty($patients)) {
+                $filters['patient_id'] = $patients[0]['id'];
+            } else {
+                return $this->success($response, []);
+            }
+        }
+
+        try {
+            $files = $this->fileService->searchFiles($clinicId, $filters);
+            return $this->success($response, $files);
+        } catch (\Exception $e) {
+            $this->logger->error("File search error", [
+                'error' => $e->getMessage(),
+                'clinic_id' => $clinicId
+            ]);
+            return $this->error($response, 'Dosya arama hatası: ' . $e->getMessage(), 500);
         }
     }
 

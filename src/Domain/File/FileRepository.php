@@ -85,4 +85,61 @@ class FileRepository
         $this->db->query($sql, [$clinicId, $uuid]);
         return true;
     }
+    /**
+     * Dosyaları filtreleyerek arar.
+     */
+    public function searchFiles(int $clinicId, array $filters): array
+    {
+        $params = [$clinicId];
+
+        // Temel sorgu ve JOIN'ler
+        // Not: Yeni modüller eklendikçe buraya JOIN eklenmelidir.
+        $sql = "SELECT f.*, 
+                       CASE 
+                           WHEN f.module = 'patient' THEN p.name 
+                           WHEN f.module = 'examination' THEN p_exam.name
+                           ELSE NULL 
+                       END as patient_name
+                FROM sys_files f
+                LEFT JOIN ptn_cards p ON f.module = 'patient' AND f.related_id = p.id
+                LEFT JOIN cln_examinations e ON f.module = 'examination' AND f.related_id = e.id
+                LEFT JOIN ptn_cards p_exam ON e.patient_id = p_exam.id
+                WHERE f.clinic_id = ? AND f.deleted_at IS NULL";
+
+        // Filtre: Hasta ID
+        if (!empty($filters['patient_id'])) {
+            $sql .= " AND (p.id = ? OR p_exam.id = ?)";
+            $params[] = $filters['patient_id'];
+            $params[] = $filters['patient_id'];
+        }
+
+        // Filtre: Modül
+        if (!empty($filters['module'])) {
+            $sql .= " AND f.module = ?";
+            $params[] = $filters['module'];
+        }
+
+        // Filtre: Dosya Türü
+        if (!empty($filters['type'])) {
+            if ($filters['type'] === 'image') {
+                $sql .= " AND f.mime_type LIKE 'image/%'";
+            } elseif ($filters['type'] === 'pdf') {
+                $sql .= " AND f.mime_type = 'application/pdf'";
+            } elseif ($filters['type'] === 'document') {
+                $sql .= " AND (f.mime_type LIKE 'application/msword' 
+                              OR f.mime_type LIKE 'application/vnd.openxmlformats-officedocument%' 
+                              OR f.mime_type = 'application/pdf')";
+            }
+        }
+
+        // Sıralama
+        $sql .= " ORDER BY f.created_at DESC";
+
+        // Limit
+        if (isset($filters['limit'])) {
+            $sql .= " LIMIT " . (int) $filters['limit'];
+        }
+
+        return $this->db->fetchAll($sql, $params);
+    }
 }

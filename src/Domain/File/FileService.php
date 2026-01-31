@@ -8,6 +8,8 @@ use App\Core\Service\StorageService;
 use Psr\Http\Message\UploadedFileInterface;
 use Ramsey\Uuid\Uuid;
 
+use App\Core\Security\CryptoService;
+
 /**
  * FileService
  * 
@@ -17,11 +19,16 @@ class FileService
 {
     private StorageService $storage;
     private FileRepository $repository;
+    private CryptoService $crypto;
 
-    public function __construct(StorageService $storage, FileRepository $repository)
-    {
+    public function __construct(
+        StorageService $storage,
+        FileRepository $repository,
+        CryptoService $crypto
+    ) {
         $this->storage = $storage;
         $this->repository = $repository;
+        $this->crypto = $crypto;
     }
 
     /**
@@ -109,5 +116,20 @@ class FileService
         }
 
         return $this->repository->softDelete($clinicId, $uuid, $userId);
+    }
+    /**
+     * Dosyaları arar.
+     */
+    public function searchFiles(int $clinicId, array $filters): array
+    {
+        $files = $this->repository->searchFiles($clinicId, $filters);
+
+        foreach ($files as &$file) {
+            if (!empty($file['patient_name'])) {
+                $file['patient_name'] = $this->crypto->decrypt($file['patient_name']) ?? $file['patient_name'];
+            }
+        }
+
+        return $files;
     }
 }

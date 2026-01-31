@@ -758,6 +758,59 @@ Tanımlı hizmet kategorilerinin listesini döner.
   "status": true,
   "data": ["Estetik", "Muayene", "Tedavi"]
 }
+```
+
+---
+
+## Domain API (Dosya Yönetimi)
+
+Dosya yükleme, arama ve indirme işlemleri.
+
+### `POST /api/files/upload`
+Sisteme dosya yükler.
+
+**Payload (Multipart/Form-Data):**
+- `file`: (Binary) Yüklenecek dosya
+- `module`: (String) Kaynak modül (örn: `patient`, `examination`)
+- `related_id`: (Int) İlgili kaydın ID'si
+
+### `GET /api/files/search`
+Kriterlere göre dosya arar.
+
+**Query Params:**
+- `q` (string): Hasta adı ile arama (Opsiyonel)
+- `module` (string): Modül filtresi (Opsiyonel)
+- `type` (string): Dosya tipi (`image`, `pdf`, `document`) (Opsiyonel)
+- `limit` (int): Kayıt limiti (Varsayılan: 50)
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 101,
+      "clinic_id": 1,
+      "module": "patient",
+      "related_id": 15,
+      "original_name": "onam_formu.pdf",
+      "mime_type": "application/pdf",
+      "size_kb": 250,
+      "uuid": "550e8400-e29b-41d4-a716-446655440000",
+      "patient_name": "Ahmet Yılmaz",
+      "created_at": "2026-01-30 14:00:00"
+    }
+  ]
+}
+```
+
+### `GET /api/files/view/{uuid}`
+Dosya içeriğini indirir veya görüntüler (Inline).
+
+### `DELETE /api/files/{uuid}`
+Dosyayı siler (Soft Delete).
+
+---
 
 ### Klinik Ayarları (Tenant)
 
