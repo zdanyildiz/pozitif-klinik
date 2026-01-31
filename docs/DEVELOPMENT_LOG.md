@@ -554,10 +554,27 @@ LOG_LEVEL=DEBUG
 
 ### 40. Randevu Ekranı Hizmet Seçimi UX İyileştirmesi (✅ Tamamlandı)
 **Tarih:** 2026-01-31
-- **Problem:** Randevu detay ekranında (Detail Modal) "Hizmet Ekle" butonuna basıldığında açılan SweetAlert modalı, Bootstrap'ın focus trap (odak hapsi) özelliği nedeniyle input erişimini engelliyordu. Kullanıcılar hizmet arama kutusuna yazamıyordu.
-- **Teknik Teşhis:** Bootstrap modalları açıldığında `tabindex="-1"` kuralı nedeniyle odağı kendi içinde hapseder. SweetAlert ikinci bir modal olarak açıldığında, `TomSelect` input'u Bootstrap modalının dışında kaldığı (veya DOM hiyerarşisinde yönetilemediği) için odaklanılamaz hale geliyordu.
-- **Çözüm (UX & Mimari):**
-  - **Inline Panel Entegrasyonu:** SweetAlert kullanımı tamamen kaldırılarak, Doktor Ekranı'nda (`clinic_examination.twig`) başarıyla kullanılan "Inline Panel" yapısı Randevu detay modalına (`clinic_appointments.twig`) taşındı.
-  - **Focus Fix (Vanilla JS):** jQuery bağımlılığı olmadan, panel açıldığında ilgili modalın `tabindex` özelliği kaldırılarak (`removeAttribute('tabindex')`) Bootstrap'ın odak hapsi devre dışı bırakıldı.
-  - **Lazy Initialization:** `TomSelect` bileşeni artık sayfa yüklendiğinde değil, sadece kullanıcı "Hizmet Ekle" panelini açtığında başlatılıyor.
-- **Sonuç:** Kullanıcılar randevu detaylarında hizmet eklerken sorunsuz bir arama ve seçim deneyimine kavuştu. Kod yapısı sadeleştirildi ve Doktor ekranı ile tutarlı hale getirildi.
+- [ ] **FEATURE:** Randevu detay ekranında randevu notlarının gösterilmesi (Backend & Frontend)
+- [ ] **FEATURE:** Randevu listesinde "Geldi" statüsüne hızlı geçiş butonu
+- [x] **PLAN:** Dosya ve Laboratuvar Modülü Mimarisi Belirlendi (`docs/Gelistirme_Dosya_ve_Lab_Mimarisi.md`)
+- [x] **FEATURE:** Dosya Modülü (Files Module) Geliştirmesi `docs/Files_Module_Implementation_Plan.md`
+    - [x] DB: `sys_files` tablosu
+    - [x] Backend: `StorageService` ve `FileRepository`
+    - [x] API: `FileController` ve Endpoints
+    - [x] Frontend: Dosya yükleme ve görüntüleme UI
+
+### 41. Dosya ve Belge Yönetim Modülü (✅ Tamamlandı)
+**Tarih:** 2026-01-31
+- **Mimari:** Güvenli, ölçeklenebilir ve multi-tenant (klinik izoleli) dosya yönetim altyapısı kuruldu.
+- **Backend:**
+  - `StorageService`: Fiziksel dosya işlemleri (Hash isimlendirme, Yıl/Ay klasör yapısı, Güvenli Path Traversal koruması).
+  - `FileRepository`: Dosya metadata yönetimi (sys_files tablosu).
+  - `FileController`: API uçları (Upload, List, View, Delete).
+- **Güvenlik:**
+  - Dosyalar Web Root dışında `/var/uploads` dizininde saklanıyor.
+  - Erişim sadece UUID üzerinden ve `TenantMiddleware` korumalı API ile sağlanıyor.
+  - Dosya içerikleri stream edilerek sunuluyor.
+- **Frontend:**
+  - **Component:** `file_manager.twig` ile her sayfaya kolayca entegre edilebilen modüler yapı.
+  - **Logic:** `file-manager.js` ile modern, asenkron dosya yükleme ve listeleme arayüzü.
+  - **Kullanım:** Hasta kartları, Lab sonuçları ve Faturalar gibi modüllere tek satırda entegre edilebilir.

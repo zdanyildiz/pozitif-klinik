@@ -147,4 +147,31 @@ return [
         $settings = $c->get('settings');
         return new LogReaderService($settings['settings']['logger']['path']);
     },
+
+    // --- Dosya Modülü Servisleri ---
+
+    // Storage Service (Fiziksel Dosya Yönetimi)
+    \App\Core\Service\StorageService::class => function (ContainerInterface $c) {
+        return new \App\Core\Service\StorageService(); // Varsayılan: project_root/var/uploads
+    },
+
+    // File Repository (Veritabanı)
+    \App\Domain\File\FileRepository::class => function (ContainerInterface $c) {
+        return new \App\Domain\File\FileRepository(
+            $c->get(Database::class)
+        );
+    },
+
+    // File Service (Domain Logic)
+    \App\Domain\File\FileService::class => function (ContainerInterface $c) {
+        return new \App\Domain\File\FileService(
+            $c->get(\App\Core\Service\StorageService::class),
+            $c->get(\App\Domain\File\FileRepository::class)
+        );
+    },
+
+    // File Controller
+    \App\Domain\File\FileController::class => function (ContainerInterface $c) {
+        return new \App\Domain\File\FileController($c);
+    },
 ];
