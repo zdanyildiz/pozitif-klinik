@@ -16,7 +16,7 @@
             <input type="file" id="file_upload_input_{{ related_id }}" class="d-none">
         </div>
     </div>
-    <div class="card-body p-0" id="file_list_container_{{ related_id }}" style="min-height: 50px;">
+    <div class="card-body p-0 file-drop-zone" id="file_list_container_{{ related_id }}" style="min-height: 50px;">
         {% if files is defined and files is not empty %}
             <ul class="list-group list-group-flush">
                 {% for file in files %}
@@ -30,9 +30,15 @@
                                 <i class="bi bi-file-earmark fs-4 me-3 text-primary"></i>
                             {% endif %}
                             <div>
-                                <a href="/api/files/view/{{ file.uuid }}" target="_blank" class="text-decoration-none fw-bold text-dark">
-                                    {{ file.original_name }}
-                                </a>
+                                {% if 'image' in file.mime_type %}
+                                    <a href="/api/files/view/{{ file.uuid }}" class="preview-file text-decoration-none fw-bold text-dark" data-title="{{ file.original_name }}">
+                                        {{ file.original_name }}
+                                    </a>
+                                {% else %}
+                                    <a href="/api/files/view/{{ file.uuid }}" target="_blank" class="text-decoration-none fw-bold text-dark">
+                                        {{ file.original_name }}
+                                    </a>
+                                {% endif %}
                                 <div class="small text-muted">
                                     {{ (file.size_kb / 1024)|number_format(2) }} MB • {{ file.created_at|date('d.m.Y') }}
                                 </div>
@@ -48,7 +54,7 @@
         {% else %}
             <div class="text-center p-3 text-muted" id="empty_file_list_{{ related_id }}">
                 {% if files is defined %}
-                    Henüz dosya yüklenmemiş.
+                    Henüz dosya yüklenmemiş. <br><small>Dosyayı buraya sürükleyip bırakabilirsiniz.</small>
                 {% else %}
                     <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                     Yükleniyor...
@@ -57,6 +63,24 @@
         {% endif %}
     </div>
 </div>
+
+<style>
+    .file-drop-zone {
+        transition: all 0.2s ease-in-out;
+        border: 2px dashed transparent;
+        position: relative;
+    }
+    .file-drop-zone.drag-over {
+        border-color: #0d6efd; /* Primary color */
+        background-color: rgba(13, 110, 253, 0.05);
+        z-index: 10;
+    }
+    /* Lightbox Modal Styles Fix */
+    #lightboxImage {
+        object-fit: contain;
+        max-width: 100%;
+    }
+</style>
 
 <script src="/assets/js/file-manager.js"></script>
 <script>

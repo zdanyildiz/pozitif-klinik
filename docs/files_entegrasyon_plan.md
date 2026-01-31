@@ -60,5 +60,5 @@ Dosya yönetiminin kullanıcının iş akışına dahil edilmesi.
 
 1.  **Aşama 1:** `FileRepository` arama metodlarının geliştirilmesi ve API desteği. ✅ **(TAMAMLANDI)**
 2.  **Aşama 2:** Merkezi "Dijital Arşiv" sayfasının (SSR) ve menü linkinin oluşturulması. ✅ **(TAMAMLANDI)**
-3.  **Aşama 3:** Hasta detay ve muayene sayfalarındaki mevcut bileşenlerin aktive edilmesi.
-4.  **Aşama 4:** UX iyileştirmeleri (Drag&Drop, Önizleme).
+3.  **Aşama 3:** Hasta detay ve muayene sayfalarındaki mevcut bileşenlerin aktive edilmesi. ✅ **(TAMAMLANDI)**
+4.  **Aşama 4:** UX iyileştirmeleri (Drag&Drop, Önizleme). ✅ **(TAMAMLANDI)**
