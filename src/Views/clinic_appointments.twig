@@ -229,6 +229,19 @@
                                 </button>
                             </div>
 
+                            <!-- Inline Service Selection Panel (Hidden by default) -->
+                            <div id="serviceSelectionPanel" class="bg-light p-3 rounded mb-3" style="display: none;">
+                                <label class="form-label small fw-bold text-muted">Hizmet Seçiniz:</label>
+                                <div class="d-flex gap-2">
+                                    <div class="flex-grow-1">
+                                        <select id="inlineServiceSelect" class="form-select" placeholder="Hizmet adı veya kodu ile arayın..."></select>
+                                    </div>
+                                    <button class="btn btn-success" id="btnConfirmAddService">
+                                        <i class="bi bi-check-lg"></i> Ekle
+                                    </button>
+                                </div>
+                            </div>
+
                             <table class="table billing-table">
                                 <thead>
                                     <tr>

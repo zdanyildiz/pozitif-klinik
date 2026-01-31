@@ -7,7 +7,7 @@ let appointments = [];
 let appointmentTypes = [];
 let patients = [];
 let doctors = [];
-let services = [];
+// let services = []; // Artık global liste kullanılmıyor, TomSelect uzak arama yapıyor
 let appointmentStatuses = [];
 let detailModal;
 let appointmentModal;
@@ -17,6 +17,7 @@ let currentTypeId = null; // Düzenleme için tür ID'si
 let patientTomSelect = null;
 let doctorTomSelect = null;
 let serviceTomSelect = null; // Hizmet seçimi için TomSelect
+let billingServiceTomSelect = null; // Detay ekranı inline hizmet seçimi
 let filterMode = 'date'; // 'date' | 'week'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -33,10 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadStatuses(),
         loadPatients(),
         loadDoctors(),
-        loadServices(),
         loadStats()
     ]);
 
+    renderServiceOptionsForTypes();
     loadAppointments();
 });
 
@@ -117,7 +118,8 @@ function setupEventListeners() {
         window.location.href = API_URL + '/admin/login';
     });
 
-    document.getElementById('btnAddService').addEventListener('click', handleAddServiceToBilling);
+    document.getElementById('btnAddService').addEventListener('click', toggleServicePanel);
+    document.getElementById('btnConfirmAddService').addEventListener('click', handleConfirmAddService);
     document.getElementById('btnUpdateDetails').addEventListener('click', handleSaveDetails);
 
     // ==========================================
@@ -148,6 +150,14 @@ function setupEventListeners() {
             loadAvailableSlots();
         });
     });
+
+    // DOKTOR EKRANI KURGUSU: Modal açılınca başlat
+    const typeModalEl = document.getElementById('typeModal');
+    if (typeModalEl) {
+        typeModalEl.addEventListener('shown.bs.modal', function () {
+            initTypeServiceSelect();
+        });
+    }
 }
 
 // ==========================================
@@ -264,14 +274,8 @@ async function loadDoctors() {
 }
 
 async function loadServices() {
-    try {
-        const res = await api.get('/api/services');
-        services = res.data || [];
-        renderServiceOptionsForTypes(); // Hizmetler yüklendikten sonra dropdown'ı doldur
-    } catch (e) {
-        console.error('Hizmetler yüklenirken hata:', e);
-        services = [];
-    }
+    // Bu fonksiyon artık kullanılmıyor, yerine TomSelect remote search kullanılıyor.
+    console.log('loadServices() devre dışı bırakıldı.');
 }
 async function loadStatuses() {
     try {
@@ -507,62 +511,93 @@ function renderTypeList() {
 // Hizmet dropdown'ını randevu türleri modalına doldur (TomSelect ile aranabilir)
 let serviceSelectInitialized = false;
 
-function renderServiceOptionsForTypes() {
+function initTypeServiceSelect() {
     const sel = document.getElementById('typeServiceSelect');
     if (!sel) return;
 
-    // TomSelect varsa temizle ve yeniden doldur
-    if (serviceTomSelect) {
-        serviceTomSelect.destroy();
-        serviceTomSelect = null;
-    }
+    // Zaten başlatılmışsa çık
+    if (serviceTomSelect) return;
 
-    // Önce normal select'i doldur
-    sel.innerHTML = '<option value="">-- Hizmet Seçin (Opsiyonel) --</option>';
-    services.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = `${s.name} - ${parseFloat(s.price).toFixed(2)}₺ (KDV: %${s.tax_rate || 0})`;
-        opt.dataset.price = s.price;
-        opt.dataset.taxRate = s.tax_rate;
-        sel.appendChild(opt);
-    });
-
-    // TomSelect başlat (aranabilir dropdown)
+    // TomSelect başlat (Remote Search) - DOKTOR EKRANIYLA AYNI AYARLAR
     serviceTomSelect = new TomSelect('#typeServiceSelect', {
-        create: false,
-        sortField: { field: 'text', direction: 'asc' },
-        placeholder: 'Hizmet ara...',
+        valueField: 'id',
+        labelField: 'name',
+        searchField: ['name'],
+        placeholder: 'Hizmet ara (en az 2 karakter)...',
+        preload: false,
+        loadThrottle: 500,
         allowEmptyOption: true,
+        // dropdownParent: 'body', // KALDIRILDI - DOKTOR EKRANINDA YOK
+        load: function (query, callback) {
+            if (query.length < 2) return callback();
+            api.get(`/api/services/search?q=${encodeURIComponent(query)}`)
+                .then(res => {
+                    if (res.data && Array.isArray(res.data)) {
+                        const results = res.data.map(s => ({
+                            id: s.id,
+                            name: s.name,
+                            price: parseFloat(s.price || 0),
+                            tax_rate: parseFloat(s.tax_rate || 0),
+                            code: s.code || ''
+                        }));
+                        callback(results);
+                    } else {
+                        callback();
+                    }
+                })
+                .catch(err => {
+                    console.error('Service search error:', err);
+                    callback();
+                });
+        },
         render: {
             option: function (data, escape) {
-                return `<div class="py-1">${escape(data.text)}</div>`;
-            }
+                return `<div class="py-2 px-3 border-bottom">
+                    <div class="fw-bold text-primary">${escape(data.name)}</div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <small class="text-muted">${data.code ? escape(data.code) : ''}</small>
+                        <div class="fw-bold text-success">${parseFloat(data.price).toFixed(2)} ₺</div>
+                    </div>
+                </div>`;
+            },
+            item: function (data, escape) {
+                return `<div>${escape(data.name)} <span class="text-muted ms-2">(${parseFloat(data.price).toFixed(2)} ₺)</span></div>`;
+            },
+            no_results: (data, escape) => `<div class="no-results p-2">"${escape(data.input)}" için sonuç bulunamadı</div>`,
+            loading: (data, escape) => `<div class="spinner-border spinner-border-sm text-primary m-2" role="status"></div> Aranıyor...`
         },
         onChange: function (value) {
-            handleServiceChange(value);
+            if (!value) {
+                handleServiceChange(null, null);
+                return;
+            }
+            const s = this.options[value];
+            handleServiceChange(value, s);
         }
     });
 }
 
+function renderServiceOptionsForTypes() {
+    // Bu fonksiyon artık modal tetiklendiğinde initTypeServiceSelect'i çağırıyor
+    console.log('Hizmet seçimi modal açılışına bağlandı.');
+}
+
 // Hizmet seçildiğinde fiyatı otomatik doldur
-function handleServiceChange(serviceId) {
+function handleServiceChange(serviceId, serviceData) {
     const priceHint = document.getElementById('servicePriceHint');
     const priceValue = document.getElementById('servicePriceValue');
     const defaultPriceInput = document.getElementById('typeDefaultPrice');
 
-    if (serviceId) {
-        const service = services.find(s => s.id == serviceId);
-        if (service) {
-            const price = parseFloat(service.price).toFixed(2);
-            const taxRate = service.tax_rate || 0;
-            priceHint.style.display = 'block';
-            priceValue.textContent = `${price}₺ (KDV: %${taxRate})`;
-            defaultPriceInput.value = price;
-            return;
-        }
+    if (serviceId && serviceData) {
+        const price = parseFloat(serviceData.price).toFixed(2);
+        const taxRate = serviceData.tax_rate || 0;
+        priceHint.style.display = 'block';
+        priceValue.textContent = `${price}₺ (KDV: %${taxRate})`;
+        defaultPriceInput.value = price;
+    } else {
+        priceHint.style.display = 'none';
+        // defaultPriceInput.value = '0.00'; // Opsiyonel: Fiyatı sıfırlama
     }
-    priceHint.style.display = 'none';
 }
 
 // ==========================================
@@ -687,57 +722,108 @@ function renderBillingItems(items, total) {
     document.getElementById('billingGrandTotal').textContent = parseFloat(total).toFixed(2) + ' ₺';
 }
 
-async function handleAddServiceToBilling() {
-    const { value: serviceId } = await Swal.fire({
-        title: 'Hizmet Seçin',
-        html: '<select id="swalServiceSelect" class="form-select"></select>',
-        showCancelButton: true,
-        confirmButtonText: 'Ekle',
-        cancelButtonText: 'İptal',
-        didOpen: () => {
-            const select = document.getElementById('swalServiceSelect');
-            const options = services.map(s => ({
-                id: s.id,
-                name: s.name,
-                price: s.price
-            }));
+async function toggleServicePanel() {
+    const panel = document.getElementById('serviceSelectionPanel');
+    if (!panel) return;
 
-            new TomSelect('#swalServiceSelect', {
-                options: options,
-                valueField: 'id',
-                labelField: 'name',
-                searchField: ['name'],
-                placeholder: 'Hizmet ara...',
-                render: {
-                    option: function (data, escape) {
-                        return `<div><span class="fw-bold">${escape(data.name)}</span> <small class="text-muted">(${escape(parseFloat(data.price).toFixed(2))} ₺)</small></div>`;
-                    },
-                    item: function (data, escape) {
-                        return `<div>${escape(data.name)}</div>`;
-                    }
-                }
-            });
-        },
-        preConfirm: () => {
-            return document.getElementById('swalServiceSelect').value;
-        }
-    });
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
 
-    if (serviceId) {
-        const s = services.find(x => x.id == serviceId);
-        try {
-            await api.post(`/api/appointments/${currentAppointmentId}/items`, {
-                service_id: s.id,
-                item_name: s.name,
-                unit_price: s.price,
-                quantity: 1
-            });
-            refreshDetail();
-        } catch (e) {
-            Utils.showError('Hizmet eklenemedi');
+        // CRITICAL FIX: Bootstrap focus hapsini kır (Vanilla JS)
+        const modal = document.getElementById('detailModal');
+        if (modal) modal.removeAttribute('tabindex');
+
+        // TomSelect başlat
+        if (!billingServiceTomSelect) {
+            initBillingServiceSelect();
         }
+    } else {
+        panel.style.display = 'none';
+        if (billingServiceTomSelect) billingServiceTomSelect.clear();
     }
 }
+
+function initBillingServiceSelect() {
+    billingServiceTomSelect = new TomSelect('#inlineServiceSelect', {
+        valueField: 'id',
+        labelField: 'name',
+        searchField: ['name'],
+        placeholder: 'Hizmet ara...',
+        preload: false,
+        loadThrottle: 500,
+        // dropdownParent: 'body', // Disable for inline feeling, relying on focus fix
+        load: function (query, callback) {
+            if (query.length < 2) return callback();
+            api.get(`/api/services/search?q=${encodeURIComponent(query)}`)
+                .then(res => {
+                    if (res.data && Array.isArray(res.data)) {
+                        const results = res.data.map(s => ({
+                            id: s.id,
+                            name: s.name,
+                            price: parseFloat(s.price || 0),
+                            tax_rate: parseFloat(s.tax_rate || 0),
+                            code: s.code || ''
+                        }));
+                        callback(results);
+                    } else {
+                        callback();
+                    }
+                })
+                .catch(err => {
+                    console.error('Service search error:', err);
+                    callback();
+                });
+        },
+        render: {
+            option: function (data, escape) {
+                return `<div class="py-2 px-3 border-bottom">
+                    <div class="fw-bold text-primary">${escape(data.name)}</div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <small class="text-muted">${data.code ? escape(data.code) : ''}</small>
+                        <div class="fw-bold text-success">${parseFloat(data.price).toFixed(2)} ₺</div>
+                    </div>
+                </div>`;
+            },
+            item: function (data, escape) {
+                return `<div>${escape(data.name)} <span class="text-muted ms-2">(${parseFloat(data.price).toFixed(2)} ₺)</span></div>`;
+            },
+            no_results: (data, escape) => `<div class="no-results p-2">"${escape(data.input)}" için sonuç bulunamadı</div>`,
+            loading: (data, escape) => `<div class="spinner-border spinner-border-sm text-primary m-2" role="status"></div> Aranıyor...`
+        }
+    });
+}
+
+async function handleConfirmAddService() {
+    if (!billingServiceTomSelect) return;
+    const val = billingServiceTomSelect.getValue();
+    if (!val) {
+        Utils.showError('Lütfen bir hizmet seçin');
+        return;
+    }
+
+    const s = billingServiceTomSelect.options[val];
+
+    try {
+        await api.post(`/api/appointments/${currentAppointmentId}/items`, {
+            service_id: s.id,
+            item_name: s.name,
+            unit_price: s.price,
+            quantity: 1
+        });
+
+        Utils.showSuccess('Hizmet eklendi');
+
+        // Paneli gizle ve temizle
+        document.getElementById('serviceSelectionPanel').style.display = 'none';
+        billingServiceTomSelect.clear();
+
+        // Detayı yenile
+        viewDetail(currentAppointmentId);
+    } catch (e) {
+        Utils.showError('Hizmet eklenemedi');
+    }
+}
+
 
 async function removeBillingItem(itemId) {
     const res = await Swal.fire({
@@ -810,7 +896,18 @@ function editType(id) {
 
     // TomSelect ile hizmet seçimini ayarla
     if (serviceTomSelect) {
-        serviceTomSelect.setValue(type.service_id || '', true); // silent=true
+        if (type.service_id) {
+            // Mevcut hizmeti seçeneklere ekle (yoksa gösterilmez)
+            serviceTomSelect.addOption({
+                id: type.service_id,
+                name: type.service_name,
+                price: type.service_price,
+                tax_rate: type.service_tax_rate
+            });
+            serviceTomSelect.setValue(type.service_id, true); // silent=true
+        } else {
+            serviceTomSelect.clear(true);
+        }
     }
 
     // Hizmet seçiliyse fiyat bilgisini göster
