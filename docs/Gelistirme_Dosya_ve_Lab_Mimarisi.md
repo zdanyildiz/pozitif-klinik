@@ -87,15 +87,15 @@ Klinik, bir laboratuvar isteği oluşturduğunda iki şekilde sonuçlandırabili
 
 ---
 
-## 3. Migration Stratejisi (Eski Sistemden Geçiş)
+## 3. Migration Stratejisi ve Sonuçları (Güncelleme: 31.01.2026)
 
-Eski MSSQL sistemindeki verilerin bu yeni yapıya aktarılması için yapılacaklar:
+Eski MSSQL sistemindeki verilerin bu yeni yapıya aktarılması süreci tamamlanmıştır:
 
-1.  **BLOB (Binary) Verilerin Kurtarılması:**
-    *   `HST_LAB_RAPOR` ve `HST_LAB_PATOLOJI` gibi tablolardaki `IMAGE` kolonları okunacak.
-    *   Bu veriler fiziksel dosya (`.pdf`, `.jpg`) olarak diske kaydedilecek.
-    *   Yeni oluşan dosya yolları `sys_files` tablosuna işlenecek.
+1.  **BLOB (Binary) Veriler:**
+    *   `HST_LAB_RAPOR` ve `HST_TIBBI_DOSYALAR` tabloları incelenmiş, içerisinde **0 (sıfır)** kayıt bulunmuştur.
+    *   Bu nedenle herhangi bir PDF/JPG dosyası aktarımı **yapılmamıştır/gerekmemiştir**.
 
-2.  **Yapısal Sonuçların Aktarımı:**
-    *   `HST_LAB_BIYOKIMYA` vb. tablolardaki sayısal veriler okunacak.
-    *   Bu veriler `cln_lab_result_items` tablosuna aktarılarak, eski hastaların geçmiş değerlerinin kaybolmaması sağlanacak.
+2.  **Yapısal Sonuçların Aktarımı (TAMAMLANDI):**
+    *   `HST_LAB_BIYOKIMYA` tablosunda yaklaşık 800+ sayısal veri tespit edilmiştir.
+    *   Bu veriler `scripts/migrate_lab_data.js` aracı ile yeni `cln_lab_results` ve `cln_lab_result_items` tablolarına başarıyla aktarılmıştır.
+    *   Eski sistemdeki "referans aralıkları" ve "anormallik" durumları korunmuştur.

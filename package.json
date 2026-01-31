@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "file-type": "^21.3.0",
     "mssql": "^12.2.0",
-    "mysql2": "^3.16.2"
+    "mysql2": "^3.16.2",
+    "uuid": "^13.0.0"
   }
 }

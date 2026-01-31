@@ -67,7 +67,8 @@ Frontend ve mobil uygulamalar için API uçlarının oluşturulması.
     - `src/Views/components/file_manager.twig` componenti oluşturuldu.
     - `public/assets/js/file-manager.js` dosyası oluşturuldu.
 
-## 🧪 Aşama 5: Test ve Doğrulama
-- Farklı klinikler arası izolasyon testi.
-- Yetkisiz erişim testi.
-- Dosya yükleme/silme senaryoları.
+## 🧪 Aşama 5: Test ve Doğrulama ✅
+- Farklı klinikler arası izolasyon testi. ✅
+- Yetkisiz erişim testi. ✅
+- Dosya yükleme/silme senaryoları. ✅
+

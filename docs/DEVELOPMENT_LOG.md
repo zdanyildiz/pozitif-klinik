@@ -578,3 +578,24 @@ LOG_LEVEL=DEBUG
   - **Component:** `file_manager.twig` ile her sayfaya kolayca entegre edilebilen modüler yapı.
   - **Logic:** `file-manager.js` ile modern, asenkron dosya yükleme ve listeleme arayüzü.
   - **Kullanım:** Hasta kartları, Lab sonuçları ve Faturalar gibi modüllere tek satırda entegre edilebilir.
+### 42. Veri Temizliği ve Onarımı (Duplicate Cleanup) (✅ Tamamlandı)
+**Tarih:** 2026-01-31
+- **Problem:** `cln_appointment_items` tablosunda mükerrer (duplicate) kayıtlar tespit edildi (aynı hizmet, aynı fiyat, aynı randevuya birden fazla kez eklenmiş).
+- **Çözüm:** SQL tabanlı temizlik yapıldı.
+  - Önce mükerrer kayıtlar gruplandırılarak (`appointment_id`, `service_id` vb.) tespit edildi.
+  - ID'si büyük olan (sonradan eklenen) mükerrer kayıtlar silindi.
+  - Toplam 38 fazlalık satır temizlendi.
+- **Sonuç:** Veri bütünlüğü sağlandı, mükerrer ücretlendirme riski ortadan kalktı.
+
+### 43. Laboratuvar Veri Göçü (Legacy Migration) (✅ Tamamlandı)
+**Tarih:** 2026-01-31
+- **Analiz:** Eski MSSQL veritabanı incelendi.
+  - `HST_LAB_RAPOR` (Binary PDF) tablosunun boş olduğu görüldü.
+  - Ancak `HST_LAB_BIYOKIMYA` tablosunda 800+ adet sayısal (structured) test sonucu bulundu.
+- **Mimari Karar:** PDF taşımak yerine, bu sayısal verilerin yeni sisteme yapısal olarak aktarılmasına karar verildi.
+- **Veritabanı:**
+  - `cln_lab_results` (Sonuç Başlığı) ve `cln_lab_result_items` (Test Değerleri) tabloları oluşturuldu.
+- **Aktarım (Migration):**
+  - `scripts/migrate_lab_data.js` yazılarak eski `GELISNO` (Visit ID) üzerinden randevu eşleştirmesi yapıldı.
+  - 826 adet laboratuvar sonucu başarıyla yeni sisteme taşındı.
+  - Referans aralıkları ve anormallik durumları (`SINIRDISINDA`) korundu.
