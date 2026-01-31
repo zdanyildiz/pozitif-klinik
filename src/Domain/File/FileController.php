@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\File;
 
 use App\Core\BaseController;
+use App\Core\Attributes\Route;
+use App\Core\Attributes\Group;
+use App\Core\Attributes\Middleware;
+use App\Middleware\TenantMiddleware;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Log\LoggerInterface;
 use Slim\Exception\HttpNotFoundException;
 
 /**
@@ -15,25 +20,25 @@ use Slim\Exception\HttpNotFoundException;
  * 
  * Dosya yükleme ve erişim işlemleri için API uçları.
  */
+#[Group('/api/files')]
+#[Middleware(TenantMiddleware::class)]
 class FileController extends BaseController
 {
     private FileService $fileService;
+    private LoggerInterface $logger;
 
     public function __construct(ContainerInterface $container)
     {
         parent::__construct($container);
         $this->fileService = $container->get(FileService::class);
+        $this->logger = $container->get(LoggerInterface::class);
     }
 
     /**
      * Dosya Yükleme Endpoint'i
      * POST /api/files/upload
-     * 
-     * Body Params:
-     * - module: string (patient, lab, vb.)
-     * - related_id: int
-     * - file: Binary file content
      */
+    #[Route('POST', '/upload')]
     public function upload(Request $request, Response $response): Response
     {
         $clinicId = $this->getClinicId($request);
@@ -71,10 +76,19 @@ class FileController extends BaseController
                 $userId
             );
 
+            $this->logger->info("File uploaded", [
+                'clinic_id' => $clinicId,
+                'module' => $module,
+                'related_id' => $relatedId,
+                'file_uuid' => $result['uuid']
+            ]);
+
             return $this->createdResponse($response, $result, 'Dosya başarıyla yüklendi.');
         } catch (\Exception $e) {
-            // Loglama yapılması iyi olur
-            // $this->logger->error(...)
+            $this->logger->error("File upload error", [
+                'error' => $e->getMessage(),
+                'clinic_id' => $clinicId
+            ]);
             return $this->error($response, 'Dosya yüklenirken hata oluştu: ' . $e->getMessage(), 500);
         }
     }
@@ -83,6 +97,7 @@ class FileController extends BaseController
      * Dosya Listeleme Endpoint'i
      * GET /api/files/list/{module}/{relatedId}
      */
+    #[Route('GET', '/list/{module}/{relatedId}')]
     public function list(Request $request, Response $response, array $args): Response
     {
         $clinicId = $this->getClinicId($request);
@@ -100,9 +115,8 @@ class FileController extends BaseController
     /**
      * Dosya Görüntüleme/İndirme Endpoint'i
      * GET /api/files/view/{uuid}
-     * 
-     * Dosyayı direkt stream eder.
      */
+    #[Route('GET', '/view/{uuid}')]
     public function view(Request $request, Response $response, array $args): Response
     {
         $clinicId = $this->getClinicId($request);
@@ -124,7 +138,7 @@ class FileController extends BaseController
             return $response
                 ->withHeader('Content-Type', $meta['mime_type'])
                 ->withHeader('Content-Disposition', 'inline; filename="' . $meta['original_name'] . '"')
-                ->withHeader('Content-Length', (string) ($meta['size_kb'] * 1024)) // size_kb yaklaşık değer olabilir
+                ->withHeader('Content-Length', (string) ($meta['size_kb'] * 1024))
                 ->withBody($stream);
 
         } catch (\RuntimeException $e) {
@@ -138,6 +152,7 @@ class FileController extends BaseController
      * Dosya Silme Endpoint'i
      * DELETE /api/files/{uuid}
      */
+    #[Route('DELETE', '/{uuid}')]
     public function delete(Request $request, Response $response, array $args): Response
     {
         $clinicId = $this->getClinicId($request);
@@ -148,11 +163,21 @@ class FileController extends BaseController
             $success = $this->fileService->delete($clinicId, $uuid, $userId);
 
             if ($success) {
+                $this->logger->info("File deleted", [
+                    'clinic_id' => $clinicId,
+                    'file_uuid' => $uuid,
+                    'user_id' => $userId
+                ]);
                 return $this->success($response, null, 'Dosya silindi.');
             } else {
                 return $this->notFoundResponse($response, 'Dosya bulunamadı veya silinemedi.');
             }
         } catch (\Exception $e) {
+            $this->logger->error("File delete error", [
+                'error' => $e->getMessage(),
+                'clinic_id' => $clinicId,
+                'file_uuid' => $uuid
+            ]);
             return $this->error($response, 'Silme işleminde hata: ' . $e->getMessage(), 500);
         }
     }

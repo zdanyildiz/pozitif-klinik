@@ -34,8 +34,15 @@ class FileManager {
             });
         }
 
-        // İlk yüklemede listeyi getir
-        this.loadFiles();
+        // İlk yüklemede listeyi getir (Eğer SSR ile gelmediyse)
+        const hasSSRData = this.container && (
+            this.container.querySelector('ul') ||
+            document.getElementById(`empty_file_list_${this.relatedId}`)
+        );
+
+        if (!hasSSRData) {
+            this.loadFiles();
+        }
     }
 
     /**

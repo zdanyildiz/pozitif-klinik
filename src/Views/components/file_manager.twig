@@ -17,11 +17,44 @@
         </div>
     </div>
     <div class="card-body p-0" id="file_list_container_{{ related_id }}" style="min-height: 50px;">
-        <!-- Dosya Listesi Buraya Gelecek -->
-        <div class="text-center p-3 text-muted">
-            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Yükleniyor...
-        </div>
+        {% if files is defined and files is not empty %}
+            <ul class="list-group list-group-flush">
+                {% for file in files %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            {% if 'image' in file.mime_type %}
+                                <i class="bi bi-file-earmark-image fs-4 me-3 text-primary"></i>
+                            {% elif 'pdf' in file.mime_type %}
+                                <i class="bi bi-file-earmark-pdf fs-4 me-3 text-primary"></i>
+                            {% else %}
+                                <i class="bi bi-file-earmark fs-4 me-3 text-primary"></i>
+                            {% endif %}
+                            <div>
+                                <a href="/api/files/view/{{ file.uuid }}" target="_blank" class="text-decoration-none fw-bold text-dark">
+                                    {{ file.original_name }}
+                                </a>
+                                <div class="small text-muted">
+                                    {{ (file.size_kb / 1024)|number_format(2) }} MB • {{ file.created_at|date('d.m.Y') }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-sm btn-outline-danger btn-delete-file" data-uuid="{{ file.uuid }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="text-center p-3 text-muted" id="empty_file_list_{{ related_id }}">
+                {% if files is defined %}
+                    Henüz dosya yüklenmemiş.
+                {% else %}
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Yükleniyor...
+                {% endif %}
+            </div>
+        {% endif %}
     </div>
 </div>
 

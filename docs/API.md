@@ -901,6 +901,60 @@ Randevuya hizmet/kalem ekler.
 
 ### `DELETE /api/appointments/{id}/items/{itemId}`
 Randevudan bir kalem siler.
+
+---
+
+## Domain API (Dosya Yönetimi)
+
+Tüm modüller için merkezi dosya depolama sistemi.
+
+### `POST /api/files/upload`
+Sisteme dosya yükler. Multi-part form-data formatında gönderilmelidir.
+
+**Payload (Form Data):**
+- `file`: Dosya içeriği (binary)
+- `module`: 'patient', 'lab', 'invoice', 'examination' vb.
+- `related_id`: Bağlı olduğu kaydın ID'si.
+
+**Başarılı Yanıt (201 Created):**
+```json
+{
+  "status": true,
+  "message": "Dosya başarıyla yüklendi.",
+  "data": {
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "original_name": "rontgen.jpg",
+    "mime_type": "image/jpeg",
+    "size_kb": 150
+  }
+}
+```
+
+### `GET /api/files/list/{module}/{relatedId}`
+Belirli bir modüle ve kayda ait dosyaları listeler.
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "uuid": "...",
+      "original_name": "test.pdf",
+      "mime_type": "application/pdf",
+      "size_kb": 1200,
+      "created_at": "2026-01-31 15:00:00"
+    }
+  ]
+}
+```
+
+### `GET /api/files/view/{uuid}`
+Dosyayı görüntüler veya indirir. Dosya içeriğini (`stream`) direkt döner.
+
+### `DELETE /api/files/{uuid}`
+Dosyayı sistemden siler (Soft delete).
+
 ---
 
 ## Web (SSR) Rotaları
