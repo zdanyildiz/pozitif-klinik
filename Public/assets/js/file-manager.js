@@ -11,6 +11,7 @@ class FileManager {
         this.containerId = config.containerId; // Liste kapsayıcısı ID
         this.uploadBtnId = config.uploadBtnId; // Yükleme butonu ID
         this.csrfToken = config.csrfToken;
+        this.listUrl = config.customListUrl || `/api/files/list/${this.module}/${this.relatedId}`;
 
         this.container = document.getElementById(this.containerId);
         this.uploadInput = document.getElementById(this.uploadBtnId); // Input type=file elem
@@ -102,7 +103,7 @@ class FileManager {
         this.container.innerHTML = '<div class="text-center p-3">Yükleniyor...</div>';
 
         try {
-            const response = await fetch(`/api/files/list/${this.module}/${this.relatedId}`, {
+            const response = await fetch(this.listUrl, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json'

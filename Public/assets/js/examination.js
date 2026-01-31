@@ -8,6 +8,7 @@ let currentExaminationId = null;
 let diagnosisTomSelect = null;
 let billingModal = null;
 let allServices = [];
+let examFileManager = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Get appointment ID from URL
@@ -62,6 +63,7 @@ async function loadCurrentExamination() {
         if (examRes.data) {
             fillExaminationForm(examRes.data);
             currentExaminationId = examRes.data.id;
+            initExamFileManager(currentExaminationId);
         }
     } catch (e) {
         console.error('Examination load error:', e);
@@ -404,7 +406,10 @@ async function handleSave() {
             res = await api.put(`/api/examinations/${currentExaminationId}`, data);
         } else {
             res = await api.post('/api/examinations', data);
-            if (res.id) currentExaminationId = res.id;
+            if (res.data && res.data.id) {
+                currentExaminationId = res.data.id;
+                initExamFileManager(currentExaminationId);
+            }
         }
 
         Utils.showToast('Muayene başarıyla kaydedildi');
@@ -432,3 +437,21 @@ window.addText = (targetId, text) => {
     }
     el.focus();
 };
+
+/**
+ * Dosya Yöneticisini Başlat
+ */
+function initExamFileManager(examId) {
+    if (!examId) return;
+
+    // Arayüzü göster
+    document.getElementById('examFilesSection').style.display = 'block';
+
+    examFileManager = new FileManager({
+        module: 'examination',
+        relatedId: examId,
+        containerId: 'exam_file_list',
+        uploadBtnId: 'exam_file_upload',
+        csrfToken: window.csrfToken || ''
+    });
+}

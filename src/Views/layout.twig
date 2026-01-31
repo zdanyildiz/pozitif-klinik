@@ -19,6 +19,9 @@
     <!-- Using absolute paths for assets to be safe -->
     <link href="{{ base_path }}/assets/css/dashboard.css?v={{ version }}" rel="stylesheet">
     
+    <meta name="csrf-name" content="{{ csrf.name }}">
+    <meta name="csrf-value" content="{{ csrf.value }}">
+    
     {% block head %}{% endblock %}
 </head>
 <body>

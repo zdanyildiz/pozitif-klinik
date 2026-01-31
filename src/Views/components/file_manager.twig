@@ -66,7 +66,7 @@
             relatedId: {{ related_id }},
             containerId: 'file_list_container_{{ related_id }}',
             uploadBtnId: 'file_upload_input_{{ related_id }}',
-            csrfToken: '{{ csrf.getTokenValue() }}'
+            csrfToken: '{{ csrf.value }}'
         });
     });
 </script>
