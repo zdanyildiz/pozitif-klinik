@@ -885,7 +885,7 @@ function getStatusLabel(s) {
     const status = appointmentStatuses.find(x => x.status_code === s);
     if (status) return status.name;
 
-    const labels = { pending: 'Bekliyor', waiting: 'Klinikte', in_test: 'İşlemde', completed: 'Tamamlandı', cancelled: 'İptal', no_show: 'Gelmedi' };
+    const labels = { unconfirmed: 'Onay Bekliyor', confirmed: 'Onaylandı', waiting: 'Klinikte', in_test: 'İşlemde', completed: 'Tamamlandı', cancelled: 'İptal', did_not_come: 'Gelmedi' };
     return labels[s] || s;
 }
 

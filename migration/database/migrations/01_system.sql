@@ -123,12 +123,12 @@ CREATE TABLE `sys_appointment_statuses` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `sys_appointment_statuses` (`status_code`, `name`, `color_code`, `icon_class`, `is_system`, `sort_order`) VALUES
-('pending', 'Bekliyor', '#ffc107', 'bi-hourglass-split', 1, 1),
-('confirmed', 'Onaylandı', '#0d6efd', 'bi-check-lg', 1, 2),
-('waiting', 'Klinikte Bekliyor', '#fd7e14', 'bi-person-check', 1, 3),
-('in_test', 'İşlemde/Muayenede', '#0dcaf0', 'bi-heart-pulse', 1, 4),
-('completed', 'Tamamlandı', '#198754', 'bi-check-circle-fill', 1, 5),
-('cancelled', 'İptal Edildi', '#dc3545', 'bi-x-circle', 1, 6),
-('did_not_come', 'Gelmedi', '#6c757d', 'bi-dash-circle', 1, 7);
+('unconfirmed', 'Onay Bekliyor', '#6c757d', 'bi-patch-question', 1, 0),
+('confirmed', 'Onaylandı', '#0d6efd', 'bi-check-lg', 1, 1),
+('waiting', 'Klinikte Bekliyor', '#fd7e14', 'bi-person-check', 1, 2),
+('in_test', 'İşlemde/Muayenede', '#0dcaf0', 'bi-heart-pulse', 1, 3),
+('completed', 'Tamamlandı', '#198754', 'bi-check-circle-fill', 1, 4),
+('cancelled', 'İptal Edildi', '#dc3545', 'bi-x-circle', 1, 5),
+('did_not_come', 'Gelmedi', '#6c757d', 'bi-dash-circle', 1, 6);
 
 SET FOREIGN_KEY_CHECKS = 1;

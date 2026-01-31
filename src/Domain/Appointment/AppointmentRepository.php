@@ -59,7 +59,7 @@ class AppointmentRepository
         $endTime = (clone $startTime)->modify("+{$durationMinutes} minutes");
 
         // Aktif statüler (iptal ve gelmedi olanlar hariç)
-        $activeStatuses = ['pending', 'confirmed', 'waiting', 'in_test'];
+        $activeStatuses = ['unconfirmed', 'confirmed', 'waiting', 'in_test'];
         $statusPlaceholders = implode(',', array_fill(0, count($activeStatuses), '?'));
 
         $sql = "SELECT 
@@ -361,7 +361,7 @@ class AppointmentRepository
      */
     private function getDayAppointmentsForSlotCalculation(int $clinicId, string $date, ?int $doctorId = null): array
     {
-        $activeStatuses = ['pending', 'confirmed', 'waiting', 'in_test'];
+        $activeStatuses = ['unconfirmed', 'confirmed', 'waiting', 'in_test'];
         $statusPlaceholders = implode(',', array_fill(0, count($activeStatuses), '?'));
 
         $sql = "SELECT 
@@ -476,7 +476,7 @@ class AppointmentRepository
         // Boş string değerleri NULL'a çevir
         $doctorId = !empty($data['doctor_id']) ? (int) $data['doctor_id'] : null;
 
-        $status = !empty($data['status']) ? $data['status'] : 'pending';
+        $status = !empty($data['status']) ? $data['status'] : 'confirmed';
 
         // 1. Randevuyu oluştur
         $sql = "INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, notes) 
@@ -607,7 +607,7 @@ class AppointmentRepository
             $doctorId,
             $data['type_id'],
             $data['appointment_date'],
-            $data['status'] ?? 'pending',
+            $data['status'] ?? 'confirmed',
             $data['notes'] ?? null,
             $clinicId,
             $appointmentId
@@ -697,7 +697,7 @@ class AppointmentRepository
         // 2. Bekleyen randevu sayısı (pending, waiting, in_test)
         $sqlPending = "SELECT COUNT(*) as count FROM cln_appointments 
                        WHERE clinic_id = ? AND DATE(appointment_date) = ? 
-                       AND status IN ('pending', 'waiting', 'in_test')";
+                       AND status IN ('unconfirmed', 'confirmed', 'waiting', 'in_test')";
         $resPending = $this->db->fetch($sqlPending, [$clinicId, $date]);
         $pendingCount = (int) ($resPending['count'] ?? 0);
 
@@ -714,10 +714,9 @@ class AppointmentRepository
         // 1. Günlük İstatistikler
         $sqlStats = "SELECT 
             COUNT(*) as total,
-            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-            SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-            SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+            SUM(CASE WHEN status = 'unconfirmed' THEN 1 ELSE 0 END) as unconfirmed,
+            SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) as waiting,
+            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
             FROM cln_appointments 
             WHERE clinic_id = ? AND DATE(appointment_date) = ?";
 
