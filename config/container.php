@@ -166,7 +166,8 @@ return [
     \App\Domain\File\FileService::class => function (ContainerInterface $c) {
         return new \App\Domain\File\FileService(
             $c->get(\App\Core\Service\StorageService::class),
-            $c->get(\App\Domain\File\FileRepository::class)
+            $c->get(\App\Domain\File\FileRepository::class),
+            $c->get(CryptoService::class)
         );
     },
 

@@ -239,9 +239,10 @@ class DataMigrator {
     // 6. Tıbbi Kayıtları Aktarma
     async extractExaminations() {
         console.log('\n--- TIBBİ NOTLAR ---');
-        // Link: TAKIP.EPIKRIZ_ID -> EPIKRIZ.ID, EPIKRIZ.TIBBIDOSYA_ID -> TIBBI.RECORD_ID, TIBBI.GELISNO
+        // MSSQL tarafında mükerrer kayıtları önlemek için DISTINCT kullanıyoruz.
+        // Ayrıca aynı GELISNO için birebir aynı içerikleri eliyoruz.
         const result = await this.mssqlPool.request().query(`
-            SELECT 
+            SELECT DISTINCT
                 t.GELISNO,
                 et.SIKAYETLER,
                 et.HIKAYESI,
@@ -253,7 +254,14 @@ class DataMigrator {
             FROM HST_TIBBI_EPIKRIZ_TAKIP et
             INNER JOIN HST_TIBBI_EPIKRIZ e ON et.EPIKRIZ_ID = e.ID
             INNER JOIN HST_TIBBI t ON e.TIBBIDOSYA_ID = t.RECORD_ID
-            ORDER BY et.EPIKRIZ_ID
+            WHERE EXISTS (
+                SELECT 1 FROM (
+                    SELECT MIN(it.ID) as min_id 
+                    FROM HST_TIBBI_EPIKRIZ_TAKIP it
+                    GROUP BY it.EPIKRIZ_ID, CAST(it.SIKAYETLER AS NVARCHAR(MAX)), CAST(it.HIKAYESI AS NVARCHAR(MAX)), CAST(it.TESHIS AS NVARCHAR(MAX))
+                ) sub WHERE sub.min_id = et.ID
+            )
+            ORDER BY t.GELISNO
         `);
 
         const examinations = result.recordset.map(row => ({
