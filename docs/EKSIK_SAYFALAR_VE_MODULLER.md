@@ -12,6 +12,7 @@ Mevcut randevu listesinde "Bekliyor", "İşlemde" gibi durumlar var ancak doktor
     *   Hızlı tanı ekleme (Veritabanı bağlantılı ICD-10 arama).
     *   Klinik bazlı favori tanı yönetimi (Branş uyumlu).
     *   Önceki muayene notlarını aynı ekranda görme (History Sidebar).
+    *   Mevcut muayene ile ilişkili veya hastanın geçmiş laboratuvar sonuçlarının görüntülenmesi.
     *   Randevu listesinden doğrudan erişim.
 
 ## 2. Detaylı Hasta Kayıt Defteri ve Zaman Tüneli
@@ -22,6 +23,7 @@ Mevcut randevu listesinde "Bekliyor", "İşlemde" gibi durumlar var ancak doktor
     *   Hastanın tüm gelişlerinin (visit) kronolojik listesi.
     *   Her gelişte yapılan işlemler ve alınan notlar.
     *   Hastanın borç/alacak durumu.
+    *   Tüm laboratuvar sonuçlarının (biyokimya, hemogram vb.) listelenmesi ve grafiksel takibi.
     *   Yüklenen dökümanlar/görüntüler.
 *   **İlişkili Tablolar:** `ptn_cards`, `cln_appointments`, `cln_examinations`.
 
