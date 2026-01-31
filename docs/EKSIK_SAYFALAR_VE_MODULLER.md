@@ -15,9 +15,9 @@ Mevcut randevu listesinde "Bekliyor", "İşlemde" gibi durumlar var ancak doktor
     *   Mevcut muayene ile ilişkili veya hastanın geçmiş laboratuvar sonuçlarının görüntülenmesi.
     *   Randevu listesinden doğrudan erişim.
 
-## 2. Detaylı Hasta Kayıt Defteri ve Zaman Tüneli
-`patients.twig` sayfası şu an sadece liste bazlı. Bir hastanın tüm tıbbi geçmişini tek ekranda görmek kritik önemde.
-
+## 2. Detaylı Hasta Kayıt Defteri ve Zaman Tüneli [PLAN HAZIRLANDI]
+`patients.twig` sayfası şu an sadece liste bazlı. Bir hastanın tüm tıbbi geçmişini tek ekranda görmek kritik önemde. Aktarılan ~75k randevu verisinin anlamlı kullanımı bu sayfaya bağlıdır.
+*   **Detaylı Plan:** `docs/Patient_Detail_Implementation_Plan.md`
 *   **Sayfa Adı:** `Hasta Detay / Timeline` (Örn: `/admin/patients/{id}`)
 *   **İşlev:** 
     *   Hastanın tüm gelişlerinin (visit) kronolojik listesi.
