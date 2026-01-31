@@ -242,26 +242,38 @@ class DataMigrator {
         // MSSQL tarafında mükerrer kayıtları önlemek için DISTINCT kullanıyoruz.
         // Ayrıca aynı GELISNO için birebir aynı içerikleri eliyoruz.
         const result = await this.mssqlPool.request().query(`
-            SELECT DISTINCT
-                t.GELISNO,
-                et.SIKAYETLER,
-                et.HIKAYESI,
-                et.BULGULAR,
-                et.TESHIS,
-                et.TEDAVI,
-                et.SONUC,
-                et.TARIH
-            FROM HST_TIBBI_EPIKRIZ_TAKIP et
-            INNER JOIN HST_TIBBI_EPIKRIZ e ON et.EPIKRIZ_ID = e.ID
-            INNER JOIN HST_TIBBI t ON e.TIBBIDOSYA_ID = t.RECORD_ID
-            WHERE EXISTS (
-                SELECT 1 FROM (
-                    SELECT MIN(it.ID) as min_id 
-                    FROM HST_TIBBI_EPIKRIZ_TAKIP it
-                    GROUP BY it.EPIKRIZ_ID, CAST(it.SIKAYETLER AS NVARCHAR(MAX)), CAST(it.HIKAYESI AS NVARCHAR(MAX)), CAST(it.TESHIS AS NVARCHAR(MAX))
-                ) sub WHERE sub.min_id = et.ID
+            WITH RankedTakip AS (
+                SELECT 
+                    t.GELISNO,
+                    et.SIKAYETLER,
+                    et.HIKAYESI,
+                    et.BULGULAR,
+                    et.TESHIS,
+                    et.TEDAVI,
+                    et.SONUC,
+                    et.TARIH,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY 
+                            t.GELISNO, 
+                            CONVERT(VARCHAR(19), et.TARIH, 120)
+                        ORDER BY et.TARIH DESC
+                    ) as rn
+                FROM HST_TIBBI_EPIKRIZ_TAKIP et
+                INNER JOIN HST_TIBBI_EPIKRIZ e ON et.EPIKRIZ_ID = e.ID
+                INNER JOIN HST_TIBBI t ON e.TIBBIDOSYA_ID = t.RECORD_ID
             )
-            ORDER BY t.GELISNO
+            SELECT 
+                GELISNO,
+                SIKAYETLER,
+                HIKAYESI,
+                BULGULAR,
+                TESHIS,
+                TEDAVI,
+                SONUC,
+                TARIH
+            FROM RankedTakip
+            WHERE rn = 1
+            ORDER BY GELISNO
         `);
 
         const examinations = result.recordset.map(row => ({

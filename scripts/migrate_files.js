@@ -8,7 +8,7 @@ const crypto = require('crypto');
 
 // --- Configuration ---
 const CLINIC_ID = 1;
-const UPLOAD_ROOT = '/home/zafer/htdocs/pozitif-klinik/storage/app/uploads'; // Absolute path
+const UPLOAD_ROOT = '/htdocs/pozitif-klinik/storage/app/uploads'; // Absolute path
 
 // MSSQL Config (Legacy)
 const mssqlConfig = {
