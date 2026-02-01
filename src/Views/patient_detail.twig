@@ -305,38 +305,44 @@
 
             <!-- Muayene Bulguları (Varsa) -->
             <div id="examSection" class="p-4 border-bottom">
-                <h6 class="fw-bold text-primary mb-3">
-                    <i class="bi bi-file-medical me-2"></i>Klinik Notlar
-                </h6>
-                
-                <div class="mb-3">
-                    <label class="small text-muted fw-bold text-uppercase">Şikayet</label>
-                    <p class="mb-0" id="offcanvasComplaint">-</p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="small text-muted fw-bold text-uppercase">Hikaye</label>
-                    <p class="mb-0" id="offcanvasStory">-</p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="small text-muted fw-bold text-uppercase">Bulgular</label>
-                    <p class="mb-0" id="offcanvasFindings">-</p>
-                </div>
+                <div id="examData">
+                    <h6 class="fw-bold text-primary mb-3">
+                        <i class="bi bi-file-medical me-2"></i>Klinik Notlar
+                    </h6>
+                    
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold text-uppercase">Şikayet</label>
+                        <p class="mb-0" id="offcanvasComplaint">-</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold text-uppercase">Hikaye</label>
+                        <p class="mb-0" id="offcanvasStory">-</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold text-uppercase">Bulgular</label>
+                        <p class="mb-0" id="offcanvasFindings">-</p>
+                    </div>
 
-                <div class="p-3 bg-light rounded border mb-3">
-                    <label class="small text-muted fw-bold text-uppercase text-primary">Tanı (Diagnöz)</label>
-                    <p class="mb-0 fw-bold text-dark" id="offcanvasDiagnosis">-</p>
-                </div>
+                    <div class="p-3 bg-light rounded border mb-3">
+                        <label class="small text-muted fw-bold text-uppercase text-primary">Tanı (Diagnöz)</label>
+                        <p class="mb-0 fw-bold text-dark" id="offcanvasDiagnosis">-</p>
+                    </div>
 
-                <div class="mb-3">
-                    <label class="small text-muted fw-bold text-uppercase">Tedavi / Plan</label>
-                    <p class="mb-0" id="offcanvasTreatment">-</p>
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold text-uppercase">Tedavi / Plan</label>
+                        <p class="mb-0" id="offcanvasTreatment">-</p>
+                    </div>
+                    
+                     <div class="mb-0">
+                        <label class="small text-muted fw-bold text-uppercase">Sonuç Notu</label>
+                        <p class="mb-0 fst-italic text-secondary" id="offcanvasResult">-</p>
+                    </div>
                 </div>
-                
-                 <div class="mb-0">
-                    <label class="small text-muted fw-bold text-uppercase">Sonuç Notu</label>
-                    <p class="mb-0 fst-italic text-secondary" id="offcanvasResult">-</p>
+                <div id="examEmpty" class="text-center text-muted py-3 d-none">
+                    <i class="bi bi-journal-x fs-4"></i>
+                    <br>Bu randevu için doktor muayene notu girilmemiş.
                 </div>
             </div>
 
@@ -439,12 +445,16 @@
 
             // Exam Details
             const examSection = document.getElementById('examSection');
+            const examData = document.getElementById('examData');
+            const examEmpty = document.getElementById('examEmpty');
+
             if (exam) {
-                examSection.classList.remove('d-none');
+                examData.classList.remove('d-none');
+                examEmpty.classList.add('d-none');
                 
                 const setText = (id, val) => {
                     const el = document.getElementById(id);
-                    el.textContent = val || '-';
+                    if (el) el.textContent = val || '-';
                 };
 
                 setText('offcanvasComplaint', exam.complaint);
@@ -454,7 +464,8 @@
                 setText('offcanvasTreatment', exam.treatment);
                 setText('offcanvasResult', exam.result_note);
             } else {
-                examSection.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-journal-x fs-4"></i><br>Bu randevu için doktor muayene notu girilmemiş.</div>';
+                examData.classList.add('d-none');
+                examEmpty.classList.remove('d-none');
             }
 
             // Services / Items
