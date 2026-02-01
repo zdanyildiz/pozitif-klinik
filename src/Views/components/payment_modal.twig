@@ -1,0 +1,72 @@
+{# Payment Modal Component #}
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-wallet2 me-2 text-primary"></i>Tahsilat Yap
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Özet Bilgi -->
+                <div id="paymentSummaryAlert" class="alert alert-info border-0 rounded-3 mb-4 d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small opacity-75">Toplam Borç:</span>
+                        <span id="summaryTotalDebt" class="fw-bold">0.00 ₺</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <span class="small opacity-75">Kalan Borç:</span>
+                        <span id="summaryRemainingDebt" class="fw-bold text-danger fs-5">0.00 ₺</span>
+                    </div>
+                </div>
+
+                <!-- Item Breakdown -->
+                <div id="paymentItemsContainer" class="mb-4 border rounded p-3 bg-white" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+
+                <form id="paymentForm">
+                    <input type="hidden" id="paymentPatientId" name="patient_id">
+                    <input type="hidden" id="paymentAppointmentId" name="appointment_id">
+                    
+                    <!-- Dinamik Ödeme Satırları -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted mb-2">Ödeme Yöntemi ve Tutar</label>
+                        <div id="paymentRowsContainer">
+                            <!-- JS ile dinamik satırlar eklenecek -->
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100 mt-2 border-dashed py-2" id="btnAddPaymentRow">
+                            <i class="bi bi-plus-circle me-1"></i> Parçalı Ödeme Ekle
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Açıklama / Not (Opsiyonel)</label>
+                        <textarea class="form-control" name="notes" id="paymentNotes" rows="2" placeholder="Ödeme ile ilgili notlar..."></textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm" id="btnSavePayment">
+                            <i class="bi bi-check-circle me-2"></i>Tahsilatı Kaydet
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnSaveAndPrintReceipt">
+                            <i class="bi bi-printer me-2"></i>Kaydet ve Makbuz Yazdır
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-dashed {
+    border-style: dashed !important;
+}
+.payment-row {
+    animation: slideDown 0.3s ease-out;
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>

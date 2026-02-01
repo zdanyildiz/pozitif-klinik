@@ -305,6 +305,48 @@ class AppointmentController extends BaseController
         return $this->success($response, null, 'Hizmet silindi.');
     }
 
+    #[Route('PUT', '/{id:[0-9]+}/items/{itemId:[0-9]+}')]
+    public function updateItem(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $appointmentId = (int) $args['id'];
+        $itemId = (int) $args['itemId'];
+        $data = $request->getParsedBody();
+
+        if (empty($data['item_name']) || empty($data['unit_price'])) {
+            return $this->error($response, 'Hizmet adı ve fiyat gereklidir.', 400);
+        }
+
+        $calcTotal = ($data['unit_price'] * ($data['quantity'] ?? 1));
+
+        // Frontend total_price gönderiyorsa ona güvenilebilir, ama backend doğrulaması daha iyidir.
+        // Ancak indirim varsa iş değişir.
+        // İstemci tarafında: total_price = (unit * qty)
+        // İndirim backend'de ayrı tutuluyor.
+        $data['total_price'] = $calcTotal;
+
+        $userId = (int) $this->getUserId($request);
+        $this->repository->updateItem($clinicId, $appointmentId, $itemId, $data, $userId);
+
+        return $this->success($response, null, 'Hizmet güncellendi.');
+    }
+
+    #[Route('PUT', '/{id:[0-9]+}/discount')]
+    public function updateDiscount(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $appointmentId = (int) $args['id'];
+        $data = $request->getParsedBody();
+
+        $amount = (float) ($data['amount'] ?? 0);
+        $note = $data['note'] ?? null;
+        $userId = (int) $this->getUserId($request);
+
+        $this->repository->updateGeneralDiscount($clinicId, $appointmentId, $amount, $note, $userId);
+
+        return $this->success($response, null, 'Genel indirim güncellendi.');
+    }
+
     #[Route('GET', '/statuses')]
     public function listStatuses(Request $request, Response $response): Response
     {

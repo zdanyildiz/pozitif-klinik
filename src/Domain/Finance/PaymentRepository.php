@@ -35,13 +35,67 @@ class PaymentRepository
             $data['payment_type'],
             $data['amount'],
             $data['currency'] ?? 'TRY',
-            $data['payment_date'],
+            $data['payment_date'] ?? date('Y-m-d H:i:s'),
             $data['notes'] ?? null,
             $data['status'] ?? 'completed',
             $data['created_by'] ?? null
         ]);
 
-        return (int) $this->db->getConnection()->lastInsertId();
+        $paymentId = (int) $this->db->getConnection()->lastInsertId();
+
+        // Eğer randevu bazlı ise statü güncelle
+        if (!empty($data['appointment_id'])) {
+            $this->updateAppointmentPaymentStatus((int) $data['appointment_id']);
+        }
+
+        return $paymentId;
+    }
+
+    /**
+     * Parçalı ödeme (Split Payment) kaydeder.
+     */
+    public function createMultiple(int $clinicId, array $payments, int $createdBy): array
+    {
+        $ids = [];
+        $appointmentId = null;
+
+        foreach ($payments as $payment) {
+            $payment['created_by'] = $createdBy;
+            $ids[] = $this->create($clinicId, $payment);
+            if (!empty($payment['appointment_id'])) {
+                $appointmentId = (int) $payment['appointment_id'];
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Randevunun ödeme durumunu hesaplar ve günceller.
+     */
+    public function updateAppointmentPaymentStatus(int $appointmentId): void
+    {
+        // 1. Toplam Borç
+        $debtSql = "SELECT SUM(total_price) as total FROM cln_appointment_items WHERE appointment_id = ?";
+        $debt = (float) ($this->db->fetch($debtSql, [$appointmentId])['total'] ?? 0);
+
+        // 2. Toplam Ödeme
+        $paidSql = "SELECT SUM(amount) as total FROM cln_payments WHERE appointment_id = ? AND status = 'completed'";
+        $paid = (float) ($this->db->fetch($paidSql, [$appointmentId])['total'] ?? 0);
+
+        // 3. Statü Belirle
+        $status = 'unpaid';
+        if ($debt > 0) {
+            if ($paid >= $debt) {
+                $status = 'paid';
+            } elseif ($paid > 0) {
+                $status = 'partially_paid';
+            }
+        }
+
+        // 4. Güncelle
+        $updateSql = "UPDATE cln_appointments SET payment_status = ? WHERE id = ?";
+        $this->db->query($updateSql, [$status, $appointmentId]);
     }
 
     /**
@@ -49,8 +103,17 @@ class PaymentRepository
      */
     public function cancel(int $clinicId, int $paymentId): bool
     {
-        $sql = "UPDATE cln_payments SET status = 'cancelled' WHERE clinic_id = ? AND id = ?";
-        $this->db->query($sql, [$clinicId, $paymentId]);
+        // Önce ödemeyi bulalım ki appointment_id varsa orayı da güncelleyelim
+        $sql = "SELECT appointment_id FROM cln_payments WHERE clinic_id = ? AND id = ?";
+        $payment = $this->db->fetch($sql, [$clinicId, $paymentId]);
+
+        $updateSql = "UPDATE cln_payments SET status = 'cancelled' WHERE clinic_id = ? AND id = ?";
+        $this->db->query($updateSql, [$clinicId, $paymentId]);
+
+        if ($payment && !empty($payment['appointment_id'])) {
+            $this->updateAppointmentPaymentStatus((int) $payment['appointment_id']);
+        }
+
         return true;
     }
 

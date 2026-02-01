@@ -90,11 +90,14 @@
                                 <label class="form-label fw-semibold">Doktor</label>
                                 <select class="form-select" name="doctor_id" id="doctorSelect"></select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label fw-semibold">Durum</label>
-                                <select class="form-select" name="status" id="createStatusSelect">
-                                    <!-- Dynamically populated -->
-                                </select>
+                                <select class="form-select" name="status" id="createStatusSelect"></select>
+                            </div>
+                            <!-- Ücret (Dinamik) -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Ücret (₺)</label>
+                                <input type="number" step="0.01" class="form-control" name="type_price" id="appTypePrice" placeholder="0.00">
                             </div>
                         </div>
 
@@ -246,19 +249,17 @@
                                 <thead>
                                     <tr>
                                         <th>Hizmet / İşlem</th>
-                                        <th class="w-80p">Adet</th>
+                                        <th class="w-80p text-center">Adet</th>
                                         <th class="text-end w-120p">Birim Fiyat</th>
-                                        <th class="text-end w-120p">Toplam</th>
+                                        <th class="text-end w-120p">Ara Toplam</th>
+                                        <th class="w-130p">İndirim</th>
+                                        <th class="text-end w-120p">Net Tutar</th>
                                         <th class="w-50p"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="billingItemsBody"></tbody>
                             </table>
-
-                            <div class="billing-total d-flex justify-content-between mt-4">
-                                <span>Genel Toplam</span>
-                                <span id="billingGrandTotal">0,00 ₺</span>
-                            </div>
+                            <div id="billingSummaryContainer"></div>
                         </div>
                     </div>
                 </div>
@@ -321,9 +322,12 @@
             </div>
         </div>
     </div>
+    {% include "components/payment_modal.twig" %}
 {% endblock %}
+
 
 {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script src="{{ base_path }}/assets/js/finance-shared.js?v={{ version }}"></script>
     <script src="{{ base_path }}/assets/js/appointments.js?v={{ version }}"></script>
 {% endblock %}

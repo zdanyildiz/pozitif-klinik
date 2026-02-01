@@ -77,6 +77,13 @@
                         <span class="fw-bold">Bakiye</span>
                         <span class="fw-bold text-primary">{{ balance|number_format(2, ',', '.') }} TL</span>
                     </div>
+                    {% if balance > 0 %}
+                    <div class="d-grid mt-3">
+                        <button class="btn btn-success shadow-sm" onclick="openPatientPayment()">
+                            <i class="bi bi-cash-coin me-2"></i>Tahsilat Al
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -374,11 +381,28 @@
         </div>
     </div>
 </div>
+    {% include "components/payment_modal.twig" %}
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ base_path }}/assets/js/finance-shared.js?v={{ version }}"></script>
 <script src="{{ base_path }}/assets/js/file-manager.js?v={{ version }}"></script>
 <script>
+    function openPatientPayment() {
+        if (typeof PaymentModule !== 'undefined') {
+            PaymentModule.open({
+                patient_id: {{ patient.id }},
+                total_debt: {{ totalDebt }},
+                remaining_debt: {{ balance }}
+            });
+        }
+    }
+
+    // Refresh on payment
+    window.addEventListener('payment-saved', () => {
+        window.location.reload();
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
         // Init File Manager separately if needed or reuse logic
         if (typeof FileManager !== 'undefined') {

@@ -35,33 +35,51 @@ class PaymentController extends BaseController
     }
 
     /**
-     * Yeni ödeme/tahsilat oluşturur
+     * Yeni ödeme/tahsilat oluşturur (Tekli veya Parçalı)
      */
     #[Route('POST', '')]
     public function createPayment(Request $request, Response $response): Response
     {
         $clinicId = (int) $this->getClinicId($request);
         $data = $request->getParsedBody();
+        $userId = $this->getUserId($request);
 
-        // Validasyon
+        // Eğer data['payments'] varsa parçalı ödemedir
+        if (isset($data['payments']) && is_array($data['payments'])) {
+            $paymentIds = $this->paymentRepository->createMultiple($clinicId, $data['payments'], $userId);
+
+            $this->getLogger($clinicId)->info('Multiple payments received', [
+                'count' => count($paymentIds),
+                'user_id' => $userId
+            ]);
+
+            return $this->createdResponse($response, [
+                'ids' => $paymentIds
+            ], 'Tahsilatlar başarıyla kaydedildi');
+        }
+
+        // Tekli ödeme validasyonu (Mevcut yapı)
         $validator = v::key('patient_id', v::intVal())
             ->key('appointment_id', v::optional(v::intVal()))
             ->key('amount', v::numericVal()->positive())
             ->key('payment_type', v::in(['cash', 'credit_card', 'bank_transfer', 'other']))
-            ->key('payment_date', v::dateTime())
+            ->key('payment_date', v::optional(v::dateTime()))
             ->key('notes', v::optional(v::stringType()));
 
         try {
             $validator->assert($data);
 
-            $data['created_by'] = $this->getUserId($request);
+            $data['created_by'] = $userId;
+            if (empty($data['payment_date'])) {
+                $data['payment_date'] = date('Y-m-d H:i:s');
+            }
 
             $paymentId = $this->paymentRepository->create($clinicId, $data);
 
             $this->getLogger($clinicId)->info('Payment received', [
                 'payment_id' => $paymentId,
                 'amount' => $data['amount'],
-                'user_id' => $data['created_by']
+                'user_id' => $userId
             ]);
 
             return $this->createdResponse($response, [

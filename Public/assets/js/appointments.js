@@ -129,8 +129,18 @@ function setupEventListeners() {
     // Tarih değiştiğinde slotları yükle
     document.getElementById('appDate').addEventListener('change', loadAvailableSlots);
 
-    // Tür seçildiğinde slotları yeniden yükle (süre farklı olabilir)
-    document.getElementById('typeSelect').addEventListener('change', loadAvailableSlots);
+    // Tür seçildiğinde slotları yeniden yükle ve ücreti getir
+    document.getElementById('typeSelect').addEventListener('change', (e) => {
+        loadAvailableSlots();
+        const typeId = e.target.value;
+        const type = appointmentTypes.find(t => t.id == typeId);
+        if (type) {
+            const price = (type.service_id && type.service_price) ? type.service_price : type.default_price;
+            document.getElementById('appTypePrice').value = parseFloat(price || 0).toFixed(2);
+        } else {
+            document.getElementById('appTypePrice').value = '0.00';
+        }
+    });
 
     // Doktor seçildiğinde slotları yeniden yükle
     document.getElementById('doctorSelect').addEventListener('change', loadAvailableSlots);
@@ -158,6 +168,12 @@ function setupEventListeners() {
             initTypeServiceSelect();
         });
     }
+
+    // Ödeme sonrası tabloyu yenile
+    window.addEventListener('payment-saved', () => {
+        loadAppointments();
+        loadStats();
+    });
 }
 
 // ==========================================
@@ -367,21 +383,45 @@ function renderAppointments() {
 
         // Status Column
         const tdStatus = document.createElement('td');
-        const statusBadge = document.createElement('span');
+        const statusWrapper = document.createElement('div');
+        statusWrapper.className = 'd-flex align-items-center gap-2 flex-wrap';
 
-        // Dinamik statü bilgilerini kullan (varsa)
+        // Randevu Durumu Badge (Küçük versiyon)
+        const statusBadge = document.createElement('span');
         if (app.status_name) {
             statusBadge.className = 'badge';
             statusBadge.style.backgroundColor = `${app.status_color}20`;
             statusBadge.style.color = app.status_color;
             statusBadge.style.border = `1px solid ${app.status_color}40`;
-            statusBadge.innerHTML = `<i class="bi ${app.status_icon} me-1"></i> ${app.status_name}`;
+            statusBadge.style.fontSize = '0.75rem';
+            statusBadge.innerHTML = `<i class="bi ${app.status_icon}"></i> ${app.status_name}`;
         } else {
             statusBadge.className = `badge appointment-status-${app.status}`;
+            statusBadge.style.fontSize = '0.75rem';
             statusBadge.textContent = getStatusLabel(app.status);
         }
+        statusWrapper.appendChild(statusBadge);
 
-        tdStatus.appendChild(statusBadge);
+        // Ödeme Durumu Badge (Icon-only veya çok kısa)
+        const paymentBadge = document.createElement('span');
+        paymentBadge.className = 'badge rounded-pill';
+        paymentBadge.style.fontSize = '0.7rem';
+        if (app.payment_status === 'paid') {
+            paymentBadge.className += ' bg-success';
+            paymentBadge.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+            paymentBadge.title = 'Ödendi';
+        } else if (app.payment_status === 'partially_paid') {
+            paymentBadge.className += ' bg-warning text-dark';
+            paymentBadge.innerHTML = '<i class="bi bi-clock-history"></i>';
+            paymentBadge.title = 'Parçalı Ödeme';
+        } else {
+            paymentBadge.className += ' bg-light text-muted border';
+            paymentBadge.innerHTML = '<i class="bi bi-wallet2"></i>';
+            paymentBadge.title = 'Ödenmedi';
+        }
+        statusWrapper.appendChild(paymentBadge);
+
+        tdStatus.appendChild(statusWrapper);
         row.appendChild(tdStatus);
 
         // Actions Column
@@ -389,18 +429,46 @@ function renderAppointments() {
         const actionWrapper = document.createElement('div');
         actionWrapper.className = 'd-flex justify-content-end align-items-center gap-2';
 
-        // 1. Muayene Butonu (Primary Action)
+        // 1. Tahsilat Butonu (Daha şık ve küçük)
+        if (app.payment_status !== 'paid') {
+            const btnPay = document.createElement('button');
+            btnPay.className = 'btn btn-sm btn-outline-success shadow-none';
+            btnPay.style.fontSize = '0.75rem';
+            btnPay.innerHTML = '<i class="bi bi-wallet2"></i> Tahsil';
+            btnPay.onclick = async (e) => {
+                e.stopPropagation();
+                const originalHtml = btnPay.innerHTML;
+                try {
+                    btnPay.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                    btnPay.disabled = true;
+
+                    const res = await api.get(`/api/appointments/${app.id}`);
+                    if (res.data) {
+                        openPaymentModal(res.data);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Utils.showError('Randevu bilgileri yüklenemedi.');
+                } finally {
+                    btnPay.innerHTML = originalHtml;
+                    btnPay.disabled = false;
+                }
+            };
+            actionWrapper.appendChild(btnPay);
+        }
+
+        // 2. Muayene Butonu
         const btnExam = document.createElement('button');
-        btnExam.className = 'btn btn-sm btn-exam-action';
-        btnExam.innerHTML = '<i class="bi bi-person-pulse me-1"></i> Muayene';
-        btnExam.title = 'Muayene Ekranı';
+        btnExam.className = 'btn btn-sm btn-exam-action shadow-none';
+        btnExam.style.fontSize = '0.75rem';
+        btnExam.innerHTML = '<i class="bi bi-person-pulse"></i> Muayene';
         btnExam.onclick = (e) => {
             e.stopPropagation();
             window.location.href = `${API_URL}/admin/examination?appointment_id=${app.id}`;
         };
         actionWrapper.appendChild(btnExam);
 
-        // 2. Diğer İşlemler (Secondary Actions)
+        // 3. Diğer İşlemler (Secondary Actions)
         const btnGroup = document.createElement('div');
         btnGroup.className = 'btn-group';
 
@@ -719,10 +787,18 @@ async function viewDetail(id, e) {
         typeBadgeWrapper.appendChild(badge);
         document.getElementById('detailDoctorName').textContent = app.doctor_name || '-';
         document.getElementById('detailDateTime').textContent = app.appointment_date;
-        document.getElementById('detailNotes').textContent = app.notes || 'Not yok';
+        document.getElementById('detailNotes').value = app.notes || 'Not yok';
         document.getElementById('detailStatusSelect').value = app.status;
-
-        renderBillingItems(app.items, app.total_amount);
+        // Render Billing
+        renderBillingItems(
+            app.items,
+            app.total_amount,
+            app.total_paid,
+            app.remaining_amount,
+            app.general_discount_amount,
+            app.items_subtotal, // Need to make sure backend returns this or we sum client side
+            app.items_discount_total // Need to make sure backend returns this
+        );
 
         detailModal.show();
     } catch (e) {
@@ -730,17 +806,55 @@ async function viewDetail(id, e) {
     }
 }
 
-function renderBillingItems(items, total) {
+function openPaymentModal(app) {
+    if (typeof PaymentModule !== 'undefined') {
+        PaymentModule.open({
+            patient_id: app.patient_id,
+            appointment_id: app.id,
+            total_debt: app.total_amount || 0,
+            remaining_debt: app.remaining_amount !== undefined ? app.remaining_amount : (app.total_amount || 0),
+            items: app.items || []
+        });
+    } else {
+        console.error('PaymentModule not loaded');
+    }
+}
+
+// item -> {id, item_name, quantity, unit_price, total_price (gross), discount_amount}
+function renderBillingItems(items, netTotal, totalPaid = 0, remaining = 0, generalDiscount = 0, itemsSubtotal = 0, itemsDiscountTotal = 0) {
     const tbody = document.getElementById('billingItemsBody');
     tbody.innerHTML = '';
 
+    // Header'ı güncelle (İndirim kolonları eklendiği için)
+    // Bunu JS ile yapmak yerine HTML'i güncellemem lazım ama burada dinamik tablo başlığı yok.
+    // clinic_appointments.twig dosyasında statik <thead> var. Onu da güncellemeliyim.
+    // Hızlı çözüm: Tablo başlığını burada JS ile kontrol edebiliriz veya sadece body'i doldururuz.
+    // Twig tarafında başlığı güncelleyeceğim.
+
     items.forEach(item => {
         const row = document.createElement('tr');
+        const unitPrice = parseFloat(item.unit_price);
+        const quantity = parseInt(item.quantity);
+        const grossTotal = unitPrice * quantity; // item.total_price genelde budur ama emin olmak için
+        const discount = parseFloat(item.discount_amount || 0);
+        const netLineTotal = grossTotal - discount;
+
         row.innerHTML = `
-            <td>${item.item_name}</td>
-            <td>${item.quantity}</td>
-            <td class="text-end">${parseFloat(item.unit_price).toFixed(2)} ₺</td>
-            <td class="text-end fw-bold">${parseFloat(item.total_price).toFixed(2)} ₺</td>
+            <td>
+                <div class="fw-bold">${item.item_name}</div>
+                ${item.description ? `<small class="text-muted fst-italic">${item.description}</small>` : ''}
+            </td>
+            <td class="text-center">${quantity}</td>
+            <td class="text-end">${unitPrice.toFixed(2)} ₺</td>
+            <td class="text-end text-muted">${grossTotal.toFixed(2)} ₺</td>
+            <td style="width: 130px;">
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control text-end" value="${discount > 0 ? discount.toFixed(2) : ''}" 
+                           step="0.01" min="0" onchange="updateItemDiscount(${item.id}, this.value)" placeholder="0.00">
+                    <span class="input-group-text px-1">₺</span>
+                </div>
+            </td>
+            <td class="text-end fw-bold">${netLineTotal.toFixed(2)} ₺</td>
             <td class="text-end">
                 <button class="btn btn-sm text-danger" onclick="removeBillingItem(${item.id})">
                     <i class="bi bi-trash"></i>
@@ -750,7 +864,137 @@ function renderBillingItems(items, total) {
         tbody.appendChild(row);
     });
 
-    document.getElementById('billingGrandTotal').textContent = parseFloat(total).toFixed(2) + ' ₺';
+    // Özet Bilgileri Güncelle
+    let summaryHtml = `
+        <div class="d-flex flex-column gap-2 mt-4 p-3 bg-light rounded shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">Ara Toplam:</span>
+                <span class="fw-bold">${parseFloat(itemsSubtotal).toFixed(2)} ₺</span>
+            </div>
+            
+            ${itemsDiscountTotal > 0 ? `
+            <div class="d-flex justify-content-between align-items-center small text-danger">
+                <span class="text-muted">Kalem İndirimleri:</span>
+                <span>-${parseFloat(itemsDiscountTotal).toFixed(2)} ₺</span>
+            </div>` : ''}
+
+            <div class="d-flex justify-content-between align-items-center mt-1">
+                <span class="text-muted">Genel İndirim:</span>
+                <div style="width: 140px;">
+                    <div class="input-group input-group-sm">
+                        <input type="number" id="generalDiscountInput" class="form-control text-end" 
+                               value="${parseFloat(generalDiscount) > 0 ? parseFloat(generalDiscount).toFixed(2) : ''}" 
+                               step="0.01" min="0" onchange="updateGeneralDiscount(this.value)" placeholder="İndirim">
+                        <span class="input-group-text">₺</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
+                <span class="fw-bold fs-6">Genel Toplam:</span>
+                <span class="fw-bold fs-6" id="billingGrandTotal">${parseFloat(netTotal).toFixed(2)} ₺</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center text-success">
+                <span class="text-muted">Tahsil Edilen:</span>
+                <span class="fw-bold">${parseFloat(totalPaid).toFixed(2)} ₺</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                <span class="fw-bold fs-5">Kalan Borç:</span>
+                <span class="fw-bold fs-5 text-danger">${parseFloat(remaining).toFixed(2)} ₺</span>
+            </div>
+    `;
+
+    if (remaining > 0) {
+        summaryHtml += `
+            <div class="mt-3">
+                <button class="btn btn-success w-100 py-2 shadow-sm" onclick="handleCollectPaymentFromModal()">
+                    <i class="bi bi-cash-coin me-2"></i>Tahsilat Yap
+                </button>
+            </div>
+        `;
+    } else if (netTotal > 0) {
+        summaryHtml += `
+            <div class="mt-3">
+                <div class="alert alert-success py-2 mb-0 border-0 text-center small">
+                    <i class="bi bi-check-circle-fill me-1"></i> Borç tamamen ödenmiştir.
+                </div>
+            </div>
+        `;
+    }
+
+    summaryHtml += `</div>`;
+
+    // Özeti hedeflenen container'a yerleştir
+    const summaryContainer = document.getElementById('billingSummaryContainer');
+    if (summaryContainer) {
+        summaryContainer.innerHTML = summaryHtml;
+    }
+}
+
+async function updateItemDiscount(itemId, value) {
+    const discount = parseFloat(value) || 0;
+    // Backend updateItem endpointine ihtiyacımız var ama şu an sadece PUT /{id}/items/{itemId} var
+    // ve bu endpoint miktar (quantity) vs de bekliyor olabilir.
+    // İdealde item'ı önce bulup sonra full update yapmak lazım ama bu yavaş.
+    // AppointmentController updateItem methodu sadece gönderilen fieldları güncellemeli veya biz hepsini göndermeliyiz.
+    // Şu anki item verisine ihtiyacımız var. `currentAppointmentId` ile cache'den veya DOM'dan alabiliriz.
+    // DOM'dan almak riskli.
+
+    // Hızlı çözüm: API'den veriyi al, update et.
+    try {
+        const res = await api.get(`/api/appointments/${currentAppointmentId}`);
+        const item = res.data.items.find(i => i.id == itemId);
+        if (!item) return;
+
+        await api.put(`/api/appointments/${currentAppointmentId}/items/${itemId}`, {
+            item_name: item.item_name,
+            unit_price: item.unit_price,
+            quantity: item.quantity,
+            description: item.description,
+            discount_amount: discount
+        });
+
+        refreshDetail(); // Recalculate everything
+    } catch (e) {
+        console.error(e);
+        Utils.showError('İndirim güncellenemedi');
+    }
+}
+
+async function updateGeneralDiscount(value) {
+    const discount = parseFloat(value) || 0;
+    try {
+        await api.put(`/api/appointments/${currentAppointmentId}/discount`, {
+            amount: discount
+        });
+        refreshDetail();
+    } catch (e) {
+        console.error(e);
+        Utils.showError('Genel indirim güncellenemedi');
+    }
+}
+
+function handleCollectPaymentFromModal() {
+    // 1. Detay modalını kapat (Mimari kural: Modal içinde modal yasak)
+    detailModal.hide();
+
+    // 2. Güncel veriyi çek ve ödeme modalını aç
+    // Global appointments listesi eski kalmış olabilir, her zaman sunucudan taze veri çekiyoruz.
+    api.get(`/api/appointments/${currentAppointmentId}`)
+        .then(res => {
+            const app = res.data;
+            if (app) {
+                openPaymentModal(app);
+            } else {
+                Utils.showError('Randevu verilerine ulaşılamadı.');
+            }
+        })
+        .catch(err => {
+            console.error('Payment data fetch error:', err);
+            Utils.showError('Ödeme ekranı açılırken hata oluştu.');
+        });
 }
 
 async function toggleServicePanel() {
@@ -878,7 +1122,21 @@ async function handleSaveDetails() {
     const status = document.getElementById('detailStatusSelect').value;
     try {
         await api.put(`/api/appointments/${currentAppointmentId}/status`, { status });
-        detailModal.hide();
+
+        // Eğer durum "Tamamlandı" (completed) seçildiyse ve borç varsa ödeme ekranını aç
+        if (status === 'completed') {
+            const res = await api.get(`/api/appointments/${currentAppointmentId}`);
+            const app = res.data;
+            if (app.remaining_amount > 0) {
+                detailModal.hide();
+                openPaymentModal(app);
+            } else {
+                detailModal.hide();
+            }
+        } else {
+            detailModal.hide();
+        }
+
         loadAppointments();
         loadStats();
         Utils.showSuccess('Güncellendi');
@@ -1005,7 +1263,16 @@ function resetTypeForm() {
 
 async function refreshDetail() {
     const res = await api.get(`/api/appointments/${currentAppointmentId}`);
-    renderBillingItems(res.data.items, res.data.total_amount);
+    const app = res.data;
+    renderBillingItems(
+        app.items,
+        app.total_amount,
+        app.total_paid,
+        app.remaining_amount,
+        app.general_discount_amount,
+        app.items_discount_total || 0,
+        app.items_subtotal || 0
+    );
 }
 
 // HELPERS

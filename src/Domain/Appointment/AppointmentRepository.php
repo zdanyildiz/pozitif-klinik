@@ -509,10 +509,15 @@ class AppointmentRepository
         // 2. Eğer randevu türünün bağlı hizmeti veya varsayılan fiyatı varsa, adisyona ilk kalemi ekle
         $type = $this->findTypeById($clinicId, (int) $data['type_id']);
         if ($type) {
-            // Öncelik: bağlı hizmet fiyatı, yoksa default_price
-            $price = ($type['service_id'] && $type['service_price'])
-                ? $type['service_price']
-                : $type['default_price'];
+            // Öncelik: Kullanıcının girdiği fiyat, sonra bağlı hizmet fiyatı, en son default_price
+            $price = 0;
+            if (isset($data['type_price']) && is_numeric($data['type_price'])) {
+                $price = (float) $data['type_price'];
+            } else {
+                $price = ($type['service_id'] && $type['service_price'])
+                    ? $type['service_price']
+                    : $type['default_price'];
+            }
 
             if ($price > 0) {
                 $this->addItem($clinicId, $appointmentId, [
@@ -522,7 +527,7 @@ class AppointmentRepository
                     'unit_price' => $price,
                     'total_price' => $price,
                     'performer_id' => $data['doctor_id'] ?? null
-                ], $userId); // userId'yi buraya da iletiyoruz
+                ], $userId);
             }
         }
 
@@ -555,13 +560,28 @@ class AppointmentRepository
 
         $appointment = $this->decryptAppointmentPatientName($result);
 
-        // Randevu kalemlerini (items) getir
         $appointment['items'] = $this->getItems($clinicId, $appointmentId);
 
         // Toplam tutarı hesapla
-        $appointment['total_amount'] = array_reduce($appointment['items'], function ($carry, $item) {
-            return $carry + $item['total_price'];
+        $appointment['items_subtotal'] = array_reduce($appointment['items'], function ($carry, $item) {
+            return $carry + (float) $item['total_price'];
         }, 0);
+
+        $appointment['items_discount_total'] = array_reduce($appointment['items'], function ($carry, $item) {
+            return $carry + (float) ($item['discount_amount'] ?? 0);
+        }, 0);
+
+        $appointment['general_discount_amount'] = (float) ($appointment['general_discount_amount'] ?? 0);
+
+        // Net Tutar = (Kalemler - Kalem İndirimleri) - Genel İndirim
+        $netItemsTotal = $appointment['items_subtotal'] - $appointment['items_discount_total'];
+        $appointment['total_amount'] = max(0, $netItemsTotal - $appointment['general_discount_amount']);
+
+        // Ödeme bilgileri
+        $paidSql = "SELECT COALESCE(SUM(amount), 0) as total_paid FROM cln_payments WHERE appointment_id = ? AND status = 'completed'";
+        $paidResult = $this->db->fetch($paidSql, [$appointmentId]);
+        $appointment['total_paid'] = (float) $paidResult['total_paid'];
+        $appointment['remaining_amount'] = $appointment['total_amount'] - $appointment['total_paid'];
 
         return $appointment;
     }
@@ -714,13 +734,21 @@ class AppointmentRepository
 
     public function getPatientTotalDebt(int $clinicId, int $patientId): float
     {
-        $sql = "SELECT SUM(i.total_price) as total 
-                FROM cln_appointment_items i
-                JOIN cln_appointments a ON i.appointment_id = a.id
-                WHERE i.clinic_id = ? AND a.patient_id = ?";
+        // 1. Kalemler Toplamı (İndirimler düşülmüş)
+        $sqlItems = "SELECT COALESCE(SUM(unit_price * quantity - COALESCE(discount_amount, 0)), 0) as total
+                     FROM cln_appointment_items i
+                     JOIN cln_appointments a ON i.appointment_id = a.id
+                     WHERE i.clinic_id = ? AND a.patient_id = ?";
 
-        $result = $this->db->fetch($sql, [$clinicId, $patientId]);
-        return (float) ($result['total'] ?? 0.00);
+        // 2. Genel İndirimler Toplamı
+        $sqlDiscount = "SELECT COALESCE(SUM(general_discount_amount), 0) as total
+                        FROM cln_appointments
+                        WHERE clinic_id = ? AND patient_id = ?";
+
+        $itemsTotal = (float) ($this->db->fetch($sqlItems, [$clinicId, $patientId])['total'] ?? 0);
+        $discountTotal = (float) ($this->db->fetch($sqlDiscount, [$clinicId, $patientId])['total'] ?? 0);
+
+        return max(0, $itemsTotal - $discountTotal);
     }
 
     public function getStats(int $clinicId, string $date): array
@@ -802,8 +830,8 @@ class AppointmentRepository
     {
         $sql = "INSERT INTO cln_appointment_items (
                     clinic_id, appointment_id, service_id, item_name, 
-                    quantity, unit_price, total_price, performer_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    quantity, unit_price, total_price, performer_id, discount_amount, description
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $this->db->query($sql, [
             $clinicId,
@@ -813,7 +841,9 @@ class AppointmentRepository
             $data['quantity'] ?? 1,
             $data['unit_price'],
             $data['total_price'],
-            $data['performer_id'] ?? null
+            $data['performer_id'] ?? null,
+            $data['discount_amount'] ?? 0.00,
+            $data['description'] ?? null
         ]);
 
         $itemId = (int) $this->db->getConnection()->lastInsertId();
@@ -830,6 +860,58 @@ class AppointmentRepository
         );
 
         return $itemId;
+    }
+
+    public function updateItem(int $clinicId, int $appointmentId, int $itemId, array $data, ?int $userId = null): bool
+    {
+        $sql = "UPDATE cln_appointment_items SET 
+                    item_name = ?, quantity = ?, unit_price = ?, total_price = ?, discount_amount = ?, description = ?
+                WHERE clinic_id = ? AND appointment_id = ? AND id = ?";
+
+        $this->db->query($sql, [
+            $data['item_name'],
+            $data['quantity'],
+            $data['unit_price'],
+            $data['total_price'],
+            $data['discount_amount'] ?? 0.00,
+            $data['description'] ?? null,
+            $clinicId,
+            $appointmentId,
+            $itemId
+        ]);
+
+        $this->logger->log(
+            clinicId: $clinicId,
+            action: 'APPOINTMENT_ITEM_UPDATE',
+            module: 'FINANCE',
+            userId: $userId,
+            recordId: $appointmentId,
+            recordType: 'AppointmentItem',
+            newValues: $data,
+            description: "Randevu kalemi güncellendi (#{$itemId})"
+        );
+
+        return true;
+    }
+
+    public function updateGeneralDiscount(int $clinicId, int $appointmentId, float $amount, ?string $note, ?int $userId = null): bool
+    {
+        $sql = "UPDATE cln_appointments SET general_discount_amount = ?, general_discount_note = ? 
+                WHERE clinic_id = ? AND id = ?";
+        $this->db->query($sql, [$amount, $note, $clinicId, $appointmentId]);
+
+        $this->logger->log(
+            clinicId: $clinicId,
+            action: 'APPOINTMENT_DISCOUNT_UPDATE',
+            module: 'FINANCE',
+            userId: $userId,
+            recordId: $appointmentId,
+            recordType: 'Appointment',
+            newValues: ['amount' => $amount, 'note' => $note],
+            description: "Randevu genel indirimi güncellendi: {$amount} TL"
+        );
+
+        return true;
     }
 
     public function removeItem(int $clinicId, int $appointmentId, int $itemId, ?int $userId = null): bool

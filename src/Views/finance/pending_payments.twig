@@ -54,23 +54,28 @@
     </div>
 </div>
 
-{% include 'finance/modals/payment_modal.twig' %}
+{% include 'components/payment_modal.twig' %}
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ base_path }}/assets/js/finance-shared.js?v={{ version }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Modal açıldığında verileri doldur
-    const paymentModal = document.getElementById('paymentModal');
-    paymentModal.addEventListener('show.bs.modal', event => {
-        const button = event.relatedTarget;
-        const patientId = button.getAttribute('data-patient-id');
-        const appointmentId = button.getAttribute('data-appointment-id');
-        const remaining = button.getAttribute('data-remaining');
+    // Collect buttons
+    document.querySelectorAll('.btn-collect').forEach(btn => {
+        btn.onclick = () => {
+            const data = {
+                patient_id: btn.dataset.patientId,
+                appointment_id: btn.dataset.appointmentId,
+                remaining_debt: parseFloat(btn.dataset.remaining)
+            };
+            PaymentModule.open(data);
+        };
+    });
 
-        document.getElementById('payment_patient_id').value = patientId;
-        document.getElementById('payment_appointment_id').value = appointmentId;
-        document.getElementById('payment_amount').value = remaining;
+    // Refresh on payment
+    window.addEventListener('payment-saved', () => {
+        location.reload();
     });
 });
 </script>
