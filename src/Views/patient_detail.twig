@@ -3,118 +3,7 @@
 {% block title %}{{ patient.name }} - Hasta Detayı{% endblock %}
 
 {% block head %}
-    <style>
-        .patient-header {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            color: white;
-            border-radius: 1rem;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        
-        .patient-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            background: url('data:image/svg+xml,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="white" stroke-width="2" fill="none" opacity="0.1"/></svg>') repeat;
-            opacity: 0.1;
-        }
-
-        .avatar-circle {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .info-pill {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
-            padding: 0.5rem 1rem;
-            border-radius: 50rem;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .action-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .action-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .timeline-item {
-            position: relative;
-            padding-left: 2rem;
-            padding-bottom: 2rem;
-            border-left: 2px solid #e5e7eb;
-        }
-
-        .timeline-item:last-child {
-            border-left: 2px solid transparent;
-        }
-
-        .timeline-dot {
-            position: absolute;
-            left: -0.6rem;
-            top: 0;
-            width: 1.2rem;
-            height: 1.2rem;
-            border-radius: 50%;
-            background: white;
-            border: 3px solid #6366f1;
-        }
-
-        .card-glass {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(229, 231, 235, 0.5);
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s;
-        }
-        
-        .nav-link-custom {
-            color: #6b7280;
-            font-weight: 500;
-            padding: 1rem 1.5rem;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s;
-        }
-        
-        .nav-link-custom:hover {
-            color: #4f46e5;
-            background: rgba(79, 70, 229, 0.05);
-        }
-        
-        .nav-link-custom.active {
-            color: #4f46e5;
-            border-bottom-color: #4f46e5;
-            background: transparent;
-        }
-    </style>
+    <link href="{{ base_path }}/assets/css/patient-detail.css?v={{ version }}" rel="stylesheet">
 {% endblock %}
 
 {% block page_title %}
@@ -215,17 +104,17 @@
                 <div class="card-header bg-transparent border-bottom-0 p-0">
                     <ul class="nav nav-tabs border-bottom" id="patientTabs" role="tablist">
                         <li class="nav-item">
-                            <button class="nav-link nav-link-custom active" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button">
+                            <button class="nav-link tab-link-custom active" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button">
                                 <i class="bi bi-clock-history me-2"></i>Zaman Tüneli
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link nav-link-custom" id="labs-tab" data-bs-toggle="tab" data-bs-target="#labs" type="button">
+                            <button class="nav-link tab-link-custom" id="labs-tab" data-bs-toggle="tab" data-bs-target="#labs" type="button">
                                 <i class="bi bi-eyedropper me-2"></i>Laboratuvar
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link nav-link-custom" id="files-tab" data-bs-toggle="tab" data-bs-target="#files" type="button">
+                            <button class="nav-link tab-link-custom" id="files-tab" data-bs-toggle="tab" data-bs-target="#files" type="button">
                                 <i class="bi bi-folder2-open me-2"></i>Dosyalar
                             </button>
                         </li>
