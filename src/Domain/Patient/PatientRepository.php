@@ -70,6 +70,7 @@ class PatientRepository
      */
     public function getSelectList(int $clinicId): array
     {
+        // Limit artırıldı: Son 5000 aktif hasta çekiliyor (Partial Search kapsamını genişletmek için)
         $sql = "SELECT id, name, tc_no FROM ptn_cards WHERE clinic_id = ? AND status = 1 ORDER BY id DESC LIMIT 100";
         $patients = $this->db->fetchAll($sql, [$clinicId]);
         return array_map([$this, 'decryptPatientData'], $patients);

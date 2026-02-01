@@ -42,4 +42,19 @@ Bu döküman, mevcut finans modülünün kullanıcı deneyimini (UX) artırmak, 
 
 ---
 **Durum:** Tamamlandı (Gruplandırma ve Detay Görünümü Stabilize Edildi)
-**Öncelik:** UX ve Veri Tutarlılığı
+**Bakiye:** Faz 2'ye aktarılanlar: API Tabanlı Dinamik Arama.
+
+---
+
+## 4. Gelecek Geliştirmeler (Faz 2)
+
+### 4.1. API Tabanlı Dinamik Arama (UX)
+Şu anki "Live Search" SSR (Sayfa yenileme) ile çalışmaktadır. Daha akışkan bir deneyim için:
+- JavaScript `api` instance'ı kullanılarak arka planda veri çekilmelidir.
+- Tablo içeriği JavaScript ile (DOM Manipulation veya Template Literal) güncellenmelidir.
+- Mevcut `?q=...` içeren URL parametre yapısı korunarak (History API) adres çubuğu güncel tutulmalıdır.
+
+### 4.2. Gelişmiş Raporlama
+- Gelir kalemlerinin grafiksel dökümü.
+- Doktor bazlı hakediş/ciro raporları.
+

@@ -5,10 +5,10 @@
 {% block content %}
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="/admin/finance/transactions" class="row g-3 align-items-end">
+        <form method="GET" action="/admin/finance/transactions" class="row g-3 align-items-end" id="transactionsForm">
             <div class="col-md-3">
-                <label for="search" class="form-label">Arama (TC No)</label>
-                <input type="text" class="form-control" id="search" name="q" value="{{ filters.search }}" placeholder="TC Kimlik No...">
+                <label class="form-label small">İsim / TC No</label>
+                <input type="text" name="q" class="form-control" placeholder="Tam ad veya TC..." value="{{ filters.q }}">
             </div>
             <div class="col-md-2">
                 <label for="start_date" class="form-label">Başlangıç</label>
@@ -28,7 +28,9 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-filter"></i> Filtrele</button>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Ara
+                </button>
             </div>
         </form>
     </div>
@@ -38,13 +40,13 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <div>
             <h5 class="card-title mb-0">İşlem Listesi</h5>
-            <small class="text-muted">Toplam {{ totalCount }} işlem bulundu.</small>
+            <small class="text-muted" id="totalCountDisplay">Toplam {{ totalCount }} işlem bulundu.</small>
         </div>
         <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Yazdır</button>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
+            <table class="table table-hover mb-0 align-middle" id="transactionsTable">
                 <thead>
                     <tr>
                         <th>Tarih</th>
@@ -55,73 +57,17 @@
                         <th class="text-end">İşlemler</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for item in transactions %}
-                    <tr>
-                        <td>
-                            <div class="fw-bold">{{ item.last_payment_date|date('d.m.Y') }}</div>
-                            <small class="text-muted">{{ item.last_payment_date|date('H:i') }}</small>
-                        </td>
-                        <td>
-                            <div>{{ item.patient_name }}</div>
-                            <small class="text-muted">{{ item.patient_tc }}</small>
-                        </td>
-                        <td>
-                            <span class="badge bg-light text-dark border">{{ item.payment_types_label }}</span>
-                        </td>
-                        <td>
-                            {% if item.item_count > 1 %}
-                                <span class="badge bg-info rounded-pill">{{ item.item_count }} Parçalı Ödeme</span>
-                            {% else %}
-                                <span class="text-muted">-</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-end fw-bold text-success">{{ item.total_amount|number_format(2) }} ₺</td>
-                        <td class="text-end">
-                            {% if item.appointment_id %}
-                                <button class="btn btn-sm btn-outline-primary" onclick="openPaymentDetail({{ item.appointment_id }})">
-                                    <i class="bi bi-eye"></i> Detay
-                                </button>
-                            {% else %}
-                                <button class="btn btn-sm btn-outline-secondary" disabled>
-                                    <i class="bi bi-dash-circle"></i>
-                                </button>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-5">
-                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                            Aradığınız kriterlere uygun kayıt bulunamadı.
-                        </td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="transactionTableBody">
+                    {% include 'finance/partials/transaction_rows.twig' %}
                 </tbody>
             </table>
         </div>
     </div>
     
     <!-- Pagination -->
-    {% if totalPages > 1 %}
-    <div class="card-footer d-flex justify-content-center">
-        <nav>
-            <ul class="pagination mb-0">
-                <li class="page-item {% if currentPage == 1 %}disabled{% endif %}">
-                    <a class="page-link" href="?page={{ currentPage - 1 }}&{{ filters|url_encode }}">Önceki</a>
-                </li>
-                {% for i in 1..totalPages %}
-                    <li class="page-item {% if currentPage == i %}active{% endif %}">
-                        <a class="page-link" href="?page={{ i }}&{{ filters|url_encode }}">{{ i }}</a>
-                    </li>
-                {% endfor %}
-                <li class="page-item {% if currentPage == totalPages %}disabled{% endif %}">
-                    <a class="page-link" href="?page={{ currentPage + 1 }}&{{ filters|url_encode }}">Sonraki</a>
-                </li>
-            </ul>
-        </nav>
+    <div id="paginationWrapper">
+        {% include 'finance/partials/pagination.twig' %}
     </div>
-    {% endif %}
 </div>
 
 {% include 'finance/modals/payment_detail_modal.twig' %}
@@ -130,6 +76,82 @@
 
 {% block scripts %}
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('transactionsForm');
+        const searchInput = document.querySelector('input[name="q"]');
+        let debounceTimeout = null;
+
+        // Debounced Input
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(() => {
+                    form.dispatchEvent(new Event('submit'));
+                }, 1000);
+            });
+        }
+
+        // Pagination Clicks (Delegation)
+        document.getElementById('paginationWrapper').addEventListener('click', (e) => {
+            const link = e.target.closest('.page-link');
+            if (link && !link.closest('.disabled')) {
+                e.preventDefault();
+                const url = link.href;
+                updateTable(url);
+            }
+        });
+
+        // Browser Back/Forward
+        window.addEventListener('popstate', () => {
+            updateTable(window.location.href, false);
+        });
+    });
+
+    function updateTable(url, pushState = true) {
+        const tbody = document.getElementById('transactionTableBody');
+        const paginationWrapper = document.getElementById('paginationWrapper');
+        const totalCountDisplay = document.getElementById('totalCountDisplay');
+        const table = document.getElementById('transactionsTable');
+
+        // Loading State
+        table.style.opacity = '0.5';
+
+        api.get(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => {
+                const data = res.data;
+                
+                // Update Content
+                if (data.html) {
+                    tbody.innerHTML = data.html;
+                }
+                if (data.pagination) {
+                    paginationWrapper.innerHTML = data.pagination;
+                } else {
+                    paginationWrapper.innerHTML = '';
+                }
+                if (data.totalCount !== undefined) {
+                    totalCountDisplay.innerText = `Toplam ${data.totalCount} işlem bulundu.`;
+                }
+
+                // Update URL
+                if (pushState) {
+                    history.pushState(null, '', url);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Arama sırasında bir hata oluştu. Lütfen tekrar deneyin.',
+                    confirmButtonText: 'Tamam'
+                });
+            })
+            .finally(() => {
+                table.style.opacity = '1';
+            });
+    }
+
     function openPaymentDetail(appointmentId) {
         const modalEl = document.getElementById('paymentDetailModal');
         const modal = new bootstrap.Modal(modalEl);
@@ -176,7 +198,6 @@
                 html += '<ul class="list-group">';
                 data.payments.forEach(pay => {
                     const date = new Date(pay.payment_date).toLocaleString('tr-TR');
-                    // Tip çevirisi size kalmış, basitce yazıyorum
                     html += `<li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <span class="fw-medium">${date}</span> <span class="badge bg-secondary ms-2">${pay.payment_type}</span>

@@ -19,12 +19,18 @@ class FinanceWebController
 {
     private Twig $view;
     private PaymentRepository $paymentRepository;
+    private \App\Domain\Patient\PatientRepository $patientRepository;
     private SessionService $session;
 
-    public function __construct(Twig $view, PaymentRepository $paymentRepository, SessionService $session)
-    {
+    public function __construct(
+        Twig $view,
+        PaymentRepository $paymentRepository,
+        \App\Domain\Patient\PatientRepository $patientRepository,
+        SessionService $session
+    ) {
         $this->view = $view;
         $this->paymentRepository = $paymentRepository;
+        $this->patientRepository = $patientRepository;
         $this->session = $session;
     }
 
@@ -111,15 +117,48 @@ class FinanceWebController
             'start_date' => $queryParams['start_date'] ?? null,
             'end_date' => $queryParams['end_date'] ?? null,
             'payment_type' => $queryParams['payment_type'] ?? null,
-            'search' => $queryParams['q'] ?? null,
+            'search' => null, // Blind index search bypass
+            'patient_id' => $queryParams['patient_id'] ?? null,
+            'patient_ids' => []
         ];
+
+        // "q" parametresi varsa arama yap
+        if (!empty($queryParams['q'])) {
+            $query = trim($queryParams['q']);
+            $foundIds = [];
+
+            // 1. Yöntem: Tam Eşleşme (Blind Index)
+            $exactMatches = $this->patientRepository->search($clinicId, $query);
+            foreach ($exactMatches as $p) {
+                $foundIds[] = $p['id'];
+            }
+
+            // 2. Yöntem: Eğer tam eşleşme yoksa veya az ise, "Randevu Ekranı Mantığı" ile son 100 hastayı çekip içinde ara
+            // Bu, "Sevda" yazınca "Sevda Yılmaz"ı bulmayı sağlar (En azından son eklenenlerde)
+            if (empty($foundIds)) {
+                $recentPatients = $this->patientRepository->getSelectList($clinicId);
+                foreach ($recentPatients as $p) {
+                    // Türkçe karakter duyarlı arama için mb_stripos kullanılabilir veya basit stripos
+                    if (stripos($p['name'], $query) !== false || stripos($p['tc_no'], $query) !== false) {
+                        $foundIds[] = $p['id'];
+                    }
+                }
+            }
+
+            $filters['patient_ids'] = array_unique($foundIds);
+
+            // Eğer hala hiç kimse bulunamadıysa (ne db search ne memory filter), boş küme döndür
+            if (empty($filters['patient_ids'])) {
+                $filters['patient_ids'] = [-1]; // İmkansız ID
+            }
+        }
 
         // Verileri Çek
         $transactions = $this->paymentRepository->getDetailedTransactions($clinicId, $filters, $page, $perPage);
         $totalCount = $this->paymentRepository->countDetailedTransactions($clinicId, $filters);
         $totalPages = ceil($totalCount / $perPage);
 
-        return $this->view->render($response, 'finance/transactions.twig', [
+        $viewData = [
             'transactions' => $transactions,
             'pageTitle' => 'Kasa Hareketleri',
             'page' => 'finance_transactions',
@@ -127,6 +166,26 @@ class FinanceWebController
             'totalPages' => $totalPages,
             'filters' => $queryParams,
             'totalCount' => $totalCount
-        ]);
+        ];
+
+        // AJAX Request Kontrolü
+        if ($request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest') {
+            $html = $this->view->fetch('finance/partials/transaction_rows.twig', $viewData);
+            $pagination = $this->view->fetch('finance/partials/pagination.twig', $viewData);
+
+            $payload = json_encode([
+                'status' => true,
+                'data' => [
+                    'html' => $html,
+                    'pagination' => $pagination,
+                    'totalCount' => $totalCount
+                ]
+            ]);
+
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json');
+        }
+
+        return $this->view->render($response, 'finance/transactions.twig', $viewData);
     }
 }

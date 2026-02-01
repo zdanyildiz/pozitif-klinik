@@ -614,3 +614,22 @@ LOG_LEVEL=DEBUG
 - **Sonuç:** Doktorlar artık hastanın hem güncel randevularını hem de eski sistemden gelen tüm serbest notlarını ve laboratuvar sonuçlarını tek ekranda, hatasız görebiliyor.
 
 ---
+### 45. Finans ve Kasa Yönetim Modülü (✅ Tamamlandı)
+**Tarih:** 2026-02-01
+- **Kapsam:** Tahsilat yönetimi, borçlu listesi, kasa hareketleri ve dashboard trend analizi.
+- **Akıllı Gruplandırma (Consolidation):**
+  - Migration ile gelen saniyeler farkıyla kaydedilmiş çoklu ödeme kayıtları, "Gün + Hasta" bazında akıllıca gruplandırıldı. 
+  - Hem Dashboard hem de İşlem Geçmişi sayfasında temiz bir görünüm sağlandı; parçalı veriler o günkü tek bir "Ziyaret/İşlem" satırında toplandı.
+- **Detaylı İşlem Görünümü:**
+  - `getTransactionDetailWithServices` metodu güncellenerek bir randevuya veya güne ait tüm hizmet dökümü ve ödeme geçmişi (parçalı tahsilatlar dahil) tek bir modalda birleştirildi.
+- **Dashboard Trendleri:**
+  - Haftalık ciro kıyaslaması ve trend yüzdeleri (Haftalık %Artış/Azalış) eklendi.
+  - Günlük toplam ciro ve bekleyen ödeme istatistikleri SSR (Server Side Rendering) ile hızlandırıldı.
+- **Güvenlik ve Gizlilik:**
+  - `PaymentRepository` üzerinden çekilen verilerde hasta TC numaraları ve isimleri `CryptoService` ile decrypt edilerek sunuldu.
+  - Şifreli veriler üzerinde arama yapılabilmesi için blind index (kör dizin) altyapısı desteklendi.
+- **Filtreleme ve Arama:**
+  - Tarih aralığı, ödeme tipi ve Hasta (İsim/TC) bazlı filtreleme özellikleri stabilize edildi.
+  - Yazarken otomatik filtreleme (JavaScript Debounce) özelliği Transactions sayfasında aktif edildi.
+
+---

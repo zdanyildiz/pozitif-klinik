@@ -266,15 +266,25 @@ class PaymentRepository
             $params[] = $filters['payment_type'];
         }
 
-        // Search (Şimdilik sadece TC No veya ID üzerinden)
-        // İsim araması encrypted olduğu için blind index gerektirir, burayı basit tutuyoruz.
-        if (!empty($filters['search'])) {
-            $term = $filters['search'];
-            if (is_numeric($term)) {
-                // TC No araması varsayımı (blind index varsa oraya bakılmalı, şimdilik direct check)
-                // Encrypted yapıda LIKE çalışmaz. Bu kısım Phase 3'te blind index ile geliştirilecek.
-                // Şimdilik pas geçiyoruz veya dummy implementation.
+        if (!empty($filters['patient_id'])) {
+            $sql .= " AND pm.patient_id = ?";
+            $params[] = $filters['patient_id'];
+        }
+
+        if (!empty($filters['patient_ids'])) {
+            $placeholders = implode(',', array_fill(0, count($filters['patient_ids']), '?'));
+            $sql .= " AND pm.patient_id IN ($placeholders)";
+            foreach ($filters['patient_ids'] as $pid) {
+                $params[] = $pid;
             }
+        }
+
+        // Search (İsim veya TC No üzerinden Blind Index ile)
+        if (!empty($filters['search'])) {
+            $hash = $this->crypto->blindIndex($filters['search']);
+            $sql .= " AND (p.tc_no_hash = ? OR p.name_hash = ?)";
+            $params[] = $hash;
+            $params[] = $hash;
         }
 
         // Gruplama: Sadece Gün + Hasta bazlı (Aynı gün içindeki tüm randevuları ve ödemeleri birleştirir)
@@ -324,6 +334,7 @@ class PaymentRepository
             SELECT COUNT(*) as total FROM (
                 SELECT pm.id
                 FROM cln_payments pm
+                JOIN ptn_cards p ON pm.patient_id = p.id
                 WHERE pm.clinic_id = ? AND pm.status = 'completed'
         ";
 
@@ -340,6 +351,26 @@ class PaymentRepository
         if (!empty($filters['payment_type'])) {
             $sql .= " AND pm.payment_type = ?";
             $params[] = $filters['payment_type'];
+        }
+
+        if (!empty($filters['patient_id'])) {
+            $sql .= " AND pm.patient_id = ?";
+            $params[] = $filters['patient_id'];
+        }
+
+        if (!empty($filters['patient_ids'])) {
+            $placeholders = implode(',', array_fill(0, count($filters['patient_ids']), '?'));
+            $sql .= " AND pm.patient_id IN ($placeholders)";
+            foreach ($filters['patient_ids'] as $pid) {
+                $params[] = $pid;
+            }
+        }
+
+        if (!empty($filters['search'])) {
+            $hash = $this->crypto->blindIndex($filters['search']);
+            $sql .= " AND (p.tc_no_hash = ? OR p.name_hash = ?)";
+            $params[] = $hash;
+            $params[] = $hash;
         }
 
         $sql .= " GROUP BY pm.patient_id, DATE(pm.payment_date) ) as grouped_table";

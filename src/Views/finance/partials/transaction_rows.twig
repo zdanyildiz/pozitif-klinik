@@ -1,0 +1,41 @@
+{% for item in transactions %}
+<tr>
+    <td>
+        <div class="fw-bold">{{ item.last_payment_date|date('d.m.Y') }}</div>
+        <small class="text-muted">{{ item.last_payment_date|date('H:i') }}</small>
+    </td>
+    <td>
+        <div>{{ item.patient_name }}</div>
+        <small class="text-muted">{{ item.patient_tc }}</small>
+    </td>
+    <td>
+        <span class="badge bg-light text-dark border">{{ item.payment_types_label }}</span>
+    </td>
+    <td>
+        {% if item.item_count > 1 %}
+            <span class="badge bg-info rounded-pill">{{ item.item_count }} Parçalı Ödeme</span>
+        {% else %}
+            <span class="text-muted">-</span>
+        {% endif %}
+    </td>
+    <td class="text-end fw-bold text-success">{{ item.total_amount|number_format(2) }} ₺</td>
+    <td class="text-end">
+        {% if item.appointment_id %}
+            <button class="btn btn-sm btn-outline-primary" onclick="openPaymentDetail({{ item.appointment_id }})">
+                <i class="bi bi-eye"></i> Detay
+            </button>
+        {% else %}
+            <button class="btn btn-sm btn-outline-secondary" disabled>
+                <i class="bi bi-dash-circle"></i>
+            </button>
+        {% endif %}
+    </td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="6" class="text-center text-muted py-5">
+        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+        Aradığınız kriterlere uygun kayıt bulunamadı.
+    </td>
+</tr>
+{% endfor %}

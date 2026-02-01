@@ -1,0 +1,19 @@
+{% if totalPages > 1 %}
+<div class="card-footer d-flex justify-content-center" id="paginationContainer">
+    <nav>
+        <ul class="pagination mb-0">
+            <li class="page-item {% if currentPage == 1 %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ currentPage - 1 }}&{{ filters|url_encode }}" data-page="{{ currentPage - 1 }}">Önceki</a>
+            </li>
+            {% for i in 1..totalPages %}
+                <li class="page-item {% if currentPage == i %}active{% endif %}">
+                    <a class="page-link" href="?page={{ i }}&{{ filters|url_encode }}" data-page="{{ i }}">{{ i }}</a>
+                </li>
+            {% endfor %}
+            <li class="page-item {% if currentPage == totalPages %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ currentPage + 1 }}&{{ filters|url_encode }}" data-page="{{ currentPage + 1 }}">Sonraki</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endif %}
