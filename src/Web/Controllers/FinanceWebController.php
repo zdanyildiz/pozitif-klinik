@@ -47,12 +47,32 @@ class FinanceWebController
         $pendingCount = count($pendingPayments);
         $pendingTotal = array_reduce($pendingPayments, fn($acc, $item) => $acc + $item['remaining_amount'], 0);
 
+        // Haftalık Trend Analizi
+        $thisWeekStart = date('Y-m-d', strtotime('monday this week'));
+        $thisWeekEnd = date('Y-m-d', strtotime('sunday this week'));
+        $lastWeekStart = date('Y-m-d', strtotime('monday last week'));
+        $lastWeekEnd = date('Y-m-d', strtotime('sunday last week'));
+
+        $thisWeekTotal = $this->paymentRepository->getPeriodTotal($clinicId, $thisWeekStart, $thisWeekEnd);
+        $lastWeekTotal = $this->paymentRepository->getPeriodTotal($clinicId, $lastWeekStart, $lastWeekEnd);
+
+        $trendPercent = 0;
+        if ($lastWeekTotal > 0) {
+            $trendPercent = (($thisWeekTotal - $lastWeekTotal) / $lastWeekTotal) * 100;
+        } elseif ($thisWeekTotal > 0) {
+            $trendPercent = 100; // Önceki hafta 0, bu hafta artış var -> %100 pozitif
+        }
+
         return $this->view->render($response, 'finance/dashboard.twig', [
             'summary' => $summary,
             'totalToday' => $totalToday,
             'recentTransactions' => $recentTransactions,
             'pendingCount' => $pendingCount,
             'pendingTotal' => $pendingTotal,
+            // Weekly Stats
+            'thisWeekTotal' => $thisWeekTotal,
+            'trendPercent' => $trendPercent,
+
             'pageTitle' => 'Kasa ve Finans',
             'page' => 'finance'
         ]);
@@ -76,18 +96,37 @@ class FinanceWebController
 
     /**
      * Tüm İşlemler (Histori)
+     * Filtreleme ve Pagination eklendi.
      */
     #[Route('GET', '/transactions')]
     public function transactions(Request $request, Response $response): Response
     {
         $clinicId = (int) $this->session->get('clinic_id');
-        // İleride pagination eklenebilir. Şimdilik son 100 işlem.
-        $transactions = $this->paymentRepository->getRecentTransactions($clinicId, 100);
+        $queryParams = $request->getQueryParams();
+
+        $page = (int) ($queryParams['page'] ?? 1);
+        $perPage = 20;
+
+        $filters = [
+            'start_date' => $queryParams['start_date'] ?? null,
+            'end_date' => $queryParams['end_date'] ?? null,
+            'payment_type' => $queryParams['payment_type'] ?? null,
+            'search' => $queryParams['q'] ?? null,
+        ];
+
+        // Verileri Çek
+        $transactions = $this->paymentRepository->getDetailedTransactions($clinicId, $filters, $page, $perPage);
+        $totalCount = $this->paymentRepository->countDetailedTransactions($clinicId, $filters);
+        $totalPages = ceil($totalCount / $perPage);
 
         return $this->view->render($response, 'finance/transactions.twig', [
             'transactions' => $transactions,
             'pageTitle' => 'Kasa Hareketleri',
-            'page' => 'finance_transactions'
+            'page' => 'finance_transactions',
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'filters' => $queryParams,
+            'totalCount' => $totalCount
         ]);
     }
 }

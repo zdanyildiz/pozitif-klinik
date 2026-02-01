@@ -141,19 +141,40 @@ class PaymentRepository
     }
 
     /**
+     * Belirli tarih aralığındaki toplam ciro.
+     */
+    public function getPeriodTotal(int $clinicId, string $startDate, string $endDate): float
+    {
+        $sql = "SELECT SUM(amount) as total
+                FROM cln_payments 
+                WHERE clinic_id = ? 
+                  AND DATE(payment_date) >= ?
+                  AND DATE(payment_date) <= ?
+                  AND status = 'completed'";
+
+        $result = $this->db->fetch($sql, [$clinicId, $startDate, $endDate]);
+        return (float) ($result['total'] ?? 0);
+    }
+
+    /**
      * Son alının ödemeler listesi.
      */
     public function getRecentTransactions(int $clinicId, int $limit = 20): array
     {
         $sql = "SELECT 
-                    pm.*,
+                    pm.patient_id,
+                    MAX(pm.appointment_id) as appointment_id,
+                    MAX(pm.payment_date) as payment_date,
+                    SUM(pm.amount) as amount,
+                    GROUP_CONCAT(DISTINCT pm.payment_type SEPARATOR ', ') as payment_type,
                     p.name as patient_name,
                     u.name as staff_name
                 FROM cln_payments pm
                 JOIN ptn_cards p ON pm.patient_id = p.id
                 LEFT JOIN sys_users u ON pm.created_by = u.id
-                WHERE pm.clinic_id = ?
-                ORDER BY pm.payment_date DESC
+                WHERE pm.clinic_id = ? AND pm.status = 'completed'
+                GROUP BY pm.patient_id, DATE(pm.payment_date)
+                ORDER BY payment_date DESC
                 LIMIT ?";
 
         $rows = $this->db->fetchAll($sql, [$clinicId, $limit]);
@@ -190,6 +211,209 @@ class PaymentRepository
             'total_debt' => $debt,
             'total_paid' => $paid,
             'balance' => $debt - $paid // Pozitif: Borçlu, Negatif: Alacaklı
+        ];
+    }
+    /**
+     * Gelişmiş Filtreleme ve Gruplama ile Ödeme Listesi (Pagination Destekli)
+     * Not: Aynı hasta ve aynı randevuya ait ödemeler gruplanır.
+     */
+    public function getDetailedTransactions(int $clinicId, array $filters = [], int $page = 1, int $perPage = 20): array
+    {
+        $offset = ($page - 1) * $perPage;
+        $params = [$clinicId];
+
+        // Temel Sorgu
+        $sql = "
+            SELECT 
+                DATE(pm.payment_date) as date_group,
+                pm.patient_id,
+                MAX(pm.payment_date) as last_payment_date,
+                SUM(pm.amount) as total_amount,
+                COUNT(pm.id) as item_count,
+                
+                -- Grup içindeki ödeme tiplerini birleştir (örn: Credit Card, Cash)
+                GROUP_CONCAT(DISTINCT pm.payment_type ORDER BY pm.id DESC SEPARATOR ', ') as payment_types,
+                
+                -- Hasta Bilgileri
+                p.name as patient_name,
+                p.tc_no as patient_tc,
+                
+                -- Doktor (Randevu varsa)
+                doc.name as doctor_name,
+                MAX(pm.appointment_id) as appointment_id
+                
+            FROM cln_payments pm
+            JOIN ptn_cards p ON pm.patient_id = p.id
+            LEFT JOIN cln_appointments a ON pm.appointment_id = a.id
+            LEFT JOIN sys_users doc ON a.doctor_id = doc.id
+            
+            WHERE pm.clinic_id = ? AND pm.status = 'completed'
+        ";
+
+        // Filtreler
+        if (!empty($filters['start_date'])) {
+            $sql .= " AND DATE(pm.payment_date) >= ?";
+            $params[] = $filters['start_date'];
+        }
+
+        if (!empty($filters['end_date'])) {
+            $sql .= " AND DATE(pm.payment_date) <= ?";
+            $params[] = $filters['end_date'];
+        }
+
+        if (!empty($filters['payment_type'])) {
+            $sql .= " AND pm.payment_type = ?";
+            $params[] = $filters['payment_type'];
+        }
+
+        // Search (Şimdilik sadece TC No veya ID üzerinden)
+        // İsim araması encrypted olduğu için blind index gerektirir, burayı basit tutuyoruz.
+        if (!empty($filters['search'])) {
+            $term = $filters['search'];
+            if (is_numeric($term)) {
+                // TC No araması varsayımı (blind index varsa oraya bakılmalı, şimdilik direct check)
+                // Encrypted yapıda LIKE çalışmaz. Bu kısım Phase 3'te blind index ile geliştirilecek.
+                // Şimdilik pas geçiyoruz veya dummy implementation.
+            }
+        }
+
+        // Gruplama: Sadece Gün + Hasta bazlı (Aynı gün içindeki tüm randevuları ve ödemeleri birleştirir)
+        $sql .= "
+            GROUP BY 
+                pm.patient_id,
+                DATE(pm.payment_date)
+        ";
+
+        // Sıralama ve Limit
+        $sql .= " ORDER BY last_payment_date DESC LIMIT ? OFFSET ?";
+        $params[] = $perPage;
+        $params[] = $offset;
+
+        $rows = $this->db->fetchAll($sql, $params);
+
+        // Decrypt ve Formatlama
+        return array_map(function ($row) {
+            if (!empty($row['patient_name'])) {
+                $row['patient_name'] = $this->crypto->decrypt($row['patient_name']) ?? $row['patient_name'];
+            }
+            if (!empty($row['patient_tc'])) {
+                $row['patient_tc'] = $this->crypto->decrypt($row['patient_tc']) ?? $row['patient_tc'];
+            }
+            // Tipleri formatla (örn: cash, credit_card -> Nakit, Kredi Kartı)
+            $row['payment_types_label'] = implode(', ', array_map(function ($t) {
+                return match ($t) {
+                    'cash' => 'Nakit',
+                    'credit_card' => 'Kredi Kartı',
+                    'bank_transfer' => 'Havale/EFT',
+                    'other' => 'Diğer',
+                    default => $t
+                };
+            }, explode(', ', $row['payment_types'] ?? '')));
+
+            return $row;
+        }, $rows);
+    }
+
+    /**
+     * Sayfalama için toplam kayıt sayısı
+     */
+    public function countDetailedTransactions(int $clinicId, array $filters = []): int
+    {
+        $params = [$clinicId];
+        $sql = "
+            SELECT COUNT(*) as total FROM (
+                SELECT pm.id
+                FROM cln_payments pm
+                WHERE pm.clinic_id = ? AND pm.status = 'completed'
+        ";
+
+        if (!empty($filters['start_date'])) {
+            $sql .= " AND DATE(pm.payment_date) >= ?";
+            $params[] = $filters['start_date'];
+        }
+
+        if (!empty($filters['end_date'])) {
+            $sql .= " AND DATE(pm.payment_date) <= ?";
+            $params[] = $filters['end_date'];
+        }
+
+        if (!empty($filters['payment_type'])) {
+            $sql .= " AND pm.payment_type = ?";
+            $params[] = $filters['payment_type'];
+        }
+
+        $sql .= " GROUP BY pm.patient_id, DATE(pm.payment_date) ) as grouped_table";
+
+        $result = $this->db->fetch($sql, $params);
+        return (int) ($result['total'] ?? 0);
+    }
+
+    /**
+     * Randevu Detaylı Finansal Görünüm (Modal için)
+     * Hizmetler ve Ödeme Geçmişini getirir.
+     */
+    public function getTransactionDetailWithServices(int $clinicId, int $appointmentId): array
+    {
+        // Önce referans randevuyu bul ki tarih ve hastayı bilelim
+        $refSql = "SELECT patient_id, DATE(appointment_date) as app_date FROM cln_appointments WHERE id = ?";
+        $ref = $this->db->fetch($refSql, [$appointmentId]);
+
+        if (!$ref)
+            return ['services' => [], 'payments' => [], 'summary' => []];
+
+        $patientId = (int) $ref['patient_id'];
+        $date = $ref['app_date'];
+
+        // 1. O güne ait TÜM Hizmet Kalemleri (Borçlar)
+        $itemsSql = "
+            SELECT 
+                i.*, 
+                s.name as service_name,
+                u.name as performer_name
+            FROM cln_appointment_items i
+            JOIN cln_appointments a ON i.appointment_id = a.id
+            LEFT JOIN cln_services s ON i.service_id = s.id
+            LEFT JOIN sys_users u ON i.performer_id = u.id
+            WHERE i.clinic_id = ? 
+              AND a.patient_id = ? 
+              AND DATE(a.appointment_date) = ?
+        ";
+        $items = $this->db->fetchAll($itemsSql, [$clinicId, $patientId, $date]);
+
+        // 2. O güne ait TÜM Tahsilatlar
+        $paymentsSql = "
+            SELECT * 
+            FROM cln_payments 
+            WHERE clinic_id = ? 
+              AND patient_id = ? 
+              AND DATE(payment_date) = ? 
+              AND status = 'completed'
+            ORDER BY payment_date DESC
+        ";
+        $payments = $this->db->fetchAll($paymentsSql, [$clinicId, $patientId, $date]);
+
+        // 3. Özet Hesaplama
+        $totalDebt = 0;
+        foreach ($items as $item) {
+            $totalDebt += (float) $item['total_price'];
+        }
+
+        $totalPaid = 0;
+        foreach ($payments as $p) {
+            $totalPaid += (float) $p['amount'];
+        }
+
+        return [
+            'services' => $items,
+            'payments' => $payments,
+            'summary' => [
+                'total_debt' => $totalDebt,
+                'total_paid' => $totalPaid,
+                'balance' => $totalDebt - $totalPaid
+            ],
+            'info' => [
+                'date' => $date
+            ]
         ];
     }
 }

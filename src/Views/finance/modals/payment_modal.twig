@@ -59,8 +59,8 @@ document.getElementById('btnSavePayment').addEventListener('click', async () => 
     const data = Object.fromEntries(formData.entries());
 
     try {
-        const response = await axios.post('/api/payments', data);
-        if (response.data.status) {
+        const response = await api.post('/api/payments', data);
+        if (response.status) {
             // Başarılı
             const modalEl = document.getElementById('paymentModal');
             const modal = bootstrap.Modal.getInstance(modalEl);

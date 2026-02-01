@@ -41,8 +41,17 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-white-50">Haftalık Hedef</h6>
-                        <h2 class="mb-0">-- %</h2>
+                        <h6 class="text-white-50">Haftalık Ciro</h6>
+                        <h2 class="mb-0">{{ thisWeekTotal|number_format(2) }} ₺</h2>
+                        <div class="small mt-1">
+                            {% if trendPercent > 0 %}
+                                <span class="fw-bold"><i class="bi bi-arrow-up"></i> %{{ trendPercent|number_format(1) }}</span> <span class="text-white-50">geçen haftaya göre</span>
+                            {% elseif trendPercent < 0 %}
+                                <span class="fw-bold"><i class="bi bi-arrow-down"></i> %{{ trendPercent|abs|number_format(1) }}</span> <span class="text-white-50">geçen haftaya göre</span>
+                            {% else %}
+                                <span class="text-white-50">Değişim Yok</span>
+                            {% endif %}
+                        </div>
                     </div>
                     <i class="fs-1 bi-graph-up-arrow text-white-50"></i>
                 </div>
@@ -89,30 +98,47 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover mb-0 align-middle">
                         <thead>
                             <tr>
+                                <th>Tarih</th>
                                 <th>Hasta</th>
-                                <th>Tutar</th>
-                                <th>Tip</th>
-                                <th>Saat</th>
+                                <th class="text-end">Tutar</th>
+                                <th class="text-center">Tip</th>
+                                <th class="text-end">İşlem</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in recentTransactions %}
                             <tr>
-                                <td>{{ item.patient_name }}</td>
-                                <td class="fw-bold text-success">+{{ item.amount|number_format(2) }} ₺</td>
                                 <td>
-                                    {% if item.payment_type == 'cash' %} <span class="badge bg-success">N</span>
-                                    {% elseif item.payment_type == 'credit_card' %} <span class="badge bg-info">K</span>
-                                    {% else %} <span class="badge bg-secondary">D</span> {% endif %}
+                                    <div class="fw-bold">{{ item.payment_date|date('d.m.Y') }}</div>
+                                    <small class="text-muted">{{ item.payment_date|date('H:i') }}</small>
                                 </td>
-                                <td>{{ item.payment_date|date('H:i') }}</td>
+                                <td>{{ item.patient_name }}</td>
+                                <td class="fw-bold text-success text-end">+{{ item.amount|number_format(2) }} ₺</td>
+                                <td class="text-center">
+                                    {% if ',' in item.payment_type %}
+                                        <span class="badge bg-warning text-dark" title="{{ item.payment_type }}">M</span>
+                                    {% elseif item.payment_type == 'cash' %} 
+                                        <span class="badge bg-success">N</span>
+                                    {% elseif item.payment_type == 'credit_card' %} 
+                                        <span class="badge bg-info">K</span>
+                                    {% else %} 
+                                        <span class="badge bg-secondary">D</span> 
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if item.appointment_id %}
+                                        <button class="btn btn-sm btn-outline-primary" onclick="openPaymentDetail({{ item.appointment_id }})">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted">Kayıt yok</td>
+                                <td colspan="5" class="text-center text-muted py-4">Kayıt yok</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -124,4 +150,67 @@
 </div>
 
 {% include 'finance/modals/payment_modal.twig' %}
+{% include 'finance/modals/payment_detail_modal.twig' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openPaymentDetail(appointmentId) {
+        const modalEl = document.getElementById('paymentDetailModal');
+        const modal = new bootstrap.Modal(modalEl);
+        
+        const contentDiv = document.getElementById('paymentDetailContent');
+        contentDiv.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Yükleniyor...</p></div>';
+        
+        modal.show();
+
+        api.get('/api/payments/transaction-detail/' + appointmentId)
+            .then(res => {
+                const data = res.data;
+                let html = '';
+
+                html += '<h6 class="fw-bold mb-3">Hizmet Dökümü</h6>';
+                html += '<table class="table table-sm table-bordered mb-4">';
+                html += '<thead class="table-light"><tr><th>Hizmet</th><th>Tutar</th></tr></thead><tbody>';
+                
+                if (data.services.length === 0) {
+                     html += '<tr><td colspan="2" class="text-center text-muted">Hizmet kaydı bulunamadı.</td></tr>';
+                } else {
+                    data.services.forEach(item => {
+                        html += `<tr>
+                            <td>${item.item_name}</td>
+                            <td class="text-end">${parseFloat(item.total_price).toFixed(2)} ₺</td>
+                        </tr>`;
+                    });
+                }
+                html += '</tbody></table>';
+
+                const summary = data.summary;
+                html += '<div class="row mb-4">';
+                html += `<div class="col-4"><div class="border rounded p-2 text-center bg-light"><small>Toplam Borç</small><div class="fw-bold">${summary.total_debt.toFixed(2)} ₺</div></div></div>`;
+                html += `<div class="col-4"><div class="border rounded p-2 text-center bg-light"><small>Toplam Ödenen</small><div class="fw-bold text-success">${summary.total_paid.toFixed(2)} ₺</div></div></div>`;
+                html += `<div class="col-4"><div class="border rounded p-2 text-center ${summary.balance > 0 ? 'bg-danger-subtle' : 'bg-success-subtle'}"><small>Kalan</small><div class="fw-bold">${summary.balance.toFixed(2)} ₺</div></div></div>`;
+                html += '</div>';
+
+                html += '<h6 class="fw-bold mb-3">Bu Randevuya Ait Ödemeler</h6>';
+                html += '<ul class="list-group">';
+                data.payments.forEach(pay => {
+                    const date = new Date(pay.payment_date).toLocaleString('tr-TR');
+                    html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-medium">${date}</span> <span class="badge bg-secondary ms-2">${pay.payment_type}</span>
+                        </div>
+                        <span class="fw-bold">${parseFloat(pay.amount).toFixed(2)} ₺</span>
+                    </li>`;
+                });
+                html += '</ul>';
+
+                contentDiv.innerHTML = html;
+            })
+            .catch(err => {
+                console.error(err);
+                contentDiv.innerHTML = '<div class="alert alert-danger">Veri yüklenirken hata oluştu.</div>';
+            });
+    }
+</script>
 {% endblock %}

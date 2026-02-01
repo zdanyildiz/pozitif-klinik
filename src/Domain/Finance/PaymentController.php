@@ -110,4 +110,18 @@ class PaymentController extends BaseController
 
         return $this->success($response, null, 'Ödeme iptal edildi');
     }
+
+    /**
+     * Randevu / İşlem Detayı (Modal için)
+     */
+    #[Route('GET', '/transaction-detail/{appointmentId:[0-9]+}')]
+    public function getTransactionDetails(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $appointmentId = (int) $args['appointmentId'];
+
+        $details = $this->paymentRepository->getTransactionDetailWithServices($clinicId, $appointmentId);
+
+        return $this->success($response, $details);
+    }
 }
