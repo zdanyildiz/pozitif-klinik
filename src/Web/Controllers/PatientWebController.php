@@ -10,6 +10,9 @@ use Slim\Views\Twig;
 use App\Domain\Patient\PatientRepository;
 use App\Domain\System\GeneralRepository;
 use App\Core\Service\SessionService;
+use App\Domain\Appointment\AppointmentRepository;
+use App\Domain\Examination\ExaminationRepository;
+use App\Domain\Lab\LabRepository;
 use App\Core\Attributes\Route;
 use App\Core\Attributes\Group;
 use App\Core\Attributes\Middleware;
@@ -22,17 +25,26 @@ class PatientWebController
     private PatientRepository $repository;
     private GeneralRepository $generalRepository;
     private SessionService $session;
+    private AppointmentRepository $appointmentRepository;
+    private ExaminationRepository $examinationRepository;
+    private LabRepository $labRepository;
 
     public function __construct(
         Twig $view,
         PatientRepository $repository,
         GeneralRepository $generalRepository,
-        SessionService $session
+        SessionService $session,
+        AppointmentRepository $appointmentRepository,
+        ExaminationRepository $examinationRepository,
+        LabRepository $labRepository
     ) {
         $this->view = $view;
         $this->repository = $repository;
         $this->generalRepository = $generalRepository;
         $this->session = $session;
+        $this->appointmentRepository = $appointmentRepository;
+        $this->examinationRepository = $examinationRepository;
+        $this->labRepository = $labRepository;
     }
 
     #[Route('GET', '/patients')]
@@ -52,6 +64,96 @@ class PatientWebController
             'provinces' => $provinces,
             'pageTitle' => 'Hasta Listesi',
             'page' => 'patients' // for active sidebar
+        ]);
+    }
+
+    #[Route('GET', '/patients/{id}')]
+    public function detail(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->session->get('clinic_id');
+        $patientId = (int) $args['id'];
+
+        // 1. Hasta Detayı
+        $patient = $this->repository->findById($clinicId, $patientId);
+
+        if (!$patient) {
+            return $response->withHeader('Location', '/admin/patients')->withStatus(302);
+        }
+
+        // 2. Geçmiş Randevular (Timeline için temel)
+        $appointments = $this->appointmentRepository->findAllByPatient($clinicId, $patientId);
+
+        // 3. Finansal Özet
+        $totalDebt = $this->appointmentRepository->getPatientTotalDebt($clinicId, $patientId);
+
+        // 4. Muayene Kayıtları
+        $examinations = $this->examinationRepository->findAllByPatient($clinicId, $patientId);
+
+        // 4. Laboratuvar Sonuçları
+        $labResults = $this->labRepository->findAllByPatient($clinicId, $patientId);
+
+        // 5. Hibrit Zaman Tüneli Hazırlığı
+        $timeline = [];
+        $mappedExamIds = [];
+
+        // 1. Randevuları baz alarak eşleşen muayeneleri bağla
+        $examMap = [];
+        foreach ($examinations as $exam) {
+            if (!empty($exam['appointment_id'])) {
+                $examMap[$exam['appointment_id']] = $exam;
+            }
+        }
+
+        foreach ($appointments as $appt) {
+            $exam = $examMap[$appt['id']] ?? null;
+            if ($exam) {
+                $mappedExamIds[] = $exam['id'];
+            }
+
+            $timeline[] = [
+                'entry_type' => 'appointment',
+                'date' => $appt['appointment_date'],
+                'doctor_name' => $appt['doctor_name'],
+                'title' => $appt['type_name'],
+                'color' => $appt['color_code'] ?? '#6366f1',
+                'status_name' => $appt['status_name'] ?? $appt['status'],
+                'status_color' => $appt['status_color'] ?? '#6c757d',
+                'notes' => $appt['notes'],
+                'appointment_id' => $appt['id'],
+                'examination' => $exam
+            ];
+        }
+
+        // 2. Herhangi bir randevuya bağlı OLMAYAN muayeneleri ekle
+        foreach ($examinations as $exam) {
+            if (!in_array($exam['id'], $mappedExamIds)) {
+                $timeline[] = [
+                    'entry_type' => 'examination',
+                    'date' => $exam['created_at'],
+                    'doctor_name' => $exam['doctor_name'] ?? 'Doktor Notu',
+                    'title' => 'Tıbbi Muayene Kaydı',
+                    'color' => '#10b981',
+                    'status_name' => 'Tamamlandı',
+                    'status_color' => '#10b981',
+                    'notes' => $exam['complaint'],
+                    'examination_id' => $exam['id'],
+                    'examination' => $exam
+                ];
+            }
+        }
+
+        // 3. Tarihe göre sırala (Yeniden Eskiye)
+        usort($timeline, function ($a, $b) {
+            return strcmp($b['date'], $a['date']);
+        });
+
+        return $this->view->render($response, 'patient_detail.twig', [
+            'patient' => $patient,
+            'timeline' => $timeline,
+            'labResults' => $labResults,
+            'totalDebt' => $totalDebt,
+            'pageTitle' => $patient['name'] . ' - Hasta Detayı',
+            'page' => 'patients'
         ]);
     }
 }

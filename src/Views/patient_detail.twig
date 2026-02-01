@@ -1,0 +1,604 @@
+{% extends 'layout.twig' %}
+
+{% block title %}{{ patient.name }} - Hasta Detayı{% endblock %}
+
+{% block head %}
+    <style>
+        .patient-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .patient-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="white" stroke-width="2" fill="none" opacity="0.1"/></svg>') repeat;
+            opacity: 0.1;
+        }
+
+        .avatar-circle {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .info-pill {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            padding: 0.5rem 1rem;
+            border-radius: 50rem;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+            padding-bottom: 2rem;
+            border-left: 2px solid #e5e7eb;
+        }
+
+        .timeline-item:last-child {
+            border-left: 2px solid transparent;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -0.6rem;
+            top: 0;
+            width: 1.2rem;
+            height: 1.2rem;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #6366f1;
+        }
+
+        .card-glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        
+        .nav-link-custom {
+            color: #6b7280;
+            font-weight: 500;
+            padding: 1rem 1.5rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav-link-custom:hover {
+            color: #4f46e5;
+            background: rgba(79, 70, 229, 0.05);
+        }
+        
+        .nav-link-custom.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+            background: transparent;
+        }
+    </style>
+{% endblock %}
+
+{% block page_title %}
+    <a href="{{ base_path }}/admin/patients" class="text-decoration-none text-secondary me-2">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    Hasta Detayı
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header Section -->
+    <div class="patient-header d-flex flex-column flex-md-row align-items-center gap-4">
+        <div class="avatar-circle">
+            <span class="bi bi-person"></span>
+        </div>
+        
+        <div class="flex-grow-1 text-center text-md-start">
+            <h2 class="fw-bold mb-1">{{ patient.name }}</h2>
+            <div class="d-flex flex-wrap justify-content-center justify-content-md-start gap-2 mt-2">
+                <div class="info-pill">
+                    <i class="bi bi-upc-scan"></i> {{ patient.tc_no }}
+                </div>
+                <div class="info-pill">
+                    <i class="bi bi-telephone"></i> {{ patient.phone }}
+                </div>
+                <div class="info-pill">
+                    <i class="bi bi-droplet"></i> {{ patient.blood_type|default('Bilinmiyor') }}
+                </div>
+                <div class="info-pill">
+                    <i class="bi bi-cake"></i> {{ patient.birth_date ? patient.birth_date : '-' }}
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3 mt-md-0">
+            <button class="btn action-btn rounded-pill px-4">
+                <i class="bi bi-calendar-plus me-2"></i>Randevu
+            </button>
+            <button class="btn action-btn rounded-pill px-4">
+                <i class="bi bi-file-earmark-medical me-2"></i>Muayene
+            </button>
+            <div class="dropdown">
+                <button class="btn action-btn rounded-circle" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Düzenle</a></li>
+                    <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-archive me-2"></i>Arşivle</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Sidebar Info -->
+        <div class="col-lg-3">
+            <div class="card card-glass mb-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3 text-secondary">Finansal Özet</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Toplam Borç</span>
+                        <span class="fw-bold text-danger">{{ totalDebt|number_format(2, ',', '.') }} TL</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Ödenen</span>
+                        <span class="fw-bold text-success">0,00 TL</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Bakiye</span>
+                        <span class="fw-bold text-primary">{{ totalDebt|number_format(2, ',', '.') }} TL</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-glass">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3 text-secondary">İletişim & Adres</h5>
+                    <p class="mb-1 text-muted"><i class="bi bi-geo-alt me-2"></i>{{ patient.address }}</p>
+                    <p class="mb-1 text-muted">{{ patient.district_name }} / {{ patient.province_name }}</p>
+                    <hr>
+                    <p class="mb-1 text-muted"><i class="bi bi-envelope me-2"></i>{{ patient.email|default('-') }}</p>
+                </div>
+            </div>
+            
+            <div class="card card-glass mt-4">
+                <div class="card-body">
+                     <h5 class="card-title fw-bold mb-3 text-secondary">Notlar</h5>
+                     <p class="text-muted small">{{ patient.notes|default('Not eklenmemiş.') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content (Timeline & Tabs) -->
+        <div class="col-lg-9">
+            <div class="card card-glass border-0">
+                <div class="card-header bg-transparent border-bottom-0 p-0">
+                    <ul class="nav nav-tabs border-bottom" id="patientTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link nav-link-custom active" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button">
+                                <i class="bi bi-clock-history me-2"></i>Zaman Tüneli
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link nav-link-custom" id="labs-tab" data-bs-toggle="tab" data-bs-target="#labs" type="button">
+                                <i class="bi bi-eyedropper me-2"></i>Laboratuvar
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link nav-link-custom" id="files-tab" data-bs-toggle="tab" data-bs-target="#files" type="button">
+                                <i class="bi bi-folder2-open me-2"></i>Dosyalar
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-4">
+                    <div class="tab-content" id="patientTabsContent">
+                        
+                        <!-- Timeline Tab -->
+                        <div class="tab-pane fade show active" id="timeline" role="tabpanel">
+                            <div class="timeline-container">
+                                {% if timeline is empty %}
+                                    <div class="text-center py-5 text-muted">
+                                        <i class="bi bi-calendar-x fs-1 opacity-50"></i>
+                                        <p class="mt-3">Henüz geçmiş randevu veya işlem bulunmuyor.</p>
+                                    </div>
+                                {% else %}
+                                    {% for item in timeline %}
+                                    <div class="timeline-item" style="cursor: pointer;" onclick="showTimelineDetail({{ item.appointment_id|default('null') }}, {{ item.examination_id|default('null') }})">
+                                        <div class="timeline-dot" style="border-color: {{ item.color }};"></div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="fw-bold mb-0 text-dark">
+                                                    {% if item.entry_type == 'examination' %}
+                                                        <i class="bi bi-file-medical-fill text-success me-1"></i>
+                                                    {% endif %}
+                                                    {{ item.title }}
+                                                </h6>
+                                                <small class="text-muted">{{ item.date|date('d.m.Y H:i') }}</small>
+                                                <span class="ms-2 badge bg-light text-secondary border border-secondary fw-normal" style="font-size: 0.7rem;">
+                                                    <i class="bi bi-info-circle me-1"></i>Detay
+                                                </span>
+                                            </div>
+                                            <span class="badge" style="background-color: {{ item.status_color }}">
+                                                {{ item.status_name }}
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="bg-light p-3 rounded-3 mb-2">
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <div class="avatar-sm rounded-circle bg-white d-flex align-items-center justify-content-center shadow-sm" style="width: 24px; height: 24px;">
+                                                    <i class="bi bi-person-fill text-muted" style="font-size: 12px;"></i>
+                                                </div>
+                                                <small class="fw-bold text-secondary">{{ item.doctor_name }}</small>
+                                            </div>
+                                            {% if item.notes %}
+                                                <p class="mb-0 text-muted small text-truncate" style="max-height: 3.6em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                                    {{ item.notes }}
+                                                </p>
+                                            {% endif %}
+                                            
+                                            {% if item.examination %}
+                                                <div class="mt-3 pt-2 border-top border-secondary-subtle">
+                                                    <div class="d-flex gap-2 mb-1">
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Tanı</span>
+                                                        <span class="text-dark small fw-medium">{{ item.examination.diagnosis|default('Tanı girilmedi') }}</span>
+                                                    </div>
+                                                    {% if item.examination.result_note %}
+                                                        <div class="small text-muted fst-italic text-truncate">"{{ item.examination.result_note }}"</div>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Laboratories Tab -->
+                        <div class="tab-pane fade" id="labs" role="tabpanel">
+                            {% if labResults is empty %}
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-clipboard-data fs-1 opacity-50"></i>
+                                    <p class="mt-3">Henüz laboratuvar sonucu bulunmuyor.</p>
+                                </div>
+                            {% else %}
+                                <div class="accordion accordion-flush" id="labAccordion">
+                                    {% for result in labResults %}
+                                        <div class="accordion-item border rounded mb-3 overflow-hidden">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#lab-{{ result.id }}">
+                                                    <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 gap-md-4 w-100">
+                                                        <span class="fw-bold text-dark"><i class="bi bi-file-earmark-medical me-2"></i>Lab Sonucu #{{ result.id }}</span>
+                                                        <span class="text-muted small"><i class="bi bi-calendar-event me-1"></i>{{ result.result_date|date('d.m.Y') }}</span>
+                                                        {% if result.doctor_name %}
+                                                            <span class="text-muted small"><i class="bi bi-person me-1"></i>{{ result.doctor_name }}</span>
+                                                        {% endif %}
+                                                        <span class="badge bg-success ms-auto me-3">{{ result.items|length }} Test</span>
+                                                    </div>
+                                                </button>
+                                            </h2>
+                                            <div id="lab-{{ result.id }}" class="accordion-collapse collapse" data-bs-parent="#labAccordion">
+                                                <div class="accordion-body p-0">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover mb-0">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th style="width: 40%">Test Adı</th>
+                                                                    <th>Sonuç</th>
+                                                                    <th>Referans Aralığı</th>
+                                                                    <th>Durum</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for item in result.items %}
+                                                                    <tr class="{{ item.is_abnormal ? 'table-danger-subtle' : '' }}">
+                                                                        <td class="fw-medium">{{ item.test_name }}</td>
+                                                                        <td class="{{ item.is_abnormal ? 'text-danger fw-bold' : '' }}">
+                                                                            {{ item.result_value }} {{ item.unit }}
+                                                                        </td>
+                                                                        <td class="text-muted small">{{ item.reference_range }}</td>
+                                                                        <td>
+                                                                            {% if item.is_abnormal %}
+                                                                                <span class="badge bg-danger">Anormal</span>
+                                                                            {% else %}
+                                                                                <span class="badge bg-success">Normal</span>
+                                                                            {% endif %}
+                                                                        </td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Files Tab -->
+                        <div class="tab-pane fade" id="files" role="tabpanel">
+                             <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h6 class="mb-0 fw-bold">Dosyalar</h6>
+                                <div>
+                                    <label for="patient_file_upload" class="btn btn-sm btn-outline-primary" style="cursor: pointer;">
+                                        <i class="bi bi-cloud-upload me-1"></i> Yeni Dosya Yükle
+                                    </label>
+                                    <input type="file" id="patient_file_upload" class="d-none">
+                                </div>
+                            </div>
+                            <div id="patient_file_list" class="border rounded bg-light p-3" style="min-height: 200px;">
+                                <!-- File Manager JS will populate this -->
+                                <div class="text-center p-5 text-muted">
+                                    <div class="spinner-border spinner-border-sm me-2"></div> Dosyalar yükleniyor...
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas for Timeline Detail -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="timelineOffcanvas" aria-labelledby="timelineOffcanvasLabel" style="width: 500px;">
+    <div class="offcanvas-header bg-light border-bottom">
+        <div>
+            <h5 class="offcanvas-title fw-bold" id="timelineOffcanvasLabel">Randevu Detayı</h5>
+            <small class="text-muted" id="offcanvasDate">...</small>
+        </div>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <div id="offcanvasLoading" class="text-center p-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2 text-muted">Detaylar yükleniyor...</p>
+        </div>
+        
+        <div id="offcanvasContent" class="d-none">
+            <!-- Doktor & Tür Bilgisi -->
+            <div class="p-4 border-bottom bg-white">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0" id="offcanvasDoctor">Dr. -</h6>
+                        <span class="badge bg-secondary" id="offcanvasType">-</span>
+                        <span class="badge bg-light text-dark border ms-1" id="offcanvasStatus">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Muayene Bulguları (Varsa) -->
+            <div id="examSection" class="p-4 border-bottom">
+                <h6 class="fw-bold text-primary mb-3">
+                    <i class="bi bi-file-medical me-2"></i>Klinik Notlar
+                </h6>
+                
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold text-uppercase">Şikayet</label>
+                    <p class="mb-0" id="offcanvasComplaint">-</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold text-uppercase">Hikaye</label>
+                    <p class="mb-0" id="offcanvasStory">-</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold text-uppercase">Bulgular</label>
+                    <p class="mb-0" id="offcanvasFindings">-</p>
+                </div>
+
+                <div class="p-3 bg-light rounded border mb-3">
+                    <label class="small text-muted fw-bold text-uppercase text-primary">Tanı (Diagnöz)</label>
+                    <p class="mb-0 fw-bold text-dark" id="offcanvasDiagnosis">-</p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold text-uppercase">Tedavi / Plan</label>
+                    <p class="mb-0" id="offcanvasTreatment">-</p>
+                </div>
+                
+                 <div class="mb-0">
+                    <label class="small text-muted fw-bold text-uppercase">Sonuç Notu</label>
+                    <p class="mb-0 fst-italic text-secondary" id="offcanvasResult">-</p>
+                </div>
+            </div>
+
+            <!-- Hizmetler / İşlemler -->
+            <div class="p-4">
+                <h6 class="fw-bold text-success mb-3">
+                    <i class="bi bi-receipt me-2"></i>Yapılan İşlemler (Hizmetler)
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-borderless mb-0">
+                        <thead class="text-muted border-bottom">
+                            <tr>
+                                <th>Hizmet</th>
+                                <th class="text-end">Tutar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="offcanvasServices">
+                            <!-- JS populate -->
+                        </tbody>
+                        <tfoot class="border-top fw-bold">
+                            <tr>
+                                <td>TOPLAM</td>
+                                <td class="text-end" id="offcanvasTotal">0.00 TL</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ base_path }}/assets/js/file-manager.js?v={{ version }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Init File Manager separately if needed or reuse logic
+        if (typeof FileManager !== 'undefined') {
+            new FileManager({
+                module: 'patient',
+                relatedId: {{ patient.id }},
+                containerId: 'patient_file_list',
+                uploadBtnId: 'patient_file_upload',
+                csrfToken: '{{ csrf.value }}',
+                customListUrl: `/api/files/list/patient/{{ patient.id }}`
+            });
+        }
+    });
+
+    // Timeline Detail Functions
+    const timelineOffcanvas = new bootstrap.Offcanvas(document.getElementById('timelineOffcanvas'));
+
+    async function showTimelineDetail(appointmentId, examinationId) {
+        // 1. Reset & Show Loading
+        document.getElementById('offcanvasLoading').classList.remove('d-none');
+        document.getElementById('offcanvasContent').classList.add('d-none');
+        timelineOffcanvas.show();
+
+        try {
+            // 2. Fetch Data Parallel
+            const fetchSafe = (url) => api.get(url).catch(() => ({ data: null }));
+            
+            let appt = null;
+            let exam = null;
+
+            if (appointmentId) {
+                const [apptRes, examRes] = await Promise.all([
+                    api.get(`/api/appointments/${appointmentId}`),
+                    fetchSafe(`/api/examinations/appointment/${appointmentId}`)
+                ]);
+                appt = apptRes.data;
+                exam = examRes.data;
+            } else if (examinationId) {
+                const examRes = await api.get(`/api/examinations/${examinationId}`);
+                exam = examRes.data;
+                // Mock appointment-like structure for the UI header
+                appt = {
+                    appointment_date: exam.created_at,
+                    doctor_name: exam.doctor_name || 'Bilinmiyor',
+                    type_name: 'Tıbbi Muayene Kaydı',
+                    status_name: 'Tamamlandı',
+                    status_color: '#10b981',
+                    items: []
+                };
+            }
+
+            if (!appt && !exam) throw new Error('Veri bulunamadı');
+
+            // 3. Populate Data
+            
+            // Header
+            document.getElementById('offcanvasDate').textContent = Utils.formatDate(appt.appointment_date);
+            document.getElementById('offcanvasDoctor').textContent = appt.doctor_name || 'Belirtilmemiş';
+            document.getElementById('offcanvasType').textContent = appt.type_name;
+            const statusEl = document.getElementById('offcanvasStatus');
+            statusEl.textContent = appt.status_name || appt.status;
+            statusEl.className = 'badge';
+            statusEl.style.backgroundColor = appt.status_color || '#6c757d';
+
+            // Exam Details
+            const examSection = document.getElementById('examSection');
+            if (exam) {
+                examSection.classList.remove('d-none');
+                
+                const setText = (id, val) => {
+                    const el = document.getElementById(id);
+                    el.textContent = val || '-';
+                };
+
+                setText('offcanvasComplaint', exam.complaint);
+                setText('offcanvasStory', exam.story);
+                setText('offcanvasFindings', exam.bulgular);
+                setText('offcanvasDiagnosis', exam.diagnosis);
+                setText('offcanvasTreatment', exam.treatment);
+                setText('offcanvasResult', exam.result_note);
+            } else {
+                examSection.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-journal-x fs-4"></i><br>Bu randevu için doktor muayene notu girilmemiş.</div>';
+            }
+
+            // Services / Items
+            const tbody = document.getElementById('offcanvasServices');
+            tbody.innerHTML = '';
+            let total = 0;
+
+            if (appt.items && appt.items.length > 0) {
+                appt.items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="fw-medium">${item.item_name}</div>
+                            <small class="text-muted" style="font-size:0.75rem">Adet: ${item.quantity}</small>
+                        </td>
+                        <td class="text-end">${parseFloat(item.total_price).toFixed(2)} TL</td>
+                    `;
+                    tbody.appendChild(tr);
+                    total += parseFloat(item.total_price);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted small fst-italic">İşlem/Hizmet kaydı yok.</td></tr>';
+            }
+            document.getElementById('offcanvasTotal').textContent = total.toFixed(2) + ' TL';
+
+            // 4. Show Content
+            document.getElementById('offcanvasLoading').classList.add('d-none');
+            document.getElementById('offcanvasContent').classList.remove('d-none');
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById('offcanvasLoading').innerHTML = '<div class="text-danger p-4"><i class="bi bi-exclamation-triangle fs-2"></i><br>Detaylar yüklenemedi.</div>';
+        }
+    }
+</script>
+{% endblock %}

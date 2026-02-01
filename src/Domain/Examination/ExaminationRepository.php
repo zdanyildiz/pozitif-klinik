@@ -16,42 +16,51 @@ class ExaminationRepository
         $this->db = $db;
     }
 
-    public function findAllByPatient(int $patientId): array
+    public function findAllByPatient(int $clinicId, int $patientId): array
     {
         $stmt = $this->db->getConnection()->prepare("
             SELECT e.*, u.name as doctor_name
             FROM cln_examinations e
             LEFT JOIN sys_users u ON e.doctor_user_id = u.id
-            WHERE e.patient_id = :patient_id
+            WHERE e.clinic_id = :clinic_id AND e.patient_id = :patient_id
             ORDER BY e.created_at DESC
         ");
-        $stmt->execute(['patient_id' => $patientId]);
+        $stmt->execute([
+            'clinic_id' => $clinicId,
+            'patient_id' => $patientId
+        ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function findById(int $id): ?array
+    public function findById(int $clinicId, int $id): ?array
     {
         $stmt = $this->db->getConnection()->prepare("
             SELECT e.*, u.name as doctor_name
             FROM cln_examinations e
             LEFT JOIN sys_users u ON e.doctor_user_id = u.id
-            WHERE e.id = :id
+            WHERE e.clinic_id = :clinic_id AND e.id = :id
         ");
-        $stmt->execute(['id' => $id]);
+        $stmt->execute([
+            'clinic_id' => $clinicId,
+            'id' => $id
+        ]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ?: null;
     }
 
-    public function findByAppointmentId(int $appointmentId): ?array
+    public function findByAppointmentId(int $clinicId, int $appointmentId): ?array
     {
         $stmt = $this->db->getConnection()->prepare("
             SELECT e.*, u.name as doctor_name
             FROM cln_examinations e
             LEFT JOIN sys_users u ON e.doctor_user_id = u.id
-            WHERE e.appointment_id = :appointment_id
+            WHERE e.clinic_id = :clinic_id AND e.appointment_id = :appointment_id
             LIMIT 1
         ");
-        $stmt->execute(['appointment_id' => $appointmentId]);
+        $stmt->execute([
+            'clinic_id' => $clinicId,
+            'appointment_id' => $appointmentId
+        ]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ?: null;
     }
@@ -86,7 +95,7 @@ class ExaminationRepository
         return (int) $this->db->getConnection()->lastInsertId();
     }
 
-    public function update(int $id, array $data): bool
+    public function update(int $clinicId, int $id, array $data): bool
     {
         $sql = "UPDATE cln_examinations SET 
                     anamnez = :anamnez,
@@ -96,10 +105,11 @@ class ExaminationRepository
                     diagnosis = :diagnosis,
                     treatment = :treatment,
                     result_note = :result_note
-                WHERE id = :id";
+                WHERE clinic_id = :clinic_id AND id = :id";
 
         $stmt = $this->db->getConnection()->prepare($sql);
         return $stmt->execute([
+            'clinic_id' => $clinicId,
             'id' => $id,
             'anamnez' => $data['anamnez'] ?? null,
             'complaint' => $data['complaint'] ?? null,

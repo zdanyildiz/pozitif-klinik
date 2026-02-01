@@ -91,9 +91,12 @@
                         </td>
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary" onclick="showPatientDetails({{ patient.id }})" title="Detay / Vitals">
+                                <button class="btn btn-outline-primary" onclick="showPatientDetails({{ patient.id }})" title="Hızlı Önizleme (Modal)">
                                     <i class="bi bi-eye"></i>
                                 </button>
+                                <a href="{{ base_path }}/admin/patients/{{ patient.id }}" class="btn btn-outline-secondary" title="Tam Detay Sayfası">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
                                 <button class="btn btn-outline-warning" onclick="editPatient({{ patient.id }})" title="Düzenle">
                                     <i class="bi bi-pencil"></i>
                                 </button>

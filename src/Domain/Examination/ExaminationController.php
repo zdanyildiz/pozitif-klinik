@@ -28,11 +28,22 @@ class ExaminationController extends BaseController
         $this->logger = $logger;
     }
 
+    #[Route('GET', '/{id:[0-9]+}')]
+    public function getExamination(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = $this->getClinicId($request);
+        $id = (int) $args['id'];
+        $examination = $this->repository->findById($clinicId, $id);
+
+        return $this->success($response, $examination);
+    }
+
     #[Route('GET', '/patient/{patientId:[0-9]+}')]
     public function getPatientExaminations(Request $request, Response $response, array $args): Response
     {
+        $clinicId = $this->getClinicId($request);
         $patientId = (int) $args['patientId'];
-        $examinations = $this->repository->findAllByPatient($patientId);
+        $examinations = $this->repository->findAllByPatient($clinicId, $patientId);
 
         return $this->success($response, $examinations);
     }
@@ -40,8 +51,9 @@ class ExaminationController extends BaseController
     #[Route('GET', '/appointment/{appointmentId:[0-9]+}')]
     public function getAppointmentExamination(Request $request, Response $response, array $args): Response
     {
+        $clinicId = $this->getClinicId($request);
         $appointmentId = (int) $args['appointmentId'];
-        $examination = $this->repository->findByAppointmentId($appointmentId);
+        $examination = $this->repository->findByAppointmentId($clinicId, $appointmentId);
 
         return $this->success($response, $examination);
     }
@@ -79,7 +91,7 @@ class ExaminationController extends BaseController
         $clinicId = $this->getClinicId($request);
 
         try {
-            $success = $this->repository->update($id, $data);
+            $success = $this->repository->update($clinicId, $id, $data);
 
             if ($success) {
                 $this->logger->getLogger($clinicId)->info("Muayene kaydı güncellendi: ID $id");
