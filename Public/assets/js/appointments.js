@@ -228,27 +228,58 @@ async function loadTypes() {
 }
 
 async function loadPatients() {
-    const res = await api.get('/api/patients/select-list');
-    patients = res.data || [];
-    renderPatientOptions();
+    try {
+        // İlk yüklemede hastaları GETİRME, sadece TomSelect'i başlat
+        // renderPatientOptions(); // Kaldırıldı
 
-    // Tom Select Başlat
-    if (!patientTomSelect) {
-        patientTomSelect = new TomSelect('#patientSelect', {
-            create: false,
-            sortField: { field: 'text', order: 'asc' },
-            placeholder: 'Hasta Ara...',
-            allowEmptyOption: true
-        });
-    } else {
-        patientTomSelect.clearOptions();
-        const options = patients.map(p => ({
-            value: p.id,
-            text: `${p.name} (${p.tc_no || '-'})`
-        }));
-        patientTomSelect.addOptions(options);
+        // Tom Select Başlat (Remote Search ile güçlendirildi)
+        if (!patientTomSelect) {
+            patientTomSelect = new TomSelect('#patientSelect', {
+                valueField: 'id',
+                labelField: 'text',
+                searchField: ['text'],
+                placeholder: 'Hasta Ara (En az 2 karakter)...',
+                allowEmptyOption: true,
+                preload: false, // Preload disabled
+                loadThrottle: 500,
+
+                // Başlangıçta seçenek yok
+                options: [],
+
+                load: function (query, callback) {
+                    if (query.length < 2) return callback();
+
+                    // Uzak Arama: Tüm veritabanında blind index ile arama
+                    api.get(`/api/patients/search?q=${encodeURIComponent(query)}`)
+                        .then(res => {
+                            const results = (res.data || []).map(p => ({
+                                id: p.id,
+                                text: `${p.name} (${p.tc_no || '-'})`
+                            }));
+                            callback(results);
+                        })
+                        .catch(() => callback());
+                },
+                render: {
+                    option: function (data, escape) {
+                        return `<div class="py-1 px-2 border-bottom">
+                            <div class="fw-bold">${escape(data.text)}</div>
+                            <small class="text-muted">Klinik Kaydı</small>
+                        </div>`;
+                    },
+                    item: function (data, escape) {
+                        return `<div>${escape(data.text)}</div>`;
+                    },
+                    no_results: (data, escape) => `<div class="no-results p-2">"${escape(data.input)}" için tam eşleşme bulunamadı</div>`,
+                    loading: (data, escape) => `<div class="spinner-border spinner-border-sm text-primary m-2" role="status"></div> Aranıyor...`
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Hastalar yüklenemedi:', e);
     }
 }
+
 
 async function loadDoctors() {
     const res = await api.get('/api/users');

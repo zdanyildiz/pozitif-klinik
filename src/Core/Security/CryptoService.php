@@ -7,12 +7,14 @@ namespace App\Core\Security;
 class CryptoService
 {
     private string $key;
+    private string $blindIndexKey;
     private string $method = 'aes-256-gcm';
 
-    public function __construct(string $appKey)
+    public function __construct(string $appKey, string $blindIndexKey)
     {
-        // Hex key'i binary'ye çeviriyoruz
+        // Hex keyleri binary'ye çeviriyoruz
         $this->key = hex2bin($appKey);
+        $this->blindIndexKey = hex2bin($blindIndexKey);
     }
 
     /**
@@ -57,12 +59,36 @@ class CryptoService
     }
 
     /**
-     * Arama için kör dizin (Blind Index) oluşturur
+     * Arama metnini normalize eder (Türkçe karakter dönüşümü + küçük harf)
+     * Örn: "İSTANBUL" -> "istanbul", "AĞRI" -> "agri" (veya tr karakter korunarak)
+     */
+    public function normalize(string $text): string
+    {
+        // 1. Türkçe Karakter Dönüşümü (Büyük -> Küçük)
+        // mb_strtolower Türkçe karakterleri bazen doğru dürüst çeviremeyebilir (environment locale bağlı)
+        // Bu yüzden manuel bir map daha güvenlidir.
+        $search = ['KI', 'kI', 'İ', 'I', 'Ğ', 'Ü', 'Ş', 'Ö', 'Ç'];
+        $replace = ['ki', 'ki', 'i', 'ı', 'ğ', 'ü', 'ş', 'ö', 'ç'];
+        $text = str_replace($search, $replace, $text);
+
+        // 2. Standart lowercase ve trim
+        return trim(mb_strtolower($text, 'UTF-8'));
+    }
+
+    /**
+     * Arama için güvenli ve normalize edilmiş kör dizin (Blind Index) oluşturur.
+     * Bu hash ASLA geri döndürülemez ve şifreleme anahtarından farklı bir anahtar kullanır.
      */
     public function blindIndex(?string $data): ?string
     {
-        if (empty($data))
+        if (empty($data)) {
             return null;
-        return hash_hmac('sha256', $data, $this->key);
+        }
+        
+        // Önce normalize et
+        $normalized = $this->normalize($data);
+        
+        // Sonra HMAC ile hashle
+        return hash_hmac('sha256', $normalized, $this->blindIndexKey);
     }
 }

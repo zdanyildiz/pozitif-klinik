@@ -281,10 +281,31 @@ class PaymentRepository
 
         // Search (İsim veya TC No üzerinden Blind Index ile)
         if (!empty($filters['search'])) {
-            $hash = $this->crypto->blindIndex($filters['search']);
-            $sql .= " AND (p.tc_no_hash = ? OR p.name_hash = ?)";
-            $params[] = $hash;
-            $params[] = $hash;
+            $normalizedQuery = $this->crypto->normalize($filters['search']);
+            $tokens = explode(' ', $normalizedQuery);
+            $tokens = array_unique(array_filter($tokens));
+
+            if (!empty($tokens)) {
+                $hashes = [];
+                foreach ($tokens as $token) {
+                    if (mb_strlen($token) >= 2) {
+                        $hashes[] = $this->crypto->blindIndex($token);
+                    }
+                }
+
+                if (!empty($hashes)) {
+                    $placeholders = implode(',', array_fill(0, count($hashes), '?'));
+                    $sql .= " AND EXISTS (
+                        SELECT 1 FROM search_index si 
+                        WHERE si.table_name = 'ptn_cards' 
+                        AND si.record_id = p.id 
+                        AND si.search_hash IN ($placeholders)
+                    )";
+                    foreach ($hashes as $h) {
+                        $params[] = $h;
+                    }
+                }
+            }
         }
 
         // Gruplama: Sadece Gün + Hasta bazlı (Aynı gün içindeki tüm randevuları ve ödemeleri birleştirir)
@@ -367,10 +388,31 @@ class PaymentRepository
         }
 
         if (!empty($filters['search'])) {
-            $hash = $this->crypto->blindIndex($filters['search']);
-            $sql .= " AND (p.tc_no_hash = ? OR p.name_hash = ?)";
-            $params[] = $hash;
-            $params[] = $hash;
+            $normalizedQuery = $this->crypto->normalize($filters['search']);
+            $tokens = explode(' ', $normalizedQuery);
+            $tokens = array_unique(array_filter($tokens));
+
+            if (!empty($tokens)) {
+                $hashes = [];
+                foreach ($tokens as $token) {
+                    if (mb_strlen($token) >= 2) {
+                        $hashes[] = $this->crypto->blindIndex($token);
+                    }
+                }
+
+                if (!empty($hashes)) {
+                    $placeholders = implode(',', array_fill(0, count($hashes), '?'));
+                    $sql .= " AND EXISTS (
+                        SELECT 1 FROM search_index si 
+                        WHERE si.table_name = 'ptn_cards' 
+                        AND si.record_id = p.id 
+                        AND si.search_hash IN ($placeholders)
+                    )";
+                    foreach ($hashes as $h) {
+                        $params[] = $h;
+                    }
+                }
+            }
         }
 
         $sql .= " GROUP BY pm.patient_id, DATE(pm.payment_date) ) as grouped_table";

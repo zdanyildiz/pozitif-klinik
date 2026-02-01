@@ -81,13 +81,22 @@
         const searchInput = document.querySelector('input[name="q"]');
         let debounceTimeout = null;
 
+        // Form Submit Handler (AJAX Search)
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            const url = form.action + '?' + params.toString();
+            updateTable(url);
+        });
+
         // Debounced Input
         if (searchInput) {
             searchInput.addEventListener('input', () => {
                 clearTimeout(debounceTimeout);
                 debounceTimeout = setTimeout(() => {
                     form.dispatchEvent(new Event('submit'));
-                }, 1000);
+                }, 800); 
             });
         }
 

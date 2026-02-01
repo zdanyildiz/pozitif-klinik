@@ -47,6 +47,7 @@ return [
         // Hassas hasta verileri için şifreleme altyapısı
     CryptoService::class => function (ContainerInterface $c) {
         $appKey = $_ENV['APP_KEY'] ?? getenv('APP_KEY');
+        $blindIndexKey = $_ENV['BLIND_INDEX_KEY'] ?? getenv('BLIND_INDEX_KEY');
 
         if (empty($appKey)) {
             throw new \RuntimeException(
@@ -55,7 +56,14 @@ return [
             );
         }
 
-        return new CryptoService($appKey);
+        if (empty($blindIndexKey)) {
+            throw new \RuntimeException(
+                'BLIND_INDEX_KEY environment variable is not set. ' .
+                'Run "openssl rand -hex 32" and add it to .env'
+            );
+        }
+
+        return new CryptoService($appKey, $blindIndexKey);
     },
 
         // E-Posta Gönderim Servisi
