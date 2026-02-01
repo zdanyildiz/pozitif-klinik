@@ -1010,6 +1010,75 @@ Dosyayı sistemden siler (Soft delete).
 
 ---
 
+## Domain API (Tıbbi Muayene İşlemleri)
+
+Doktorun muayene notlarını (anamnez, tanı, tedavi vb.) yönettiği uçlar.
+
+### `GET /api/examinations/patient/{patientId}`
+Hastanın tüm geçmiş muayene kayıtlarını listeler. (Randevulu veya randevusuz).
+
+### `GET /api/examinations/appointment/{appointmentId}`
+Belirli bir randevuya bağlı muayene kaydını getirir.
+
+### `GET /api/examinations/{id}`
+ID bazlı tekil muayene kaydı getirir.
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "data": {
+    "id": 501,
+    "patient_id": 16519,
+    "doctor_user_id": 3,
+    "appointment_id": 75353,
+    "anamnez": "...",
+    "complaint": "Baş ağrısı",
+    "diagnosis": "Migren (G43.9)",
+    "treatment": "Ağrı kesici reçete edildi",
+    "created_at": "2026-02-01 10:00:00"
+  }
+}
+```
+
+### `POST /api/examinations`
+Yeni muayene kaydı oluşturur.
+
+---
+
+## Domain API (Laboratuvar Sonuçları)
+
+Hastanın laboratuvar (biyokimya, hemogram vb.) test sonuçlarını yönetir.
+
+### `GET /api/lab/patient/{patientId}` 
+*(Not: LabRepository üzerinden servis edilir)* 
+Hastanın tüm laboratuvar sonuçlarını ve alt kalemlerini (test değerleri) döner.
+
+**Yanıt Yapısı:**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 12,
+      "result_date": "2026-01-15",
+      "doctor_name": "Dr. Erhan",
+      "items": [
+        {
+          "test_name": "Glikoz",
+          "test_value": "105",
+          "test_unit": "mg/dL",
+          "reference_range": "70 - 100",
+          "is_abnormal": 1
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
 ## Web (SSR) Rotaları
 
 Bu rotalar tarayıcı üzerinden doğrudan erişilen, Twig ile render edilen HTML sayfalarıdır.

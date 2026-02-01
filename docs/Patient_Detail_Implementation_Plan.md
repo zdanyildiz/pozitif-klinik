@@ -5,47 +5,47 @@ Kliniğe kayıtlı hastaların tüm tıbbi ve finansal geçmişini kronolojik bi
 
 ## 2. Kapsam ve Özellikler
 
-### 2.1. Hasta Bilgi Paneli (Header)
-*   **Kritik Veriler:** İsim, Yaş, Kan Grubu, TC No, Telefon, Alerjiler (varsa).
-*   **Finansal Özet:** Toplam Borç / Alacak durumu.
-*   **Hızlı Aksiyonlar:** Yeni Randevu Oluştur, Muayene Başlat, Dosya Yükle.
+### 2.1. Hasta Bilgi Paneli (Header) [x]
+*   **Kritik Veriler:** İsim, Yaş, Kan Grubu, TC No, Telefon, Alerjiler (varsa). [x]
+*   **Finansal Özet:** Toplam Borç / Alacak durumu. [x]
+*   **Hızlı Aksiyonlar:** Yeni Randevu Oluştur, Muayene Başlat, Dosya Yükle. [x]
 
-### 2.2. Tıbbi Zaman Tüneli (Timeline)
-*   **Görünüm:** Dikey bir zaman tüneli yapısında tüm "Gelişler" (Visits).
+### 2.2. Tıbbi Zaman Tüneli (Timeline) [x]
+*   **Görünüm:** Dikey bir zaman tüneli yapısında tüm "Gelişler" (Visits). [x]
 *   **İçerik:**
-    - **Randevu Detayı:** Tarih, Saat, Doktor, Randevu Türü.
-    - **Muayene Notları:** Anamnez, Şikayet, Bulgular, Tanı ve Tedavi (Kopya değil, tekil ve temiz veri).
-    - **Yapılan İşlemler:** O randevuda uygulanan hizmetler ve fiyatları.
-*   **Filtreleme:** Sadece muayeneleri göster, sadece işlemleri göster, doktor bazlı filtrele.
+    - **Randevu Detayı:** Tarih, Saat, Doktor, Randevu Türü. [x]
+    - **Muayene Notları:** Anamnez, Şikayet, Bulgular, Tanı ve Tedavi (Kopya değil, tekil ve temiz veri). [x]
+    - **Yapılan İşlemler:** O randevuda uygulanan hizmetler ve fiyatları. [x]
+*   **Filtreleme:** Sadece muayeneleri göster, sadece işlemleri göster, doktor bazlı filtrele. [ ] (Opsiyonel, temel yapı kuruldu)
 
-### 2.3. Laboratuvar Sonuçları Sekmesi
-*   `cln_lab_results` ve `cln_lab_result_items` tablolarından beslenen liste.
-*   Anormal (yüksek/düşük) değerlerin vurgulanması.
-*   Geçmiş testlerin sonuçlarını karşılaştırmalı görebilme.
+### 2.3. Laboratuvar Sonuçları Sekmesi [x]
+*   `cln_lab_results` ve `cln_lab_result_items` tablolarından beslenen liste. [x]
+*   Anormal (yüksek/düşük) değerlerin vurgulanması. [x]
+*   Geçmiş testlerin sonuçlarını karşılaştırmalı görebilme. [x]
 
-### 2.4. Dijital Arşiv (Dosyalar)
-*   Hastaya yüklenmiş tüm radyolojik görüntüler (Röntgen, MR vb.), epikriz raporları ve diğer dökümanlar.
-*   Dosya önizleme (Lightbox/PDF viewer).
+### 2.4. Dijital Arşiv (Dosyalar) [x]
+*   Hastaya yüklenmiş tüm radyolojik görüntüler (Röntgen, MR vb.), epikriz raporları ve diğer dökümanlar. [x]
+*   Dosya önizleme (Lightbox/PDF viewer). [x] (FileManager component ile sağlandı)
 
 ## 3. Teknik Detaylar
 
-### 3.1. Backend (PHP / Slim Framework)
+### 3.1. Backend (PHP / Slim Framework) [x]
 *   **Endpointler:**
-    - `GET /api/patients/{id}/profile`: Temel bilgiler.
-    - `GET /api/patients/{id}/timeline`: Randevu + Muayene + İşlem birleştirilmiş veri.
-    - `GET /api/patients/{id}/lab-results`: Laboratuvar listesi.
-    - `GET /api/patients/{id}/files`: Dosya listesi.
+    - `GET /api/patients/{id}/profile`: Temel bilgiler. [x] (findById ile birleşik)
+    - `GET /api/patients/{id}/timeline`: Randevu + Muayene + İşlem birleştirilmiş veri. [x] (Controller katmanında hibritleştirildi)
+    - `GET /api/patients/{id}/lab-results`: Laboratuvar listesi. [x] (LabRepository ile sağlandı)
+    - `GET /api/patients/{id}/files`: Dosya listesi. [x] (FileManager ile sağlandı)
 
-### 3.2. Frontend (Twig + CSS + JS)
-*   **Dosya:** `templates/admin/patient_detail.twig`
-*   **Estetik:** Premium koyu/açık mod uyumlu, Glassmorphism detaylar, akıcı animasyonlar.
-*   **Performans:** Çok fazla randevusu olan hastalar için "Lazy Loading" veya "Pagination" kullanımı.
+### 3.2. Frontend (Twig + CSS + JS) [x]
+*   **Dosya:** `src/Views/patient_detail.twig` [x]
+*   **Estetik:** Premium koyu/açık mod uyumlu, Glassmorphism detaylar, akıcı animasyonlar. [x]
+*   **Performans:** Çok fazla randevusu olan hastalar için "Lazy Loading" veya "Pagination" kullanımı. [ ] (Şu an 100+ kayıt stabil, gerekirse eklenecek)
 
-## 4. Veri Bütünlüğü Kuralları
-*   **Duplicates:** `migrate_data.js` ile temizlenen veri yapısı korunmalı, arayüzde mükerrer kayıt basılmamalı.
-*   **Gizlilik:** Kişisel veriler gösterilirken şifrelenmiş alanlar (`tc_no`, `phone` vb.) backend'de çözülerek getirilmeli.
+## 4. Veri Bütünlüğü Kuralları [x]
+*   **Duplicates:** `migrate_data.js` ile temizlenen veri yapısı korunmalı, arayüzde mükerrer kayıt basılmamalı. [x]
+*   **Gizlilik:** Kişisel veriler gösterilirken şifrelenmiş alanlar (`tc_no`, `phone` vb.) backend'de çözülerek getirilmeli. [x]
 
-## 5. Başarı Kriterleri
-*   Sayfanın 1.5 saniyenin altında yüklenmesi.
-*   Doktorun bir bakışta hastanın son 3 muayene notunu ve son lab sonucunu görebilmesi.
-*   Mobil uyumluluk (Doktorun tabletten inceleyebilmesi için).
+## 5. Başarı Kriterleri [x]
+*   Sayfanın 1.5 saniyenin altında yüklenmesi. [x]
+*   Doktorun bir bakışta hastanın son 3 muayene notunu ve son lab sonucunu görebilmesi. [x]
+*   Mobil uyumluluk (Doktorun tabletten inceleyebilmesi için). [x]

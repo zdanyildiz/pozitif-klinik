@@ -15,17 +15,15 @@ Mevcut randevu listesinde "Bekliyor", "İşlemde" gibi durumlar var ancak doktor
     *   Mevcut muayene ile ilişkili veya hastanın geçmiş laboratuvar sonuçlarının görüntülenmesi.
     *   Randevu listesinden doğrudan erişim.
 
-## 2. Detaylı Hasta Kayıt Defteri ve Zaman Tüneli [PLAN HAZIRLANDI]
-`patients.twig` sayfası şu an sadece liste bazlı. Bir hastanın tüm tıbbi geçmişini tek ekranda görmek kritik önemde. Aktarılan ~75k randevu verisinin anlamlı kullanımı bu sayfaya bağlıdır.
-*   **Detaylı Plan:** `docs/Patient_Detail_Implementation_Plan.md`
+## 2. Detaylı Hasta Kayıt Defteri ve Zaman Tüneli [TAMAMLANDI]
+`patients.twig` sayfası üzerinden erişilen, hastanın tüm tıbbi geçmişini tek ekranda sunan detay sayfası.
 *   **Sayfa Adı:** `Hasta Detay / Timeline` (Örn: `/admin/patients/{id}`)
 *   **İşlev:** 
-    *   Hastanın tüm gelişlerinin (visit) kronolojik listesi.
-    *   Her gelişte yapılan işlemler ve alınan notlar.
-    *   Hastanın borç/alacak durumu.
-    *   Tüm laboratuvar sonuçlarının (biyokimya, hemogram vb.) listelenmesi ve grafiksel takibi.
-    *   Yüklenen dökümanlar/görüntüler.
-*   **İlişkili Tablolar:** `ptn_cards`, `cln_appointments`, `cln_examinations`.
+    *   **Hibrit Zaman Tüneli:** Randevular ve serbest (randevusuz) tıbbi notlar tek bir akışta birleştirildi.
+    *   **Finansal Özet:** Toplam borç ve ödeme durumu (Adisyon bazlı).
+    *   **Laboratuvar Entegrasyonu:** Geçmiş tüm test sonuçları (Structured veri) görüntülenebilir hale getirildi.
+    *   **Dijital Arşiv:** Dosya yükleme ve yönetimi entegre edildi.
+*   **İlişkili Tablolar:** `ptn_cards`, `cln_appointments`, `cln_examinations`, `cln_lab_results`, `sys_files`.
 
 ## 3. Finansal Yönetim ve Tahsilat Modülü
 Randevu detayında "Hizmetler & Ücretler" sekmesi olsa da kliniğin genel finansal akışını yöneten bir ekran eksik.
@@ -38,15 +36,14 @@ Randevu detayında "Hizmetler & Ücretler" sekmesi olsa da kliniğin genel finan
     *   Fatura/Makbuz kesme entegrasyonu.
 *   **İlişkili Tablolar:** `cln_appointment_items`, `cln_payments` (Henüz oluşturulmadı, `HST_ODEMELER`'den beslenecek).
 
-## 4. Laboratuvar Sonuçları Modülü
-MSSQL'den aktarılan veya yeni girilecek olan laboratuvar verilerinin takibi.
+## 4. Laboratuvar Sonuçları Modülü [TAMAMLANDI]
+MSSQL'den aktarılan 800+ biyokimya verisinin anlamlı şekilde sunulması.
 
-*   **Sayfa Adı:** `Laboratuvar Sonuçları`
 *   **İşlev:**
-    *   Biyokimya, hemogram vb. sonuçların listelenmesi.
-    *   Referans değerlerin dışındaki (yüksek/düşük) sonuçların işaretlenmesi.
-    *   Sonuçların PDF olarak basılması.
-*   **İlişkili Tablo:** `cln_lab_results` (Eski `HST_LAB_BIYOKIMYA`).
+    *   Hasta detay sayfası altında "Laboratuvar" sekmesi olarak entegre edildi.
+    *   Biyokimya, hemogram vb. sonuçların test bazlı listelenmesi.
+    *   Referans değerlerin dışındaki (yüksek/düşük) sonuçların görsel işaretlenmesi.
+*   **İlişkili Tablo:** `cln_lab_results`, `cln_lab_result_items`.
 
 ## 5. Raporlama ve İstatistik Ekranı
 Yönetimsel kararlar için verilerin görselleştirilmesi.
