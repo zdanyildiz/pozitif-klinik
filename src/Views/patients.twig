@@ -410,17 +410,54 @@
                 patientModal.show();
             });
 
-            // Filtreleme (Arama) - İstemci taraflı DOM filtreleme
+            // Sunucu Taraflı Arama (Blind Search Entegrasyonu)
+            let searchTimeout = null;
+            
             patientSearch.addEventListener('input', (e) => {
                 const query = e.target.value.toLowerCase().trim();
-                const rows = patientsTableBody.querySelectorAll('tr');
-                rows.forEach(row => {
-                    if (row.innerText.toLowerCase().includes(query)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
+
+                clearTimeout(searchTimeout);
+
+                if (query.length < 2) {
+                    if (query.length === 0) {
+                        // Arama temizlendiyse listeyi sıfırla (sayfayı yenile veya ilk 20 kaydı çek)
+                        // Performans için şimdilik reload en temizi, ya da varsayılan listeyi tekrar çekebiliriz.
+                        // Kullanıcı deneyimi için şimdilik reload yapmıyoruz, sonuca göre boşaltıyoruz.
+                         window.location.reload(); 
                     }
-                });
+                    return;
+                }
+
+                // Debounce: Yazma bittikten 500ms sonra ara
+                searchTimeout = setTimeout(async () => {
+                    try {
+                        // Tabloyu yükleniyor moduna al
+                        patientsTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2 text-muted">Aranıyor...</p>
+                                </td>
+                            </tr>
+                        `;
+
+                        const response = await api.get(`/api/patients/search?q=${encodeURIComponent(query)}`);
+                        const results = response.data || [];
+
+                        renderPatientTable(results);
+
+                    } catch (error) {
+                        console.error('Arama hatası:', error);
+                        patientsTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-danger">
+                                    <i class="bi bi-exclamation-circle fs-1"></i>
+                                    <p class="mt-2">Arama sırasında bir hata oluştu.</p>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }, 500); 
             });
 
             // Hasta Kaydet
@@ -429,6 +466,65 @@
             // İl Değiştiğinde İlçeleri Getir
             document.getElementById('province_id').addEventListener('change', (e) => {
                 loadDistricts(e.target.value);
+            });
+        }
+
+        /**
+         * Tabloyu Dinamik Olarak Yenile
+         */
+        function renderPatientTable(patients) {
+            patientsTableBody.innerHTML = '';
+
+            if (patients.length === 0) {
+                patientsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <i class="bi bi-search fs-1 text-muted opacity-50"></i>
+                            <p class="mt-3 text-secondary">Sonuç bulunamadı.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            patients.forEach(patient => {
+                const tr = document.createElement('tr');
+                
+                // Cinsiyet Badge
+                let genderHtml = '<span class="badge bg-secondary-subtle text-secondary rounded-pill">Belirtilmemiş</span>';
+                if (patient.gender === 'M') {
+                    genderHtml = '<span class="badge bg-info-subtle text-info rounded-pill">Erkek</span>';
+                } else if (patient.gender === 'F') {
+                    genderHtml = '<span class="badge bg-danger-subtle text-danger rounded-pill">Kadın</span>';
+                }
+
+                // Tarih (updated_at veya created_at)
+                const lastActionDate = patient.updated_at || patient.created_at;
+
+                tr.innerHTML = `
+                    <td><code>${patient.tc_no || '-'}</code></td>
+                    <td><div class="fw-bold text-dark">${patient.name}</div></td>
+                    <td>${patient.phone || '-'}</td>
+                    <td>${genderHtml}</td>
+                    <td><small class="text-muted">${lastActionDate || '-'}</small></td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="showPatientDetails(${patient.id})" title="Hızlı Önizleme (Modal)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <a href="${window.location.origin}/admin/patients/${patient.id}" class="btn btn-outline-secondary" title="Tam Detay Sayfası">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                            <button class="btn btn-outline-warning" onclick="editPatient(${patient.id})" title="Düzenle">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="handleArchivePatient(${patient.id})" title="Arşivle">
+                                <i class="bi bi-archive"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                patientsTableBody.appendChild(tr);
             });
         }
 
