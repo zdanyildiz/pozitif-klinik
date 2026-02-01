@@ -1,0 +1,77 @@
+{% extends 'layout.twig' %}
+
+{% block page_title %}Bekleyen Ödemeler{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Borçlu Listesi (Randevu Bazlı)</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Hasta</th>
+                        <th>Randevu/Doktor</th>
+                        <th>Toplam Borç</th>
+                        <th>Ödenen</th>
+                        <th class="text-end">Kalan Bakiye</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pendingPayments %}
+                    <tr>
+                        <td>{{ item.appointment_date|date('d.m.Y H:i') }}</td>
+                        <td>
+                            <div>{{ item.patient_name }}</div>
+                            <small class="text-muted">{{ item.patient_phone }}</small>
+                        </td>
+                        <td>{{ item.doctor_name }}</td>
+                        <td>{{ item.total_debt|number_format(2) }} ₺</td>
+                        <td class="text-success">{{ item.total_paid|number_format(2) }} ₺</td>
+                        <td class="text-end fw-bold text-danger">{{ item.remaining_amount|number_format(2) }} ₺</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary btn-collect" 
+                                    data-patient-id="{{ item.patient_id }}"
+                                    data-appointment-id="{{ item.appointment_id }}"
+                                    data-remaining="{{ item.remaining_amount }}"
+                                    data-bs-toggle="modal" data-bs-target="#paymentModal">
+                                <i class="bi-cash-coin"></i> Tahsil Et
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">Bekleyen ödeme bulunamadı.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include 'finance/modals/payment_modal.twig' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Modal açıldığında verileri doldur
+    const paymentModal = document.getElementById('paymentModal');
+    paymentModal.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        const patientId = button.getAttribute('data-patient-id');
+        const appointmentId = button.getAttribute('data-appointment-id');
+        const remaining = button.getAttribute('data-remaining');
+
+        document.getElementById('payment_patient_id').value = patientId;
+        document.getElementById('payment_appointment_id').value = appointmentId;
+        document.getElementById('payment_amount').value = remaining;
+    });
+});
+</script>
+{% endblock %}

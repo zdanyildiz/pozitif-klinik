@@ -1,0 +1,57 @@
+{% extends 'layout.twig' %}
+
+{% block page_title %}Kasa Hareketleri{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Tüm İşlemler</h5>
+        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">Yazdır</button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Hasta</th>
+                        <th>İşlem Yapan</th>
+                        <th>Notlar</th>
+                        <th>Ödeme Tipi</th>
+                        <th class="text-end">Tutar</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in transactions %}
+                    <tr>
+                        <td>{{ item.payment_date|date('d.m.Y H:i') }}</td>
+                        <td>{{ item.patient_name }}</td>
+                        <td>{{ item.staff_name }}</td>
+                        <td>{{ item.notes }}</td>
+                        <td>
+                            {% if item.payment_type == 'cash' %} Nakit
+                            {% elseif item.payment_type == 'credit_card' %} Kredi Kartı
+                            {% elseif item.payment_type == 'bank_transfer' %} Havale
+                            {% else %} Diğer {% endif %}
+                        </td>
+                        <td class="text-end fw-bold">{{ item.amount|number_format(2) }} ₺</td>
+                        <td>
+                            {% if item.status == 'cancelled' %}
+                                <span class="badge bg-danger">İptal</span>
+                            {% else %}
+                                <span class="badge bg-success">Onaylı</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Kayıt bulunamadı.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

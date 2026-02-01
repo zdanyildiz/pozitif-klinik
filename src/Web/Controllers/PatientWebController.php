@@ -13,6 +13,7 @@ use App\Core\Service\SessionService;
 use App\Domain\Appointment\AppointmentRepository;
 use App\Domain\Examination\ExaminationRepository;
 use App\Domain\Lab\LabRepository;
+use App\Domain\Finance\PaymentRepository;
 use App\Core\Attributes\Route;
 use App\Core\Attributes\Group;
 use App\Core\Attributes\Middleware;
@@ -28,6 +29,7 @@ class PatientWebController
     private AppointmentRepository $appointmentRepository;
     private ExaminationRepository $examinationRepository;
     private LabRepository $labRepository;
+    private PaymentRepository $paymentRepository;
 
     public function __construct(
         Twig $view,
@@ -36,7 +38,8 @@ class PatientWebController
         SessionService $session,
         AppointmentRepository $appointmentRepository,
         ExaminationRepository $examinationRepository,
-        LabRepository $labRepository
+        LabRepository $labRepository,
+        PaymentRepository $paymentRepository
     ) {
         $this->view = $view;
         $this->repository = $repository;
@@ -45,6 +48,7 @@ class PatientWebController
         $this->appointmentRepository = $appointmentRepository;
         $this->examinationRepository = $examinationRepository;
         $this->labRepository = $labRepository;
+        $this->paymentRepository = $paymentRepository;
     }
 
     #[Route('GET', '/patients')]
@@ -83,8 +87,11 @@ class PatientWebController
         // 2. Geçmiş Randevular (Timeline için temel)
         $appointments = $this->appointmentRepository->findAllByPatient($clinicId, $patientId);
 
-        // 3. Finansal Özet
-        $totalDebt = $this->appointmentRepository->getPatientTotalDebt($clinicId, $patientId);
+        // 3. Finansal Özet (YENİ SİSTEM)
+        $financeStats = $this->paymentRepository->getPatientBalance($clinicId, $patientId);
+        $totalDebt = $financeStats['total_debt'];
+        $totalPaid = $financeStats['total_paid'];
+        $balance = $financeStats['balance'];
 
         // 4. Muayene Kayıtları
         $examinations = $this->examinationRepository->findAllByPatient($clinicId, $patientId);
@@ -152,6 +159,8 @@ class PatientWebController
             'timeline' => $timeline,
             'labResults' => $labResults,
             'totalDebt' => $totalDebt,
+            'totalPaid' => $totalPaid,
+            'balance' => $balance,
             'pageTitle' => $patient['name'] . ' - Hasta Detayı',
             'page' => 'patients'
         ]);
