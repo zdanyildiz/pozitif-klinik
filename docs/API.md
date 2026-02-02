@@ -798,6 +798,69 @@ Kriterlere göre dosya arar.
       "size_kb": 250,
       "uuid": "550e8400-e29b-41d4-a716-446655440000",
       "patient_name": "Ahmet Yılmaz",
+      "created_at": "2026-01-31 14:00:00"
+    }
+  ]
+}
+
+### `GET /admin/files/download/{uuid}`
+Dosyayı indirir veya tarayıcıda görüntüler (inline disposition).
+
+---
+
+## Domain API (Finans & Ödeme)
+
+Bu endpoint'ler tahsilat, borç takibi ve ödeme işlemlerini yönetir.
+
+### `GET /api/payments/transactions`
+Finansal işlem geçmişini (ödemeler, borçlar) listeler.
+
+**Query Params:**
+- `start_date` (YYYY-MM-DD): Başlangıç tarihi
+- `end_date` (YYYY-MM-DD): Bitiş tarihi
+- `q` (string): Hasta adı veya TC No ile arama
+- `type` (string): Ödeme tipi (cash, credit_card, insurance, transfer)
+- `limit` (int): Kayıt limiti
+
+### `GET /api/payments/transactions/{id}`
+Belirli bir işlemin detaylarını (hizmetler, ödeme parçaları) getirir.
+
+### `POST /api/payments`
+Yeni bir ödeme (tahsilat) kaydeder. Çoklu ve parçalı ödeme desteklenir.
+
+**Payload:**
+```json
+{
+  "payments": [
+    {
+      "patient_id": 12,
+      "appointment_id": 123, // Opsiyonel
+      "payment_type": "cash",
+      "amount": 1500.00,
+      "notes": "Elden tahsilat"
+    }
+  ]
+}
+```
+
+### `PUT /api/appointments/{id}/discount`
+Bir randevuya genel indirim tanımlar.
+
+**Payload:**
+```json
+{
+  "amount": 250.00,
+  "note": "Öğrenci indirimi"
+}
+```
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "message": "İndirim güncellendi"
+}
+```
       "created_at": "2026-01-30 14:00:00"
     }
   ]

@@ -500,6 +500,22 @@ LOG_LEVEL=DEBUG
 
 ---
 
+### 46. Randevu Ücreti ve Ödeme İyileştirmeleri (✅ Tamamlandı)
+**Tarih:** 2026-02-02
+- **Randevu Ücreti Otomasyonu:**
+  - `editAppointment` fonksiyonu düzeltilerek, randevu düzenleme ekranında mevcut muayene ücretinin doğru gelmesi sağlandı.
+  - Randevu güncellendiğinde, eğer ücret değiştirildiyse arka planda ilgili "Muayene" kaleminin (appointment item) fiyatı güncelleniyor veya yoksa otomatik oluşturuluyor.
+  - Bu sayede ödeme ekranında muayene ücretinin görünmemesi sorunu çözüldü.
+- **Genel İndirim Özelliği:**
+  - Ödeme (Tahsilat) modalına "İndirim Uygula" butonu eklendi.
+  - Kullanıcılar artık hizmet kalemlerinden bağımsız olarak "Genel İndirim Tutarı" ve "İndirim Açıklaması" girebiliyor.
+  - Girilen indirim, toplam borçtan düşülüyor ve ödeme dökümünde detaylı (tutar ve açıklama) olarak gösteriliyor.
+- **UX İyileştirmeleri:**
+  - Ödeme ekranındaki hizmet listesi görünürlüğü (`d-none` sorunu) düzeltildi.
+  - İndirim uygulandığında modal kapatılıp açılmadan anlık olarak toplam tutar güncelleniyor.
+
+---
+
 ### 36. Tıbbi Muayene Modülü ve Tanı Yönetimi (✅ Tamamlandı)
 **Tarih:** 2026-01-28
 - **Muayene Ekranı (`clinic_examination.twig`):** Doktorlar için kapsamlı, modern ve iki sütunlu muayene giriş ekranı.
