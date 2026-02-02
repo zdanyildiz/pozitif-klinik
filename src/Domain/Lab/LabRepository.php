@@ -75,14 +75,15 @@ class LabRepository
      */
     public function createResult(array $data): int
     {
-        $sql = "INSERT INTO cln_lab_results (clinic_id, patient_id, appointment_id, doctor_id, result_date, created_at)
-                VALUES (:clinic_id, :patient_id, :appointment_id, :doctor_id, :result_date, NOW())";
+        $sql = "INSERT INTO cln_lab_results (clinic_id, patient_id, appointment_id, doctor_id, request_date, result_date, created_at)
+                VALUES (:clinic_id, :patient_id, :appointment_id, :doctor_id, :request_date, :result_date, NOW())";
 
         $this->db->query($sql, [
             'clinic_id' => $data['clinic_id'],
             'patient_id' => $data['patient_id'],
             'appointment_id' => $data['appointment_id'] ?? null,
             'doctor_id' => $data['doctor_id'],
+            'request_date' => $data['request_date'] ?? $data['result_date'],
             'result_date' => $data['result_date']
         ]);
 
@@ -155,5 +156,58 @@ class LabRepository
         $stmt = $this->db->query("DELETE FROM cln_lab_results WHERE id = ?", [$resultId]);
 
         return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Aktif test panellerini (şablonları) listeler
+     */
+    public function getPanels(int $clinicId): array
+    {
+        $sql = "SELECT * FROM cln_lab_test_panels 
+                WHERE clinic_id = ? AND is_active = 1 
+                ORDER BY sort_order ASC, name ASC";
+        return $this->db->fetchAll($sql, [$clinicId]);
+    }
+
+    /**
+     * Belirli bir panele bağlı test tanımlarını getirir
+     */
+    public function getPanelItems(int $panelId): array
+    {
+        $sql = "SELECT d.*, pi.sort_order 
+                FROM cln_lab_panel_items pi
+                JOIN sys_lab_test_definitions d ON pi.test_definition_id = d.id
+                WHERE pi.panel_id = ? AND d.is_active = 1
+                ORDER BY pi.sort_order ASC, d.test_name ASC";
+        return $this->db->fetchAll($sql, [$panelId]);
+    }
+
+    /**
+     * Test kütüphanesinde arama yapar
+     */
+    public function searchDefinitions(string $query): array
+    {
+        $sql = "SELECT id, test_name, test_code, default_unit, category
+                FROM sys_lab_test_definitions
+                WHERE is_active = 1 AND (test_name LIKE ? OR test_code LIKE ?)
+                LIMIT 20";
+        $searchTerm = "%$query%";
+        return $this->db->fetchAll($sql, [$searchTerm, $searchTerm]);
+    }
+
+    /**
+     * Bir testin detaylarını ve normal değerlerini (referans aralıklarını) getirir
+     */
+    public function getDefinitionDetails(int $id): ?array
+    {
+        $sql = "SELECT * FROM sys_lab_test_definitions WHERE id = ? AND is_active = 1";
+        $def = $this->db->fetch($sql, [$id]);
+
+        if ($def) {
+            $sqlNormals = "SELECT * FROM sys_lab_test_normals WHERE test_definition_id = ?";
+            $def['normals'] = $this->db->fetchAll($sqlNormals, [$id]);
+        }
+
+        return $def;
     }
 }

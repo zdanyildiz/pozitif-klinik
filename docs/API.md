@@ -1124,36 +1124,52 @@ Yeni muayene kaydı oluşturur.
 
 ## Domain API (Laboratuvar Sonuçları)
 
-Hastanın laboratuvar (biyokimya, hemogram vb.) test sonuçlarını yönetir.
+Hastanın laboratuvar (biyokimya, hemogram vb.) test sonuçlarını yönetir ve akıllı veri girişi için şablon desteği sunar.
 
 ### `GET /api/lab/patient/{patientId}` 
-*(Not: LabRepository üzerinden servis edilir)* 
 Hastanın tüm laboratuvar sonuçlarını ve alt kalemlerini (test değerleri) döner.
 
-**Yanıt Yapısı:**
+### `POST /api/lab`
+Yeni bir laboratuvar sonucu ve test kalemlerini toplu olarak ekler.
+**Yetki:** Doktor veya Admin.
+
+**Payload:**
 ```json
 {
-  "status": true,
-  "data": [
+  "patient_id": 14376,
+  "appointment_id": 75353,
+  "doctor_id": 2,
+  "result_date": "2026-02-02",
+  "items": [
     {
-      "id": 12,
-      "result_date": "2026-01-15",
-      "doctor_name": "Dr. Erhan",
-      "items": [
-        {
-          "test_name": "Glikoz",
-          "test_value": "105",
-          "test_unit": "mg/dL",
-          "reference_range": "70 - 100",
-          "is_abnormal": 1
-        }
-      ]
+      "test_name": "Glikoz",
+      "result_value": "110",
+      "unit": "mg/dL",
+      "reference_range": "70-100",
+      "is_abnormal": 1
     }
   ]
 }
 ```
 
+### `DELETE /api/lab/{id}`
+Bir laboratuvar sonucunu ve ona bağlı tüm test kalemlerini siler.
+**Yetki:** Doktor veya Admin.
+
+### `GET /api/lab/panels`
+Klinik için tanımlı hazır test panellerini (şablonlarını) listeler (Örn: Tam Kan Sayımı, Biyokimya Paneli).
+
+### `GET /api/lab/panels/{id}/items`
+Belirli bir panelin içeriğindeki test tanımlarını getirir.
+
+### `GET /api/lab/definitions/search?q={query}`
+Merkezi test kütüphanesinde isim veya koda göre arama yapar.
+
+### `GET /api/lab/definitions/{id}`
+Bir testin detaylarını ve tanımlı referans (normal) değerlerini getirir.
+
 ---
+
 
 ## Web (SSR) Rotaları
 

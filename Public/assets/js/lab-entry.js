@@ -1,4 +1,3 @@
-/* Public/assets/js/lab-entry.js */
 const LabEntry = {
     modal: null,
 
@@ -25,18 +24,24 @@ const LabEntry = {
             dateInput.value = new Date().toISOString().split('T')[0];
         }
 
-        // Load Doctors if empty
+        // Load Doctors & Templates
+        await Promise.all([
+            this.loadDoctors(),
+            this.loadTemplates()
+        ]);
+
+        this.modal.show();
+    },
+
+    loadDoctors: async function () {
         const doctorSelect = document.getElementById('labDoctorSelect');
         if (doctorSelect && doctorSelect.options.length <= 1) {
             try {
-                // Load users list
                 const res = await api.get('/api/users');
-                if (res.data && res.data.users && Array.isArray(res.data.users)) {
+                if (res.data && res.data.users) {
                     const doctors = res.data.users.filter(u =>
-                        (u.role === 'doctor' || u.role === 'admin') &&
-                        (u.is_active == 1)
+                        (u.role === 'doctor' || u.role === 'admin') && (u.is_active == 1)
                     );
-
                     doctors.forEach(doc => {
                         const opt = document.createElement('option');
                         opt.value = doc.id;
@@ -44,25 +49,74 @@ const LabEntry = {
                         doctorSelect.appendChild(opt);
                     });
                 }
-            } catch (e) {
-                console.error("Doktor listesi yüklenemedi", e);
-            }
+            } catch (e) { console.error("Doktor listesi yüklenemedi", e); }
         }
-
-        this.modal.show();
     },
 
-    addRow: function () {
+    loadTemplates: async function () {
+        const templateSelect = document.getElementById('labTemplateSelect');
+        if (templateSelect && templateSelect.options.length <= 1) {
+            try {
+                const res = await api.get('/api/lab/panels');
+                if (res.data && Array.isArray(res.data)) {
+                    res.data.forEach(panel => {
+                        const opt = document.createElement('option');
+                        opt.value = panel.id;
+                        opt.textContent = panel.name;
+                        templateSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error("Şablon listesi yüklenemedi", e); }
+        }
+    },
+
+    loadTemplate: async function (panelId) {
+        if (!panelId) return;
+
+        try {
+            Swal.showLoading();
+            const res = await api.get(`/api/lab/panels/${panelId}/items`);
+            if (res.data && Array.isArray(res.data)) {
+                // Clear existing rows if they are empty
+                const tbody = document.getElementById('labItemsTable').getElementsByTagName('tbody')[0];
+                const rows = tbody.querySelectorAll('tr');
+                let isEmpty = true;
+                rows.forEach(r => {
+                    if (r.querySelector('input[name="result_value[]"]').value) isEmpty = false;
+                });
+
+                if (isEmpty) tbody.innerHTML = '';
+
+                res.data.forEach(item => {
+                    this.addRow({
+                        test_name: item.test_name,
+                        unit: item.default_unit,
+                        // We could fetch reference ranges here too or let the user enter
+                    });
+                });
+            }
+            Swal.close();
+        } catch (e) {
+            console.error("Şablon yüklenemedi", e);
+            Swal.fire('Hata', 'Şablon içeriği yüklenemedi', 'error');
+        }
+    },
+
+    addRow: function (data = {}) {
         const tbody = document.getElementById('labItemsTable').getElementsByTagName('tbody')[0];
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td><input type="text" class="form-control form-control-sm" name="test_name[]" placeholder="Örn: Glikoz" required></td>
-            <td><input type="text" class="form-control form-control-sm" name="result_value[]" placeholder="Değer" required></td>
-            <td><input type="text" class="form-control form-control-sm" name="unit[]" placeholder="mg/dL"></td>
-            <td><input type="text" class="form-control form-control-sm" name="reference_range[]" placeholder="70-100"></td>
+            <td class="position-relative">
+                <input type="text" class="form-control form-control-sm test-autocomplete" 
+                       name="test_name[]" placeholder="Test Adı" required value="${data.test_name || ''}" autocomplete="off">
+                <div class="autocomplete-suggestions list-group position-absolute w-100 shadow-sm d-none" style="z-index: 1050;"></div>
+            </td>
+            <td><input type="text" class="form-control form-control-sm result-input" name="result_value[]" placeholder="Değer" required></td>
+            <td><input type="text" class="form-control form-control-sm unit-input" name="unit[]" placeholder="Birim" value="${data.unit || ''}"></td>
+            <td><input type="text" class="form-control form-control-sm ref-input" name="reference_range[]" placeholder="Ref. Aralığı"></td>
             <td class="text-center">
                 <div class="form-check form-switch d-flex justify-content-center">
-                    <input class="form-check-input" type="checkbox" name="is_abnormal_check[]">
+                    <input class="form-check-input abnormal-check" type="checkbox" name="is_abnormal_check[]">
                     <input type="hidden" name="is_abnormal[]" value="0">
                 </div>
             </td>
@@ -73,14 +127,101 @@ const LabEntry = {
             </td>
         `;
 
-        // Handle checkbox value change
-        const checkbox = row.querySelector('input[type="checkbox"]');
+        this.initRowEvents(row);
+        tbody.appendChild(row);
+    },
+
+    initRowEvents: function (row) {
+        const testInput = row.querySelector('.test-autocomplete');
+        const suggestions = row.querySelector('.autocomplete-suggestions');
+        const resultInput = row.querySelector('.result-input');
+        const checkbox = row.querySelector('.abnormal-check');
         const hidden = row.querySelector('input[type="hidden"]');
+
+        // Autocomplete
+        let debounceTimer;
+        testInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            const query = e.target.value;
+            if (query.length < 2) {
+                suggestions.classList.add('d-none');
+                return;
+            }
+
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const res = await api.get(`/api/lab/definitions/search?q=${encodeURIComponent(query)}`);
+                    if (res.data && res.data.length > 0) {
+                        suggestions.innerHTML = '';
+                        res.data.forEach(def => {
+                            const item = document.createElement('button');
+                            item.type = 'button';
+                            item.className = 'list-group-item list-group-item-action small py-1';
+                            item.textContent = `${def.test_name} (${def.test_code || 'N/A'})`;
+                            item.onclick = () => this.selectDefinition(row, def);
+                            suggestions.appendChild(item);
+                        });
+                        suggestions.classList.remove('d-none');
+                    } else {
+                        suggestions.classList.add('d-none');
+                    }
+                } catch (e) { console.error(e); }
+            }, 300);
+        });
+
+        // Hide suggestions on blur (with delay for click)
+        testInput.addEventListener('blur', () => {
+            setTimeout(() => suggestions.classList.add('d-none'), 200);
+        });
+
+        // Anormal checking
+        resultInput.addEventListener('input', () => this.checkAbnormal(row));
+
         checkbox.addEventListener('change', (e) => {
             hidden.value = e.target.checked ? "1" : "0";
         });
+    },
 
-        tbody.appendChild(row);
+    selectDefinition: async function (row, def) {
+        row.querySelector('.test-autocomplete').value = def.test_name;
+        row.querySelector('.unit-input').value = def.default_unit || '';
+        row.querySelector('.autocomplete-suggestions').classList.add('d-none');
+
+        // Fetch details for reference ranges
+        try {
+            const res = await api.get(`/api/lab/definitions/${def.id}`);
+            if (res.data && res.data.normals) {
+                // For simplicity, take the first reference if multiple exist (age/gender logic can be refined later)
+                const normal = res.data.normals[0];
+                if (normal) {
+                    row.querySelector('.ref-input').value = normal.reference_text || `${normal.min_value} - ${normal.max_value}`;
+                    row.dataset.min = normal.min_value;
+                    row.dataset.max = normal.max_value;
+
+                    // If unit is still empty, take it from normals
+                    if (!row.querySelector('.unit-input').value && normal.unit) {
+                        row.querySelector('.unit-input').value = normal.unit;
+                    }
+                }
+            }
+        } catch (e) { console.error(e); }
+    },
+
+    checkAbnormal: function (row) {
+        const val = parseFloat(row.querySelector('.result-input').value);
+        const min = parseFloat(row.dataset.min);
+        const max = parseFloat(row.dataset.max);
+        const checkbox = row.querySelector('.abnormal-check');
+        const hidden = row.querySelector('input[type="hidden"][name="is_abnormal[]"]');
+
+        if (!isNaN(val)) {
+            let isAbnormal = false;
+            if (!isNaN(min) && val < min) isAbnormal = true;
+            if (!isNaN(max) && val > max) isAbnormal = true;
+
+            checkbox.checked = isAbnormal;
+            hidden.value = isAbnormal ? "1" : "0";
+        }
     },
 
     removeRow: function (btn) {
@@ -89,12 +230,13 @@ const LabEntry = {
         if (tbody.children.length > 1) {
             row.remove();
         } else {
-            // Clear inputs if it's the last row
             row.querySelectorAll('input').forEach(i => {
                 if (i.type === 'checkbox') i.checked = false;
                 else if (i.type !== 'hidden') i.value = '';
                 if (i.type === 'hidden' && i.name === 'is_abnormal[]') i.value = '0';
             });
+            delete row.dataset.min;
+            delete row.dataset.max;
         }
     },
 
@@ -114,7 +256,6 @@ const LabEntry = {
             items: []
         };
 
-        // Collect items
         const tbody = document.getElementById('labItemsTable').getElementsByTagName('tbody')[0];
         const rows = tbody.querySelectorAll('tr');
 
@@ -139,24 +280,10 @@ const LabEntry = {
         }
 
         try {
-            Swal.fire({
-                title: 'Kaydediliyor...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
+            Swal.fire({ title: 'Kaydediliyor...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             await api.post('/api/lab', payload);
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Başarılı',
-                text: 'Laboratuvar sonucu başarıyla kaydedildi.',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                window.location.reload();
-            });
-
+            Swal.fire({ icon: 'success', title: 'Başarılı', text: 'Laboratuvar sonucu başarıyla kaydedildi.', timer: 1500, showConfirmButton: false })
+                .then(() => window.location.reload());
         } catch (error) {
             console.error(error);
             Swal.fire('Hata', error.response?.data?.message || 'Bir hata oluştu.', 'error');
@@ -178,9 +305,7 @@ const LabEntry = {
         if (result.isConfirmed) {
             try {
                 await api.delete(`/api/lab/${id}`);
-                Swal.fire('Silindi!', 'Laboratuvar sonucu silindi.', 'success').then(() => {
-                    window.location.reload();
-                });
+                Swal.fire('Silindi!', 'Laboratuvar sonucu silindi.', 'success').then(() => window.location.reload());
             } catch (error) {
                 console.error(error);
                 Swal.fire('Hata', 'Silme işlemi başarısız.', 'error');

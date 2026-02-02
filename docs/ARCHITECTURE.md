@@ -189,11 +189,16 @@ src/Core/
 
 ### Yaklaşım: Shared Database, Shared Schema
 
-Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını paylaşır. Veri ayrımı, her tablodaki `clinic_id` sütunu ile sağlanır.
+Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını paylaşır.
+
+**Tablo İsimlendirme ve İzolasyon:**
+1.  **`cln_` Öneki (Tenant Verileri):** İşlem verileri (hasta, randevu, laboratuvar sonuçları, klinik bazlı paneller vb.) bu önekle başlar. Veri ayrımı, her tablodaki `clinic_id` sütunu ile sağlanır.
+2.  **`sys_` Öneki (Global Veri / Kütüphaneler):** Tüm klinikler tarafından ortak kullanılan, her kliniğin ayrı ayrı tanımlamasına gerek olmayan merkezi kütüphanelerdir (örn: İller/İlçeler, Tanı Kodları (ICD-10), Merkezi Test Tanımları). Bu tablolarda genellikle `clinic_id` bulunmaz.
 
 **Güvenlik Katmanları:**
 1.  **`TenantMiddleware`**: Gelen isteğin `Authorization` başlığındaki JWT'yi doğrular, içindeki `clinic_id`'yi ayıklar ve isteğe bir attribute olarak ekler.
-2.  **`BaseController` / `Repository` Katmanı**: Tüm veritabanı sorguları, isteğe eklenmiş olan bu `clinic_id` kullanılarak filtrelenir. Bu, bir kliniğin yanlışlıkla başka bir kliniğin verisine erişmesini engeller.
+2.  **`BaseController` / `Repository` Katmanı**: Tüm `cln_` tablosu sorguları, isteğe eklenmiş olan bu `clinic_id` kullanılarak filtrelenir. Bu, bir kliniğin yanlışlıkla başka bir kliniğin verisine erişmesini engeller.
+
 
 ---
 

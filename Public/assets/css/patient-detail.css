@@ -115,3 +115,34 @@
     border-bottom-color: #4f46e5;
     background: transparent !important;
 }
+
+/* Lab Autocomplete Styles */
+.autocomplete-suggestions {
+    background: white;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    z-index: 9999 !important; /* Force on top of modal */
+}
+
+.autocomplete-suggestions .list-group-item {
+    cursor: pointer;
+    border-left: 0;
+    border-right: 0;
+    transition: background 0.2s;
+}
+
+.autocomplete-suggestions .list-group-item:hover {
+    background-color: #f3f4f6;
+    color: #4f46e5;
+}
+
+/* Modal overflow fix for autocomplete */
+#labEntryModal .table-responsive {
+    overflow: visible !important;
+}
+
+#labItemsTable {
+    border-collapse: separate;
+}

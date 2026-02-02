@@ -406,19 +406,19 @@
             <div class="modal-body p-4">
                 <form id="labEntryForm">
                     <input type="hidden" name="patient_id" value="{{ patient.id }}">
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
+                     <div class="row g-3 mb-4">
+                        <div class="col-md-3">
                             <label class="form-label small text-muted fw-bold">Sonuç Tarihi</label>
                             <input type="date" name="result_date" class="form-control" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                              <label class="form-label small text-muted fw-bold">Doktor</label>
                              <select name="doctor_id" class="form-select" required id="labDoctorSelect">
                                  <option value="">Seçiniz</option>
                                  <!-- JS populates -->
                              </select>
                         </div>
-                         <div class="col-md-4">
+                        <div class="col-md-3">
                              <label class="form-label small text-muted fw-bold">İlişkili Randevu</label>
                              <select name="appointment_id" class="form-select" id="labAppointmentSelect">
                                  <option value="">Bağımsız Kayıt</option>
@@ -429,6 +429,13 @@
                                         </option>
                                     {% endif %}
                                  {% endfor %}
+                             </select>
+                        </div>
+                        <div class="col-md-3">
+                             <label class="form-label small text-muted fw-bold text-primary">Hazır Şablonlar</label>
+                             <select class="form-select border-primary" id="labTemplateSelect" onchange="LabEntry.loadTemplate(this.value)">
+                                 <option value="">Şablon Seçiniz...</option>
+                                 <!-- JS populates -->
                              </select>
                         </div>
                     </div>

@@ -46,6 +46,7 @@ CREATE TABLE `cln_appointments` (
   `type_id` bigint(20) unsigned NOT NULL,
   `appointment_date` datetime NOT NULL,
   `status` varchar(50) DEFAULT 'pending',
+  `payment_status` ENUM('unpaid', 'partially_paid', 'paid') NOT NULL DEFAULT 'unpaid',
   `general_discount_amount` decimal(10,2) DEFAULT 0.00,
   `general_discount_note` varchar(255) DEFAULT NULL,
   `notes` text DEFAULT NULL,
