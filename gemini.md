@@ -1,6 +1,6 @@
 # YZ AJANI KIRMIZI ÇİZGİLERİ VE TALİMATLARI
 
-Bu dosya, bu oturumda yapılan hatalardan ders çıkarılarak oluşturulmuştur. Bir YZ ajanı bu kurallara kayıtsız şartsız uymalıdır.
+Bu dosya, bu oturumda yapılan hatalardan ders çıkarılarak oluşturulmuştur. Bir YZ ajanı bu kurallara kayıtsız şartsız uymalıdır. Öncelikle her zaman Türkçe iletişim kurun!
 
 ## BUNLAR ASLA YAPILMAMALIDIR (KRİTİK HATALAR)
 
