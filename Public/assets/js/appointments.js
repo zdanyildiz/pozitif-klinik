@@ -820,8 +820,9 @@ async function viewDetail(id, e) {
             app.total_paid,
             app.remaining_amount,
             app.general_discount_amount,
-            app.items_subtotal, // Need to make sure backend returns this or we sum client side
-            app.items_discount_total // Need to make sure backend returns this
+            app.items_subtotal,
+            app.items_discount_total,
+            app.general_discount_note || ''
         );
 
         detailModal.show();
@@ -837,7 +838,9 @@ function openPaymentModal(app) {
             appointment_id: app.id,
             total_debt: app.total_amount || 0,
             remaining_debt: app.remaining_amount !== undefined ? app.remaining_amount : (app.total_amount || 0),
-            items: app.items || []
+            items: app.items || [],
+            general_discount_amount: app.general_discount_amount || 0,
+            general_discount_note: app.general_discount_note || ''
         });
     } else {
         console.error('PaymentModule not loaded');
@@ -845,7 +848,7 @@ function openPaymentModal(app) {
 }
 
 // item -> {id, item_name, quantity, unit_price, total_price (gross), discount_amount}
-function renderBillingItems(items, netTotal, totalPaid = 0, remaining = 0, generalDiscount = 0, itemsSubtotal = 0, itemsDiscountTotal = 0) {
+function renderBillingItems(items, netTotal, totalPaid = 0, remaining = 0, generalDiscount = 0, itemsSubtotal = 0, itemsDiscountTotal = 0, generalDiscountNote = '') {
     const tbody = document.getElementById('billingItemsBody');
     tbody.innerHTML = '';
 
@@ -903,14 +906,17 @@ function renderBillingItems(items, netTotal, totalPaid = 0, remaining = 0, gener
             </div>` : ''}
 
             <div class="d-flex justify-content-between align-items-center mt-1">
-                <span class="text-muted">Genel İndirim:</span>
+                <span class="text-muted">İndirim:</span>
                 <div style="width: 140px;">
                     <div class="input-group input-group-sm">
                         <input type="number" id="generalDiscountInput" class="form-control text-end" 
                                value="${parseFloat(generalDiscount) > 0 ? parseFloat(generalDiscount).toFixed(2) : ''}" 
-                               step="0.01" min="0" onchange="updateGeneralDiscount(this.value)" placeholder="İndirim">
+                               step="0.01" min="0" onchange="updateGeneralDiscount(this.value, document.getElementById('generalDiscountNoteInput')?.value)" placeholder="İndirim">
                         <span class="input-group-text">₺</span>
                     </div>
+                    <input type="text" id="generalDiscountNoteInput" class="form-control form-control-sm mt-1" 
+                           value="${generalDiscountNote}" placeholder="İndirim notu..." 
+                           onchange="updateGeneralDiscount(document.getElementById('generalDiscountInput').value, this.value)">
                 </div>
             </div>
 
@@ -987,11 +993,12 @@ async function updateItemDiscount(itemId, value) {
     }
 }
 
-async function updateGeneralDiscount(value) {
+async function updateGeneralDiscount(value, note = null) {
     const discount = parseFloat(value) || 0;
     try {
         await api.put(`/api/appointments/${currentAppointmentId}/discount`, {
-            amount: discount
+            amount: discount,
+            note: note
         });
         refreshDetail();
     } catch (e) {
@@ -1294,8 +1301,9 @@ async function refreshDetail() {
         app.total_paid,
         app.remaining_amount,
         app.general_discount_amount,
+        app.items_subtotal || 0,
         app.items_discount_total || 0,
-        app.items_subtotal || 0
+        app.general_discount_note || ''
     );
 }
 

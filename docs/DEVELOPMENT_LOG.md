@@ -649,3 +649,13 @@ LOG_LEVEL=DEBUG
   - Yazarken otomatik filtreleme (JavaScript Debounce) özelliği Transactions sayfasında aktif edildi.
 
 ---
+
+---
+
+### 47. Tahsilat ve İndirim Yönetimi UX İyileştirmeleri (✅ Tamamlandı)
+**Tarih:** 2026-02-02
+- **İndirim Bilgisi Kalıcılığı:** Tahsilat modalı kapatılıp açıldığında indirim tutarı ve açıklamasının kaybolması sorunu giderildi; veriler artık veritabanından modal açılışında yükleniyor.
+- **Terminoloji Sadeleştirme:** Kullanıcı arayüzündeki tüm "Genel İndirim" ibareleri, kafa karışıklığını gidermek için "İndirim" olarak sadeleştirildi.
+- **Dinamik Buton Yapısı:** Tahsilat modalındaki indirim butonu, mevcut indirimin varlığına göre "İndirim Uygula" veya "İndirimi Düzenle" olarak dinamikleşti.
+- **Hata Giderme:** Randevu detay ekranındaki adisyon özetinde (refreshDetail) ara toplam ve indirim tutarlarının yer değiştirmesine neden olan parametre hatası düzeltildi.
+- **Veri Tutarlılığı:** Kalem bazlı indirimler (items) ve genel indirimlerin (parent appointment) toplam borca yansıması hem backend hem frontend tarafında senkronize edildi.

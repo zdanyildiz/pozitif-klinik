@@ -69,6 +69,14 @@ const PaymentModule = {
         document.getElementById('paymentGeneralDiscount').value = generalDiscount > 0 ? generalDiscount.toFixed(2) : '';
         document.getElementById('paymentDiscountNote').value = data.general_discount_note || '';
 
+        // Buton yazısını güncelle (Uygula vs Düzenle)
+        const btnToggle = document.getElementById('btnToggleDiscount');
+        if (btnToggle) {
+            btnToggle.innerHTML = generalDiscount > 0
+                ? '<i class="bi bi-pencil-square me-1"></i> İndirimi Düzenle'
+                : '<i class="bi bi-percent me-1"></i> İndirim Uygula';
+        }
+
         // Eğer indirim varsa alanı açık göster
         const discountArea = document.getElementById('paymentDiscountArea');
         if (generalDiscount > 0 && discountArea) {
@@ -130,12 +138,12 @@ const PaymentModule = {
             `;
         });
 
-        // Genel İndirim Satırı
+        // İndirim Satırı
         if (generalDiscountAmount > 0) {
             html += `
                 <div class="list-group-item d-flex justify-content-between align-items-center bg-warning-subtle px-2 py-2 rounded mt-1">
                     <div>
-                        <div class="fw-bold text-dark"><i class="bi bi-percent"></i> Genel İndirim</div>
+                        <div class="fw-bold text-dark"><i class="bi bi-percent"></i> İndirim</div>
                         ${generalDiscountNote ? `<small class="text-muted fst-italic">Not: ${generalDiscountNote}</small>` : ''}
                     </div>
                     <span class="fw-bold text-danger">-${this.formatCurrency(generalDiscountAmount)}</span>
