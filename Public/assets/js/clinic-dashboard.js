@@ -102,28 +102,30 @@ function renderUserRow(user) {
 
     const row = document.createElement('tr');
     row.innerHTML = `
-        <td><strong>#${user.id}</strong></td>
-        <td><span class="user-full-name">${escapeHtml(user.name || '-')}</span></td>
-        <td><span class="clinic-name text-secondary">${escapeHtml(user.username)}</span></td>
+        <td class="d-none d-md-table-cell"><strong>#${user.id}</strong></td>
+        <td><span class="user-full-name fw-bold">${escapeHtml(user.name || '-')}</span></td>
+        <td class="d-none d-lg-table-cell"><span class="text-secondary">${escapeHtml(user.username)}</span></td>
         <td>
-            <span class="badge ${roleInfo.class} px-3 py-2 rounded-3">
+            <span class="badge ${roleInfo.class} px-2 py-1 rounded-2" style="font-size: 0.75rem;">
                 ${roleInfo.text}
             </span>
         </td>
         <td>
             <span class="status-badge ${statusClass}">
                 <i class="bi ${statusIcon}"></i>
-                ${statusText}
+                <span class="d-none d-sm-inline">${statusText}</span>
             </span>
         </td>
-        <td class="date-cell">${Utils.formatDate(user.created_at)}</td>
-        <td class="text-end">
-            <button class="btn btn-sm btn-outline-primary me-2" onclick="handleEditUser(${user.id})">
-                <i class="bi bi-pencil"></i> Düzenle
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="handleDeleteUser(${user.id}, '${escapeHtml(user.username)}')">
-                <i class="bi bi-trash"></i> Sil
-            </button>
+        <td class="date-cell d-none d-xl-table-cell">${Utils.formatDate(user.created_at)}</td>
+        <td>
+            <div class="d-flex justify-content-end gap-1">
+                <button class="btn btn-sm btn-outline-primary" onclick="handleEditUser(${user.id})" title="Düzenle">
+                    <i class="bi bi-pencil"></i> <span class="d-none d-md-inline">Düzenle</span>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="handleDeleteUser(${user.id}, '${escapeHtml(user.username)}')" title="Sil">
+                    <i class="bi bi-trash"></i> <span class="d-none d-md-inline">Sil</span>
+                </button>
+            </div>
         </td>
     `;
     usersTableBody.appendChild(row);

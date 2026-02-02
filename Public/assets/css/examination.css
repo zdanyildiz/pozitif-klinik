@@ -265,3 +265,117 @@ textarea.form-control-exam {
 .w-50p {
     width: 50px;
 }
+
+/* Responsive Enhancements */
+@media (max-width: 992px) {
+    .examination-container {
+        grid-template-columns: 1fr;
+        height: auto;
+        padding-bottom: 40px;
+    }
+
+    .exam-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .patient-brief {
+        width: 100%;
+        gap: 12px;
+    }
+
+    .patient-avatar-circle {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        border-radius: 10px;
+        font-size: 18px;
+    }
+
+    .exam-actions {
+        display: flex;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .exam-actions .btn {
+        flex: 1;
+        margin: 0 !important;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+    }
+
+    .exam-actions .btn i {
+        font-size: 1.1rem;
+    }
+
+    .exam-body {
+        padding: 16px;
+    }
+
+    .exam-section {
+        margin-bottom: 24px;
+    }
+
+    .section-title {
+        font-size: 13px;
+    }
+
+    .exam-footer {
+        flex-direction: column-reverse;
+        padding: 16px;
+        gap: 16px;
+        background: #fff;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .btn-save-exam {
+        width: 100%;
+        padding: 14px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+
+    .exam-footer .me-auto {
+        margin: 0 !important;
+        text-align: center;
+        width: 100%;
+    }
+
+    .history-sidebar {
+        margin-top: 24px;
+    }
+}
+
+@media (max-width: 576px) {
+    .content-area {
+        padding: 12px;
+    }
+
+    .patient-brief h5 {
+        font-size: 16px;
+    }
+
+    .patient-brief small {
+        font-size: 11px;
+        white-space: normal;
+        line-height: 1.4;
+    }
+
+    .quick-btns {
+        gap: 4px;
+    }
+
+    .btn-quick {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+}

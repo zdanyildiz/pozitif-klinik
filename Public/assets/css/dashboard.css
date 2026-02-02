@@ -679,4 +679,27 @@ body {
         /* Stack vertically on small screens */
         gap: 24px;
     }
+
+    .table-card-header {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .btn-add {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .table th,
+    .table td {
+        padding: 12px 8px;
+        font-size: 0.85rem;
+    }
 }
