@@ -676,3 +676,18 @@ LOG_LEVEL=DEBUG
   - Randevu detay ekranındaki kafa karıştıran "Tahsilat Yap" butonu kaldırıldı, işlem akışı ana Tahsilat Modalı'na yönlendirildi.
   - Hasta detay sayfasındaki "Timeline / Randevu Detay" (Offcanvas) başlık alanı `sticky` yapıldı ve kapatma butonu görünürlüğü düzeltildi.
 
+### 49. Laboratuvar Veri Giriş Modülü (✅ Tamamlandı)
+**Tarih:** 2026-02-02
+- **Veritabanı Katmanı:** `LabRepository` sınıfına `createResult`, `createResultItem` ve `deleteResult` metodları eklendi. `saveFullResult` ile transaction desteği sağlandı.
+- **API Katmanı:** `LabController` oluşturuldu. `POST /api/lab` ile yeni sonuç ekleme ve `DELETE /api/lab/{id}` ile silme özellikleri implemente edildi.
+- **Güvenlik & Mimari:** 
+    - **Transaction Yönetimi:** Veri bütünlüğü için header ve kalem kayıtları atomik (başka tabirle hep ya da hiç) şekilde işlendi.
+    - **Yetkilendirme:** Sadece Doktor ve Admin rollerine yazma/silme yetkisi verildi.
+    - **Database Core:** `Database.php` sınıfına transaction metodları eklendi.
+- **Frontend (Ekleme):**
+  - Hasta detay sayfasında (`patient_detail.twig`) laboratuvar sekmesine "Yeni Sonuç Ekle" butonu ve modal arayüzü eklendi.
+  - `lab-entry.js` ile dinamik satır ekleme/silme ve API entegrasyonu sağlandı.
+  - Test kalemleri için ad, değer, birim, referans aralığı ve anormallik durumu girişleri desteklendi.
+- **Frontend (Silme):**
+  - Laboratuvar sonuç listesine (Accordion başlığına) silme butonu eklendi.
+  - Kullanıcı onayı ile hatalı girilen kayıtların silinmesi sağlandı.

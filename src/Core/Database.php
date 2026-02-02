@@ -65,6 +65,21 @@ class Database
         return $this->query($sql, $params)->fetchAll();
     }
 
+    public function beginTransaction(): bool
+    {
+        return $this->connection->beginTransaction();
+    }
+
+    public function commit(): bool
+    {
+        return $this->connection->commit();
+    }
+
+    public function rollBack(): bool
+    {
+        return $this->connection->rollBack();
+    }
+
     // Prevent cloning
     private function __clone()
     {

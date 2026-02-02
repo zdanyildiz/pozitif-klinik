@@ -193,6 +193,13 @@
                         
                         <!-- Laboratories Tab -->
                         <div class="tab-pane fade" id="labs" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h6 class="mb-0 fw-bold">Laboratuvar Sonuçları</h6>
+                                <button class="btn btn-sm btn-outline-primary" onclick="LabEntry.openModal()">
+                                    <i class="bi bi-plus-lg me-1"></i> Yeni Sonuç Ekle
+                                </button>
+                            </div>
+
                             {% if labResults is empty %}
                                 <div class="text-center py-5 text-muted">
                                     <i class="bi bi-clipboard-data fs-1 opacity-50"></i>
@@ -210,7 +217,12 @@
                                                         {% if result.doctor_name %}
                                                             <span class="text-muted small"><i class="bi bi-person me-1"></i>{{ result.doctor_name }}</span>
                                                         {% endif %}
-                                                        <span class="badge bg-success ms-auto me-3">{{ result.items|length }} Test</span>
+                                                        <div class="ms-auto me-3 d-flex align-items-center">
+                                                            <span class="badge bg-success">{{ result.items|length }} Test</span>
+                                                            <span role="button" class="text-secondary ms-3" onclick="LabEntry.deleteResult({{ result.id }}); event.stopPropagation();" title="Sonucu Sil">
+                                                                <i class="bi bi-trash"></i>
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </button>
                                             </h2>
@@ -282,6 +294,7 @@
 
 <!-- Offcanvas for Timeline Detail -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="timelineOffcanvas" aria-labelledby="timelineOffcanvasLabel" style="width: 500px;">
+    <!-- ... (Existing Offcanvas Content) ... -->
     <div class="offcanvas-header bg-white border-bottom sticky-top">
         <div>
             <h5 class="offcanvas-title fw-bold" id="timelineOffcanvasLabel">Randevu Detayı</h5>
@@ -296,6 +309,7 @@
         </div>
         
         <div id="offcanvasContent" class="d-none">
+             <!-- ... (Existing content inside offcanvas) ... -->
             <!-- Doktor & Tür Bilgisi -->
             <div class="p-4 border-bottom bg-white">
                 <div class="d-flex align-items-center mb-3">
@@ -362,7 +376,6 @@
                     <table class="table table-sm table-borderless mb-0">
                         <thead class="text-muted border-bottom">
                             <tr>
-                                <th>Hizmet</th>
                                 <th class="text-end">Tutar</th>
                             </tr>
                         </thead>
@@ -381,12 +394,86 @@
         </div>
     </div>
 </div>
+
+<!-- Lab Entry Modal -->
+<div class="modal fade" id="labEntryModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold">Yeni Laboratuvar Sonucu Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="labEntryForm">
+                    <input type="hidden" name="patient_id" value="{{ patient.id }}">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted fw-bold">Sonuç Tarihi</label>
+                            <input type="date" name="result_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                             <label class="form-label small text-muted fw-bold">Doktor</label>
+                             <select name="doctor_id" class="form-select" required id="labDoctorSelect">
+                                 <option value="">Seçiniz</option>
+                                 <!-- JS populates -->
+                             </select>
+                        </div>
+                         <div class="col-md-4">
+                             <label class="form-label small text-muted fw-bold">İlişkili Randevu</label>
+                             <select name="appointment_id" class="form-select" id="labAppointmentSelect">
+                                 <option value="">Bağımsız Kayıt</option>
+                                 {% for item in timeline %}
+                                    {% if item.entry_type == 'appointment' %}
+                                        <option value="{{ item.appointment_id }}">
+                                            {{ item.date|date('d.m.Y') }} - {{ item.title }}
+                                        </option>
+                                    {% endif %}
+                                 {% endfor %}
+                             </select>
+                        </div>
+                    </div>
+                    
+                    <h6 class="fw-bold text-secondary mb-3">Test Sonuçları</h6>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered table-hover align-middle" id="labItemsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30%">Test Adı</th>
+                                    <th>Sonuç</th>
+                                    <th>Birim</th>
+                                    <th>Ref. Aralığı</th>
+                                    <th style="width: 80px" class="text-center">Anormal?</th>
+                                    <th style="width: 40px"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="LabEntry.addRow()">
+                        <i class="bi bi-plus-lg me-1"></i> Satır Ekle
+                    </button>
+                    
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 bg-light">
+                 <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">İptal</button>
+                 <button type="button" class="btn btn-primary px-4" onclick="LabEntry.save()">
+                    <i class="bi bi-check-lg me-1"></i> Kaydet
+                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
     {% include "components/payment_modal.twig" %}
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ base_path }}/assets/js/finance-shared.js?v={{ version }}"></script>
 <script src="{{ base_path }}/assets/js/file-manager.js?v={{ version }}"></script>
+<script src="{{ base_path }}/assets/js/lab-entry.js?v={{ version }}"></script>
 <script>
     function openPatientPayment() {
         if (typeof PaymentModule !== 'undefined') {
