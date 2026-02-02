@@ -140,6 +140,7 @@ function setupEventListeners() {
         } else {
             document.getElementById('appTypePrice').value = '0.00';
         }
+        validateAppointmentForm();
     });
 
     // Doktor seçildiğinde slotları yeniden yükle
@@ -261,6 +262,10 @@ async function loadPatients() {
 
                 // Başlangıçta seçenek yok
                 options: [],
+
+                onChange: function (value) {
+                    validateAppointmentForm();
+                },
 
                 load: function (query, callback) {
                     if (query.length < 2) return callback();
@@ -748,6 +753,13 @@ async function editAppointment(id, e) {
 
         // Formu Doldur
         if (patientTomSelect) {
+            // Seçenek listesinde yoksa ekle (Remote search olduğu için gerekli)
+            if (app.patient_id) {
+                patientTomSelect.addOption({
+                    id: app.patient_id,
+                    text: app.patient_name || 'Hasta'
+                });
+            }
             patientTomSelect.setValue(app.patient_id);
             // patientTomSelect.disable(); // İsteğe bağlı
         }
@@ -760,6 +772,18 @@ async function editAppointment(id, e) {
         document.getElementById('appTime').value = time.substring(0, 5);
         document.getElementById('appNotes').value = app.notes || '';
         document.getElementById('createStatusSelect').value = app.status;
+
+        // Fiyatı doldur (Varsa muayene kalemi)
+        const examItem = app.items.find(i => i.item_name.includes('(Muayene)'));
+        if (examItem) {
+            document.getElementById('appTypePrice').value = parseFloat(examItem.unit_price).toFixed(2);
+        } else {
+            // Yoksa boş bırak ki kullanıcı girmek isterse girsin (veya default kalsın)
+            document.getElementById('appTypePrice').value = '';
+        }
+
+        // Buton durumunu güncelle
+        validateAppointmentForm();
 
         appointmentModal.show();
     } catch (e) {

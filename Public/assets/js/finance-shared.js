@@ -24,6 +24,10 @@ const PaymentModule = {
         document.getElementById('btnAddPaymentRow').addEventListener('click', () => this.addPaymentRow());
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
 
+        // Discount listeners
+        const btnApply = document.getElementById('btnApplyDiscount');
+        if (btnApply) btnApply.addEventListener('click', () => this.handleApplyDiscount());
+
         // Event delegation for deleting rows
         this.rowsContainer.addEventListener('click', (e) => {
             if (e.target.closest('.btn-remove-row')) {
@@ -33,6 +37,12 @@ const PaymentModule = {
                 }
             }
         });
+
+        // Global exposing for onclick
+        window.toggleDiscountArea = () => {
+            const area = document.getElementById('paymentDiscountArea');
+            if (area) area.classList.toggle('d-none');
+        };
     },
 
     /**
@@ -54,8 +64,21 @@ const PaymentModule = {
             summary.classList.add('d-none');
         }
 
-        // Render Items (Detailed Breakdown)
-        this.renderItems(data.items || []);
+        // Populate discount fields if data exists
+        const generalDiscount = parseFloat(data.general_discount_amount || 0);
+        document.getElementById('paymentGeneralDiscount').value = generalDiscount > 0 ? generalDiscount.toFixed(2) : '';
+        document.getElementById('paymentDiscountNote').value = data.general_discount_note || '';
+
+        // Eğer indirim varsa alanı açık göster
+        const discountArea = document.getElementById('paymentDiscountArea');
+        if (generalDiscount > 0 && discountArea) {
+            discountArea.classList.remove('d-none');
+        } else if (discountArea) {
+            discountArea.classList.add('d-none');
+        }
+
+        // Pass extra data to renderItems for general discount display
+        this.renderItems(data.items || [], data.general_discount_amount, data.general_discount_note);
 
         // Reset rows
         this.rowsContainer.innerHTML = '';
@@ -64,12 +87,24 @@ const PaymentModule = {
         this.modal.show();
     },
 
-    renderItems(items) {
+    async refresh(appointmentId) {
+        if (!appointmentId) return;
+        try {
+            const res = await api.get(`/api/appointments/${appointmentId}`);
+            if (res.data) {
+                this.open(res.data);
+            }
+        } catch (e) {
+            console.error('Refresh error', e);
+        }
+    },
+
+    renderItems(items, generalDiscountAmount = 0, generalDiscountNote = '') {
         const container = document.getElementById('paymentItemsContainer');
         if (!container) return; // If container doesn't exist in DOM yet
 
         container.innerHTML = '';
-        if (!items || items.length === 0) {
+        if ((!items || items.length === 0) && generalDiscountAmount <= 0) {
             container.classList.add('d-none');
             return;
         }
@@ -94,6 +129,19 @@ const PaymentModule = {
                 </div>
             `;
         });
+
+        // Genel İndirim Satırı
+        if (generalDiscountAmount > 0) {
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center bg-warning-subtle px-2 py-2 rounded mt-1">
+                    <div>
+                        <div class="fw-bold text-dark"><i class="bi bi-percent"></i> Genel İndirim</div>
+                        ${generalDiscountNote ? `<small class="text-muted fst-italic">Not: ${generalDiscountNote}</small>` : ''}
+                    </div>
+                    <span class="fw-bold text-danger">-${this.formatCurrency(generalDiscountAmount)}</span>
+                </div>
+            `;
+        }
 
         html += '</div>';
         container.innerHTML = html;
@@ -185,6 +233,49 @@ const PaymentModule = {
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
+        }
+    },
+
+    async handleApplyDiscount() {
+        const appointmentId = document.getElementById('paymentAppointmentId').value;
+        if (!appointmentId) {
+            alert('Randevu ID bulunamadı, indirim uygulanamaz.');
+            return;
+        }
+
+        const amount = parseFloat(document.getElementById('paymentGeneralDiscount').value) || 0;
+        const note = document.getElementById('paymentDiscountNote').value || '';
+        const btn = document.getElementById('btnApplyDiscount');
+
+        try {
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Uygulanıyor...';
+
+            await api.put(`/api/appointments/${appointmentId}/discount`, {
+                amount: amount,
+                note: note
+            });
+
+            // Refresh modal data
+            await this.refresh(appointmentId);
+
+            // Notify other components if needed
+            window.dispatchEvent(new CustomEvent('payment-saved', { detail: { appointmentId } }));
+
+            // Hide discount area after success
+            document.getElementById('paymentDiscountArea').classList.add('d-none');
+
+            if (typeof Toast !== 'undefined') {
+                Toast.success('İndirim uygulandı.');
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert('İndirim uygulanamadı: ' + (e.message || 'Bilinmeyen hata'));
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Uygula';
         }
     }
 };

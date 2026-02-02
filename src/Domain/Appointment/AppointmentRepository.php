@@ -633,6 +633,49 @@ class AppointmentRepository
             $appointmentId
         ]);
 
+        // ==========================================
+        // MUAYENE ÜCRETİ GÜNCELLEME (Frontend'den type_price geldiyse)
+        // ==========================================
+        if (isset($data['type_price'])) {
+            $price = (float) $data['type_price'];
+
+            // Yeni tür bilgilerini al
+            $type = $this->findTypeById($clinicId, (int) $data['type_id']);
+            $itemName = ($type ? $type['name'] : 'Randevu') . ' (Muayene)';
+            $serviceId = $type['service_id'] ?? null;
+
+            // Mevcut muayene kalemini bul (İsmi "(Muayene)" ile biten)
+            // NOT: Eski isme göre bulmak daha güvenli olabilir ama isim değişmiş olabilir. 
+            // Genelde muayene kalemi items tablosunda ilk sıradadır veya ismi bellidir.
+            $sqlFindItem = "SELECT id FROM cln_appointment_items 
+                           WHERE clinic_id = ? AND appointment_id = ? 
+                           AND item_name LIKE '%(Muayene)' 
+                           LIMIT 1";
+            $existingItem = $this->db->fetch($sqlFindItem, [$clinicId, $appointmentId]);
+
+            if ($existingItem) {
+                // Kalem varsa güncelle
+                $this->updateItem($clinicId, $appointmentId, $existingItem['id'], [
+                    'item_name' => $itemName,
+                    'quantity' => 1,
+                    'unit_price' => $price,
+                    'total_price' => $price, // Miktar her zaman 1 varsayılıyor
+                    'discount_amount' => 0, // Sıfırlanmalı mı? Şimdilik evet, fiyat değişti.
+                    'description' => null
+                ]);
+            } else if ($price > 0) {
+                // Kalem yoksa ve fiyat > 0 ise yeni ekle
+                $this->addItem($clinicId, $appointmentId, [
+                    'service_id' => $serviceId,
+                    'item_name' => $itemName,
+                    'quantity' => 1,
+                    'unit_price' => $price,
+                    'total_price' => $price,
+                    'performer_id' => $doctorId
+                ]);
+            }
+        }
+
         return true;
     }
 
