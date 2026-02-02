@@ -950,15 +950,7 @@ function renderBillingItems(items, netTotal, totalPaid = 0, remaining = 0, gener
         </div>
     `;
 
-    if (remaining > 0) {
-        summaryHtml += `
-            <div class="mt-3">
-                <button class="btn btn-success w-100 py-2 shadow-sm" onclick="handleCollectPaymentFromModal()">
-                    <i class="bi bi-cash-coin me-2"></i>Tahsilat Yap
-                </button>
-            </div>
-        `;
-    } else if (netTotal > 0) {
+    if (remaining <= 0 && netTotal > 0) {
         summaryHtml += `
             <div class="mt-3">
                 <div class="alert alert-success py-2 mb-0 border-0 text-center small">

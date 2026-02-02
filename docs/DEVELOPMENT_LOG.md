@@ -659,3 +659,20 @@ LOG_LEVEL=DEBUG
 - **Dinamik Buton Yapısı:** Tahsilat modalındaki indirim butonu, mevcut indirimin varlığına göre "İndirim Uygula" veya "İndirimi Düzenle" olarak dinamikleşti.
 - **Hata Giderme:** Randevu detay ekranındaki adisyon özetinde (refreshDetail) ara toplam ve indirim tutarlarının yer değiştirmesine neden olan parametre hatası düzeltildi.
 - **Veri Tutarlılığı:** Kalem bazlı indirimler (items) ve genel indirimlerin (parent appointment) toplam borca yansıması hem backend hem frontend tarafında senkronize edildi.
+
+### 48. Tahsilat Ekranı Genişletme ve Kalem Bazlı İndirim (✅ Tamamlandı)
+**Tarih:** 2026-02-02
+- **Genişletilmiş Modal (UI/UX):**
+  - Tahsilat modalı `modal-xl` boyutuna yükseltildi ve **iki sütunlu** (Split View) yapıya geçirildi.
+  - **Sol Taraf:** Hizmet detayları, birim fiyatlar ve kalem bazlı indirim butonları.
+  - **Sağ Taraf:** Toplam özet (Borç/Alacak), genel indirim ve ödeme formu.
+  - Bu yapı sayesinde kullanıcılar neye ödeme yaptıklarını ve detayları aynı ekranda görebiliyor.
+- **Kalem Bazlı İndirim (Item-Level Discount):**
+  - Hizmet listesindeki her satıra "İndirim" butonu eklendi.
+  - Kullanıcılar artık genel indirimin yanı sıra, spesifik bir hizmete (örn: Lazer Epilasyon) özel indirim tanımlayabiliyor.
+  - İndirim girildiğinde anlık olarak toplam borç ve kalan bakiye güncelleniyor.
+- **İyileştirmeler:**
+  - Genel indirim alanına "İndirimi Sil" (Trash Icon) butonu eklendi.
+  - Randevu detay ekranındaki kafa karıştıran "Tahsilat Yap" butonu kaldırıldı, işlem akışı ana Tahsilat Modalı'na yönlendirildi.
+  - Hasta detay sayfasındaki "Timeline / Randevu Detay" (Offcanvas) başlık alanı `sticky` yapıldı ve kapatma butonu görünürlüğü düzeltildi.
+

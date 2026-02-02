@@ -1018,6 +1018,19 @@ Randevuya hizmet/kalem ekler.
 ### `DELETE /api/appointments/{id}/items/{itemId}`
 Randevudan bir kalem siler.
 
+### `PUT /api/appointments/{id}/items/{itemId}`
+Mevcut bir hizmet kalemini günceller (Fiyat, Adet, İndirim vb.).
+
+**Payload:**
+```json
+{
+  "item_name": "Botox (Revize)",
+  "unit_price": 1500.00,
+  "quantity": 2,
+  "discount_amount": 100.00  // Kalem bazlı indirim
+}
+```
+
 ---
 
 ## Domain API (Dosya Yönetimi)

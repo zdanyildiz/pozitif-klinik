@@ -109,12 +109,15 @@ const PaymentModule = {
 
         container.innerHTML = '';
         if ((!items || items.length === 0) && generalDiscountAmount <= 0) {
-            container.classList.add('d-none');
+            container.innerHTML = '<div class="text-muted text-center py-3">Hizmet bulunamadı.</div>';
             return;
         }
 
         container.classList.remove('d-none');
-        let html = '<div class="list-group list-group-flush mb-3 small">';
+        const appointmentId = document.getElementById('paymentAppointmentId').value;
+
+        let html = '<div class="table-responsive"><table class="table table-hover table-sm align-middle mb-0">';
+        html += '<thead class="table-light"><tr><th>Hizmet</th><th class="text-center">Adet</th><th class="text-end">Birim</th><th class="text-center">İndirim</th><th class="text-end">Tutar</th></tr></thead><tbody>';
 
         items.forEach(item => {
             const unitPrice = parseFloat(item.unit_price);
@@ -123,32 +126,97 @@ const PaymentModule = {
             const total = (unitPrice * quantity) - discount;
 
             html += `
-                <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 py-2">
-                    <div>
+                <tr>
+                    <td>
                         <div class="fw-bold text-dark">${item.item_name}</div>
-                        ${quantity > 1 ? `<span class="text-muted me-2">${quantity} x ${this.formatCurrency(unitPrice)}</span>` : ''}
-                        ${discount > 0 ? `<span class="badge bg-danger-subtle text-danger">-${this.formatCurrency(discount)} İndirim</span>` : ''}
-                    </div>
-                    <span class="fw-bold">${this.formatCurrency(total)}</span>
-                </div>
+                    </td>
+                    <td class="text-center">${quantity}</td>
+                    <td class="text-end text-muted small">${this.formatCurrency(unitPrice)}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm ${discount > 0 ? 'btn-warning text-dark' : 'btn-outline-secondary'} py-0 px-2" 
+                                onclick="PaymentModule.handleItemDiscount('${item.id}', ${discount}, '${appointmentId}')"
+                                title="İndirim Düzenle">
+                            <i class="bi bi-tag-fill me-1"></i>${discount > 0 ? this.formatCurrency(discount) : 'Ekle'}
+                        </button>
+                    </td>
+                    <td class="text-end fw-bold text-primary">${this.formatCurrency(total)}</td>
+                </tr>
             `;
         });
 
-        // İndirim Satırı
+        // Genel İndirim Satırı
         if (generalDiscountAmount > 0) {
             html += `
-                <div class="list-group-item d-flex justify-content-between align-items-center bg-warning-subtle px-2 py-2 rounded mt-1">
-                    <div>
-                        <div class="fw-bold text-dark"><i class="bi bi-percent"></i> İndirim</div>
-                        ${generalDiscountNote ? `<small class="text-muted fst-italic">Not: ${generalDiscountNote}</small>` : ''}
-                    </div>
-                    <span class="fw-bold text-danger">-${this.formatCurrency(generalDiscountAmount)}</span>
-                </div>
+                <tr class="bg-warning-subtle text-danger">
+                    <td colspan="4">
+                        <div class="fw-bold"><i class="bi bi-percent"></i> Genel İndirim</div>
+                        ${generalDiscountNote ? `<small class="text-muted fst-italic ms-2">${generalDiscountNote}</small>` : ''}
+                    </td>
+                    <td class="text-end fw-bold">-${this.formatCurrency(generalDiscountAmount)}</td>
+                </tr>
             `;
         }
 
-        html += '</div>';
+        html += '</tbody></table></div>';
         container.innerHTML = html;
+    },
+
+    async handleItemDiscount(itemId, currentDiscount, appointmentId) {
+        if (!appointmentId) {
+            if (typeof Toast !== 'undefined') Toast.error('Randevu bilgisi eksik!');
+            return;
+        }
+
+        // Swal ile input al
+        const { value: discount } = await Swal.fire({
+            target: document.getElementById('paymentModal'),
+            title: 'Kalem İndirimi',
+            input: 'number',
+            inputLabel: 'İndirim Tutarı (₺)',
+            inputValue: currentDiscount || '',
+            showCancelButton: true,
+            confirmButtonText: 'Kaydet',
+            cancelButtonText: 'İptal',
+            customClass: {
+                container: 'position-absolute' // Make sure it stays on top of modal
+            },
+            inputValidator: (value) => {
+                if (value < 0) return 'Negatif indirim giremezsiniz!';
+            }
+        });
+
+        if (discount !== undefined && discount !== null) {
+            try {
+                // Item datasını çekmemiz lazım çünkü API full object istiyor olabilir.
+                // Burada güvenli yol olarak önce item'ı bulup sonra update ediyoruz.
+
+                const res = await api.get(`/api/appointments/${appointmentId}`);
+                const app = res.data;
+                const item = app.items.find(i => i.id == itemId);
+
+                if (!item) throw new Error('Hizmet bulunamadı.');
+
+                await api.put(`/api/appointments/${appointmentId}/items/${itemId}`, {
+                    item_name: item.item_name,
+                    unit_price: item.unit_price,
+                    quantity: item.quantity,
+                    description: item.description,
+                    discount_amount: parseFloat(discount)
+                });
+
+                // Refresh modal
+                await this.refresh(appointmentId);
+
+                // Notify main page
+                window.dispatchEvent(new CustomEvent('payment-saved', { detail: { appointmentId } }));
+
+                if (typeof Toast !== 'undefined') Toast.success('İndirim güncellendi.');
+
+            } catch (e) {
+                console.error(e);
+                if (typeof Toast !== 'undefined') Toast.error('İndirim güncellenemedi.');
+            }
+        }
     },
 
     addPaymentRow(amount = 0) {
@@ -281,6 +349,14 @@ const PaymentModule = {
             btn.disabled = false;
             btn.textContent = 'Uygula';
         }
+    },
+
+    async removeGeneralDiscount() {
+        if (!confirm('Genel indirimi kaldırmak istediğinize emin misiniz?')) return;
+
+        document.getElementById('paymentGeneralDiscount').value = 0;
+        document.getElementById('paymentDiscountNote').value = '';
+        await this.handleApplyDiscount();
     }
 };
 
@@ -290,3 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
         PaymentModule.init();
     }
 });
+
+// Make it globally available
+window.PaymentModule = PaymentModule;
