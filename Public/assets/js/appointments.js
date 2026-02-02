@@ -862,7 +862,7 @@ function renderBillingItems(items, netTotal, totalPaid = 0, remaining = 0, gener
         const row = document.createElement('tr');
         const unitPrice = parseFloat(item.unit_price);
         const quantity = parseInt(item.quantity);
-        const grossTotal = unitPrice * quantity; // item.total_price genelde budur ama emin olmak için
+        const grossTotal = unitPrice * quantity;
         const discount = parseFloat(item.discount_amount || 0);
         const netLineTotal = grossTotal - discount;
 
@@ -872,18 +872,17 @@ function renderBillingItems(items, netTotal, totalPaid = 0, remaining = 0, gener
                 ${item.description ? `<small class="text-muted fst-italic">${item.description}</small>` : ''}
             </td>
             <td class="text-center">${quantity}</td>
-            <td class="text-end">${unitPrice.toFixed(2)} ₺</td>
-            <td class="text-end text-muted">${grossTotal.toFixed(2)} ₺</td>
-            <td style="width: 130px;">
-                <div class="input-group input-group-sm">
-                    <input type="number" class="form-control text-end" value="${discount > 0 ? discount.toFixed(2) : ''}" 
-                           step="0.01" min="0" onchange="updateItemDiscount(${item.id}, this.value)" placeholder="0.00">
-                    <span class="input-group-text px-1">₺</span>
-                </div>
+            <td class="text-end fw-semibold text-nowrap">${unitPrice.toFixed(2)} ₺</td>
+            <td class="text-center">
+                <button class="btn btn-sm ${discount > 0 ? 'btn-warning' : 'btn-outline-secondary'} py-0 px-2 small" 
+                        onclick="showItemDiscountPrompt(${item.id}, ${discount})"
+                        title="İndirim Uygula">
+                    <i class="bi bi-tag"></i> ${discount > 0 ? discount.toFixed(2) + ' ₺' : ''}
+                </button>
             </td>
-            <td class="text-end fw-bold">${netLineTotal.toFixed(2)} ₺</td>
+            <td class="text-end fw-bold text-primary text-nowrap">${netLineTotal.toFixed(2)} ₺</td>
             <td class="text-end">
-                <button class="btn btn-sm text-danger" onclick="removeBillingItem(${item.id})">
+                <button class="btn btn-sm btn-link text-danger p-0" onclick="removeBillingItem(${item.id})">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -893,47 +892,62 @@ function renderBillingItems(items, netTotal, totalPaid = 0, remaining = 0, gener
 
     // Özet Bilgileri Güncelle
     let summaryHtml = `
-        <div class="d-flex flex-column gap-2 mt-4 p-3 bg-light rounded shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="text-muted">Ara Toplam:</span>
-                <span class="fw-bold">${parseFloat(itemsSubtotal).toFixed(2)} ₺</span>
+        <div class="row mt-4 g-3">
+            <div class="col-md-6">
+                <!-- Sol Taraf Boş veya Ek Bilgiler İçin -->
             </div>
-            
-            ${itemsDiscountTotal > 0 ? `
-            <div class="d-flex justify-content-between align-items-center small text-danger">
-                <span class="text-muted">Kalem İndirimleri:</span>
-                <span>-${parseFloat(itemsDiscountTotal).toFixed(2)} ₺</span>
-            </div>` : ''}
-
-            <div class="d-flex justify-content-between align-items-center mt-1">
-                <span class="text-muted">İndirim:</span>
-                <div style="width: 140px;">
-                    <div class="input-group input-group-sm">
-                        <input type="number" id="generalDiscountInput" class="form-control text-end" 
-                               value="${parseFloat(generalDiscount) > 0 ? parseFloat(generalDiscount).toFixed(2) : ''}" 
-                               step="0.01" min="0" onchange="updateGeneralDiscount(this.value, document.getElementById('generalDiscountNoteInput')?.value)" placeholder="İndirim">
-                        <span class="input-group-text">₺</span>
+            <div class="col-md-6">
+                <div class="billing-summary-box p-3 bg-light rounded shadow-sm border">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small">Ara Toplam:</span>
+                        <span class="fw-bold fs-6">${parseFloat(itemsSubtotal).toFixed(2)} ₺</span>
                     </div>
-                    <input type="text" id="generalDiscountNoteInput" class="form-control form-control-sm mt-1" 
-                           value="${generalDiscountNote}" placeholder="İndirim notu..." 
-                           onchange="updateGeneralDiscount(document.getElementById('generalDiscountInput').value, this.value)">
+                    
+                    ${itemsDiscountTotal > 0 ? `
+                    <div class="d-flex justify-content-between align-items-center mb-1 text-danger small">
+                        <span class="text-muted">Kalem İndirimleri:</span>
+                        <span>-${parseFloat(itemsDiscountTotal).toFixed(2)} ₺</span>
+                    </div>` : ''}
+
+                    <div class="d-flex justify-content-between align-items-baseline mb-2 border-bottom pb-2">
+                        <span class="text-muted small">Genel İndirim:</span>
+                        <div class="text-end">
+                            <button class="btn btn-sm ${generalDiscount > 0 ? 'btn-danger' : 'btn-outline-danger'} py-0 px-2 mb-1" 
+                                    onclick="toggleGeneralDiscountAreaInDetail()">
+                                <i class="bi ${generalDiscount > 0 ? 'bi-pencil-square' : 'bi-plus-circle'}"></i> 
+                                ${generalDiscount > 0 ? parseFloat(generalDiscount).toFixed(2) + ' ₺' : 'İndirim Tanımla'}
+                            </button>
+                            <div id="detailGeneralDiscountArea" class="mt-2 text-start d-none">
+                                <div class="input-group input-group-sm mb-1">
+                                    <input type="number" id="generalDiscountInput" class="form-control text-end" 
+                                           value="${parseFloat(generalDiscount) > 0 ? parseFloat(generalDiscount).toFixed(2) : ''}" 
+                                           step="0.01" min="0" placeholder="0.00">
+                                    <span class="input-group-text">₺</span>
+                                </div>
+                                <input type="text" id="generalDiscountNoteInput" class="form-control form-control-sm mb-2" 
+                                       value="${generalDiscountNote}" placeholder="İndirim notu...">
+                                <button class="btn btn-sm btn-dark w-100" onclick="applyDetailGeneralDiscount()">Uygula</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold fs-5">Genel Toplam:</span>
+                        <span class="fw-bold fs-5 text-primary">${parseFloat(netTotal).toFixed(2)} ₺</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center text-success mb-2 border-bottom pb-2">
+                        <span class="text-muted small">Tahsil Edilen:</span>
+                        <span class="fw-bold">${parseFloat(totalPaid).toFixed(2)} ₺</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold fs-4">Kalan Borç:</span>
+                        <span class="fw-bold fs-4 text-danger">${parseFloat(remaining).toFixed(2)} ₺</span>
+                    </div>
                 </div>
             </div>
-
-            <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
-                <span class="fw-bold fs-6">Genel Toplam:</span>
-                <span class="fw-bold fs-6" id="billingGrandTotal">${parseFloat(netTotal).toFixed(2)} ₺</span>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center text-success">
-                <span class="text-muted">Tahsil Edilen:</span>
-                <span class="fw-bold">${parseFloat(totalPaid).toFixed(2)} ₺</span>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center border-top pt-2">
-                <span class="fw-bold fs-5">Kalan Borç:</span>
-                <span class="fw-bold fs-5 text-danger">${parseFloat(remaining).toFixed(2)} ₺</span>
-            </div>
+        </div>
     `;
 
     if (remaining > 0) {
@@ -1511,6 +1525,49 @@ function validateAppointmentForm() {
     document.getElementById('saveAppointmentBtn').disabled = !isValid;
 }
 
+async function showItemDiscountPrompt(itemId, currentDiscount) {
+    // SweetAlert'i doğrudan modal içine hedefleyerek odaklanma (focus) sorununu çözüyoruz
+    const { value: discount } = await Swal.fire({
+        target: document.getElementById('detailModal'),
+        title: 'Kalem İndirimi',
+        input: 'number',
+        inputLabel: 'İndirim Tutarı (₺)',
+        inputValue: currentDiscount || '',
+        showCancelButton: true,
+        confirmButtonText: 'Uygula',
+        cancelButtonText: 'İptal',
+        buttonsStyling: true,
+        customClass: {
+            container: 'position-absolute' // Modal içinde düzgün konumlanması için
+        },
+        didOpen: () => {
+            const input = Swal.getInput();
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        },
+        inputValidator: (value) => {
+            if (value < 0) return 'Negatif indirim giremezsiniz!';
+        }
+    });
+
+    if (discount !== undefined && discount !== null) {
+        updateItemDiscount(itemId, discount);
+    }
+}
+
+function toggleGeneralDiscountAreaInDetail() {
+    const area = document.getElementById('detailGeneralDiscountArea');
+    if (area) area.classList.toggle('d-none');
+}
+
+function applyDetailGeneralDiscount() {
+    const val = document.getElementById('generalDiscountInput').value;
+    const note = document.getElementById('generalDiscountNoteInput').value;
+    updateGeneralDiscount(val, note);
+}
+
 // Expose to global scope
 window.selectSlot = selectSlot;
 window.viewDetail = viewDetail;
@@ -1518,3 +1575,6 @@ window.removeBillingItem = removeBillingItem;
 window.editType = editType;
 window.deleteType = deleteType;
 window.resetTypeForm = resetTypeForm;
+window.showItemDiscountPrompt = showItemDiscountPrompt;
+window.toggleGeneralDiscountAreaInDetail = toggleGeneralDiscountAreaInDetail;
+window.applyDetailGeneralDiscount = applyDetailGeneralDiscount;

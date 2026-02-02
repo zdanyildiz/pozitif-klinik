@@ -77,13 +77,9 @@ const PaymentModule = {
                 : '<i class="bi bi-percent me-1"></i> İndirim Uygula';
         }
 
-        // Eğer indirim varsa alanı açık göster
+        // Her zaman kapalı başlat
         const discountArea = document.getElementById('paymentDiscountArea');
-        if (generalDiscount > 0 && discountArea) {
-            discountArea.classList.remove('d-none');
-        } else if (discountArea) {
-            discountArea.classList.add('d-none');
-        }
+        if (discountArea) discountArea.classList.add('d-none');
 
         // Pass extra data to renderItems for general discount display
         this.renderItems(data.items || [], data.general_discount_amount, data.general_discount_note);

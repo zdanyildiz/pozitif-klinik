@@ -103,15 +103,59 @@
     font-size: 0.75rem;
     text-transform: uppercase;
     color: #6c757d;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    padding: 1rem 0.75rem;
 }
 
-.billing-total {
-    background: #f8f9fa;
-    border-radius: 0.75rem;
-    padding: 1rem;
-    font-size: 1.1rem;
-    font-weight: 700;
+.billing-table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.billing-table td:first-child {
+    white-space: normal;
+    /* Sadece hizmet adı sütunu kayabilir */
+    min-width: 250px;
+}
+
+.text-nowrap,
+.fw-bold,
+.fw-semibold {
+    white-space: nowrap !important;
+}
+
+.swal2-container.position-absolute {
+    z-index: 2000 !important;
+}
+
+.billing-summary-box {
+    border: 1px solid #e0e0e0;
+    background-color: #fcfcfc !important;
+}
+
+/* Modal Responsive Widths */
+@media (min-width: 1200px) {
+    .modal-xl {
+        max-width: 1140px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .modal-xl {
+        max-width: 1320px;
+    }
+}
+
+.billing-table .btn-link {
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.billing-table .btn-link:hover {
+    transform: scale(1.2);
 }
 
 /* Utility classes for inline styles */
