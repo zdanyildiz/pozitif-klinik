@@ -37,9 +37,57 @@
     <div class="settings-container">
         <div class="settings-tabs">
             <button class="settings-tab active" data-tab="email"><i class="bi bi-envelope"></i>E-posta Ayarları</button>
+            <button class="settings-tab" data-tab="sms"><i class="bi bi-chat-square-text"></i>SMS Ayarları</button>
             <button class="settings-tab" data-tab="users"><i class="bi bi-people"></i>Kullanıcılar</button>
             <button class="settings-tab" data-tab="general"><i class="bi bi-sliders"></i>Genel Ayarlar</button>
             <button class="settings-tab" data-tab="notifications"><i class="bi bi-bell"></i>Bildirimler</button>
+        </div>
+
+        <div class="settings-panel" id="smsPanel">
+            <div class="settings-panel-header">
+                <div class="panel-header-info">
+                    <h2 class="panel-title"><i class="bi bi-chat-square-text"></i>SMS Entegrasyonu</h2>
+                    <p class="panel-description">Klinik için kullanılacak SMS sağlayıcısını seçin ve yapılandırın.</p>
+                </div>
+            </div>
+            
+            <form id="smsSettingsForm" class="settings-form">
+                 <div class="form-section">
+                    <h3 class="form-section-title"><i class="bi bi-hdd-network"></i>Sağlayıcı Seçimi</h3>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label">SMS Sağlayıcısı</label>
+                            <select class="form-select" id="smsProviderSelect">
+                                <option value="">Yükleniyor...</option>
+                            </select>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>Listede olmayan bir sağlayıcı kullanıyorsanız "Genel HTTP" seçeneğini kullanabilirsiniz.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dinamik Konfigürasyon Alanı -->
+                <div id="smsConfigContainer" class="mt-4">
+                    <!-- JS ile doldurulacak -->
+                    <div class="text-center py-4 text-muted">
+                        <p>Lütfen bir sağlayıcı seçin.</p>
+                    </div>
+                </div>
+
+                <div class="form-actions mt-4" style="border-top: 1px solid #eef2f6; padding-top: 20px;">
+                    <div class="form-actions-left">
+                         <div class="alert alert-light border mb-0" role="alert" style="font-size: 0.9em;">
+                            <i class="bi bi-shield-lock me-1"></i> Şifreler veritabanında şifrelenerek saklanır.
+                        </div>
+                    </div>
+                    <div class="form-actions-right">
+                        <button type="submit" class="btn btn-primary" id="saveSmsSettingsBtn" disabled>
+                            <i class="bi bi-save"></i> Ayarları Kaydet
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
 
         <div class="settings-panel active" id="emailPanel">

@@ -68,6 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupEventListeners() {
     // Form Submit
     emailSettingsForm.addEventListener('submit', handleSaveEmailSettings);
+    const smsForm = document.getElementById('smsSettingsForm');
+    if (smsForm) smsForm.addEventListener('submit', handleSaveSmsSettings);
 
     // Buttons
     testConnectionBtn.addEventListener('click', handleTestConnection);
@@ -117,6 +119,10 @@ function setupTabs() {
             // Genel Ayarlar sekmesi
             if (targetTab === 'general') {
                 loadBasicInfo();
+            }
+            // SMS Ayarları sekmesi
+            if (targetTab === 'sms') {
+                loadSmsSettings();
             }
         });
     });
@@ -775,4 +781,176 @@ document.addEventListener('DOMContentLoaded', () => {
         basicInfoForm.addEventListener('submit', handleSaveBasicInfo);
     }
 });
+
+// --- SMS Ayarları Fonksiyonları ---
+
+let smsProviders = [];
+let currentSmsConfig = {};
+
+async function loadSmsSettings() {
+    try {
+        const result = await api.get(`/platform-admin/sms/settings/${clinicId}`);
+        const { providers, active_settings } = result.data;
+        smsProviders = providers;
+
+        const select = document.getElementById('smsProviderSelect');
+        select.innerHTML = '<option value="">Lütfen Seçiniz</option>';
+
+        providers.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id;
+            option.textContent = p.name;
+            select.appendChild(option);
+        });
+
+        // Event Listener: Provider değişince formu yeniden çiz
+        select.onchange = () => {
+            const selectedId = parseInt(select.value);
+            const provider = smsProviders.find(p => p.id === selectedId);
+            renderSmsConfigForm(provider ? provider.config_schema : null);
+            document.getElementById('saveSmsSettingsBtn').disabled = !provider;
+        };
+
+        // Eğer mevcut ayar varsa seç ve doldur
+        if (active_settings) {
+            select.value = active_settings.provider_id;
+            // Config data encrypted olduğu için sunucudan gelmiyor.
+            // UX için: Formun üzerine "Mevcut ayarlar kayıtlı. Değiştirmek için formu doldurun." notu düşülebilir.
+            const provider = smsProviders.find(p => p.id == active_settings.provider_id);
+            if (provider) {
+                renderSmsConfigForm(provider.config_schema, true); // true: isUpdateMode
+                document.getElementById('saveSmsSettingsBtn').disabled = false;
+            }
+        }
+
+    } catch (error) {
+        console.error('SMS ayarları yüklenirken hata:', error);
+        Utils.showError('SMS ayarları yüklenemedi');
+    }
+}
+
+function renderSmsConfigForm(schema, isUpdateMode = false) {
+    const container = document.getElementById('smsConfigContainer');
+    container.innerHTML = '';
+
+    if (!schema) {
+        container.innerHTML = '<div class="text-center py-4 text-muted"><p>Lütfen bir sağlayıcı seçin.</p></div>';
+        return;
+    }
+
+    if (isUpdateMode) {
+        const infoAlert = document.createElement('div');
+        infoAlert.className = 'alert alert-info';
+        infoAlert.innerHTML = '<i class="bi bi-info-circle me-2"></i>Mevcut ayarlarınız kayıtlıdır ve GÜVENLİDİR. Değişiklik yapmak isterseniz formu doldurun, aksi takdirde dokunmanıza gerek yoktur.';
+        container.appendChild(infoAlert);
+    }
+
+    const row = document.createElement('div');
+    row.className = 'row g-3';
+
+    schema.forEach(field => {
+        const col = document.createElement('div');
+        col.className = 'col-md-12'; // Varsayılan tam genişlik
+
+        if (field.type === 'text' || field.type === 'password' || field.type === 'url') {
+            col.innerHTML = `
+                <label class="form-label">${field.label} ${field.required ? '<span class="text-danger">*</span>' : ''}</label>
+                <input type="${field.type}" class="form-control sms-config-input" 
+                       name="${field.key}" 
+                       placeholder="${field.placeholder || ''}" 
+                       ${field.required && !isUpdateMode ? 'required' : ''}>
+                ${field.help ? `<div class="form-text">${field.help}</div>` : ''}
+            `;
+        }
+        else if (field.type === 'select') {
+            const optionsHtml = (field.options || []).map(opt => `<option value="${opt}">${opt}</option>`).join('');
+            col.innerHTML = `
+                <label class="form-label">${field.label}</label>
+                <select class="form-select sms-config-input" name="${field.key}">
+                    ${optionsHtml}
+                </select>
+            `;
+            if (field.default) {
+                setTimeout(() => {
+                    const sel = col.querySelector('select');
+                    if (sel) sel.value = field.default;
+                }, 0);
+            }
+        }
+        else if (field.type === 'code' || field.type === 'textarea') {
+            col.innerHTML = `
+                <label class="form-label">${field.label}</label>
+                <textarea class="form-control sms-config-input font-monospace" 
+                          name="${field.key}" rows="5" 
+                          placeholder='${field.placeholder || ''}'></textarea>
+                ${field.help ? `<div class="form-text">${field.help}</div>` : ''}
+            `;
+        }
+
+        row.appendChild(col);
+    });
+
+    container.appendChild(row);
+}
+
+async function handleSaveSmsSettings(e) {
+    e.preventDefault();
+
+    const select = document.getElementById('smsProviderSelect');
+    const providerId = select.value;
+
+    if (!providerId) {
+        Utils.showError('Lütfen sağlayıcı seçiniz');
+        return;
+    }
+
+    // Inputları topla
+    const inputs = document.querySelectorAll('.sms-config-input');
+    const configData = {};
+    let hasFilledField = false;
+
+    inputs.forEach(input => {
+        const key = input.name;
+        const val = input.value.trim();
+
+        // Sadece dolu olanları gönder (veya şifre gibi alanlar boşsa)
+        if (val) {
+            configData[key] = val;
+            hasFilledField = true;
+        }
+    });
+
+    if (!hasFilledField) {
+        Utils.showError('Ayarları değiştirmek için en az bir alanı doldurunuz.');
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveSmsSettingsBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+
+    const payload = {
+        provider_id: providerId,
+        config: configData
+    };
+
+    try {
+        await api.put(`/platform-admin/sms/settings/${clinicId}`, payload);
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Başarılı!',
+            text: 'SMS ayarları kaydedildi.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+    } catch (error) {
+        console.error('Kaydetme hatası:', error);
+        Utils.showError(typeof error === 'string' ? error : 'Ayarlar kaydedilemedi');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Ayarları Kaydet';
+    }
+}
 
