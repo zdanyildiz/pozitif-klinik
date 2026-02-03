@@ -66,5 +66,10 @@ Platform yöneticisi, yeni bir SMS sağlayıcısını kod yazmadan ekleyebilir:
 3.  [x] Backend: `SmsDriverInterface` ve `GenericHttpDriver` (Template merge desteği)
 4.  [x] Backend: `SmsService` (Test ve Provider Builder metodları)
 5.  [x] Backend: API Controller Endpointleri (Platform & Tenant)
-6.  [ ] Frontend: Platform tarafında "Provider Builder" arayüzü (Yakında)
-7.  [ ] Frontend: Klinik tarafında "Ayarlar" tabı entegrasyonu (Yakında)
+6.  [x] Frontend: Platform tarafında "Provider Builder" arayüzü (Sağlayıcı Yönetimi)
+7.  [x] Frontend: Klinik tarafında "Ayarlar" tabı entegrasyonu (Klinik Bazlı Config)
+8.  [x] BizimSMS (XML) ve NetGSM entegrasyonları tamamlandı.
+
+## 4. Gönderim Mekanizması
+- **Test Gönderimleri:** Arayüzden tetiklendiğinde senkron (synchronous) olarak cURL ile anında gönderilir.
+- **Sistem Gönderimleri (Randevu Hatırlatma vb.):** İleride `cln_sms_queue` tablosuna kayıt atılıp bir Cron Job (PHP CLI) vasıtasıyla arka planda gönderilecek şekilde kurgulanmıştır. Şimdilik `SmsService::sendSms` metodunun doğrudan çağrılması ile anlık gönderim desteklenmektedir.

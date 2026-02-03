@@ -1191,3 +1191,53 @@ Bu rotalar tarayıcı üzerinden doğrudan erişilen, Twig ile render edilen HTM
 | /admin/patients | Hasta listesi ve kayıt sayfası |
 | /admin/appointments | Randevu yönetim sayfası |
 | /admin/personnel | Personel (Doktor/Sekreter) yönetim sayfası |
+
+---
+
+## Domain API (SMS Yönetimi)
+
+Bu endpoint'ler hem platform yönetimi hem de klinik bazlı SMS işlemlerini kapsar.
+
+### Platform SMS Sağlayıcı Yönetimi
+
+#### `GET /platform-admin/sms/providers`
+Sistemdeki tüm tanımlı SMS sağlayıcı şablonlarını listeler.
+
+#### `GET /platform-admin/sms/providers/{id}`
+Belirli bir sağlayıcının şablon detaylarını (`template_config` ve `config_schema`) getirir.
+
+#### `POST /platform-admin/sms/providers`
+Yeni bir SMS sağlayıcı şablonu (Provider Builder) oluşturur.
+
+#### `PUT /platform-admin/sms/providers/{id}`
+Mevcut bir sağlayıcı şablonunu günceller.
+
+#### `POST /platform-admin/sms/validate-provider`
+Yeni tanımlanan veya düzenlenen bir sağlayıcı şablonunun çalışabilirliğini (geçici verilerle) test eder.
+
+### Klinik SMS Ayarları
+
+#### `GET /platform-admin/sms/settings/{clinicId}`
+Bir kliniğin mevcut SMS ayarlarını (şifreli konfigürasyon hariç) ve kullanılabilir sağlayıcı listesini döner.
+
+#### `POST /platform-admin/sms/settings/{clinicId}`
+Kliniğin SMS sağlayıcısını ve konfigürasyonunu (şifrelenerek) kaydeder.
+
+#### `POST /platform-admin/sms/test/{clinicId}`
+Kliniğin kayıtlı veya formdaki güncel ayarlarıyla gerçek bir SMS gönderim testi yapar.
+
+**Payload:**
+```json
+{
+  "provider_id": 4,
+  "config": {
+    "username": "test_user",
+    "password": "...", 
+    "header": "TEST-HDR"
+  },
+  "phone": "905051234567"
+}
+```
+> **Not:** `config` alanı boş bırakılırsa, veritabanındaki kayıtlı (şifreli) ayarlar çözülerek kullanılır.
+
+---

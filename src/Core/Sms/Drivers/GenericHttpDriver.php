@@ -57,12 +57,24 @@ class GenericHttpDriver implements SmsDriverInterface
         $finalUrl = strtr($url, $vars);
 
         // 2. Headers Hazırla
-        $finalHeadersRaw = strtr($headersTemplate, $vars);
         $headers = [];
-        foreach (explode("\n", $finalHeadersRaw) as $line) {
-            $line = trim($line);
-            if (!empty($line)) {
-                $headers[] = $line;
+
+        // Check if headers is a JSON string (new Dynamic Key-Value structure)
+        $kvHeaders = json_decode($headersTemplate, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($kvHeaders)) {
+            foreach ($kvHeaders as $k => $v) {
+                $finalKey = strtr((string) $k, $vars);
+                $finalVal = strtr((string) $v, $vars);
+                $headers[] = "$finalKey: $finalVal";
+            }
+        } else {
+            // Fallback: Old newline separated format
+            $finalHeadersRaw = strtr((string) $headersTemplate, $vars);
+            foreach (explode("\n", $finalHeadersRaw) as $line) {
+                $line = trim($line);
+                if (!empty($line)) {
+                    $headers[] = $line;
+                }
             }
         }
 

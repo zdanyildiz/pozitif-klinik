@@ -85,6 +85,11 @@ class Database
     {
     }
 
+    public function lastInsertId(): string|false
+    {
+        return $this->connection->lastInsertId();
+    }
+
     // Prevent unserializing
     public function __wakeup()
     {

@@ -73,6 +73,8 @@ function setupEventListeners() {
 
     // Buttons
     testConnectionBtn.addEventListener('click', handleTestConnection);
+    const testSmsBtn = document.getElementById('testSmsBtn');
+    if (testSmsBtn) testSmsBtn.addEventListener('click', handleTestSms);
     sendTestEmailBtn.addEventListener('click', () => testEmailModal.show());
     resetToFallbackBtn.addEventListener('click', handleResetToFallback);
 
@@ -809,6 +811,7 @@ async function loadSmsSettings() {
             const provider = smsProviders.find(p => p.id === selectedId);
             renderSmsConfigForm(provider ? provider.config_schema : null);
             document.getElementById('saveSmsSettingsBtn').disabled = !provider;
+            document.getElementById('testSmsBtn').disabled = !provider;
         };
 
         // Eğer mevcut ayar varsa seç ve doldur
@@ -820,6 +823,7 @@ async function loadSmsSettings() {
             if (provider) {
                 renderSmsConfigForm(provider.config_schema, true); // true: isUpdateMode
                 document.getElementById('saveSmsSettingsBtn').disabled = false;
+                document.getElementById('testSmsBtn').disabled = false;
             }
         }
 
@@ -848,11 +852,31 @@ function renderSmsConfigForm(schema, isUpdateMode = false) {
     const row = document.createElement('div');
     row.className = 'row g-3';
 
+    // Global KV listesi için bir sayaç
+    window.kvCount = window.kvCount || 0;
+
     schema.forEach(field => {
         const col = document.createElement('div');
         col.className = 'col-md-12'; // Varsayılan tam genişlik
 
-        if (field.type === 'text' || field.type === 'password' || field.type === 'url') {
+        if (field.type === 'keyvalue') {
+            col.innerHTML = `
+                <label class="form-label d-flex justify-content-between">
+                    <span>${field.label} ${field.required ? '<span class="text-danger">*</span>' : ''}</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" onclick="addKvPair('${field.key}')">
+                        <i class="bi bi-plus-circle me-1"></i>Ekle
+                    </button>
+                </label>
+                <div id="kv-container-${field.key}" class="kv-list-container">
+                    <!-- Key-Value Satırları Buraya Gelecek -->
+                </div>
+                ${field.help ? `<div class="form-text">${field.help}</div>` : ''}
+            `;
+
+            // Eğer varsayılan değerler varsa (veya empty state için bir tane boş satır)
+            setTimeout(() => addKvPair(field.key), 0);
+        }
+        else if (field.type === 'text' || field.type === 'password' || field.type === 'url') {
             col.innerHTML = `
                 <label class="form-label">${field.label} ${field.required ? '<span class="text-danger">*</span>' : ''}</label>
                 <input type="${field.type}" class="form-control sms-config-input" 
@@ -910,6 +934,9 @@ async function handleSaveSmsSettings(e) {
     let hasFilledField = false;
 
     inputs.forEach(input => {
+        // KV inputları atla (Onları ayrıca toplayacağız)
+        if (input.dataset.kvKey) return;
+
         const key = input.name;
         const val = input.value.trim();
 
@@ -917,6 +944,27 @@ async function handleSaveSmsSettings(e) {
         if (val) {
             configData[key] = val;
             hasFilledField = true;
+        }
+    });
+
+    // Key-Value listelerini topla
+    const kvContainers = document.querySelectorAll('.kv-list-container');
+    kvContainers.forEach(container => {
+        const fieldKey = container.id.replace('kv-container-', '');
+        const kvData = {};
+
+        const rows = container.querySelectorAll('.kv-row');
+        rows.forEach(row => {
+            const k = row.querySelector('.kv-input-key').value.trim();
+            const v = row.querySelector('.kv-input-value').value.trim();
+            if (k) {
+                kvData[k] = v;
+                hasFilledField = true;
+            }
+        });
+
+        if (Object.keys(kvData).length > 0) {
+            configData[fieldKey] = JSON.stringify(kvData);
         }
     });
 
@@ -954,3 +1002,88 @@ async function handleSaveSmsSettings(e) {
     }
 }
 
+async function handleTestSms() {
+    const select = document.getElementById('smsProviderSelect');
+    const providerId = select.value;
+
+    if (!providerId) {
+        Utils.showError('Lütfen önce bir sağlayıcı seçin.');
+        return;
+    }
+
+    const { value: phone } = await Swal.fire({
+        title: 'Test SMS Gönder',
+        input: 'text',
+        inputLabel: 'Alıcı Telefon Numarası',
+        inputPlaceholder: 'Örn: 5051234567',
+        showCancelButton: true,
+        confirmButtonText: 'Gönder',
+        cancelButtonText: 'İptal',
+        inputValidator: (value) => {
+            if (!value) return 'Telefon numarası girilmelidir!';
+        }
+    });
+
+    if (!phone) return;
+
+    // Formdaki güncel config'i topla
+    const inputs = document.querySelectorAll('.sms-config-input');
+    const configData = {};
+    inputs.forEach(input => {
+        if (input.dataset.kvKey) return;
+        if (input.value.trim()) configData[input.name] = input.value.trim();
+    });
+
+    const kvContainers = document.querySelectorAll('.kv-list-container');
+    kvContainers.forEach(container => {
+        const fieldKey = container.id.replace('kv-container-', '');
+        const kvData = {};
+        container.querySelectorAll('.kv-row').forEach(row => {
+            const k = row.querySelector('.kv-input-key').value.trim();
+            const v = row.querySelector('.kv-input-value').value.trim();
+            if (k) kvData[k] = v;
+        });
+        if (Object.keys(kvData).length > 0) configData[fieldKey] = JSON.stringify(kvData);
+    });
+
+    const testBtn = document.getElementById('testSmsBtn');
+    testBtn.disabled = true;
+    testBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Gönderiliyor...';
+
+    try {
+        await api.post(`/platform-admin/sms/test/${clinicId}`, {
+            provider_id: providerId,
+            config: configData,
+            phone: phone
+        });
+
+        Swal.fire('Başarılı!', 'Test mesajı başarıyla gönderildi.', 'success');
+    } catch (error) {
+        console.error('Test SMS hatası:', error);
+        Utils.showError(typeof error === 'string' ? error : 'Test SMS gönderimi başarısız.');
+    } finally {
+        testBtn.disabled = false;
+        testBtn.innerHTML = '<i class="bi bi-chat-dots"></i> Test SMS';
+    }
+}
+
+// --- KV Helper Functions ---
+window.addKvPair = function (fieldKey, k = '', v = '') {
+    const container = document.getElementById(`kv-container-${fieldKey}`);
+    if (!container) return;
+
+    const rowId = `kv-row-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const row = document.createElement('div');
+    row.className = 'kv-row mb-2 d-flex gap-2';
+    row.id = rowId;
+
+    row.innerHTML = `
+        <input type="text" class="form-control form-control-sm kv-input-key" placeholder="Key (örn: Authorization)" value="${k}">
+        <input type="text" class="form-control form-control-sm kv-input-value" placeholder="Value" value="${v}">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="document.getElementById('${rowId}').remove()">
+            <i class="bi bi-trash"></i>
+        </button>
+    `;
+
+    container.appendChild(row);
+}

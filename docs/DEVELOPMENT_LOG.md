@@ -691,3 +691,21 @@ LOG_LEVEL=DEBUG
 - **Frontend (Silme):**
   - Laboratuvar sonuç listesine (Accordion başlığına) silme butonu eklendi.
   - Kullanıcı onayı ile hatalı girilen kayıtların silinmesi sağlandı.
+
+---
+
+### 50. SMS Entegrasyonu ve Low-Code Provider Builder (✅ Tamamlandı)
+**Tarih:** 2026-02-03
+- **Merkezi SMS Yönetimi:** Hem platform yöneticisi hem de klikniklerin kendi SMS ayarlarını yönetebileceği uçtan uca altyapı kuruldu.
+- **Provider Builder (Low-Code):** 
+    - Platform yöneticisi için yeni sağlayıcı ekleme ekranı geliştirildi.
+    - URL, HTTP Metodu, Headerlar ve Payload (XML/JSON) şablonları (`{{message}}`, `{{phone}}` placeholderları ile) dinamik olarak tanımlanabiliyor.
+    - Tanımlanan değişkenler, klinik ayar ekranında otomatik olarak birer form alanına dönüşüyor.
+- **Driver Mimari (Dinamik):** 
+    - `GenericHttpDriver` ile her türlü HTTP tabanlı SMS API'sine (BizimSMS, Twilio vb.) uyum sağlandı.
+    - `NetgsmDriver` ile sabit yapıdaki sağlayıcılar desteklendi.
+- **Güvenlik & Gizlilik:**
+    - Kliniklerin girdiği SMS kullanıcı adları ve şifreleri veritabanında **AES-256-GCM** ile şifrelenmiş olarak saklanıyor. Bu sayede platform personeli bile kliniklerin API anahtarlarını açık şekilde göremiyor.
+- **Test Mekanizması:**
+    - "Test SMS" özelliği ile kurulumların doğruluğu (kayıt edilmeden önce veya sonra) anlık olarak kontrol edilebiliyor.
+- **Dökümantasyon:** SMS modülü mimarisi ve API uçları `ARCHITECTURE.md` ve `API.md` dosyalarına işlendi.

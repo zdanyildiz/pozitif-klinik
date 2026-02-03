@@ -126,6 +126,25 @@ class SmsService
     }
 
     /**
+     * Kliniğin mevcut SMS ayarlarını çözülmüş (decrypted) olarak getirir.
+     */
+    public function getClinicSettings(int $clinicId): ?array
+    {
+        $settings = $this->repository->getClinicSettings($clinicId);
+        if (!$settings)
+            return null;
+
+        $decryptedJson = $this->crypto->decrypt($settings['config_data']);
+        $config = json_decode($decryptedJson, true) ?: [];
+
+        return [
+            'provider_id' => $settings['provider_id'],
+            'config' => $config,
+            'is_active' => $settings['is_active']
+        ];
+    }
+
+    /**
      * Klinik SMS ayarlarını şifreleyerek kaydeder.
      * Boş bırakılan alanlar mevcut değerlerini korur.
      * 
@@ -167,5 +186,29 @@ class SmsService
     public function createProvider(string $name, string $driverKey, array $templateConfig, array $configSchema): int
     {
         return $this->repository->createProvider($name, $driverKey, $templateConfig, $configSchema);
+    }
+
+    /**
+     * Sağlayıcı detayını getirir
+     */
+    public function getProvider(int $id): ?array
+    {
+        return $this->repository->getProvider($id);
+    }
+
+    /**
+     * Sağlayıcıyı günceller
+     */
+    public function updateProvider(int $id, string $name, string $driverKey, array $templateConfig, array $configSchema): void
+    {
+        $this->repository->updateProvider($id, $name, $driverKey, $templateConfig, $configSchema);
+    }
+
+    /**
+     * Sağlayıcıyı siler
+     */
+    public function deleteProvider(int $id): void
+    {
+        $this->repository->deleteProvider($id);
     }
 }

@@ -90,4 +90,46 @@ class SmsRepository
 
         return (int) $this->db->lastInsertId();
     }
+
+    /**
+     * Sağlayıcı detaylarını getirir.
+     */
+    public function getProvider(int $id): ?array
+    {
+        $sql = "SELECT * FROM sys_sms_providers WHERE id = :id";
+        $result = $this->db->fetch($sql, ['id' => $id]);
+        return $result === false ? null : $result;
+    }
+
+    /**
+     * Sağlayıcıyı günceller.
+     */
+    public function updateProvider(int $id, string $name, string $driverKey, array $templateConfig, array $configSchema): void
+    {
+        $sql = "UPDATE sys_sms_providers 
+                SET name = :name, 
+                    driver_key = :driverKey, 
+                    template_config = :templateConfig, 
+                    config_schema = :configSchema,
+                    updated_at = NOW()
+                WHERE id = :id";
+
+        $this->db->query($sql, [
+            'id' => $id,
+            'name' => $name,
+            'driverKey' => $driverKey,
+            'templateConfig' => json_encode($templateConfig, JSON_UNESCAPED_UNICODE),
+            'configSchema' => json_encode($configSchema, JSON_UNESCAPED_UNICODE)
+        ]);
+    }
+    /**
+     * Sağlayıcıyı siler.
+     * Eğer kullanımda ise hata fırlatabilir veya is_active=0 yapabiliriz.
+     * Şimdilik sert silme (hard delete) yapalım, Constraint hatası verirse kullanıcı görür.
+     */
+    public function deleteProvider(int $id): void
+    {
+        $sql = "DELETE FROM sys_sms_providers WHERE id = :id";
+        $this->db->query($sql, ['id' => $id]);
+    }
 }

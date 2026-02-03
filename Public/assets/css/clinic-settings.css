@@ -571,3 +571,36 @@
         width: 100%;
     }
 }
+
+/* Key-Value Pair Styles */
+.kv-list-container {
+    padding: 12px;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    margin-top: 8px;
+}
+
+.kv-row {
+    transition: all 0.2s;
+}
+
+.kv-row .form-control {
+    border-width: 1px;
+    padding: 8px 12px;
+}
+
+.kv-row .kv-input-key {
+    flex: 0 0 35%;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: #f8fafc;
+}
+
+.kv-row .kv-input-value {
+    flex: 1;
+}
+
+.kv-row .btn-outline-danger {
+    padding: 8px 12px;
+}

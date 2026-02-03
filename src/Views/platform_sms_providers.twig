@@ -1,0 +1,489 @@
+{% extends "platform_layout.twig" %}
+
+{% block title %}SMS Sağlayıcıları | Platform{% endblock %}
+
+{% block page_title %}SMS Sağlayıcı Yönetimi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-muted">Tanımlı SMS Servisleri</h5>
+            <button class="btn btn-primary" onclick="openProviderModal()">
+                <i class="bi bi-plus-lg"></i> Yeni Sağlayıcı Ekle
+            </button>
+        </div>
+    </div>
+
+    <!-- Providers List -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Sağlayıcı Adı</th>
+                            <th>Sürücü</th>
+                            <th>Durum</th>
+                            <th>Oluşturulma</th>
+                            <th class="text-end pe-4">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="providersTableBody">
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Provider Builder Modal -->
+<div class="modal fade" id="providerModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-tools me-2"></i>SMS Sağlayıcı Oluşturucu
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <form id="providerForm">
+                    <!-- 1. Basic Info -->
+                    <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card-header bg-white fw-bold">1. Temel Bilgiler</div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Sağlayıcı Adı</label>
+                                    <input type="text" class="form-control" name="name" placeholder="Örn: Vericini SMS" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Sürücü Tipi</label>
+                                    <select class="form-select" name="driver_key" id="driverKeySelect" onchange="toggleBuilder()">
+                                        <option value="generic_http">Generic HTTP / REST API (Önerilen)</option>
+                                        <option value="netgsm">NetGSM (Hazır Modül)</option>
+                                    </select>
+                                    <div class="form-text">Özel API entegrasyonu için "Generic HTTP" seçin.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Builder (Only for Generic HTTP) -->
+                    <div id="genericBuilder">
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                                <span>2. API Konfigürasyonu (Şablon)</span>
+                                <span class="badge bg-info text-dark">Dinamik Değişkenler: {{ "{{degisken}}" }}</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">HTTP Method</label>
+                                        <select class="form-select" name="method">
+                                            <option value="POST">POST</option>
+                                            <option value="GET">GET</option>
+                                            <option value="PUT">PUT</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <label class="form-label">API URL</label>
+                                        <input type="text" class="form-control" name="url" placeholder="https://api.example.com/v1/sms" oninput="detectVariables()">
+                                    </div>
+
+                                    <!-- Headers Builder -->
+                                    <div class="col-12">
+                                        <label class="form-label d-flex justify-content-between">
+                                            HTTP Headers
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addHeaderRow()">
+                                                <i class="bi bi-plus"></i> Header Ekle
+                                            </button>
+                                        </label>
+                                        <div id="headersContainer" class="bg-white p-2 border rounded">
+                                            <!-- Dynamic Rows -->
+                                        </div>
+                                        <div class="form-text">Örn: "Authorization": "Bearer {{ "{{api_key}}" }}"</div>
+                                    </div>
+
+                                    <!-- Body Template -->
+                                    <div class="col-12">
+                                        <label class="form-label">Body / Payload Şablonu (JSON/XML)</label>
+                                        <textarea class="form-control font-monospace" name="body_template" rows="6" oninput="detectVariables()" placeholder='{
+  "user": "{{ "{{username}}" }}",
+  "pass": "{{ "{{password}}" }}",
+  "msg": "{{ "{{message}}" }}",
+  "gsm": "{{ "{{phone}}" }}"
+}'></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Testing Section -->
+                        <div class="card border-0 shadow-sm border-start border-4 border-warning">
+                            <div class="card-header bg-warning bg-opacity-10 fw-bold">
+                                <i class="bi bi-lightning-charge-fill text-warning me-2"></i>3. Test ve Doğrulama
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">
+                                    Yukarıda girdiğiniz şablonda <code>{{ "{{...}}" }}</code> şeklinde tespit edilen değişkenler aşağıda listelenir.
+                                    Lütfen test verilerini girerek bağlantıyı kontrol edin.
+                                </p>
+                                
+                                <div class="row g-3" id="detectedVariablesContainer">
+                                    <!-- Dynamic Inputs -->
+                                </div>
+
+                                <div class="row g-3 mt-2 border-top pt-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Test Telefon Numarası</label>
+                                        <input type="text" class="form-control" id="testPhone" placeholder="532XXXXXXX">
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <button type="button" class="btn btn-warning text-dark w-100" onclick="testProvider()" id="btnTest">
+                                            <i class="bi bi-send"></i> Yapılandırmayı Test Et
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="testResult" class="mt-3 d-none alert"></div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="saveProvider()">
+                    <i class="bi bi-check-lg"></i> Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="headerRowTemplate">
+    <div class="input-group mb-2 header-row">
+        <input type="text" class="form-control" placeholder="Key (örn: Authorization)" oninput="detectVariables()">
+        <span class="input-group-text">:</span>
+        <input type="text" class="form-control" placeholder="Value (örn: Bearer {{ "{{token}}" }})" oninput="detectVariables()">
+        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove(); detectVariables()">
+            <i class="bi bi-trash"></i>
+        </button>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const API_BASE = '{{ base_path }}/platform-admin/sms';
+    
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProviders();
+        addHeaderRow(); // Add one initial header row
+    });
+
+    let currentEditingId = null;
+
+    // --- Modal & Builder Logic ---
+    function openProviderModal() {
+        currentEditingId = null;
+        document.getElementById('providerForm').reset();
+        document.getElementById('driverKeySelect').dispatchEvent(new Event('change'));
+        document.querySelector('#providerModal .modal-title').innerHTML = '<i class="bi bi-tools me-2"></i>SMS Sağlayıcı Oluşturucu';
+        document.getElementById('headersContainer').innerHTML = '';
+        addHeaderRow(); // bir tane boş ekle
+        document.getElementById('detectedVariablesContainer').innerHTML = '';
+        new bootstrap.Modal('#providerModal').show();
+    }
+
+    // --- Provider List ---
+    async function loadProviders() {
+        try {
+            const res = await axios.get(`${API_BASE}/providers`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('platform_token')}` }
+            });
+            renderProviders(res.data.data.providers);
+        } catch (e) {
+            console.error(e);
+            document.getElementById('providersTableBody').innerHTML = `<tr><td colspan="5" class="text-danger text-center">Hata: ${e.message}</td></tr>`;
+        }
+    }
+
+    function renderProviders(list) {
+        const tbody = document.getElementById('providersTableBody');
+        tbody.innerHTML = list.map(p => `
+            <tr>
+                <td class="ps-4 fw-bold">${p.name}</td>
+                <td><span class="badge bg-secondary">${p.driver_key}</span></td>
+                <td>${p.is_active ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Pasif</span>'}</td>
+                <td class="text-muted small">${new Date(p.created_at).toLocaleDateString('tr-TR')}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editProvider(${p.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteProvider(${p.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function deleteProvider(id) {
+        if (!confirm('Bu SMS sağlayıcısını silmek istediğinize emin misiniz? Bu işlem geri alınamaz!')) return;
+
+        try {
+            await axios.delete(`${API_BASE}/providers/${id}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('platform_token')}` }
+            });
+            Swal.fire('Başarılı', 'Sağlayıcı silindi.', 'success');
+            loadProviders();
+        } catch (e) {
+            Swal.fire('Hata', 'Silme işlemi başarısız: ' + (e.response?.data?.error?.message || e.message), 'error');
+        }
+    }
+
+    async function editProvider(id) {
+        try {
+            const res = await axios.get(`${API_BASE}/providers/${id}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('platform_token')}` }
+            });
+            const p = res.data.data.provider;
+            
+            currentEditingId = p.id;
+            
+            // Modal başlık
+            document.querySelector('#providerModal .modal-title').innerHTML = `<i class="bi bi-pencil me-2"></i>Düzenle: ${p.name}`;
+            
+            // Formu doldur
+            const form = document.querySelector('#providerForm');
+            form.querySelector('[name=name]').value = p.name;
+            form.querySelector('[name=driver_key]').value = p.driver_key;
+            
+            const builder = document.getElementById('genericBuilder');
+            if (p.driver_key === 'generic_http') {
+                builder.style.display = 'block';
+                const conf = p.template_config || {};
+                form.querySelector('[name=method]').value = conf.method || 'POST';
+                form.querySelector('[name=url]').value = conf.url || '';
+                form.querySelector('[name=body_template]').value = conf.body_template || '';
+                
+                // Headers Parse - Handle both string (JSON) and object formats
+                let headers = conf.headers || {};
+                if (typeof headers === 'string') {
+                    try { headers = JSON.parse(headers || '{}'); } catch(e) { headers = {}; }
+                }
+
+                const container = document.getElementById('headersContainer');
+                container.innerHTML = '';
+                
+                if (Object.keys(headers).length > 0) {
+                    Object.entries(headers).forEach(([k, v]) => {
+                        addHeaderRow(k, v);
+                    });
+                } else {
+                    addHeaderRow();
+                }
+            } else {
+                builder.style.display = 'none';
+            }
+            
+            new bootstrap.Modal('#providerModal').show();
+            detectVariables();
+            
+        } catch(e) {
+            Swal.fire('Hata', 'Sağlayıcı detayları alınamadı', 'error');
+        }
+    }
+
+    function toggleBuilder() {
+        const key = document.getElementById('driverKeySelect').value;
+        const builder = document.getElementById('genericBuilder');
+        builder.style.display = key === 'generic_http' ? 'block' : 'none';
+    }
+
+    function addHeaderRow(key = '', value = '') {
+        const tpl = document.getElementById('headerRowTemplate');
+        const container = document.getElementById('headersContainer');
+        const clone = tpl.content.cloneNode(true);
+        const inputs = clone.querySelectorAll('input');
+        if(key) inputs[0].value = key;
+        if(value) inputs[1].value = value;
+        container.appendChild(clone);
+    }
+
+    // --- Variable Detection ---
+    let detectedVars = new Set();
+    const standardVars = ['phone', 'message', 'message_json'];
+
+    function detectVariables() {
+        const form = document.querySelector('#providerForm');
+        const textToScan = [
+            form.querySelector('[name=url]').value,
+            form.querySelector('[name=body_template]').value,
+            ...Array.from(document.querySelectorAll('.header-row input')).map(i => i.value)
+        ].join(' ');
+
+        // Regex to find variables
+        const matches = textToScan.match(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g) || [];
+        const newVars = new Set();
+
+        matches.forEach(m => {
+            const varName = m.replace(/\{\{|\}\}/g, '').trim();
+            if (!standardVars.includes(varName) && varName.length > 0) {
+                newVars.add(varName);
+            }
+        });
+
+        detectedVars = newVars;
+        renderVariableInputs();
+    }
+
+    function renderVariableInputs() {
+        const container = document.getElementById('detectedVariablesContainer');
+        container.innerHTML = '';
+
+        if (detectedVars.size === 0) {
+            container.innerHTML = '<div class="col-12"><div class="alert alert-info py-2 small">Henüz özel bir değişken (örn: {{ "{{" }}username{{ "}}" }}) algılanmadı. Standart değişkenler ({{ "{{" }}phone{{ "}}" }}, {{ "{{" }}message{{ "}}" }}) otomatik yönetilir.</div></div>';
+            return;
+        }
+
+        detectedVars.forEach(v => {
+            const div = document.createElement('div');
+            div.className = 'col-md-4';
+            div.innerHTML = `
+                <label class="form-label small text-muted">Test Değeri: <b>${v}</b></label>
+                <input type="text" class="form-control form-control-sm test-var-input" data-var="${v}" placeholder="${v} giriniz">
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // --- Testing ---
+    async function testProvider() {
+        const btn = document.getElementById('btnTest');
+        const resultDiv = document.getElementById('testResult');
+        const testPhone = document.getElementById('testPhone').value;
+
+        if (!testPhone) {
+            alert('Lütfen test telefonu giriniz.');
+            return;
+        }
+
+        // Collect Test Values
+        const testValues = {};
+        document.querySelectorAll('.test-var-input').forEach(inp => {
+            testValues[inp.dataset.var] = inp.value;
+        });
+
+        // Collect Headers
+        const headers = {};
+        document.querySelectorAll('.header-row').forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const k = inputs[0].value.trim();
+            const v = inputs[1].value.trim();
+            if (k) headers[k] = v;
+        });
+
+        // Prepare Payload
+        const payload = {
+            driver_key: 'generic_http',
+            template_config: {
+                url: document.querySelector('[name=url]').value,
+                method: document.querySelector('[name=method]').value,
+                headers: JSON.stringify(headers), // Key-Value JSON
+                body_template: document.querySelector('[name=body_template]').value
+            },
+            test_values: testValues,
+            test_phone: testPhone
+        };
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Gönderiliyor...';
+        resultDiv.className = 'd-none alert';
+
+        try {
+            const res = await axios.post(`${API_BASE}/validate-provider`, payload, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('platform_token')}` }
+            });
+            resultDiv.className = 'mt-3 alert alert-success';
+            resultDiv.innerHTML = `<i class="bi bi-check-circle"></i> Başarılı! Test mesajı gönderildi. Kaydedebilirsiniz.`;
+        } catch (e) {
+            const msg = e.response?.data?.error?.message || e.message;
+            resultDiv.className = 'mt-3 alert alert-danger';
+            resultDiv.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Başarısız: ${msg}`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-send"></i> Yapılandırmayı Test Et';
+        }
+    }
+
+    // --- Save ---
+    async function saveProvider() {
+        const name = document.querySelector('[name=name]').value;
+        if (!name) return alert('Lütfen sağlayıcı adı giriniz.');
+
+        // Build Schema from Detected Vars
+        const configSchema = [];
+        detectedVars.forEach(v => {
+            let type = 'text';
+            if (v.toLowerCase().includes('pass') || v.toLowerCase().includes('secret') || v.toLowerCase().includes('key')) type = 'password';
+            
+            configSchema.push({
+                key: v,
+                label: v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' '),
+                type: type,
+                required: true
+            });
+        });
+
+        if (configSchema.length === 0) {
+            // If no vars, verify if that's intended
+            if(!confirm('Hiçbir özel değişken (kullanıcı adı, şifre vb.) tanımlamadınız. Bu sağlayıcı herhangi bir kimlik doğrulama gerektirmiyor mu?')) return;
+        }
+
+        // Collect Headers again
+        const headers = {};
+        document.querySelectorAll('.header-row').forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const k = inputs[0].value.trim();
+            const v = inputs[1].value.trim();
+            if (k) headers[k] = v;
+        });
+
+        const payload = {
+            name: name,
+            driver_key: 'generic_http',
+            template_config: {
+                url: document.querySelector('[name=url]').value,
+                method: document.querySelector('[name=method]').value,
+                headers: JSON.stringify(headers),
+                body_template: document.querySelector('[name=body_template]').value
+            },
+            config_schema: configSchema
+        };
+
+        try {
+            if (currentEditingId) {
+                 await axios.put(`${API_BASE}/providers/${currentEditingId}`, payload, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('platform_token')}` }
+                });
+                Swal.fire('Başarılı', 'SMS Sağlayıcısı güncellendi.', 'success').then(() => location.reload());
+            } else {
+                await axios.post(`${API_BASE}/providers`, payload, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('platform_token')}` }
+                });
+                Swal.fire('Başarılı', 'SMS Sağlayıcısı sisteme eklendi.', 'success').then(() => location.reload());
+            }
+        } catch (e) {
+            Swal.fire('Hata', e.response?.data?.error?.message || e.message, 'error');
+        }
+    }
+</script>
+{% endblock %}

@@ -184,8 +184,34 @@ src/Core/
 ```
 
 ---
-
-## Multi-Tenancy Stratejisi
+ 
+ ## SMS Modülü Mimarisi (Provider Builder & Driver Pattern)
+ 
+ Proje, farklı SMS sağlayıcılarının (NetGSM, Twilio, BizimSMS vb.) kod yazmadan veya minimum kodla entegre edilebileceği esnek bir SMS modülüne sahiptir.
+ 
+ **Mimarinin Bileşenleri:**
+ 
+ 1. **Driver Pattern:** Tüm gönderim işlemleri `SmsDriverInterface` arayüzünü uygulayan sürücüler üzerinden yapılır.
+    - `NetgsmDriver`: Sabit XML yapılı geleneksel sürücü.
+    - `GenericHttpDriver`: **[Low-Code]** URL, HTTP Metodu, Headerlar ve Body (JSON/XML) şablonunu veritabanından okuyarak dinamik istek oluşturan esnek sürücü.
+ 
+ 2. **Provider Builder:** Platform yöneticisi, yeni bir SMS sağlayıcısını şu adımlarla tanımlar:
+    - **Şablon**: API uç adresi ve Payload şablonu (Örn: `<sms><msg>{{message}}</msg></sms>`).
+    - **Şema (Schema)**: Kliniğin doldurması gereken alanlar (Username, Password vb.).
+    - Bu değişkenler klinik ayarlar sayfasında otomatik olarak dinamik bir forma dönüşür.
+ 
+ 3. **Güvenlik (Encryption):**
+    - Kliniklerin girdiği API anahtarları ve şifreler, veritabanında **AES-256-GCM** ile şifrelenmiş olarak saklanır.
+    - Konfigürasyon verileri sadece gönderim anında bellekte çözülür (Decrypt).
+ 
+ 4. **Gönderim Akışı:**
+    - `SmsService::sendSms()` metodu çağrıldığında, kliniğin şifreli ayarları çözülür.
+    - Sağlayıcının şablonundaki değişkenler (`{{phone}}`, `{{message}}` vb.) gerçek verilerle değiştirilir.
+    - Driver, son halini almış isteği (Request) ilgili API'ye senkron veya asenkron (planlanan) olarak iletir.
+ 
+ ---
+ 
+ ## Multi-Tenancy Stratejisi
 
 ### Yaklaşım: Shared Database, Shared Schema
 

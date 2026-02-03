@@ -1,0 +1,1223 @@
+Toplu SMS Servisi
+HTTP API Teknik
+Dokümantasyonu
+
+Sürüm 1.1.9
+
+Giriş
+•API ile çalışmaya başlamadan önce ilgili yazılım geliştirmeleri yaparken şu geçici hesabı
+kullanabilirsiniz : Kullanıcı adı : “test” Şifre : “test”. Bu geçici hesap ile yaptığınız işlemler
+tamamen sanal olarak yürütülür ve yine sanal geri dönüşler alınır.
+•API ile çalışmaya başlamak için http://sms.bizimsms.mobi adresinde yeni üyelik oluşturun,
+giriş yapın. Kullanıcı İşlemleri -> Api Ayarları -> Api Hesabı Oluştur yolunu izleyin. Kullanıcı
+adınız aynı olmakla birlikte şifre olarak API SECRET olarak belirtilen 32 karakterlik ifadeyi
+kullanın. (Web şifreniz ile API şifreniz farklı şeylerdir)
+•SMS yollayabilmek için hesabınızda kredi yüklendiğinden ve mesaj başlığınızın (originator)
+onaylanmış olduğuna emin olun.
+•API istekleri sunucularımızın 8080 numaralı portuna HTTP GET veya HTTP POST şeklinde
+gerçekleştirilir.
+•HTTP POST yönteminde içerik XML olarak formatlanmaktadır.
+•API isteklerinde istek sayısı olarak bir sınırlama yoktur.
+•Destek ve sorularınız için info@bizimsms.mobi e-posta adresinden iletişime geçebilirsiniz.
+
+Gönderim Listesi Sorgulama
+(GÖNDERIM ID’LERININ LISTESINI 50’ŞERLI GRUPLARLA VERIR)
+
+Örnek :
+İstek Adresi
+Cevap (Başarısız)
+Cevap (Başarılı)
+
+http://sms.bizimsms.mobi:8080/api/campaignidlist/v1?username=test&passw
+ord=test&page=0
+87
+00 123|456|789
+
+Giden Parametreler
+Parametreler :
+Parametre
+username
+password
+page
+
+Tip
+String
+String
+Int
+
+Açıklama
+Web kullanıcı adınız
+Api Hesabı bölümünde görüntülenen API SECRET ifadesi
+Hangi sayfadan başlanılacağı (ilk sayfa için 0)
+
+Dönüş Değerleri
+•Tüm dönüş kodları metinden oluşur.
+•Başarısız dönüş olduğunda sadece kodun kendisini geri döner.
+•Başarılı dönüşlerde koddan sonra bir boşluk karakteri bırakılır ve | (pipe) işareti ile ayrılmış
+biçimde gönderim numaraları döner. Eğer tek gönderim varsa, içerikte | işareti bulunmaz.
+•Dönüşler yeniden eskiye göre sıralıdır.
+
+Başarısız Dönüşler :
+•Aşağıdaki hata kodları isteği yapan tarafın düzeltmesi gereken durumları belirtir.
+Kod
+95
+93
+87
+
+İsim
+USE_GET_METHOD
+MISSING_GET_PARAMS
+WRONG_USER_OR_PASSWORD
+
+Açıklama
+İsteği HTTP GET ile yollayınız
+GET parametrelerinde eksik var
+Kullanıcı adı veya şifre hatalı
+
+Başarılı Dönüşler :
+Kod
+00
+
+İsim
+SUCCESS
+
+Açıklama
+İşlem başarı ile sonlandı.
+
+Kara Listeye Ekleme
+(BLACKLIST’E EKLEME)
+
+Örnek :
+İstek Adresi
+http://sms.bizimsms.mobi:8080/api/blacklistadd/V1?username=test&passwor
+
+Cevap (Başarısız)
+Cevap (Başarılı)
+
+d=test&gsm=5xxxxxxxxx
+88
+00
+
+Giden Parametreler
+Parametreler :
+Parametre
+username
+password
+Gsm
+
+Tip
+String
+String
+String
+
+Açıklama
+Web kullanıcı adınız
+Api Hesabı bölümünde görüntülenen API SECRET ifadesi
+Kara listeye eklenecek telefon numarası.
+
+Dönüş Değerleri
+•Tüm dönüş kodları metinden oluşur.
+•Başarısız dönüş olduğunda sadece kodun kendisini geri döner.
+
+Başarısız Dönüşler :
+•Aşağıdaki hata kodları isteği yapan tarafın düzeltmesi gereken durumları belirtir.
+Kod
+95
+93
+87
+78
+
+İsim
+USE_GET_METHOD
+MISSING_GET_PARAMS
+WRONG_USER_OR_PASSWORD
+ALREADY_BLACKLISTED
+
+Açıklama
+İsteği HTTP GET ile yollayınız
+GET parametrelerinde eksik var
+Kullanıcı adı veya şifre hatalı
+Numara zaten kara listeye ekli.
+
+Başarılı Dönüşler :
+Kod
+00
+
+İsim
+SUCCESS
+
+Açıklama
+İşlem başarı ile sonlandı.
+
+Kara Liste Sorgulama
+(KARA LISTEDEKI NUMARALARIN TÜMÜNÜ VERİR)
+
+Örnek :
+İstek Adresi
+Cevap (Başarısız)
+Cevap (Başarılı)
+
+http://sms.bizimsms.mobi:8080/api/blacklistexport/v1?username=test&passw
+ord=test
+87
+00 905xxxxxxxx|905xxxxxxxx| 905xxxxxxxx
+
+Giden Parametreler
+Parametreler :
+Parametre
+username
+password
+
+Tip
+String
+String
+
+Açıklama
+Web kullanıcı adınız
+Api Hesabı bölümünde görüntülenen API SECRET ifadesi
+
+Dönüş Değerleri
+•Tüm dönüş kodları metinden oluşur.
+•Başarısız dönüş olduğunda sadece kodun kendisini geri döner.
+•Başarılı dönüşlerde koddan sonra bir boşluk karakteri bırakılır ve | (pipe) işareti ile ayrılmış
+biçimde yasaklı telefon numaraları döner. Eğer tek yasaklı numara varsa, içerikte | işareti
+bulunmaz.
+
+Başarısız Dönüşler :
+•Aşağıdaki hata kodları isteği yapan tarafın düzeltmesi gereken durumları belirtir.
+Kod
+95
+93
+87
+
+İsim
+USE_GET_METHOD
+MISSING_GET_PARAMS
+WRONG_USER_OR_PASSWORD
+
+Açıklama
+İsteği HTTP GET ile yollayınız
+GET parametrelerinde eksik var
+Kullanıcı adı veya şifre hatalı
+
+Başarılı Dönüşler :
+Kod
+00
+
+İsim
+SUCCESS
+
+Açıklama
+İşlem başarı ile sonlandı.
+
+Başlık Sorgulama
+(ORIGINATOR SORGULAMA)
+
+Örnek :
+İstek Adresi
+Cevap (Başarısız)
+Cevap (Başarılı)
+
+http://sms.bizimsms.mobi:8080/api/originator/v1?username=test&password=
+test
+87
+00 BASLIK1|BASLIK2|BASLIK3
+
+Giden Parametreler
+Parametreler :
+Parametre
+username
+password
+
+Tip
+String
+String
+
+Açıklama
+Web kullanıcı adınız
+Api Hesabı bölümünde görüntülenen API SECRET ifadesi
+
+Dönüş Değerleri
+•Tüm dönüş kodları metinden oluşur.
+•Başarısız dönüş olduğunda sadece kodun kendisini geri döner.
+•Başarılı dönüşlerde koddan sonra bir boşluk karakteri bırakılır ve | (pipe) işareti ile ayrılmış
+biçimde onaylanmış sms başlıkları döner. Eğer tek onaylanmış başlık varsa, içerikte | işareti
+bulunmaz.
+
+Başarısız Dönüşler :
+•Aşağıdaki hata kodları isteği yapan tarafın düzeltmesi gereken durumları belirtir.
+Kod
+95
+93
+87
+
+İsim
+USE_GET_METHOD
+MISSING_GET_PARAMS
+WRONG_USER_OR_PASSWORD
+
+Açıklama
+İsteği HTTP GET ile yollayınız
+GET parametrelerinde eksik var
+Kullanıcı adı veya şifre hatalı
+
+Başarılı Dönüşler :
+Kod
+00
+
+İsim
+SUCCESS
+
+Açıklama
+İşlem başarı ile sonlandı.
+
+Kredi Sorgulama
+Örnek :
+İstek Adresi
+Cevap (Başarısız)
+Cevap (Başarılı)
+
+http://sms.bizimsms.mobi:8080/api/credit/v1?username=test&password=test
+
+87
+00 15600
+
+Giden Parametreler
+Parametreler :
+Parametre
+username
+password
+
+Tip
+String
+String
+
+Açıklama
+Web kullanıcı adınız
+Api Hesabı bölümünde görüntülenen API SECRET ifadesi
+
+Dönüş Değerleri
+•Tüm dönüş kodları 2 basamaklı sayılardan oluşur.
+•Başarısız dönüş olduğunda sadece kodun kendisini geri döner.
+•Başarılı dönüşlerde koddan sonra bir boşluk karakteri bırakılır ve kredi miktarı döner.
+
+Başarısız Dönüşler :
+•Aşağıdaki hata kodları isteği yapan tarafın düzeltmesi gereken durumları belirtir.
+Kod
+95
+93
+87
+
+İsim
+USE_GET_METHOD
+MISSING_GET_PARAMS
+WRONG_USER_OR_PASSWORD
+
+Açıklama
+İsteği HTTP GET ile yollayınız
+GET parametrelerinde eksik var
+Kullanıcı adı veya şifre hatalı
+
+Başarılı Dönüşler :
+Kod
+00
+
+İsim
+SUCCESS
+
+Açıklama
+İşlem başarı ile sonlandı.
+
+SMS Yollama
+•1-N tipi mesajlaşma aynı mesaj metnini bir veya daha fazla numaraya yollamak amacıyla tercih
+edilir. N-N tipi mesajlaşmada ise her numaraya farklı mesaj metni gönderilebilir.
+•Aşağıda gri arkaplana sahip olan satırlar opsiyonel özellikleri ifade eder. Bu özellikler
+kullanılmayacaksa XML yapısından kaldırılmalıdır, sadece gerekli olduğunda eklenmelidir.
+•Son 2 dakika içinde aynı SMS'i göndermeye çalışırsanız hata alırsınız. (Sistem bunu engeller)
+•Boş SMS gönderilemez.
+
+Örnek :
+İstek Adresi
+İstek Tipi
+İstek İçeriği
+
+İstek Tipi
+İstek İçeriği
+
+http://sms.bizimsms.mobi:8080/api/smspost/v1
+1-N TipiMesajlaşma
+<sms>
+<username>test</username>
+<password>test</password>
+<header>BAŞLIK</header>
+<validity>2880</validity>
+<sendDateTime>2015.7.23.9.30.0</sendDateTime>
+<message>
+<gsm>
+<no>905559998877</no>
+<no>905559998866</no>
+</gsm>
+<msg><![CDATA[-MESAJ-METNİ-1-]]></msg>
+</message>
+</sms>
+
+N-N TipiMesajlaşma
+<sms>
+<username>test</username>
+<password>test</password>
+<header>BAŞLIK</header>
+<validity>2880</validity>
+<sendDateTime>2015.7.23.9.30.0</sendDateTime>
+<messages>
+<mb><no>905559998877</no><msg><![CDATA[-MESAJ-METNİ-1]]></msg></mb>
+<mb><no>905559998866</no><msg><![CDATA[-MESAJ-METNİ-2]]></msg></mb>
+</messages>
+</sms>
+
+Cevap (Başarısız) 89
+Cevap (Başarılı) 00 77300600
+
+Giden Parametreler
+•Parametreler boş bırakılmamalıdır, aksi halde 89 yani WRONG_XML_FORMAT hatası ile
+karşılaşılır.
+
+Parametreler :
+Açıklama
+Web kullanıcı adınız
+Api Hesabı bölümünde görüntülenen API SECRET ifadesi
+Onaylanmış mesaj başlıklarınızdan biri. Bu ifade büyük-küçük harf
+duyarlıdır. Max 11 karakterdir.
+validity
+Integer Mesajın geçerlilik süresi. (dakika cinsinden)Min 1, Max 2880 olabilir.
+2880 değeri 48*60 şeklindehesaplanır, yani 48 saate tekabül eder. Hatalı
+değerler sistem tarafından 2880 olarak değiştirilir ve öyle kullanılır.
+sendDateTime String Opsiyonel bir parametredir. Mesajın gönderileceği ileri bir tarihi işaret
+eder. Örneğin : “2015.7.23.9.30.0” ifadesi 2015 yılı, 7. ay, 23. gün, saat
+09:30:00manasına gelir. Tüm parametreler “.” (nokta)karakteri ile
+birbirinde ayrılmıştır.Zamanı geldiğinde sistem mesajı otomatik olarak
+yollar. Eğer geçmiş zamanı gösteren bir tarih bilgisi yollanırsa sistem
+SMS'i bekletmeden gönderir.Mesajın gönderim tarihi gelmeden önce
+yönetim panelinden mesaja ulaşıp müdahale etme imkanınız
+bulunmaktadır.
+no
+String Telefon numarası. Tüm numaralar Türkiye içi numaralardır. Numaralar
+10, 11 veya 12 karakter olabilir. Sistem bu numaraları 12 karaktere
+tamamlar ve öyle kullanır. İletim raporlarında da 12 karakter olarak
+raporlar. Bu belirtilenler dışında, daha farklı uzunluklara sahip olan
+numaralara mesaj gönderilmez, iletim raporlarında numara aynen
+belirtilir, iletim durumu ise başarısız olarak yansıtılır.
+msg
+String Gönderilecek olan mesaj metnidir. Metin içinde XML'e has özel
+karakterler bulunabilir. Böyle durumlarda hataların önüne geçmek
+amacıyla mesaj metninin soluna “<![CDATA[“ ve sağına “]]>”
+ifadelerinin eklenmesini tavsiye etmekteyiz. Karakter seti ve boy
+hesaplamaları ile ilgili detaylar için dokümanın sonlarında özel bir başlık
+yer almaktadır, detaylar için ilgili bölüme bakınız.
+Parametre
+username
+password
+header
+
+Tip
+String
+String
+String
+
+Dönüş Değerleri
+
+•Tüm dönüş kodları 2 basamaklı sayılardan oluşur.
+•Başarısız dönüş olduğunda sadece kodun kendisini geri döner.
+•Başarılı dönüşlerde koddan sonra bir boşluk karakteri bırakılır ve daha sonra bu gönderim ile
+ilgili iletim raporu sorgusunda kullanılacak olan özgün (unique) bir sayısal ifade döner. ( Kısaca
+buna dlrId diyoruz ) Gelecekte iletim raporu sorgulanacaksa bu ifadeyi kaydetmeniz ve sorgu
+sırasında parametre olarak göndermeniz gerekmektedir.
+
+Başarısız Dönüşler 1 :
+•Normal şartlarda asla karşılaşmamanız gereken bir hata kodudur. Hatanın kaynağı sunucu veya
+istemci taraflı olabilir. Yoğun olarak bu hatayı alırsanız lütfen iletişime geçiniz.
+Kod
+99
+
+İsim
+UNKNOWN_ERROR
+
+Açıklama
+Henüz dokümante edilmemiş bir hatayı belirtir.
+
+Başarısız Dönüşler 2 :
+•Aşağıdaki hata kodları isteği yapan tarafın düzeltmesi gereken durumları belirtir.
+Kod
+97
+91
+89
+87
+85
+
+İsim
+USE_POST_METHOD
+MISSING_POST_DATA
+WRONG_XML_FORMAT
+WRONG_USER_OR_PASSWORD
+WRONG_SMS_HEADER
+
+84
+
+WRONG_SEND_DATE_TIME
+
+83
+
+EMPTY_SMS
+
+81
+
+NOT_ENOUGH_CREDITS
+
+77
+
+DUPLICATED_MESSAGE
+
+Açıklama
+İsteği HTTP POSTile yollayınız
+POST verisi okunamadı veyayok
+POST verisi XML olarak parse edilemedi
+Kullanıcı adı veya şifre hatalı
+Belirttiğiniz mesaj başlığı bulunamadı veya
+onaylanmamış
+İleri tarihli gönderim zamanı hatalı bir formata
+sahip veya 1 yıldan daha ileri bir zamanı
+gösteriyor
+Mesaj metni ve numaralar incelendikten sonra
+sistem yollanacak bir SMS oluşturmaya yetecek
+en az 1 numara ve en az 1 karakterden oluşan
+mesaj metnine sahip olamadı. Gönderim
+yapılacak verilerin yeterli olmadığına karar
+verdi.
+Gönderilecek olan mesaj için yeterli krediye
+sahip değilsiniz.
+Son 2 dakika içinde aynı SMS'in gönderilmesi
+durumu (Sistem bunu engeller)
+
+Başarılı Dönüşler :
+Kod
+00
+
+İsim
+SUCCESS
+
+Açıklama
+İşlem başarı ile sonlandı.
+
+SMS Yollama (HTTP GET)
+•Zorunlu olmadıkça bu yöntemi tercih etmeyiniz.
+•Bu yöntem en temel özellikleri ile HTTP GET metoduyla SMS gönderebilmek için kullanılır.
+Tek numaraya tek SMS gönderebilirsiniz.
+•Bu özellik bazı özel cihazlardan SMS gönderebilmesi amacıyla sonradan eklenmiştir. Bu
+yöntem SMS göndermeyle ilgili tüm özellikleri içermez. Dolayısıyla ihtiyacınızı karşılamıyorsa
+bir üst başlıktaki orjinal yöntemi kullanınız.
+•Son 2 dakika içinde aynı SMS'i göndermeye çalışırsanız hata alırsınız. (Sistem bunu engeller)
+•Boş SMS gönderilemez.
+
+Örnek :
+İstek Adresi
+İstek
+Parametreleri
+
+http://sms.bizimsms.mobi:8080/api/smsget/v1
+username
+password
+header
+gsm
+message
+
+İstek Örneği
+http://sms.bizimsms.mobi:8080/api/smsget/v1?username=test&password=test&he
+ader=BAŞLIK&gsm=905559998877&message=MESAJ%20TEST
+
+Cevap (Başarısız) 93
+Cevap (Başarılı) 00 77300600
+
+Giden Parametreler
+•Parametreler boş bırakılmamalıdır, aksi halde 83 yani MISSING_GET_PARAMS hatası ile
+karşılaşılır.
+
+Parametreler :
+Parametre
+username
+password
+header
+
+Tip
+String
+String
+String
+
+no
+
+String
+
+msg
+
+String
+
+Açıklama
+Web kullanıcı adınız
+Api Hesabı bölümünde görüntülenen API SECRET ifadesi
+Onaylanmış mesaj başlıklarınızdan biri. Bu ifade büyük-küçük harf
+duyarlıdır. Max 11 karakterdir.
+Telefon numarası. Tüm numaralar Türkiye içi numaralardır. Numaralar
+10, 11 veya 12 karakter olabilir. Sistem bu numaraları 12 karaktere
+tamamlar ve öyle kullanır. İletim raporlarında da 12 karakter olarak
+raporlar. Bu belirtilenler dışında, daha farklı uzunluklara sahip olan
+numaralara mesaj gönderilmez, iletim raporlarında numara aynen
+belirtilir, iletim durumu ise başarısız olarak yansıtılır.
+Gönderilecek olan mesaj metnidir. GET yöntemiyle gönderilen mesajın
+içindeki bazı karakterler dönüştürülmek zorundadır. (Bu teknik detay
+HTTP GET yönteminin çalışma prensibi ile ilgilidir) Örneğin ''(yani
+boşluk) karakteri'%20'şeklinde ifade edilmelidir. Mesaj metnini
+dönüştürmek için google'da “URL Encoder” ifadesini aratarak ilgili
+dönüşümü yapabileceğiniz web sayfalarına ulaşabilirsiniz. Karakter seti
+ve boy hesaplamaları ile ilgili detaylar için dokümanın sonlarında özel bir
+başlık yer almaktadır, detaylar için ilgili bölüme bakınız.
+
+Dönüş Değerleri
+•Tüm dönüş kodları 2 basamaklı sayılardan oluşur.
+•Başarısız dönüş olduğunda sadece kodun kendisini geri döner.
+•Başarılı dönüşlerde koddan sonra bir boşluk karakteri bırakılır ve daha sonra bu gönderim ile
+ilgili iletim raporu sorgusunda kullanılacak olan özgün (unique) bir sayısal ifade döner. ( Kısaca
+buna dlrId diyoruz ) Gelecekte iletim raporu sorgulanacaksa bu ifadeyi kaydetmeniz ve sorgu
+sırasında parametre olarak göndermeniz gerekmektedir.
+
+Başarısız Dönüşler 1 :
+•Normal şartlarda asla karşılaşmamanız gereken bir hata kodudur. Hatanın kaynağı sunucu veya
+istemci taraflı olabilir. Yoğun olarak bu hatayı alırsanız lütfen iletişime geçiniz.
+Kod
+99
+
+İsim
+UNKNOWN_ERROR
+
+Açıklama
+Henüz dokümante edilmemiş bir hatayı belirtir.
+
+Başarısız Dönüşler 2 :
+•Aşağıdaki hata kodları isteği yapan tarafın düzeltmesi gereken durumları belirtir.
+Kod
+95
+93
+87
+85
+
+İsim
+USE_GET_METHOD
+MISSING_GET_PARAMS
+WRONG_USER_OR_PASSWORD
+WRONG_SMS_HEADER
+
+83
+
+EMPTY_SMS
+
+81
+
+NOT_ENOUGH_CREDITS
+
+77
+
+DUPLICATED_MESSAGE
+
+Açıklama
+İsteği HTTP GETile yollayınız
+GET parametrelerinde eksik var
+Kullanıcı adı veya şifre hatalı
+Belirttiğiniz mesaj başlığı bulunamadı veya
+onaylanmamış
+Mesaj metni ve numaralar incelendikten sonra
+sistem yollanacak bir SMS oluşturmaya yetecek
+en az 1 numara ve en az 1 karakterden oluşan
+mesaj metnine sahip olamadı. Gönderim
+yapılacak verilerin yeterli olmadığına karar
+verdi.
+Gönderilecek olan mesaj için yeterli krediye
+sahip değilsiniz.
+Son 2 dakika içinde aynı SMS'in gönderilmesi
+durumu (Sistem bunu engeller)
+
+Başarılı Dönüşler :
+Kod
+00
+
+İsim
+SUCCESS
+
+Açıklama
+İşlem başarı ile sonlandı.
+
+İletim Raporu (DLR)
+Sorgulama
+•SMS gönderimi yapıldıktan hemen sonra DLR isteği yaparsanız hata alabilirsiniz. Sistem mesajı
+göndermekle ilgileniyor olabilir ve DLR raporunu oluşturacak olan veriler henüz hazır
+olmayabilir.
+•DLR isteğini, ilk olarak SMS gönderiminden sonraki 90. veya 180. saniyede yapmanızı tavsiye
+ederiz. (Sistem ilk olarak 60. saniyede DLR içeriğini güncelleyen bir görevi başlatır. 48 saat
+içinde başlarda daha sık olmak üzere sonlara doğru daha da seyrekleşen bir kural üstünden DLR
+içeriği güncellenmektedir)
+•Eğer belirttiğiniz tüm numaralara SMS ulaşmış ise DLR raporu 48 saat dolmadan önce
+tamamlanabilir, yani son halini alabilir. Bunu başarılı dönüş koduna bakarak anlayabilirsiniz.
+•Eğer gönderim listenizdeki numaralardan en az biri 48 saat boyunca kapalı kalmış ise DLR
+raporunun son halini alması toplamda 48 saat + 10 dakika gibi bir zaman alır. Bu 48 saat
+boyunca, DLR raporunun henüz son halini almadığı bilgisini başarılı dönüş koduna bakarak
+anlayabilirsiniz.
+
+Örnek :
+İstek Adresi
+Cevap (Başarısız)
+Cevap (Başarılı)
+
+http://sms.bizimsms.mobi:8080/api/dlr/v1?username=test&password=test&id
+=123456
+93
+25|905559998877 0|905559998866 5|905559998855 6|905559998844 9
+
+Giden Parametreler
+Parametreler :
+Parametre
+username
+password
+id
+
+Tip
+String
+String
+Integer
+
+Açıklama
+Web kullanıcı adınız
+Api Hesabı bölümünde görüntülenen API SECRET ifadesi
+SMS gönderimi sonrası sistem tarafından oluşturulan ve istemciye
+gönderilen dlrId isimli özgün (unique) sayısal ifade.
+
+Dönüş Değerleri
+•Tüm dönüş kodları 2 basamaklı sayılardan oluşur.
+•Başarısız dönüş veya bilgilendirme dönüşü olduğunda sadece kodun kendisini geri döner.
+•Başarılı dönüşlerde, dönüş kodu sonrasında birbirinden “|” karakteri ile ayrılmış bloklar döner.
+Bu bloklar GSM no ve SMS iletim durumu bilgisini içerir. (Detaylar sayfa sonunda)
+
+Başarısız Dönüşler 1 :
+•Normal şartlarda asla karşılaşmamanız gereken bir hata kodudur. Hatanın kaynağı sunucu veya
+istemci taraflı olabilir. Yoğun olarak bu hatayı alırsanız lütfen iletişime geçiniz.
+Kod
+99
+
+İsim
+UNKNOWN_ERROR
+
+Açıklama
+Henüz dokümante edilmemiş bir hatayı belirtir.
+
+Başarısız Dönüşler 2 :
+•Aşağıdaki hata kodları isteği yapan tarafın düzeltmesi gereken durumları belirtir.
+Kod
+95
+93
+87
+79
+
+İsim
+USE_GET_METHOD
+MISSING_GET_PARAMS
+WRONG_USER_OR_PASSWORD
+DLR_ID_NOT_FOUND
+
+Açıklama
+İsteği HTTP GET ile yollayınız
+GET parametrelerinde eksik var
+Kullanıcı adı veya şifre hatalı
+Böyle bir dlrId değeri bulunamadı, yok
+
+Bilgilendirme Dönüşleri :
+Kod
+29
+27
+
+İsim
+MESSAGE_WAITING_TO_SEND
+MESSAGE_SEND_ERROR
+
+Açıklama
+Mesaj henüz yollanmamış, yollanmak üzere
+Mesaj yollanırken beklenmeyen bir hata
+oluşmuş
+
+Başarılı Dönüşler :
+Kod
+25
+23
+
+İsim
+Açıklama
+DLR_OPERATION_STARTED
+DLR raporu güncellenmeye başlamış
+DLR_OPERATION_COMPLETED DLR raporu artık güncellenmeyecek, tüm
+bilgiler toplanmış, rapor son halini almış
+
+SMS İletim Durum Kodları :
+Kod İsim
+Açıklama
+0
+WAITING SMS gönderim için bekliyor
+5
+PENDING SMS gönderilmiş, bilgi bekleniyor
+
+Kod İsim
+Açıklama
+6
+FAIL
+SMS Ulaşmadı
+9
+SUCCESS SMS İletildi
+
+SMS Karakter Seti ve Boy Hesaplamaları
+•Bu bölümde bir SMS metninin kaç SMS olarak ücretlendirileceği, yani kaç boy olacağı ile ilgili
+hesaplamalara değinilecektir. Ayrıca gönderimine izin verilen karakterler hakkında da bilgi sahibi
+olacaksınız.
+•Sistemimiz max 6 boy SMS kabul etmektedir. Mesaj içeriği 6 boydan fazla ise otomatik olarak
+sondaki karakterlerden gereken kadarı silinerek mesaj 6 boy'a indirgenir.
+•Sistemimiz yollanacak olan her mesaj için boy hesabını otomatik olarak yapar, hesaplanan bu
+değerleri web arayüzünden görebilirsiniz.
+
+Karakter Sınıfları :
+•İlk olarak kullanılan karakterlere bakılarak mesajın Türkçe mi yoksa İngilizce mi olduğu
+belirlenir. En az 1 adet Türkçe karakter kullanılmış ise mesaj Türkçe olur, aksi halde İngilizce
+olacaktır.
+•Eğer mesajı ingilizce mesaj olarak göndermek istiyorsanız aşağıdaki tabloda Türkçe olarak
+belirtilen karakterleri mesaj içeriğinden kaldırmanız veya İngilizce karakter sınıfından benzer
+karakterler ile yer değiştirdikten sonra mesajı yollamanız gerekmektedir.
+•Mesaj içeriğindeki Türkçe karakterlerin bazıları 1, bazıları ise 2 karakter yer kaplar. İlgili
+bilgiler aşağıdaki tabloda belirtilmiştir.
+•Bu aşamada mesajın İngilizce veya Türkçe mesaj olması ile birlikte mesajın kaç karakter olduğu
+hesaplanır. Dikkat ediniz, örneğin SMS içeriğindeki 'ğ' 2 karakter olarak hesaplanır.
+Karakter Sınıfları
+İngilizce (Tamamı 1-Karakter)
+Türkçe 1-Karakter olanlar
+Türkçe 2-Karakter olanlar
+
+Liste
+'i', 'I', 'a', 'A', 'b', 'B'... 'x', 'X', 'w', 'W'... '0', '1'... '$', '!', '+'...vs
+'ü', 'Ü', 'ö', 'Ö', 'Ç'
+'ğ', 'Ğ', 'ş', 'Ş', 'ı', 'İ', 'ç'
+
+Boyların Hesaplanması :
+•Mesajın dili ve karakter sayısı dikkate alınak boy aşağıdaki tablo yardımıyla belirlenebilir.
+Dikkat ederseniz İngilizce mesajlar Türkçe mesajlara göre birkaç karakter daha fazla bilgi
+taşıyabilmektedir.
+•Tablodaki değerler aralık belirtir. Başlangıç ve bitiş değerleri de o aralığa dahildir.
+İngilizce
+Türkçe
+
+1 boy
+[1, 160]
+[1, 155]
+
+2 boy
+[161, 306]
+[156, 292]
+
+3 boy
+[307, 459]
+[293, 439]
+
+4 boy
+[460, 612]
+[440, 587]
+
+5 boy
+[613, 765]
+[588, 735]
+
+6 boy
+[766, 917]
+[736, 882]
+
+Mesaj Yollanmadan Önce Yaptığımız İçerik Dönüşümleri :
+•İlk olarak şunlar yer değiştirir : | => I, ^ => ', € => E, { => (, [ => (, } => ), ] => ), \ => /
+
+•Sonrasında, mesaj içeriğinde aşağıdaki karakterler dışında bir karaktere rastlanırsa ilgili karakter
+' ' (yani boşluk karakteri) olarak kabul edilir ve mesaj öyle yollanır :
+ABCDEFGĞHIİJKLMNOPRSŞTUVYZÖÜQWXÇ
+abcçdefgğhıijklmnoprsştuvyzöüqwx@*:!$_#()+-;,<>=./'?"%&0123456789
+
+Örnek Kaynak Kodlar
+•Fonksiyon : Kredi Sorgulama
+•Programlama Dili : Java
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+publicvoidkredi(){
+HttpURLConnection uc = null;
+try{
+URL url = newURL(" http://sms.bizimsms.mobi:8080/api/credit/v1?username=test&password=test");
+uc = (HttpURLConnection)url.openConnection();
+uc.setRequestMethod("GET");
+uc.setReadTimeout(5*1000);
+uc.setConnectTimeout(5*1000);
+uc.connect();
+intresCode = uc.getResponseCode();
+System.out.println("HTTP "+resCode);
+intreaded;
+char[] buffer = newchar[4*1024];
+StringBuffer sb = newStringBuffer();
+BufferedReader in = newBufferedReader(newInputStreamReader(uc.getInputStream(), "UTF-8"));
+while( (readed = in.read(buffer)) >0 ){
+sb.append(buffer, 0, readed);
+}
+in.close();
+String ret = sb.toString();
+System.out.println("["+ret+"]");
+}catch(Exception ex){
+ex.printStackTrace();
+}finally{
+try{ uc.disconnect(); }catch(Exception ex){} uc = null;
+}
+}
+
+•Fonksiyon : SMS Gönderme
+•Programlama Dili : Java
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+publicvoidsend(){
+HttpURLConnection uc = null;
+try{
+URL url = newURL(" http://sms.bizimsms.mobi:8080/api/smspost/v1");
+uc = (HttpURLConnection)url.openConnection();
+uc.setRequestMethod("POST");
+uc.setDoInput(true);
+uc.setDoOutput(true);
+uc.setRequestProperty("Content-Type", "text/xml; charset=UTF-8");
+uc.setRequestProperty("Content-Encoding", "UTF-8");
+uc.setReadTimeout(5*1000);
+uc.setConnectTimeout(5*1000);
+uc.connect();
+OutputStreamWriter out = newOutputStreamWriter(uc.getOutputStream(), "UTF-8");
+out.write(""
++ "<sms>"
++ "<username>test</username>"
++ "<password>test</password>"
++ "<header>BAŞLIK</header>"
++ "<validity>2880</validity>"
++ "<message>"
++ "<gsm>"
++ "<no>905559998877</no>"
++ "</gsm>"
++ "<msg><![CDATA[-test-message-]]></msg>"
++ "</message>"
++ "</sms>");
+out.flush();
+out.close();
+intresCode = uc.getResponseCode();
+System.out.println("HTTP "+resCode);
+intreaded;
+char[] buffer = newchar[4*1024];
+StringBuffer sb = newStringBuffer();
+BufferedReader in = newBufferedReader(newInputStreamReader(uc.getInputStream(), "UTF-8"));
+while( (readed = in.read(buffer)) >0 ){
+sb.append(buffer, 0, readed);
+}
+in.close();
+String ret = sb.toString();
+System.out.println("["+ret+"]");
+}catch(Exception ex){
+ex.printStackTrace();
+}finally{
+try{ uc.disconnect(); }catch(Exception ex){} uc = null;
+}
+}
+
+•Fonksiyon : SMS Gönderme (HTTP GET)
+•Programlama Dili : Java
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+publicvoidkredi(){
+HttpURLConnection uc = null;
+try{
+URL url = newURL("
+http://sms.bizimsms.mobi:8080/api/smsget/v1?username=test&password=test&header=BAŞLIK&gsm=905559998
+877&message=MESAJ%20TEST ");
+uc = (HttpURLConnection)url.openConnection();
+uc.setRequestMethod("GET");
+uc.setReadTimeout(5*1000);
+uc.setConnectTimeout(5*1000);
+uc.connect();
+intresCode = uc.getResponseCode();
+System.out.println("HTTP "+resCode);
+intreaded;
+char[] buffer = newchar[4*1024];
+StringBuffer sb = newStringBuffer();
+BufferedReader in = newBufferedReader(newInputStreamReader(uc.getInputStream(), "UTF-8"));
+while( (readed = in.read(buffer)) >0 ){
+sb.append(buffer, 0, readed);
+}
+in.close();
+String ret = sb.toString();
+System.out.println("["+ret+"]");
+}catch(Exception ex){
+ex.printStackTrace();
+}finally{
+try{ uc.disconnect(); }catch(Exception ex){} uc = null;
+}
+}
+
+•Fonksiyon : Kredi Sorgulama
+•Programlama Dili : PHP (curl eklentisi ile birlikte)
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+<?php
+$postUrl=" http://sms.bizimsms.mobi:8080/api/credit/v1?username=test&password=test";
+$ch=curl_init();
+curl_setopt($ch,CURLOPT_URL,$postUrl);
+curl_setopt($ch,CURLOPT_TIMEOUT,5);
+curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+$response=curl_exec($ch);
+
+curl_close($ch);
+echo'['.$response.']'."\n";
+?>
+
+•Fonksiyon : SMS Gönderme
+•Programlama Dili : PHP (curl eklentisi ile birlikte)
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+<?php
+$postUrl=" http://sms.bizimsms.mobi:8080/api/smspost/v1";
+$postData="".
+"<sms>".
+"<username>test</username>".
+"<password>test</password>".
+"<header>BAŞLIK</header>".
+"<validity>2880</validity>".
+"<message>".
+"<gsm>".
+"<no>905559998877</no>".
+"</gsm>".
+"<msg><![CDATA[-test-message-]]></msg>".
+"</message>".
+"</sms>";
+$ch=curl_init();
+curl_setopt($ch,CURLOPT_URL,$postUrl);
+curl_setopt($ch,CURLOPT_POSTFIELDS,$postData);
+curl_setopt($ch,CURLOPT_POST,1);
+curl_setopt($ch,CURLOPT_TIMEOUT,5);
+curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+curl_setopt($ch,CURLOPT_HTTPHEADER,Array("Content-Type: text/xml; charset=UTF-8"));
+$response=curl_exec($ch);
+curl_close($ch);
+echo'['.$response.']'."\n";
+?>
+
+•Fonksiyon : SMS Gönderme (HTTP GET)
+•Programlama Dili : PHP (curl eklentisi ile birlikte)
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+<?php
+$postUrl="
+http://sms.bizimsms.mobi:8080/api/smsget/v1?username=test&password=test&header=BAŞLIK&gsm=905559998
+877&message=MESAJ%20TEST";
+$ch=curl_init();
+curl_setopt($ch,CURLOPT_URL,$postUrl);
+curl_setopt($ch,CURLOPT_TIMEOUT,5);
+curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+$response=curl_exec($ch);
+
+curl_close($ch);
+echo'['.$response.']'."\n";
+?>
+
+•Fonksiyon : Kredi Sorgulama
+•Programlama Dili : ASP.NET (C#)
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+usingSystem;
+usingSystem.IO;
+usingSystem.Net;
+usingSystem.Text;
+usingSystem.Web;
+stringsUserID="UserName";
+stringsPwd="Password";
+stringsURL=" http://sms.bizimsms.mobi:8080/api/credit/v1?username="+sUserID+"&password="+sPwd;
+stringsResponse=GetResponse(sURL);
+Response.Write(sResponse);
+publicstaticstringGetResponse(stringsURL)
+{
+HttpWebRequestrequest=(HttpWebRequest)WebRequest.Create(sURL);
+request.MaximumAutomaticRedirections=4;
+request.Credentials=CredentialCache.DefaultCredentials;
+try
+{
+HttpWebResponseresponse=(HttpWebResponse)request.GetResponse();
+StreamreceiveStream=response.GetResponseStream();
+StreamReaderreadStream=newStreamReader(receiveStream,Encoding.UTF8);
+stringsResponse=readStream.ReadToEnd();
+response.Close();
+readStream.Close();
+returnsResponse;
+}catch{
+return"";
+}
+}
+
+•Fonksiyon : SMS Gönderme
+•Programlama Dili : ASP.NET (C#)
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+usingSystem.Net;
+usingSystem.IO;
+usingSystem.Web;
+usingSystem.Xml;
+stringsURL=" http://sms.bizimsms.mobi:8080/api/smspost/v1";
+stringsResponse=GetResponse(sURL,createXml());
+Response.Write(sResponse);
+publicstaticstringGetResponse(stringsURL,stringsXml)
+{
+try
+{
+HttpWebRequestrequest=WebRequest.Create(newUri(sURL))asHttpWebRequest;
+request.Method="POST";
+request.ContentType="application/x-www-form-urlencoded";
+request.Timeout=5000;
+
+byte[]data=UTF8Encoding.UTF8.GetBytes(sXml);
+request.ContentLength=data.Length;
+using(StreampostStream=request.GetRequestStream())
+{
+postStream.Write(data,0,data.Length);
+}
+using(HttpWebResponseresponse=request.GetResponse()asHttpWebResponse)
+{
+StreamReaderreader=newStreamReader(response.GetResponseStream());
+returnreader.ReadToEnd();
+}
+}
+catch(Exceptionex)
+{
+returnex.Message;
+}
+}
+publicstaticstringcreateXml()
+{
+StringBuildersb=newStringBuilder();
+XmlWriterSettingssettings=newXmlWriterSettings();
+settings.Encoding=Encoding.Unicode;
+settings.Indent=true;
+settings.IndentChars=("
+
+");
+
+using(XmlWriterwriter=XmlWriter.Create(sb,settings))
+{
+writer.WriteStartElement("sms");
+writer.WriteElementString("username","test");
+writer.WriteElementString("password","test");
+writer.WriteElementString("header","baslik");
+writer.WriteElementString("validity","2880");
+writer.WriteStartElement("message");
+writer.WriteStartElement("gsm");
+writer.WriteElementString("no","905559998877");
+writer.WriteEndElement();//gsm
+writer.WriteStartElement("msg");
+writer.WriteCData("-test-message-");
+writer.WriteEndElement();//msg
+writer.WriteEndElement();//message
+writer.WriteEndElement();// sms
+writer.Flush();
+}
+returnsb.ToString();
+}
+
+•Fonksiyon : SMS Gönderme (HTTP GET)
+•Programlama Dili : ASP.NET (C#)
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+usingSystem;
+usingSystem.IO;
+usingSystem.Net;
+usingSystem.Text;
+usingSystem.Web;
+string sURL= "
+http://sms.bizimsms.mobi:8080/api/smsget/v1?username=test&password=test&header=BAŞLIK&gsm=905559998
+877&message=MESAJ%20TEST"
+stringsResponse=GetResponse(sURL);
+Response.Write(sResponse);
+publicstaticstringGetResponse(stringsURL)
+{
+HttpWebRequestrequest=(HttpWebRequest)WebRequest.Create(sURL);
+
+request.MaximumAutomaticRedirections=4;
+request.Credentials=CredentialCache.DefaultCredentials;
+try
+{
+HttpWebResponseresponse=(HttpWebResponse)request.GetResponse();
+StreamreceiveStream=response.GetResponseStream();
+StreamReaderreadStream=newStreamReader(receiveStream,Encoding.UTF8);
+stringsResponse=readStream.ReadToEnd();
+response.Close();
+readStream.Close();
+returnsResponse;
+}catch{
+return"";
+}
+}
+
+•Fonksiyon : SMS Gönderme (HTTP POST)
+•Programlama Dili : C# (Windows Forms)
+•Lütfen kaynak kodu kullandığınız editörde yeniden formatlayınız. Kodlarda gereksiz
+gördüğünüz yerleri daha sonra silebilirsiniz.
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+namespace smstest
+{
+public partial class Form1 : Form
+{
+public Form1()
+{
+InitializeComponent();
+}
+private void button1_Click(object sender, EventArgs e)
+{
+string xml = "<sms><username>-ADD-YOUR-USERNAME-</username>"+
+"<password>-ADD-YOUR-PASSWORD-</password>"+
+"<header>-ADD-YOUR-HEADER-</header>"+
+"<validity>2880</validity>"+
+"<message><gsm>"+
+"<no>905559998877</no>"+
+"</gsm>"+
+"<msg><![CDATA[bu bir deneme mesajıdır]]></msg>"+
+"</message></sms>";
+string url = " http://sms.bizimsms.mobi:8080/api/smspost/v1";
+HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(xml);
+req.Method = "POST";
+req.ContentType = "text/xml;charset=utf-8";
+req.ContentLength = requestBytes.Length;
+Stream requestStream = req.GetRequestStream();
+requestStream.Write(requestBytes, 0, requestBytes.Length);
+requestStream.Close();
+HttpWebResponse res = (HttpWebResponse)req.GetResponse();
+StreamReader sr = new StreamReader(res.GetResponseStream(),
+System.Text.Encoding.Default);
+string backstr = sr.ReadToEnd();
+
+label1.Text = backstr;
+sr.Close();
+res.Close();
+}
+}
+}
+
+

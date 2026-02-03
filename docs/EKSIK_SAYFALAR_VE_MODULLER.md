@@ -71,3 +71,13 @@ Eski sistemde dağınık halde bulunan (İşlem + Anamnez detayları) ameliyat s
 *   **Yapı:** Yeni `cln_surgeries` tablosu üzerinde kurgulanacak. Eski detaylı veriler (Burun kavis ölçüsü vb.) ilk etapta kapsam dışı bırakılıp, operasyonel takip (Tarih/Yer/Kişi) önceliklendirilecek.
 
 
+
+ 
+ ## 7. SMS Entegrasyon ve Ayar Modülü [TAMAMLANDI]
+ Klinik bazlı SMS gönderim altyapısı ve platform yönetimi.
+ *   **Sayfa Adı:** `Sağlayıcı Yönetimi` (Platform) ve `SMS Ayarları` (Klinik)
+ *   **İşlev:** 
+     *   Platform yöneticisinin low-code (Builder) ile yeni SMS sağlayıcıları tanımlaması.
+     *   Kliniklerin seçtikleri sağlayıcıya göre şifreli konfigürasyonlarını girmesi.
+     *   Test SMS gönderimi ve konfigürasyon doğrulaması.
+ *   **İlişkili Tablolar:** `sys_sms_providers`, `cln_sms_settings`.

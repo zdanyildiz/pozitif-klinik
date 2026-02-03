@@ -87,4 +87,14 @@ class PlatformWebController
             'page' => 'users'
         ]);
     }
+    /**
+     * SMS Sağlayıcı Yönetimi Sayfası
+     */
+    #[Route('GET', '/platform/sms-providers')]
+    public function smsProvidersPage(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'platform_sms_providers.twig', [
+            'page' => 'sms-providers'
+        ]);
+    }
 }

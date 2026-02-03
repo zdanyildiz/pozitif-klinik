@@ -59,6 +59,54 @@ class PlatformSmsController extends BaseController
     }
 
     /**
+     * Tek bir sağlayıcının detaylarını getirir (Edit için)
+     */
+    #[Route('GET', '/providers/{id:[0-9]+}')]
+    public function getProvider(Request $request, Response $response, array $args): Response
+    {
+        $id = (int) $args['id'];
+        $provider = $this->service->getProvider($id);
+
+        if (!$provider) {
+            return $this->error($response, 'Sağlayıcı bulunamadı', 404);
+        }
+
+        // JSON decode
+        $provider['config_schema'] = !empty($provider['config_schema']) ? json_decode($provider['config_schema'], true) : [];
+        $provider['template_config'] = !empty($provider['template_config']) ? json_decode($provider['template_config'], true) : [];
+
+        return $this->success($response, ['provider' => $provider]);
+    }
+
+    /**
+     * Sağlayıcıyı günceller
+     */
+    #[Route('PUT', '/providers/{id:[0-9]+}')]
+    public function updateProvider(Request $request, Response $response, array $args): Response
+    {
+        $id = (int) $args['id'];
+        $data = $request->getParsedBody();
+
+        if (empty($data['name']) || empty($data['driver_key']) || empty($data['template_config']) || empty($data['config_schema'])) {
+            return $this->error($response, 'Eksik parametreler', 400);
+        }
+
+        try {
+            $this->service->updateProvider(
+                $id,
+                $data['name'],
+                $data['driver_key'],
+                $data['template_config'],
+                $data['config_schema']
+            );
+
+            return $this->success($response, null, 'SMS Sağlayıcısı güncellendi.');
+        } catch (\Exception $e) {
+            return $this->error($response, 'Güncelleme hatası: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Yeni bir SMS sağlayıcısı tanımlar (Provider Builder)
      */
     #[Route('POST', '/providers')]
@@ -120,6 +168,78 @@ class PlatformSmsController extends BaseController
     }
 
     /**
+     * Kliniğin mevcut (veya formdaki) ayarlarıyla test SMS gönderir.
+     */
+    #[Route('POST', '/test/{clinicId:[0-9]+}')]
+    public function testClinicSms(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $args['clinicId'];
+        $data = $request->getParsedBody();
+
+        if (empty($data['provider_id']) || empty($data['phone'])) {
+            return $this->error($response, 'Eksik parametreler (provider_id veya phone)', 400);
+        }
+
+        try {
+            // Sağlayıcıyı al (driver_key ve template_config için)
+            $provider = $this->repository->getProvider((int) $data['provider_id']);
+            if (!$provider) {
+                return $this->error($response, 'Sağlayıcı bulunamadı.', 404);
+            }
+
+            $templateConfig = !empty($provider['template_config']) ? json_decode($provider['template_config'], true) : [];
+
+            // Eğer formdan temiz (boş) bir config geldiyse, kayıtlı olanı kullanmayı deneyelim
+            $formConfig = $data['config'] ?? [];
+            if (empty($formConfig)) {
+                $savedSettings = $this->repository->getClinicSettings($clinicId);
+                if ($savedSettings && $savedSettings['provider_id'] == $data['provider_id']) {
+                    // Kayıtlı şifreli veriyi çöz
+                    $formConfig = $this->service->getClinicSettings($clinicId)['config'];
+                }
+            }
+
+            if (empty($formConfig)) {
+                return $this->error($response, 'Test için yapılandırma bilgisi bulunamadı. Lütfen formu doldurun veya ayarları kaydedin.', 400);
+            }
+
+            // Template + Kullanıcı değerlerini birleştir
+            $fullConfig = array_merge($templateConfig, $formConfig);
+
+            $success = $this->service->testConnection(
+                $provider['driver_key'],
+                $fullConfig,
+                $data['phone']
+            );
+
+            if ($success) {
+                return $this->success($response, null, 'Test SMS başarıyla gönderildi.');
+            }
+
+            return $this->error($response, 'Test SMS gönderilemedi.', 500);
+
+        } catch (\Exception $e) {
+            return $this->error($response, 'Test hatası: ' . $e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * Sağlayıcıyı siler
+     */
+    #[Route('DELETE', '/providers/{id:[0-9]+}')]
+    public function deleteProvider(Request $request, Response $response, array $args): Response
+    {
+        $id = (int) $args['id'];
+
+        try {
+            $this->service->deleteProvider($id);
+            return $this->success($response, null, 'SMS Sağlayıcısı silindi.');
+        } catch (\Exception $e) {
+            return $this->error($response, 'Silme işlemi başarısız: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Belirli bir klinik için SMS ayarlarını getir
      */
     #[Route('GET', '/settings/{clinicId:[0-9]+}')]
@@ -129,10 +249,8 @@ class PlatformSmsController extends BaseController
 
         $providers = $this->repository->getActiveProviders();
         foreach ($providers as &$p) {
-            $p['config_schema'] = json_decode($p['config_schema'], true);
-            if (!empty($p['template_config'])) {
-                $p['template_config'] = json_decode($p['template_config'], true);
-            }
+            $p['config_schema'] = !empty($p['config_schema']) ? json_decode($p['config_schema'], true) : [];
+            $p['template_config'] = !empty($p['template_config']) ? json_decode($p['template_config'], true) : [];
         }
 
         $currentSettings = $this->repository->getClinicSettings($clinicId);
