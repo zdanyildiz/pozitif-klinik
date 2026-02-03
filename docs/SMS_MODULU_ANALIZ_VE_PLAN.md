@@ -15,17 +15,19 @@ Eski MSSQL veritabanı (`ErhanOzel`) üzerinde yapılan incelemeler sonucunda:
   - HTTP metodları (GET/POST) ve parametreler dinamik değil.
 
 ## 2. Yeni Modül Mimarisi (Platform & Multi-Tenant)
-Kliniklerin kendi SMS sağlayıcılarını seçebileceği veya platform yöneticisinin tanımlayabileceği esnek bir yapı kurgulanacaktır.
+Kliniklerin kendi SMS sağlayıcılarını seçebileceği veya platform yöneticisinin tanımlayabileceği esnek bir yapı kurgulanmıştır.
 
 ### 2.1. Veritabanı Şeması (MySQL)
 
-**`sys_sms_providers` (Sistem Tanımlı Sağlayıcılar)**
-Bu tablo, desteklenen entegrasyon şablonlarını tutar.
+**`sys_sms_providers` (Sistem Tanımlı Sağlayıcılar & Şablonlar)**
+Bu tablo, desteklenen entegrasyon şablonlarını (Provider Builder verilerini) tutar.
 - `id` (int, PK)
-- `name` (varchar): Örn: "NetGSM", "İleti Merkezi", "Generic HTTP"
-- `driver_class` (varchar): Backend tarafındaki sınıf adı. Örn: `App\Core\Sms\Drivers\NetgsmDriver` veya `App\Core\Sms\Drivers\GenericHttpDriver`
-- `config_schema` (json): Bu sağlayıcı için gerekli alanların tanımı (Form oluşturmak için).
-  - Örn: `[{"key": "username", "label": "Kullanıcı Adı", "type": "text"}, {"key": "source_addr", "label": "Başlık", "type": "text"}]`
+- `name` (varchar): Örn: "NetGSM", "BizimSMS", "Generic HTTP"
+- `driver_key` (varchar): Backend tarafındaki driver anahtarı. Örn: `netgsm`, `generic_http`
+- `template_config` (json): **[YENİ]** Platform yöneticisi tarafından tanımlanan sabit ayarlar.
+  - Örn: `{"url": "...", "method": "POST", "body_template": "..."}`
+- `config_schema` (json): Kliniğin doldurması gereken alanların tanımı (Dinamik form oluşturmak için).
+  - Örn: `[{"key": "username", "label": "Kullanıcı Adı"}, {"key": "password", "label": "API Key"}]`
 - `is_active` (boolean)
 
 **`cln_sms_settings` (Klinik Bazlı Ayarlar)**
@@ -33,45 +35,36 @@ Her kliniğin kendi ayarlarını tuttuğu tablo.
 - `id` (int, PK)
 - `clinic_id` (int): Hangi klinik?
 - `provider_id` (int): `sys_sms_providers.id`
-- `config_data` (json): Şifrelenmiş (Encrypted) ayar verileri.
-  - Örn: `{"username": "doktor1", "password": "sifre123", "header": "POZITIF"}`
+- `config_data` (json): Şifrelenmiş (Encrypted) ayar verileri. Sadece kliniğin girdiği değerleri tutar.
+  - Örn: `{"username": "doktor1", "password": "..."}`
 - `is_active` (boolean)
 
 **`cln_sms_queue` (Gönderim Kuyruğu)**
-- `id`
-- `clinic_id`
-- `phone`
-- `message`
-- `status` (pending, sending, sent, failed)
-- `provider_response` (text)
-- `created_at`, `updated_at`
+- `id`, `clinic_id`, `phone`, `message`, `status`, `provider_response`, `created_at`, `updated_at`
 
-### 2.2. Backend (PHP - Slim)
+### 2.2. Provider Builder (Low-Code Entegrasyon)
+Platform yöneticisi, yeni bir SMS sağlayıcısını kod yazmadan ekleyebilir:
+1. **Şablon Tanımı**: URL, Method ve Payload (XML/JSON) şablonunu oluşturur. Şablonda kliniğe özel alanlar `{{variable}}` şeklinde belirtilir.
+2. **Otomatik Form**: Belirtilen değişkenler, klinik ayar ekranında otomatik olarak form alanına dönüşür.
+3. **Test Mekanizması**: Ayarlar kaydedilmeden önce gerçek bir numara ile test edilerek API uyumluluğu doğrulanır.
 
-Bu yapı interface tabanlı ve genişletilebilir olacaktır.
+### 2.3. Backend (PHP - Slim)
+- **SmsService**: Kliniğin değerleri ile sağlayıcının şablonunu (`template_config`) birleştirerek (merge) dinamik isteği hazırlar.
+- **Factory Logic**: `driver_key` değerine göre ilgili driver sınıfını (`NetgsmDriver`, `GenericHttpDriver`) yükler.
+- **Encryption**: Klinik bazlı hassas veriler (API Key/Password) veritabanında AES-256 ile şifrelenmiş tutulur.
 
-- **Interface:** `SmsDriverInterface` (`send($phone, $message, $config)`)
-- **Driverlar:**
-  - `GenericHttpDriver`: Kullanıcı arayüzünden girilen URL, Method ve JSON Payload şablonuna göre istek atar. En esnek yapıdır.
-  - `NetgsmDriver`, `TwilioDriver`: Özel API'leri olanlar için optimize edilmiş sınıflar.
-- **Service:** `SmsService`
-  - Kliniğin aktif ayarını çeker.
-  - İlgili driver'ı yükler (`Factory Pattern`).
-  - Gönderimi yapar ve loglar.
+### 2.4. API Endpointleri (Platform Yönetimi)
+- `GET /platform-admin/sms/providers`: Tanımlı sağlayıcıları listeler.
+- `POST /platform-admin/sms/validate-provider`: Yeni sağlayıcı tanımını test eder.
+- `POST /platform-admin/sms/providers`: Onaylanmış yeni bir sağlayıcı şablonu oluşturur.
+- `PUT /platform-admin/sms/settings/{clinicId}`: Kliniğin SMS ayarlarını günceller.
 
-### 2.3. Frontend (Platform Admin)
-
-- **SMS Ayarları Sayfası:**
-  - Sağlayıcı seçimi (Selectbox).
-  - Seçilen sağlayıcıya göre dinamik form alanlarının gelmesi (`config_schema`'dan okunarak).
-  - "Test SMS Gönder" butonu.
-
-## 3. Geliştirme Adımları
+## 3. Geliştirme Durumu
 
 1.  [x] Analiz ve Planlama
-2.  [x] Veritabanı Migrasyonlarının Hazırlanması (`sys_sms_providers`, `cln_sms_settings`)
-3.  [x] Seed Data (Yaygın sağlayıcılar ve Generic Driver için)
-4.  [x] Backend: `SmsDriverInterface` ve `GenericHttpDriver` implementasyonu.
-5.  [x] Backend: `SmsService` ve Controller endpointlerinin yazılması.
-6.  [x] Frontend: Platform tarafında ayar ekranının tasarlanması.
-7.  [x] Frontend: JS entegrasyonu (Dinamik Form Builder).
+2.  [x] Veritabanı Şeması ve Migrasyonlar (Provider Builder desteği eklendi)
+3.  [x] Backend: `SmsDriverInterface` ve `GenericHttpDriver` (Template merge desteği)
+4.  [x] Backend: `SmsService` (Test ve Provider Builder metodları)
+5.  [x] Backend: API Controller Endpointleri (Platform & Tenant)
+6.  [ ] Frontend: Platform tarafında "Provider Builder" arayüzü (Yakında)
+7.  [ ] Frontend: Klinik tarafında "Ayarlar" tabı entegrasyonu (Yakında)
