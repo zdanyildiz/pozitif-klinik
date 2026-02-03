@@ -184,4 +184,18 @@ class UserRepository
 
         return true;
     }
+
+    public function listUsers(int $clinicId, ?string $role = null): array
+    {
+        $sql = "SELECT id, name, role FROM sys_users WHERE clinic_id = ?";
+        $params = [$clinicId];
+
+        if ($role) {
+            $sql .= " AND role = ?";
+            $params[] = $role;
+        }
+
+        $sql .= " AND is_active = 1 ORDER BY name ASC";
+        return $this->db->fetchAll($sql, $params);
+    }
 }

@@ -59,3 +59,15 @@ Yönetimsel kararlar için verilerin görselleştirilmesi.
 
 ## Öncelikli Öneri
 Öncelikle **Muayene Ekranı** ve **Detaylı Hasta Timeline** sayfasının yapılması, aktarılan 82.000 tıbbi kaydın anlamlı hale gelmesini sağlayacaktır.
+
+## 6. Ameliyat Takip Modülü [TAMAMLANDI]
+Eski sistemde dağınık halde bulunan (İşlem + Anamnez detayları) ameliyat süreçlerinin merkezi takibi.
+
+*   **Sayfa Adı:** `Ameliyat Takip` (`/admin/surgeries`)
+*   **İşlev:**
+    *   Planlanan ve gerçekleşen ameliyatların listesi.
+    *   Hangi doktor, hangi hastanede, hangi hastayı ameliyat edecek?
+    *   Ameliyat statüleri (Planlandı, Tamamlandı, İptal).
+*   **Yapı:** Yeni `cln_surgeries` tablosu üzerinde kurgulanacak. Eski detaylı veriler (Burun kavis ölçüsü vb.) ilk etapta kapsam dışı bırakılıp, operasyonel takip (Tarih/Yer/Kişi) önceliklendirilecek.
+
+

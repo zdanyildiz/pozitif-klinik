@@ -1,0 +1,342 @@
+{% extends "layout.twig" %}
+
+{% block title %}Ameliyat Takibi | Pozitif Klinik{% endblock %}
+{% block page_title %}Ameliyat Takibi{% endblock %}
+
+{% block head %}
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        .surgery-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .status-badge {
+            padding: 0.35em 0.65em;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        .status-planned { background: #e0f2fe; color: #0284c7; }
+        .status-completed { background: #dcfce7; color: #16a34a; }
+        .status-cancelled { background: #fee2e2; color: #dc2626; }
+        .status-postponed { background: #fef3c7; color: #d97706; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Filters -->
+    <div class="filter-bar mb-4">
+        <form method="GET" action="/admin/surgeries" class="d-flex flex-wrap gap-3 align-items-end">
+            <div>
+                <label class="form-label small text-muted">Başlangıç</label>
+                <input type="date" name="start_date" class="form-control form-control-sm" value="{{ filters.start_date }}">
+            </div>
+            <div>
+                <label class="form-label small text-muted">Bitiş</label>
+                <input type="date" name="end_date" class="form-control form-control-sm" value="{{ filters.end_date }}">
+            </div>
+            <div style="min-width: 200px;">
+                <label class="form-label small text-muted">Doktor</label>
+                <select name="doctor_id" class="form-select form-select-sm">
+                    <option value="">Tümü</option>
+                    {% for doctor in doctors %}
+                        <option value="{{ doctor.id }}" {{ filters.doctor_id == doctor.id ? 'selected' : '' }}>{{ doctor.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="min-width: 150px;">
+                <label class="form-label small text-muted">Durum</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Tümü</option>
+                    <option value="planned" {{ filters.status == 'planned' ? 'selected' : '' }}>Planlandı</option>
+                    <option value="completed" {{ filters.status == 'completed' ? 'selected' : '' }}>Tamamlandı</option>
+                    <option value="cancelled" {{ filters.status == 'cancelled' ? 'selected' : '' }}>İptal</option>
+                    <option value="postponed" {{ filters.status == 'postponed' ? 'selected' : '' }}>Ertelendi</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-filter"></i> Filtrele
+            </button>
+            <a href="/admin/surgeries" class="btn btn-sm btn-outline-secondary"> Sıfırla </a>
+            
+            <div class="ms-auto">
+                <button type="button" class="btn btn-sm btn-save" onclick="openNewSurgeryModal()">
+                    <i class="bi bi-plus-lg"></i> Yeni Ameliyat Planla
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="surgery-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Tarih / Saat</th>
+                        <th>Hasta</th>
+                        <th>Doktor</th>
+                        <th>Hastane / Lokasyon</th>
+                        <th>Durum</th>
+                        <th>Açıklama</th>
+                        <th class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for surgery in surgeries %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ surgery.surgery_date|date('d.m.Y H:i') }}</div>
+                                <div class="small text-muted">{{ surgery.surgery_date|date('l') }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-primary">{{ surgery.patient_name }}</div>
+                            </td>
+                            <td>{{ surgery.doctor_name }}</td>
+                            <td>
+                                {% if surgery.hospital_name %}
+                                    <i class="bi bi-hospital me-1 text-muted"></i> {{ surgery.hospital_name }}
+                                {% else %}
+                                    <span class="text-muted fst-italic">Klinik İçi</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ surgery.status }}">
+                                    {% if surgery.status == 'planned' %}Planlandı
+                                    {% elseif surgery.status == 'completed' %}Tamamlandı
+                                    {% elseif surgery.status == 'cancelled' %}İptal
+                                    {% elseif surgery.status == 'postponed' %}Ertelendi
+                                    {% else %}{{ surgery.status }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 200px;" title="{{ surgery.description }}">
+                                    {{ surgery.description }}
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="editSurgery({{ surgery.id }})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSurgery({{ surgery.id }})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-3"></i>
+                                Kayıt bulunamadı.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="surgeryModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title" id="modalTitle">Yeni Ameliyat Planla</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-4">
+                    <form id="surgeryForm">
+                        <input type="hidden" name="id" id="surgeryId">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Hasta <span class="text-danger">*</span></label>
+                            <select id="patientSelect" name="patient_id" class="form-select" required></select>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Tarih <span class="text-danger">*</span></label>
+                                <input type="datetime-local" name="surgery_date" id="surgeryDate" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Doktor <span class="text-danger">*</span></label>
+                                <select name="doctor_id" id="doctorSelect" class="form-select" required>
+                                    <option value="">Seçiniz</option>
+                                    {% for doctor in doctors %}
+                                        <option value="{{ doctor.id }}">{{ doctor.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Hastane (Opsiyonel)</label>
+                            <input type="text" name="hospital_name" id="hospitalName" class="form-control" placeholder="Örn: Acıbadem Hastanesi">
+                            <div class="form-text">Boş bırakılırsa klinik içi varsayılır.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Durum</label>
+                            <select name="status" id="statusSelect" class="form-select">
+                                <option value="planned">Planlandı</option>
+                                <option value="completed">Tamamlandı</option>
+                                <option value="cancelled">İptal</option>
+                                <option value="postponed">Ertelendi</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Açıklama / Notlar</label>
+                            <textarea name="description" id="description" class="form-control" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-save" onclick="saveSurgery()">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        let patientSelect;
+        const modal = new bootstrap.Modal(document.getElementById('surgeryModal'));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Patient Select Başlat
+            patientSelect = new TomSelect("#patientSelect", {
+                valueField: 'id',
+                labelField: 'name',
+                searchField: ['name', 'tc_no', 'phone'],
+                load: function(query, callback) {
+                    if (query.length < 2) return callback();
+                    
+                    fetch('/api/patients/search?q=' + encodeURIComponent(query))
+                        .then(response => response.json())
+                        .then(json => {
+                            callback(json.data);
+                        }).catch(() => {
+                            callback();
+                        });
+                },
+                placeholder: 'Hasta Ara (İsim, TC, Tel)...',
+                render: {
+                    option: function(item, escape) {
+                        return `<div>
+                                    <span class="fw-bold">${escape(item.name)}</span>
+                                    <span class="small text-muted ms-2">${escape(item.phone || '-')}</span>
+                                </div>`;
+                    },
+                    item: function(item, escape) {
+                        return `<div>${escape(item.name)}</div>`;
+                    }
+                }
+            });
+        });
+
+        function openNewSurgeryModal() {
+            document.getElementById('surgeryForm').reset();
+            document.getElementById('surgeryId').value = '';
+            document.getElementById('modalTitle').textContent = 'Yeni Ameliyat Planla';
+            patientSelect.clear();
+            modal.show();
+        }
+
+        async function editSurgery(id) {
+            try {
+                const response = await fetch(`/api/surgeries/${id}`);
+                const res = await response.json();
+                
+                if (res.status) {
+                    const data = res.data;
+                    document.getElementById('surgeryId').value = data.id;
+                    document.getElementById('modalTitle').textContent = 'Ameliyat Düzenle';
+                    
+                    // Set fields
+                    document.getElementById('doctorSelect').value = data.doctor_id;
+                    document.getElementById('hospitalName').value = data.hospital_name || '';
+                    document.getElementById('statusSelect').value = data.status;
+                    document.getElementById('description').value = data.description || '';
+                    document.getElementById('surgeryDate').value = data.surgery_date.replace(' ', 'T').substring(0, 16); // Formata uygun hale getir
+
+                    // Patient TomSelect update
+                    patientSelect.addOption({
+                        id: data.patient_id,
+                        name: data.patient_name, // Bu repo'dan gelmeli
+                    });
+                    patientSelect.setValue(data.patient_id);
+
+                    modal.show();
+                } else {
+                    alert('Hata: ' + res.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Bir hata oluştu.');
+            }
+        }
+
+        async function saveSurgery() {
+            const form = document.getElementById('surgeryForm');
+            const data = Object.fromEntries(new FormData(form).entries());
+            const id = data.id;
+            
+            if (!data.patient_id || !data.surgery_date || !data.doctor_id) {
+                alert('Lütfen zorunlu alanları doldurun.');
+                return;
+            }
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/surgeries/${id}` : '/api/surgeries';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const res = await response.json();
+                
+                if (res.status) {
+                    location.reload();
+                } else {
+                    alert('Hata: ' + res.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Bir hata oluştu.');
+            }
+        }
+
+        async function deleteSurgery(id) {
+            if (!confirm('Bu ameliyat kaydını silmek istediğinize emin misiniz?')) return;
+
+            try {
+                const response = await fetch(`/api/surgeries/${id}`, {
+                    method: 'DELETE'
+                });
+                const res = await response.json();
+                 if (res.status) {
+                    location.reload();
+                } else {
+                    alert('Hata: ' + res.message);
+                }
+            } catch (err) {
+                 console.error(err);
+                alert('Bir hata oluştu.');
+            }
+        }
+    </script>
+{% endblock %}
