@@ -54,6 +54,14 @@ class SmsService
             throw new RuntimeException("Invalid JSON in SMS configuration.");
         }
 
+        // Merge with Template Config if available (for Provider Builder)
+        if (!empty($settings['template_config'])) {
+            $templateConfig = json_decode($settings['template_config'], true);
+            if (is_array($templateConfig)) {
+                $config = array_merge($templateConfig, $config);
+            }
+        }
+
         // 3. Driver'ı Seç (Factory Logic)
         $driverKey = $settings['driver_key'];
         $driver = $this->createDriver($driverKey);
@@ -76,6 +84,22 @@ class SmsService
             // Hatayı yukarı fırlat (Controller yakalasın)
             throw $e;
         }
+    }
+
+    /**
+     * Verilen konfigürasyonla (Kaydedilmemiş) SMS gönderimini test eder.
+     * 
+     * @param string $driverKey
+     * @param array $fullConfig (Template + User Values merged)
+     * @param string $phone
+     * @return bool
+     */
+    public function testConnection(string $driverKey, array $fullConfig, string $phone): bool
+    {
+        $driver = $this->createDriver($driverKey);
+        $cleanPhone = $this->normalizePhone($phone);
+
+        return $driver->send($cleanPhone, "Test SMS - Pozitif Klinik Entegrasyon Kontrolu", $fullConfig);
     }
 
     /**
@@ -135,5 +159,13 @@ class SmsService
 
         $encrypted = $this->crypto->encrypt($json);
         $this->repository->saveClinicSettings($clinicId, $providerId, $encrypted);
+    }
+
+    /**
+     * Yeni bir SMS Sağlayıcı tanımlar (Provider Builder)
+     */
+    public function createProvider(string $name, string $driverKey, array $templateConfig, array $configSchema): int
+    {
+        return $this->repository->createProvider($name, $driverKey, $templateConfig, $configSchema);
     }
 }

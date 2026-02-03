@@ -47,12 +47,76 @@ class PlatformSmsController extends BaseController
             if (!empty($provider['config_schema'])) {
                 $provider['config_schema'] = json_decode($provider['config_schema'], true);
             }
+            if (!empty($provider['template_config'])) {
+                $provider['template_config'] = json_decode($provider['template_config'], true);
+            }
         }
 
         return $this->success($response, [
             'count' => count($providers),
             'providers' => $providers
         ]);
+    }
+
+    /**
+     * Yeni bir SMS sağlayıcısı tanımlar (Provider Builder)
+     */
+    #[Route('POST', '/providers')]
+    public function createProvider(Request $request, Response $response): Response
+    {
+        $data = $request->getParsedBody();
+
+        if (empty($data['name']) || empty($data['driver_key']) || empty($data['template_config']) || empty($data['config_schema'])) {
+            return $this->error($response, 'Eksik parametreler (name, driver_key, template_config, config_schema)', 400);
+        }
+
+        try {
+            $id = $this->service->createProvider(
+                $data['name'],
+                $data['driver_key'],
+                $data['template_config'], // Array olarak gelmeli
+                $data['config_schema']    // Array olarak gelmeli
+            );
+
+            return $this->success($response, ['id' => $id], 'SMS Sağlayıcısı başarıyla oluşturuldu.');
+        } catch (\Exception $e) {
+            return $this->error($response, 'Sağlayıcı oluşturulurken hata: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Yapılandırılmış ama kaydedilmemiş bir sağlayıcıyı test eder.
+     * Bu endpoint, "Provider Builder" ekranında "Test Et" butonuna basınca çalışır.
+     */
+    #[Route('POST', '/validate-provider')]
+    public function validateProvider(Request $request, Response $response): Response
+    {
+        $data = $request->getParsedBody();
+
+        // Gerekli: driver_key, template_config (URL vb), test_values (User/Pass), test_phone
+        if (empty($data['driver_key']) || empty($data['template_config']) || empty($data['test_values']) || empty($data['test_phone'])) {
+            return $this->error($response, 'Eksik test parametreleri.', 400);
+        }
+
+        try {
+            // Template ile Test Değerlerini Birleştir
+            $fullConfig = array_merge($data['template_config'], $data['test_values']);
+
+            $success = $this->service->testConnection(
+                $data['driver_key'],
+                $fullConfig,
+                $data['test_phone']
+            );
+
+            if ($success) {
+                return $this->success($response, null, 'Test SMS başarıyla gönderildi.');
+            } else {
+                return $this->error($response, 'Test SMS gönderilemedi (API hata dönmedi ama başarısız).', 500);
+            }
+
+        } catch (\Exception $e) {
+            return $this->error($response, 'Test başarısız: ' . $e->getMessage(), 400);
+        }
     }
 
     /**
@@ -66,6 +130,9 @@ class PlatformSmsController extends BaseController
         $providers = $this->repository->getActiveProviders();
         foreach ($providers as &$p) {
             $p['config_schema'] = json_decode($p['config_schema'], true);
+            if (!empty($p['template_config'])) {
+                $p['template_config'] = json_decode($p['template_config'], true);
+            }
         }
 
         $currentSettings = $this->repository->getClinicSettings($clinicId);
@@ -76,6 +143,8 @@ class PlatformSmsController extends BaseController
                 'provider_id' => $currentSettings['provider_id'],
                 'is_active' => $currentSettings['is_active'],
                 'updated_at' => $currentSettings['updated_at']
+                // Not: Güvenlik gereği encrypted config'i client'a dönmüyoruz.
+                // İstemci tarafı form alanlarını boş görür, doldurursa update olur.
             ];
         }
 
@@ -94,7 +163,7 @@ class PlatformSmsController extends BaseController
         $clinicId = (int) $args['clinicId'];
         $data = $request->getParsedBody();
 
-        if (empty($data['provider_id']) || empty($data['config'])) {
+        if (empty($data['provider_id']) || !isset($data['config'])) {
             return $this->error($response, 'Eksik parametreler (provider_id, config)', 400);
         }
 

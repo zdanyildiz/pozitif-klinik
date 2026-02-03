@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS `sys_sms_providers` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
   `driver_key` VARCHAR(50) NOT NULL COMMENT 'e.g. netgsm, generic_http',
+  `template_config` JSON NULL COMMENT 'Admin defined configuration (URL, Body Template etc.)',
   `config_schema` JSON NOT NULL COMMENT 'Form fields definition',
   `is_active` TINYINT(1) DEFAULT 1,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP

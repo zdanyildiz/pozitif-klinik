@@ -33,7 +33,8 @@ class SmsRepository
         $sql = "SELECT 
                     s.*, 
                     p.driver_key, 
-                    p.name as provider_name 
+                    p.name as provider_name,
+                    p.template_config
                 FROM cln_sms_settings s
                 JOIN sys_sms_providers p ON s.provider_id = p.id
                 WHERE s.clinic_id = :clinic_id AND s.is_active = 1 AND p.is_active = 1";
@@ -70,5 +71,21 @@ class SmsRepository
     {
         // TODO: cln_sms_logs veya benzeri bir tabloya log atılabilir.
         // Şimdilik sadece placeholder.
+        /**
+     * Yeni bir SMS sağlayıcısı ekler.
+     */
+    public function createProvider(string $name, string $driverKey, array $templateConfig, array $configSchema): int
+    {
+        $sql = "INSERT INTO sys_sms_providers (name, driver_key, template_config, config_schema, is_active, created_at) 
+                VALUES (:name, :driverKey, :templateConfig, :configSchema, 1, NOW())";
+        
+        $this->db->query($sql, [
+            'name' => $name,
+            'driverKey' => $driverKey,
+            'templateConfig' => json_encode($templateConfig, JSON_UNESCAPED_UNICODE),
+            'configSchema' => json_encode($configSchema, JSON_UNESCAPED_UNICODE)
+        ]);
+
+        return (int) $this->db->lastInsertId();
     }
 }
