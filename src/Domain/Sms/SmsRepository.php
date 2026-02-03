@@ -71,14 +71,16 @@ class SmsRepository
     {
         // TODO: cln_sms_logs veya benzeri bir tabloya log atılabilir.
         // Şimdilik sadece placeholder.
-        /**
+    }
+
+    /**
      * Yeni bir SMS sağlayıcısı ekler.
      */
     public function createProvider(string $name, string $driverKey, array $templateConfig, array $configSchema): int
     {
         $sql = "INSERT INTO sys_sms_providers (name, driver_key, template_config, config_schema, is_active, created_at) 
                 VALUES (:name, :driverKey, :templateConfig, :configSchema, 1, NOW())";
-        
+
         $this->db->query($sql, [
             'name' => $name,
             'driverKey' => $driverKey,
