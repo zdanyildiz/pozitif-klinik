@@ -106,14 +106,32 @@ class GenericHttpDriver implements SmsDriverInterface
         $error = curl_error($ch);
         curl_close($ch);
 
+        // Debug Log - Proje köküne yazalım
+        $debugInfo = date('[Y-m-d H:i:s]') . " SMS DEBUG: URL: $finalUrl | HTTP: $httpCode | Error: $error | Response: " . ($response ?: 'EMPTY') . PHP_EOL;
+        file_put_contents(__DIR__ . '/../../../../var/logs/sms_debug.log', $debugInfo, FILE_APPEND);
+
         if ($error) {
             throw new RuntimeException("Generic HTTP Error: " . $error);
         }
 
         if ($httpCode >= 200 && $httpCode < 300) {
+            // Özel Durum: Bazı Türk SMS sağlayıcıları (BizimSMS gibi) HTTP 200 dönüp 
+            // body içinde "87", "01" gibi hata kodları verebilir.
+            $trimmedResponse = trim($response);
+            if (ctype_digit($trimmedResponse) && strlen($trimmedResponse) <= 3) {
+                $errorCode = (int) $trimmedResponse;
+                $errorMessage = match ($errorCode) {
+                    87 => "Kullanıcı adı veya şifre hatalı (BizimSMS)",
+                    01 => "Hatalı Giriş Bilgileri",
+                    02 => "Numara Tanımlanmamış",
+                    04 => "Yetersiz Kredi",
+                    default => "SMS Sağlayıcı Hatası (Kod: $errorCode)"
+                };
+                throw new RuntimeException($errorMessage);
+            }
             return true;
         }
 
-        throw new RuntimeException("API returned HTTP $httpCode: " . substr($response, 0, 100));
+        throw new RuntimeException("API returned HTTP $httpCode: " . ($response ? substr($response, 0, 200) : 'No Response'));
     }
 }
