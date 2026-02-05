@@ -112,6 +112,7 @@ class FileController extends BaseController
         $filters = [
             'module' => $queryParams['module'] ?? null,
             'type' => $queryParams['type'] ?? null,
+            'file_category' => $queryParams['file_category'] ?? null,
             'patient_id' => isset($queryParams['patient_id']) ? (int) $queryParams['patient_id'] : null,
             'limit' => $queryParams['limit'] ?? 50
         ];
@@ -119,7 +120,7 @@ class FileController extends BaseController
         if (!empty($queryParams['q'])) {
             $patients = $this->patientRepository->search($clinicId, $queryParams['q']);
             if (!empty($patients)) {
-                $filters['patient_id'] = $patients[0]['id'];
+                $filters['patient_ids'] = array_column($patients, 'id');
             } else {
                 return $this->success($response, []);
             }

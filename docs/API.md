@@ -783,9 +783,10 @@ Sisteme dosya yükler.
 Kriterlere göre dosya arar.
 
 **Query Params:**
-- `q` (string): Hasta adı ile arama (Opsiyonel)
+- `q` (string): Hasta adı, TC No veya Telefon ile arama (Opsiyonel)
 - `module` (string): Modül filtresi (Opsiyonel)
 - `type` (string): Dosya tipi (`image`, `pdf`, `document`) (Opsiyonel)
+- `file_category` (string): Dosya kategorisi (`prescription`, `report`, `other`) (Opsiyonel)
 - `limit` (int): Kayıt limiti (Varsayılan: 50)
 
 **Başarılı Yanıt (200 OK):**

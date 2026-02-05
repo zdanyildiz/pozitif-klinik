@@ -112,8 +112,17 @@ class FileRepository
                 LEFT JOIN ptn_cards p_lab ON l.patient_id = p_lab.id
                 WHERE f.clinic_id = ? AND f.deleted_at IS NULL";
 
-        // Filtre: Hasta ID
-        if (!empty($filters['patient_id'])) {
+        // Filtre: Hasta IDleri (Array veya Int)
+        if (!empty($filters['patient_ids'])) {
+            $ids = is_array($filters['patient_ids']) ? $filters['patient_ids'] : [$filters['patient_ids']];
+            if (!empty($ids)) {
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                $sql .= " AND (p.id IN ($placeholders) OR p_exam.id IN ($placeholders) OR p_lab.id IN ($placeholders))";
+                // Parametreleri 3 kez ekliyoruz (her OR bloğu için)
+                $params = array_merge($params, $ids, $ids, $ids);
+            }
+        } elseif (!empty($filters['patient_id'])) {
+            // Geriye dönük uyumluluk
             $sql .= " AND (p.id = ? OR p_exam.id = ? OR p_lab.id = ?)";
             $params[] = $filters['patient_id'];
             $params[] = $filters['patient_id'];
@@ -135,8 +144,16 @@ class FileRepository
             } elseif ($filters['type'] === 'document') {
                 $sql .= " AND (f.mime_type LIKE 'application/msword' 
                               OR f.mime_type LIKE 'application/vnd.openxmlformats-officedocument%' 
-                              OR f.mime_type = 'application/pdf')";
+                              OR f.mime_type = 'application/vnd.ms-excel'
+                              OR f.mime_type LIKE 'application/vnd.openxmlformats-officedocument.spreadsheetml%'
+                              OR f.mime_type = 'text/csv')";
             }
+        }
+
+        // Filtre: Kategori (Reçete, Rapor vb.)
+        if (!empty($filters['file_category'])) {
+            $sql .= " AND f.file_category = ?";
+            $params[] = $filters['file_category'];
         }
 
         // Sıralama
@@ -148,5 +165,18 @@ class FileRepository
         }
 
         return $this->db->fetchAll($sql, $params);
+    }
+
+    /**
+     * Modül bazlı dosya sayılarını getirir.
+     */
+    public function countByModule(int $clinicId): array
+    {
+        $sql = "SELECT module, COUNT(*) as count 
+                FROM sys_files 
+                WHERE clinic_id = ? AND deleted_at IS NULL 
+                GROUP BY module";
+
+        return $this->db->fetchAll($sql, [$clinicId]);
     }
 }

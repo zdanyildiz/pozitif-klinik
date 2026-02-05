@@ -136,4 +136,11 @@ class FileService
 
         return $files;
     }
+    /**
+     * Dosya sayılarını modül bazlı getirir.
+     */
+    public function getFileCounts(int $clinicId): array
+    {
+        return $this->repository->countByModule($clinicId);
+    }
 }
