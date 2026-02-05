@@ -131,4 +131,17 @@ INSERT INTO `sys_appointment_statuses` (`status_code`, `name`, `color_code`, `ic
 ('cancelled', 'İptal Edildi', '#dc3545', 'bi-x-circle', 1, 5),
 ('did_not_come', 'Gelmedi', '#6c757d', 'bi-dash-circle', 1, 6);
 
+-- 8. Dinamik Muayene Form Tanımları
+DROP TABLE IF EXISTS `sys_specialty_forms`;
+CREATE TABLE `sys_specialty_forms` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `specialty_code` varchar(50) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `form_schema` LONGTEXT NOT NULL COMMENT 'JSON storage for form fields definition',
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `specialty_code` (`specialty_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

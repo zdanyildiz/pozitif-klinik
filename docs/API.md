@@ -402,7 +402,12 @@ Yeni muayene kaydı oluşturur.
   "bulgular": "Normal bulgular...",
   "diagnosis": "G43 - Migren",
   "treatment": "Dinlenme, Ağrı kesici...",
-  "result_note": "Kontrole gelecek"
+  "result_note": "Kontrole gelecek",
+  "specialty_code": "IC_HASTALIKLARI",
+  "specialty_data": {
+     "karaciger_palpasyonu": "Normal",
+     "tiroid_muayenesi": "Nodul izlendi"
+  }
 }
 ```
 
