@@ -26,15 +26,18 @@ class FileRepository
     public function create(array $data): int
     {
         $sql = "INSERT INTO sys_files (
-                    clinic_id, module, related_id, original_name, storage_path, 
-                    file_hash, mime_type, size_kb, uuid, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    clinic_id, module, related_id, original_name, display_name, 
+                    file_category, storage_path, file_hash, mime_type, 
+                    size_kb, uuid, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $this->db->query($sql, [
             $data['clinic_id'],
             $data['module'],
             $data['related_id'],
             $data['original_name'],
+            $data['display_name'] ?? null,
+            $data['file_category'] ?? 'other',
             $data['storage_path'],
             $data['file_hash'],
             $data['mime_type'],
@@ -98,17 +101,21 @@ class FileRepository
                        CASE 
                            WHEN f.module = 'patient' THEN p.name 
                            WHEN f.module = 'examination' THEN p_exam.name
+                           WHEN f.module = 'lab' THEN p_lab.name
                            ELSE NULL 
                        END as patient_name
                 FROM sys_files f
                 LEFT JOIN ptn_cards p ON f.module = 'patient' AND f.related_id = p.id
                 LEFT JOIN cln_examinations e ON f.module = 'examination' AND f.related_id = e.id
                 LEFT JOIN ptn_cards p_exam ON e.patient_id = p_exam.id
+                LEFT JOIN cln_lab_results l ON f.module = 'lab' AND f.related_id = l.id
+                LEFT JOIN ptn_cards p_lab ON l.patient_id = p_lab.id
                 WHERE f.clinic_id = ? AND f.deleted_at IS NULL";
 
         // Filtre: Hasta ID
         if (!empty($filters['patient_id'])) {
-            $sql .= " AND (p.id = ? OR p_exam.id = ?)";
+            $sql .= " AND (p.id = ? OR p_exam.id = ? OR p_lab.id = ?)";
+            $params[] = $filters['patient_id'];
             $params[] = $filters['patient_id'];
             $params[] = $filters['patient_id'];
         }

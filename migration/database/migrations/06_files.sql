@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS `sys_files` (
     `module` VARCHAR(50) NOT NULL COMMENT 'Hangi modül: patient, lab, invoice vb.',
     `related_id` BIGINT UNSIGNED NOT NULL COMMENT 'Bağlı olduğu kaydın IDsi',
     `original_name` VARCHAR(255) NOT NULL COMMENT 'Orijinal dosya adı',
+    `display_name` VARCHAR(255) DEFAULT NULL COMMENT 'Kullanıcı tanımlı dosya adı',
+    `file_category` VARCHAR(50) DEFAULT 'other' COMMENT 'Dosya kategorisi (radiology, lab vb.)',
     `storage_path` VARCHAR(255) NOT NULL COMMENT 'Disk üzerindeki tam yol (örn: 1/2026/01/hash.pdf)',
     `file_hash` VARCHAR(64) NOT NULL COMMENT 'SHA-256 hash',
     `mime_type` VARCHAR(100) NOT NULL,

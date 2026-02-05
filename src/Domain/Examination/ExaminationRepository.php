@@ -55,6 +55,7 @@ class ExaminationRepository
             FROM cln_examinations e
             LEFT JOIN sys_users u ON e.doctor_user_id = u.id
             WHERE e.clinic_id = :clinic_id AND e.appointment_id = :appointment_id
+            ORDER BY e.id DESC
             LIMIT 1
         ");
         $stmt->execute([
@@ -70,11 +71,13 @@ class ExaminationRepository
         $sql = "INSERT INTO cln_examinations (
                     clinic_id, patient_id, doctor_user_id, 
                     anamnez, complaint, story, bulgular, 
-                    diagnosis, treatment, result_note, appointment_id
+                    diagnosis, treatment, result_note, appointment_id,
+                    specialty_code, specialty_data
                 ) VALUES (
                     :clinic_id, :patient_id, :doctor_user_id, 
                     :anamnez, :complaint, :story, :bulgular, 
-                    :diagnosis, :treatment, :result_note, :appointment_id
+                    :diagnosis, :treatment, :result_note, :appointment_id,
+                    :specialty_code, :specialty_data
                 )";
 
         $stmt = $this->db->getConnection()->prepare($sql);
@@ -89,7 +92,9 @@ class ExaminationRepository
             'diagnosis' => $data['diagnosis'] ?? null,
             'treatment' => $data['treatment'] ?? null,
             'result_note' => $data['result_note'] ?? null,
-            'appointment_id' => $data['appointment_id'] ?? null
+            'appointment_id' => $data['appointment_id'] ?? null,
+            'specialty_code' => $data['specialty_code'] ?? null,
+            'specialty_data' => $data['specialty_data'] ?? null
         ]);
 
         return (int) $this->db->getConnection()->lastInsertId();

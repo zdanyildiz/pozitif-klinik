@@ -97,10 +97,21 @@ async function loadHistory() {
             const date = Utils.formatDate(exam.created_at);
             const summary = exam.diagnosis || exam.complaint || 'Detay belirtilmemiş';
 
+            let filesHtml = '';
+            if (exam.files && exam.files.length > 0) {
+                filesHtml = `<div class="mt-2 d-flex gap-1 flex-wrap">`;
+                exam.files.forEach(f => {
+                    const catIcons = { radiology: 'bi-x-ray', lab: 'bi-eyedropper', report: 'bi-file-earmark-medical', prescription: 'bi-capsule', other: 'bi-file-earmark' };
+                    filesHtml += `<span class="badge bg-light text-primary border px-1" title="${f.display_name || f.original_name}"><i class="bi ${catIcons[f.file_category] || 'bi-file-earmark'}"></i></span>`;
+                });
+                filesHtml += `</div>`;
+            }
+
             item.innerHTML = `
                 <div class="history-date">${date}</div>
                 <div class="small text-primary mb-1">${exam.doctor_name || 'Doktor'}</div>
                 <div class="history-summary">${summary}</div>
+                ${filesHtml}
             `;
 
             item.onclick = () => viewHistoricalExam(exam);
@@ -340,6 +351,15 @@ function viewHistoricalExam(exam) {
                 <p><strong>Tanı:</strong> ${exam.diagnosis || '-'}</p>
                 <p><strong>Tedavi:</strong> ${exam.treatment || '-'}</p>
                 <p><strong>Not:</strong> ${exam.result_note || '-'}</p>
+                <hr>
+                <h6>Dosyalar:</h6>
+                <div class="d-flex gap-2 flex-wrap">
+                    ${(exam.files || []).map(f => `
+                        <a href="/api/files/view/${f.uuid}" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill">
+                            <i class="bi bi-file-earmark me-1"></i>${f.display_name || f.original_name}
+                        </a>
+                    `).join('') || '<span class="text-muted">Dosya yok</span>'}
+                </div>
             </div>
         `,
         confirmButtonText: 'Kapat',
@@ -406,8 +426,14 @@ async function handleSave() {
             res = await api.put(`/api/examinations/${currentExaminationId}`, data);
         } else {
             res = await api.post('/api/examinations', data);
-            if (res.data && res.data.id) {
-                currentExaminationId = res.data.id;
+        }
+
+        if (res.data && res.data.id) {
+            const oldId = currentExaminationId;
+            currentExaminationId = res.data.id;
+
+            // Eğer ID değiştiyse veya ilk kez set ediliyorsa dosya yöneticisini tazele
+            if (oldId !== currentExaminationId) {
                 initExamFileManager(currentExaminationId);
             }
         }

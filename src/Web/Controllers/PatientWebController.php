@@ -14,6 +14,7 @@ use App\Domain\Appointment\AppointmentRepository;
 use App\Domain\Examination\ExaminationRepository;
 use App\Domain\Lab\LabRepository;
 use App\Domain\Finance\PaymentRepository;
+use App\Domain\File\FileRepository;
 use App\Core\Attributes\Route;
 use App\Core\Attributes\Group;
 use App\Core\Attributes\Middleware;
@@ -30,6 +31,7 @@ class PatientWebController
     private ExaminationRepository $examinationRepository;
     private LabRepository $labRepository;
     private PaymentRepository $paymentRepository;
+    private FileRepository $fileRepository;
 
     public function __construct(
         Twig $view,
@@ -39,7 +41,8 @@ class PatientWebController
         AppointmentRepository $appointmentRepository,
         ExaminationRepository $examinationRepository,
         LabRepository $labRepository,
-        PaymentRepository $paymentRepository
+        PaymentRepository $paymentRepository,
+        FileRepository $fileRepository
     ) {
         $this->view = $view;
         $this->repository = $repository;
@@ -49,6 +52,7 @@ class PatientWebController
         $this->examinationRepository = $examinationRepository;
         $this->labRepository = $labRepository;
         $this->paymentRepository = $paymentRepository;
+        $this->fileRepository = $fileRepository;
     }
 
     #[Route('GET', '/patients')]
@@ -99,7 +103,14 @@ class PatientWebController
         // 4. Laboratuvar Sonuçları
         $labResults = $this->labRepository->findAllByPatient($clinicId, $patientId);
 
-        // 5. Hibrit Zaman Tüneli Hazırlığı
+        // 5. Dosyalar (Tüm dökümanları çek ve grupla)
+        $allFiles = $this->fileRepository->searchFiles($clinicId, ['patient_id' => $patientId]);
+        $filesByModule = [];
+        foreach ($allFiles as $file) {
+            $filesByModule[$file['module']][$file['related_id']][] = $file;
+        }
+
+        // 6. Hibrit Zaman Tüneli Hazırlığı
         $timeline = [];
         $mappedExamIds = [];
 
@@ -127,7 +138,11 @@ class PatientWebController
                 'status_color' => $appt['status_color'] ?? '#6c757d',
                 'notes' => $appt['notes'],
                 'appointment_id' => $appt['id'],
-                'examination' => $exam
+                'examination' => $exam,
+                'files' => array_merge(
+                    $filesByModule['appointment'][$appt['id']] ?? [],
+                    $exam ? ($filesByModule['examination'][$exam['id']] ?? []) : []
+                )
             ];
         }
 
@@ -144,7 +159,8 @@ class PatientWebController
                     'status_color' => '#10b981',
                     'notes' => $exam['complaint'],
                     'examination_id' => $exam['id'],
-                    'examination' => $exam
+                    'examination' => $exam,
+                    'files' => $filesByModule['examination'][$exam['id']] ?? []
                 ];
             }
         }

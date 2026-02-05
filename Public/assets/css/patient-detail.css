@@ -146,3 +146,56 @@
 #labItemsTable {
     border-collapse: separate;
 }
+
+/* --- File Manager Premium Styles --- */
+.file-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.file-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.file-thumb {
+    transition: all 0.3s ease;
+}
+
+.file-card:hover .file-thumb {
+    background-color: white !important;
+    transform: scale(1.1);
+}
+
+.hover-shadow:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-xs {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+}
+
+.border-dashed {
+    border: 2px dashed #dee2e6 !important;
+}
+
+.upload-item-card {
+    border-left: 4px solid #4f46e5 !important;
+}
+
+.transition {
+    transition: 0.3s all;
+}
+
+/* Category Badge Colors */
+.bg-primary-subtle { background-color: #e0e7ff !important; color: #4338ca !important; }
+.bg-success-subtle { background-color: #dcfce7 !important; color: #15803d !important; }
+.bg-info-subtle { background-color: #e0f2fe !important; color: #0369a1 !important; }
+.bg-warning-subtle { background-color: #fef9c3 !important; color: #a16207 !important; }
+.bg-secondary-subtle { background-color: #f3f4f6 !important; color: #4b5563 !important; }
+
+/* Drag & Drop Overlay */
+.drag-active {
+    background-color: rgba(79, 70, 229, 0.05) !important;
+    border: 2px dashed #4f46e5 !important;
+}

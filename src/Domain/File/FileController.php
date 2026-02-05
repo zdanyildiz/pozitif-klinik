@@ -77,7 +77,9 @@ class FileController extends BaseController
                 $clinicId,
                 $module,
                 $relatedId,
-                $userId
+                $userId,
+                $body['display_name'] ?? null,
+                $body['file_category'] ?? 'other'
             );
 
             $this->logger->info("File uploaded", [
@@ -110,6 +112,7 @@ class FileController extends BaseController
         $filters = [
             'module' => $queryParams['module'] ?? null,
             'type' => $queryParams['type'] ?? null,
+            'patient_id' => isset($queryParams['patient_id']) ? (int) $queryParams['patient_id'] : null,
             'limit' => $queryParams['limit'] ?? 50
         ];
 

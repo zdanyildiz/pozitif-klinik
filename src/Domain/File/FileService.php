@@ -46,7 +46,9 @@ class FileService
         int $clinicId,
         string $module,
         int $relatedId,
-        ?int $userId
+        ?int $userId,
+        ?string $displayName = null,
+        string $fileCategory = 'other'
     ): array {
         // 1. Fiziksel Kayıt
         $storageResult = $this->storage->save($file, $clinicId);
@@ -57,6 +59,8 @@ class FileService
             'module' => $module,
             'related_id' => $relatedId,
             'original_name' => $file->getClientFilename(),
+            'display_name' => $displayName,
+            'file_category' => $fileCategory,
             'storage_path' => $storageResult['path'],
             'file_hash' => $storageResult['hash'],
             'mime_type' => $file->getClientMediaType(),
