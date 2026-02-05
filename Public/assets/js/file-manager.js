@@ -14,9 +14,9 @@ class FileManager {
         this.listUrl = config.customListUrl || `/api/files/list/${this.module}/${this.relatedId}`;
 
         this.container = document.getElementById(this.containerId);
-        this.uploadInput = document.getElementById(this.uploadBtnId);
+        this.uploadTrigger = document.getElementById(this.uploadBtnId); // Label or Button
 
-        this.pendingFiles = []; // Madalda bekleyen dosyalar
+        this.pendingFiles = [];
         this.categories = {
             'other': { name: 'Diğer / Döküman', icon: 'bi-file-earmark', color: 'secondary' },
             'radiology': { name: 'Röntgen / Görüntüleme', icon: 'bi-x-ray', color: 'primary' },
@@ -29,9 +29,27 @@ class FileManager {
     }
 
     init() {
-        if (this.uploadInput) {
-            this.uploadInput.setAttribute('multiple', 'multiple');
-            this.uploadInput.addEventListener('change', (e) => this.prepareUpload(e.target.files));
+        // Create hidden file input if not exists
+        let hiddenInput = document.getElementById('global_file_input');
+        if (!hiddenInput) {
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'file';
+            hiddenInput.id = 'global_file_input';
+            hiddenInput.multiple = true;
+            hiddenInput.style.display = 'none';
+            document.body.appendChild(hiddenInput);
+        }
+        this.fileInput = hiddenInput;
+
+        // Listen for input changes
+        this.fileInput.addEventListener('change', (e) => this.prepareUpload(e.target.files));
+
+        // If trigger is a label for an input, we might need to prevent default or change approach
+        if (this.uploadTrigger) {
+            this.uploadTrigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openUploadModal();
+            });
         }
 
         this.initUploadModal();
@@ -60,35 +78,41 @@ class FileManager {
         }
     }
 
-    /**
-     * Upload Modalı Başlatma
-     */
     initUploadModal() {
         const modalId = 'fileUploadModal';
         if (!document.getElementById(modalId)) {
             const html = `
                 <div class="modal fade" id="${modalId}" data-bs-backdrop="static" tabindex="-1">
                     <div class="modal-dialog modal-lg modal-dialog-centered">
-                        <div class="modal-content border-0 shadow-lg">
-                            <div class="modal-header bg-light border-0">
-                                <h5 class="modal-title fw-bold text-dark">
-                                    <i class="bi bi-cloud-arrow-up me-2 text-primary"></i>Dosya Yükleme Paneli
+                        <div class="modal-content border-0 shadow-lg" style="border-radius: 1.25rem;">
+                            <div class="modal-header bg-white border-0 pt-4 px-4 pb-0">
+                                <h5 class="modal-title fw-bold">
+                                    <span class="p-2 bg-primary-subtle rounded-3 me-2 border border-primary-subtle">
+                                        <i class="bi bi-cloud-arrow-up text-primary"></i>
+                                    </span>
+                                    Dosya Yükleme Paneli
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body p-4">
                                 <div id="fileUploadList" class="mb-3">
-                                    <!-- Dosyalar buraya eklenecek -->
+                                    <!-- Files go here -->
                                 </div>
-                                <div class="drop-zone-mini p-4 border-dashed rounded-3 text-center bg-light mb-0" id="modalDropZone">
-                                    <i class="bi bi-plus-circle fs-3 text-muted"></i>
-                                    <p class="small text-muted mb-0 mt-2">Daha fazla dosya sürükleyin veya ekleyin</p>
+                                <div class="drop-zone-modern p-5 border-dashed rounded-4 text-center bg-light cursor-pointer transition hover-bg-light-subtle" id="modalDropZone">
+                                    <div class="mb-3">
+                                        <i class="bi bi-files fs-1 text-primary-subtle"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-1">Dosyaları Buraya Sürükleyin</h6>
+                                    <p class="text-muted small mb-3">Veya bilgisayarınızdan seçmek için aşağıdaki butona tıklayın</p>
+                                    <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" id="modalAddFilesBtn">
+                                        <i class="bi bi-plus-lg me-1"></i> Dosya Seçin
+                                    </button>
                                 </div>
                             </div>
-                            <div class="modal-footer bg-light border-0">
+                            <div class="modal-footer bg-light border-0 py-3 px-4" id="uploadModalFooter" style="display: none;">
                                 <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">İptal</button>
-                                <button type="button" class="btn btn-primary px-4 rounded-pill" id="startUploadBtn">
-                                    <i class="bi bi-check2-circle me-2"></i>Seçilenleri Yükle
+                                <button type="button" class="btn btn-primary px-5 rounded-pill shadow" id="startUploadBtn">
+                                    <i class="bi bi-upload me-2"></i>Yüklemeyi Başlat (<span id="pendingCount">0</span>)
                                 </button>
                             </div>
                         </div>
@@ -98,41 +122,53 @@ class FileManager {
             document.body.insertAdjacentHTML('beforeend', html);
         }
 
-        this.uploadModal = new bootstrap.Modal(document.getElementById(modalId));
+        this.uploadModalEl = document.getElementById(modalId);
+        this.uploadModal = new bootstrap.Modal(this.uploadModalEl);
         this.uploadListContainer = document.getElementById('fileUploadList');
+        this.pendingCountSpan = document.getElementById('pendingCount');
+        this.modalFooter = document.getElementById('uploadModalFooter');
 
         document.getElementById('startUploadBtn').addEventListener('click', () => this.processQueue());
+        document.getElementById('modalAddFilesBtn').addEventListener('click', () => this.fileInput.click());
+        document.getElementById('modalDropZone').addEventListener('click', (e) => {
+            if (e.target.id === 'modalDropZone' || e.target.closest('#modalDropZone') && e.target.tagName !== 'BUTTON') {
+                this.fileInput.click();
+            }
+        });
     }
 
-    /**
-     * Dosyaları Yükleme İçin Hazırla (Modal Aç)
-     */
+    openUploadModal() {
+        this.pendingFiles = [];
+        this.renderUploadList();
+        this.uploadModal.show();
+    }
+
     prepareUpload(files) {
         if (!files || files.length === 0) return;
 
         for (let file of files) {
-            // Basit boyut kontrolü
             if (file.size > 20 * 1024 * 1024) {
-                Utils.showToast(`${file.name} çok büyük (Max 20MB)`, 'error');
+                if (typeof Utils !== 'undefined' && Utils.showToast) Utils.showToast(`${file.name} çok büyük (Max 20MB)`, 'error');
                 continue;
             }
 
             this.pendingFiles.push({
                 id: Math.random().toString(36).substr(2, 9),
                 file: file,
-                displayName: file.name.split('.').slice(0, -1).join('.'), // Uzantısız isim
+                displayName: file.name.split('.').slice(0, -1).join('.'),
                 category: 'other'
             });
         }
 
         this.renderUploadList();
-        this.uploadModal.show();
-
-        if (this.uploadInput) this.uploadInput.value = '';
+        this.fileInput.value = '';
     }
 
     renderUploadList() {
         this.uploadListContainer.innerHTML = '';
+        const count = this.pendingFiles.length;
+        this.pendingCountSpan.textContent = count;
+        this.modalFooter.style.display = count > 0 ? 'flex' : 'none';
 
         this.pendingFiles.forEach(item => {
             const div = document.createElement('div');
@@ -145,25 +181,27 @@ class FileManager {
                         </div>
                     </div>
                     <div class="col">
-                        <div class="mb-2">
-                            <input type="text" class="form-control form-control-sm border-0 bg-light fw-bold" 
+                        <div class="mb-1">
+                            <input type="text" class="form-control form-control-sm border-bottom rounded-0 bg-transparent fw-bold" 
                                    placeholder="Dosya Adı" value="${item.displayName}" 
-                                   onchange="Utils.updatePendingFileName('${item.id}', this.value)">
+                                   onchange="FileManagerHelper.updateName('${item.id}', this.value)">
                         </div>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 mt-2">
                             ${Object.keys(this.categories).map(catKey => `
-                                <input type="radio" class="btn-check" name="cat_${item.id}" id="cat_${item.id}_${catKey}" 
-                                       value="${catKey}" ${item.category === catKey ? 'checked' : ''}
-                                       onchange="Utils.updatePendingFileCat('${item.id}', '${catKey}')">
-                                <label class="btn btn-outline-secondary btn-xs py-1 px-2 border-0 rounded-pill" for="cat_${item.id}_${catKey}" title="${this.categories[catKey].name}">
-                                    <i class="bi ${this.categories[catKey].icon}"></i>
-                                </label>
+                                <div class="cat-pill">
+                                    <input type="radio" class="btn-check" name="cat_${item.id}" id="cat_${item.id}_${catKey}" 
+                                           value="${catKey}" ${item.category === catKey ? 'checked' : ''}
+                                           onchange="FileManagerHelper.updateCat('${item.id}', '${catKey}')">
+                                    <label class="btn btn-outline-secondary btn-xs py-1 px-2 border rounded-pill small" for="cat_${item.id}_${catKey}" title="${this.categories[catKey].name}">
+                                        <i class="bi ${this.categories[catKey].icon} me-1"></i>${this.categories[catKey].name.split(' ')[0]}
+                                    </label>
+                                </div>
                             `).join('')}
                         </div>
                     </div>
                     <div class="col-auto">
-                        <button class="btn btn-link text-danger p-1" onclick="Utils.removePendingFile('${item.id}')">
-                            <i class="bi bi-x-lg"></i>
+                        <button class="btn btn-outline-danger btn-sm border-0 rounded-circle" onclick="FileManagerHelper.remove('${item.id}')">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </div>
@@ -171,28 +209,16 @@ class FileManager {
             this.uploadListContainer.appendChild(div);
         });
 
-        // Global Utils helper'ları (FileManager içinden erişim zor olduğu için veya daha temiz olması için)
-        window.Utils = window.Utils || {};
-        window.Utils.updatePendingFileName = (id, val) => {
-            const item = this.pendingFiles.find(f => f.id === id);
-            if (item) item.displayName = val;
-        };
-        window.Utils.updatePendingFileCat = (id, cat) => {
-            const item = this.pendingFiles.find(f => f.id === id);
-            if (item) item.category = cat;
-        };
-        window.Utils.removePendingFile = (id) => {
-            this.pendingFiles = this.pendingFiles.filter(f => f.id !== id);
-            this.renderUploadList();
-            if (this.pendingFiles.length === 0) this.uploadModal.hide();
+        window.FileManagerHelper = {
+            updateName: (id, val) => { const it = this.pendingFiles.find(f => f.id === id); if (it) it.displayName = val; },
+            updateCat: (id, cat) => { const it = this.pendingFiles.find(f => f.id === id); if (it) it.category = cat; },
+            remove: (id) => { this.pendingFiles = this.pendingFiles.filter(f => f.id !== id); this.renderUploadList(); }
         };
     }
 
-    /**
-     * Kuyruğu İşle (Yükle)
-     */
     async processQueue() {
         const btn = document.getElementById('startUploadBtn');
+        const originalContent = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Yükleniyor...';
 
@@ -213,7 +239,7 @@ class FileManager {
                 const result = await response.json();
                 if (!result.status) throw new Error(result.message);
             } catch (error) {
-                Utils.showToast(`${item.file.name} yüklenemedi: ${error.message}`, 'error');
+                console.error('File Upload Error:', error);
             }
         }
 
@@ -221,55 +247,44 @@ class FileManager {
         this.renderUploadList();
         this.uploadModal.hide();
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check2-circle me-2"></i>Seçilenleri Yükle';
+        btn.innerHTML = originalContent;
 
-        Utils.showToast('Dosyalar başarıyla yüklendi.');
+        if (typeof Utils !== 'undefined' && Utils.showToast) Utils.showToast('Dosyalar başarıyla yüklendi.');
         this.loadFiles();
     }
 
-    /**
-     * Dosyaları Listeleme
-     */
     async loadFiles() {
         if (!this.container) return;
-
-        this.container.innerHTML = `
-            <div class="text-center p-5">
-                <div class="spinner-border text-primary opacity-50"></div>
-                <p class="text-muted mt-2 small">Dosyalar getiriliyor...</p>
-            </div>
-        `;
+        this.container.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary opacity-50"></div></div>';
 
         try {
-            const response = await api.get(this.listUrl); // 'api' helper is assumed global
-            if (response.data) {
-                this.renderList(response.data);
+            // Using global 'api' if available, else fetch
+            let data;
+            if (window.api) {
+                const res = await api.get(this.listUrl);
+                data = res.data;
+            } else {
+                const res = await fetch(this.listUrl);
+                const json = await res.json();
+                data = json.data;
             }
+            this.renderList(data);
         } catch (error) {
-            console.error('List Error:', error);
-            this.container.innerHTML = '<div class="alert alert-danger mx-3 mt-3">Dosyalar yüklenemedi.</div>';
+            console.error('Load Error:', error);
+            this.container.innerHTML = '<div class="alert alert-danger mx-3">Hata oluştu.</div>';
         }
     }
 
-    /**
-     * Liste Görünümü (Premium Tasarım)
-     */
     renderList(files) {
         if (!files || files.length === 0) {
-            this.container.innerHTML = `
-                <div class="text-center p-5 text-muted opacity-50">
-                    <i class="bi bi-folder-x fs-1"></i>
-                    <p class="mt-2">Henüz döküman eklenmemiş.</p>
-                </div>
-            `;
+            this.container.innerHTML = '<div class="text-center p-5 text-muted"><i class="bi bi-folder2-open fs-1 opacity-25"></i><p>Dosya yok</p></div>';
             return;
         }
 
-        let html = '<div class="row g-3 p-3">';
-
+        let html = '<div class="row g-3 p-2">';
         files.forEach(file => {
             const size = (file.size_kb / 1024).toFixed(2);
-            const date = Utils.formatDate(file.created_at);
+            const date = new Date(file.created_at).toLocaleDateString('tr-TR');
             const cat = this.categories[file.file_category] || this.categories['other'];
             const displayName = file.display_name || file.original_name;
 
@@ -278,102 +293,83 @@ class FileManager {
             if (file.mime_type.includes('pdf')) icon = 'bi-file-earmark-pdf';
 
             html += `
-                <div class="col-md-6 col-xl-4">
-                    <div class="file-card p-3 rounded-4 bg-white border shadow-sm h-100 position-relative hover-shadow transition">
-                        <div class="d-flex align-items-start gap-3">
-                            <div class="file-thumb rounded-3 bg-light d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                <i class="bi ${icon} fs-4 text-${cat.color}"></i>
+                <div class="col-md-12 col-xl-6">
+                    <div class="file-card p-3 rounded-3 bg-white border h-100 shadow-sm hover-shadow transition">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="file-thumb flex-shrink-0 bg-${cat.color}-subtle rounded-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="bi ${icon} fs-3 text-${cat.color}"></i>
                             </div>
                             <div class="flex-grow-1 min-w-0">
-                                <h6 class="mb-1 text-truncate fw-bold text-dark" title="${displayName}">
+                                <h6 class="mb-1 text-truncate fw-bold">
                                     <a href="/api/files/view/${file.uuid}" target="_blank" class="text-decoration-none text-dark ${file.mime_type.includes('image') ? 'preview-file' : ''}" data-title="${displayName}">
                                         ${displayName}
                                     </a>
                                 </h6>
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="badge bg-${cat.color}-subtle text-${cat.color} border-0 rounded-pill small px-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-${cat.color}-subtle text-${cat.color} border-0 rounded-pill" style="font-size: 0.65rem;">
                                         <i class="bi ${cat.icon} me-1"></i>${cat.name}
                                     </span>
+                                    <span class="text-muted small" style="font-size: 0.75rem;">${size} MB</span>
                                 </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted" style="font-size: 0.75rem;">${size} MB • ${date}</small>
-                                    <button class="btn btn-link btn-sm text-danger p-0 border-0 btn-delete-file" data-uuid="${file.uuid}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
+                            </div>
+                            <div class="actions">
+                                <button class="btn btn-outline-danger btn-sm border-0 rounded-circle btn-delete-file" data-uuid="${file.uuid}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
         });
-
         html += '</div>';
         this.container.innerHTML = html;
     }
 
     async deleteFile(uuid) {
-        if (!confirm('Bu dökümanı kalıcı olarak silmek istediğinize emin misiniz?')) return;
-
+        if (!confirm('Silmek istediğinize emin misiniz?')) return;
         try {
             const res = await api.delete(`/api/files/${uuid}`);
             if (res.status) this.loadFiles();
         } catch (e) {
-            Utils.showToast('Silme işlemi başarısız', 'error');
+            alert('Hata!');
         }
     }
 
     bindDragDrop() {
         if (!this.container) return;
-
-        const handleDrag = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        };
-
-        ['dragenter', 'dragover'].forEach(name => {
-            this.container.addEventListener(name, (e) => {
-                handleDrag(e);
-                this.container.classList.add('drag-active');
-            });
+        ['dragenter', 'dragover'].forEach(n => {
+            this.container.addEventListener(n, (e) => { e.preventDefault(); this.container.classList.add('drag-active'); });
         });
-
-        ['dragleave', 'drop'].forEach(name => {
-            this.container.addEventListener(name, (e) => {
-                handleDrag(e);
-                this.container.classList.remove('drag-active');
-                if (name === 'drop' && e.dataTransfer.files.length > 0) {
-                    this.prepareUpload(e.dataTransfer.files);
-                }
-            });
+        ['dragleave', 'drop'].forEach(n => {
+            this.container.addEventListener(n, (e) => { e.preventDefault(); this.container.classList.remove('drag-active'); if (n === 'drop') this.prepareUpload(e.dataTransfer.files); });
         });
     }
 
     initLightbox() {
         if (!document.getElementById('fileManagerLightbox')) {
-            const html = `
+            const h = `
                 <div class="modal fade" id="fileManagerLightbox" tabindex="-1">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
                         <div class="modal-content bg-transparent border-0">
                             <div class="modal-header border-0"><button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button></div>
                             <div class="modal-body p-0 text-center">
-                                <img src="" id="lightboxImage" class="img-fluid rounded shadow-lg" style="max-height: 85vh;">
-                                <div id="lightboxCaption" class="text-white mt-3 fw-bold fs-5"></div>
+                                <img src="" id="lightboxImage" class="img-fluid rounded" style="max-height: 85vh;">
+                                <div id="lightboxCaption" class="text-white mt-3 fw-bold"></div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', html);
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', h);
         }
         this.lightboxModal = new bootstrap.Modal(document.getElementById('fileManagerLightbox'));
     }
 
-    openLightbox(url, title) {
-        const img = document.getElementById('lightboxImage');
-        const caption = document.getElementById('lightboxCaption');
-        img.src = url;
-        caption.textContent = title || '';
+    openLightbox(u, t) {
+        const i = document.getElementById('lightboxImage');
+        const c = document.getElementById('lightboxCaption');
+        i.src = u;
+        c.textContent = t;
         this.lightboxModal.show();
     }
 }

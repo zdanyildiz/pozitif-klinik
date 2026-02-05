@@ -123,7 +123,8 @@
     overflow-y: auto;
     border: 1px solid #e5e7eb;
     border-radius: 0.5rem;
-    z-index: 9999 !important; /* Force on top of modal */
+    z-index: 9999 !important;
+    /* Force on top of modal */
 }
 
 .autocomplete-suggestions .list-group-item {
@@ -150,11 +151,12 @@
 /* --- File Manager Premium Styles --- */
 .file-card {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #ffffff;
 }
 
 .file-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.08) !important;
 }
 
 .file-thumb {
@@ -162,40 +164,78 @@
 }
 
 .file-card:hover .file-thumb {
-    background-color: white !important;
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
-.hover-shadow:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+.drop-zone-modern {
+    transition: all 0.3s ease;
+    border: 2px dashed #cbd5e1;
 }
 
-.btn-xs {
-    padding: 0.15rem 0.4rem;
-    font-size: 0.75rem;
+.drop-zone-modern:hover {
+    border-color: #4f46e5;
+    background-color: #f8fafc !important;
 }
 
-.border-dashed {
-    border: 2px dashed #dee2e6 !important;
+.cat-pill .btn-check+.btn {
+    opacity: 0.6;
+    transition: 0.2s all;
+}
+
+.cat-pill .btn-check:checked+.btn {
+    opacity: 1;
+    background-color: #4f46e5;
+    color: white;
+    border-color: #4f46e5;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
 }
 
 .upload-item-card {
     border-left: 4px solid #4f46e5 !important;
+    background: #fdfdff;
+}
+
+.btn-xs {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
 }
 
 .transition {
     transition: 0.3s all;
 }
 
-/* Category Badge Colors */
-.bg-primary-subtle { background-color: #e0e7ff !important; color: #4338ca !important; }
-.bg-success-subtle { background-color: #dcfce7 !important; color: #15803d !important; }
-.bg-info-subtle { background-color: #e0f2fe !important; color: #0369a1 !important; }
-.bg-warning-subtle { background-color: #fef9c3 !important; color: #a16207 !important; }
-.bg-secondary-subtle { background-color: #f3f4f6 !important; color: #4b5563 !important; }
-
 /* Drag & Drop Overlay */
 .drag-active {
     background-color: rgba(79, 70, 229, 0.05) !important;
     border: 2px dashed #4f46e5 !important;
+}
+
+/* Category Colors */
+.text-primary {
+    color: #4f46e5 !important;
+}
+
+.bg-primary-subtle {
+    background-color: #e0e7ff !important;
+    color: #4f46e5 !important;
+}
+
+.bg-success-subtle {
+    background-color: #dcfce7 !important;
+    color: #166534 !important;
+}
+
+.bg-info-subtle {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+}
+
+.bg-warning-subtle {
+    background-color: #fef9c3 !important;
+    color: #854d0e !important;
+}
+
+.bg-secondary-subtle {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
 }
