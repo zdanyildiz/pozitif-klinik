@@ -1009,6 +1009,12 @@ class AppointmentRepository
             $appointment['patient_phone'] = '-';
         }
 
+        // TC No decryption
+        if (!empty($appointment['patient_tc_no'])) {
+            $decryptedTc = $this->crypto->decrypt($appointment['patient_tc_no']);
+            $appointment['patient_tc_no'] = $decryptedTc ?? $appointment['patient_tc_no'];
+        }
+
         return $appointment;
     }
 }
