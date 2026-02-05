@@ -183,15 +183,7 @@ class PatientRepository
                 if (mb_strlen($token) < 2)
                     continue;
 
-                $hash = hash_hmac('sha256', $token, hex2bin(getenv('BLIND_INDEX_KEY')));
-                // CryptoService içinde blindIndex metodu private key kullanıyor, burada manuel hashlemek yerine
-                // CryptoService'i public yapabiliriz ya da blindIndex metodunu kullanabiliriz.
-                // Ancak CryptoService->blindIndex() metodunu kullanırsak içinde tekrar normalize edecek. 
-                // Token zaten normalize olduğu için sorun yok, tekrar normalize etmesi sonucu değiştirmez (lower->lower).
-
-                // Düzeltme: CryptoService->blindIndex() kullanın
                 $hash = $this->crypto->blindIndex($token);
-
                 $this->db->query($insertSql, [$tableName, $patientId, 'name', $hash]);
             }
         }
@@ -202,10 +194,39 @@ class PatientRepository
             $this->db->query($insertSql, [$tableName, $patientId, 'tc_no', $hash]);
         }
 
-        // 3. Telefon (Tam Eşleşme)
+        // 3. Telefon (Gelişmiş İndeksleme)
         if (!empty($data['phone'])) {
+            // Tam hali (Mevcut format)
             $hash = $this->crypto->blindIndex($data['phone']);
             $this->db->query($insertSql, [$tableName, $patientId, 'phone', $hash]);
+
+            // Sadece rakamlar (05551234567 gibi)
+            $cleanPhone = preg_replace('/[^0-9]/', '', $data['phone']);
+            if ($cleanPhone !== $data['phone'] && !empty($cleanPhone)) {
+                $hashClean = $this->crypto->blindIndex($cleanPhone);
+                $this->db->query($insertSql, [$tableName, $patientId, 'phone', $hashClean]);
+            }
+
+            // Başındaki sıfır olmadan (5551234567 gibi)
+            if (!empty($cleanPhone) && str_starts_with($cleanPhone, '0')) {
+                $noZeroPhone = ltrim($cleanPhone, '0');
+                if (!empty($noZeroPhone)) {
+                    $hashNoZero = $this->crypto->blindIndex($noZeroPhone);
+                    $this->db->query($insertSql, [$tableName, $patientId, 'phone', $hashNoZero]);
+                }
+            }
+
+            // Eğer boşluklu ise parçaları da ekleyelim (Örn: 0555 123 -> "0555" ve "123" ayrı ayrı aranabilsin)
+            if (strpos($data['phone'], ' ') !== false) {
+                $tokens = explode(' ', $data['phone']);
+                foreach ($tokens as $token) {
+                    $token = trim($token, " \t\n\r\0\x0B()-");
+                    if (mb_strlen($token) >= 3) {
+                        $hashToken = $this->crypto->blindIndex($token);
+                        $this->db->query($insertSql, [$tableName, $patientId, 'phone', $hashToken]);
+                    }
+                }
+            }
         }
     }
 
@@ -298,9 +319,21 @@ class PatientRepository
         $hashes = [];
         foreach ($tokens as $token) {
             if (mb_strlen($token) >= 2) {
+                // Orijinal token (normalize edilmiş hali)
                 $hashes[] = $this->crypto->blindIndex($token);
+
+                // Alternatif: Eğer token numara içeriyorsa, sadece rakamlarını da hashle
+                // Örn: "(555)" -> "555" olarak da aranabilsin
+                if (preg_match('/[0-9]/', $token)) {
+                    $clean = preg_replace('/[^0-9]/', '', $token);
+                    if (mb_strlen($clean) >= 2 && $clean !== $token) {
+                        $hashes[] = $this->crypto->blindIndex($clean);
+                    }
+                }
             }
         }
+
+        $hashes = array_unique($hashes);
 
         if (empty($hashes)) {
             return [];

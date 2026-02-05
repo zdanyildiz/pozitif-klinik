@@ -353,6 +353,14 @@ class PaymentRepository
                 foreach ($tokens as $token) {
                     if (mb_strlen($token) >= 2) {
                         $hashes[] = $this->crypto->blindIndex($token);
+
+                        // Ekstra: Numerik karakterler için temizlenmiş halini de ara
+                        if (preg_match('/[0-9]/', $token)) {
+                            $clean = preg_replace('/[^0-9]/', '', $token);
+                            if (mb_strlen($clean) >= 2 && $clean !== $token) {
+                                $hashes[] = $this->crypto->blindIndex($clean);
+                            }
+                        }
                     }
                 }
 

@@ -254,7 +254,7 @@ async function loadPatients() {
             patientTomSelect = new TomSelect('#patientSelect', {
                 valueField: 'id',
                 labelField: 'text',
-                searchField: ['text'],
+                searchField: ['text', 'phone'],
                 placeholder: 'Hasta Ara (En az 2 karakter)...',
                 allowEmptyOption: true,
                 preload: false, // Preload disabled
@@ -275,7 +275,8 @@ async function loadPatients() {
                         .then(res => {
                             const results = (res.data || []).map(p => ({
                                 id: p.id,
-                                text: `${p.name} (${p.tc_no || '-'})`
+                                text: `${p.name} (${p.tc_no || '-'})`,
+                                phone: p.phone || '-'
                             }));
                             callback(results);
                         })
@@ -285,13 +286,13 @@ async function loadPatients() {
                     option: function (data, escape) {
                         return `<div class="py-1 px-2 border-bottom">
                             <div class="fw-bold">${escape(data.text)}</div>
-                            <small class="text-muted">Klinik Kaydı</small>
+                            <small class="text-muted"><i class="bi bi-telephone"></i> ${escape(data.phone)}</small>
                         </div>`;
                     },
                     item: function (data, escape) {
-                        return `<div>${escape(data.text)}</div>`;
+                        return `<div>${escape(data.text)} <small class="text-muted ms-1">(${escape(data.phone)})</small></div>`;
                     },
-                    no_results: (data, escape) => `<div class="no-results p-2">"${escape(data.input)}" için tam eşleşme bulunamadı</div>`,
+                    no_results: (data, escape) => `<div class="no-results p-2">"${escape(data.input)}" için sonuç bulunamadı</div>`,
                     loading: (data, escape) => `<div class="spinner-border spinner-border-sm text-primary m-2" role="status"></div> Aranıyor...`
                 }
             });
