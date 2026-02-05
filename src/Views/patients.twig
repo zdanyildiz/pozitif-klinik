@@ -627,7 +627,8 @@
 
                 if (!patient) return;
 
-                resetPatientForm();
+                document.getElementById('patientId').value = ''; // Clear ID explicitly before setting
+
                 document.getElementById('patientId').value = patient.id;
                 document.getElementById('tc_no').value = patient.tc_no;
                 document.getElementById('name').value = patient.name;

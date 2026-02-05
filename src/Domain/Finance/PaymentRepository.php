@@ -43,11 +43,6 @@ class PaymentRepository
 
         $paymentId = (int) $this->db->getConnection()->lastInsertId();
 
-        // Eğer randevu bazlı ise statü güncelle
-        if (!empty($data['appointment_id'])) {
-            $this->updateAppointmentPaymentStatus((int) $data['appointment_id']);
-        }
-
         return $paymentId;
     }
 
@@ -57,14 +52,19 @@ class PaymentRepository
     public function createMultiple(int $clinicId, array $payments, int $createdBy): array
     {
         $ids = [];
-        $appointmentId = null;
+        $appointmentIdsToUpdate = [];
 
         foreach ($payments as $payment) {
             $payment['created_by'] = $createdBy;
             $ids[] = $this->create($clinicId, $payment);
             if (!empty($payment['appointment_id'])) {
-                $appointmentId = (int) $payment['appointment_id'];
+                $appointmentIdsToUpdate[] = (int) $payment['appointment_id'];
             }
+        }
+
+        // Benzersiz randevu ID'lerini al ve her biri için ödeme durumunu güncelle
+        foreach (array_unique($appointmentIdsToUpdate) as $appId) {
+            $this->updateAppointmentPaymentStatus($appId);
         }
 
         return $ids;

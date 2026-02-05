@@ -1,0 +1,207 @@
+{% extends "platform_layout.twig" %}
+
+{% block title %}Tıbbi Branş Yönetimi - Pozitif Platform{% endblock %}
+
+{% block page_title %}Tıbbi Branşlar (Uzmanlıklar){% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 text-end">
+        <button class="btn btn-primary" onclick="openSpecialtyModal()">
+            <i class="bi bi-plus-lg"></i> Yeni Branş Ekle
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">ID</th>
+                        <th>Branş Kodu</th>
+                        <th>Branş Adı</th>
+                        <th>ICD Prefixleri (Boost)</th>
+                        <th>Durum</th>
+                        <th class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for specialty in specialties %}
+                    <tr>
+                        <td>{{ specialty.id }}</td>
+                        <td><span class="badge bg-light text-dark font-monospace">{{ specialty.code }}</span></td>
+                        <td class="fw-medium">{{ specialty.name }}</td>
+                        <td>
+                            {% if specialty.icd_prefixes %}
+                                {% for prefix in specialty.icd_prefixes|split(',') %}
+                                    <span class="badge bg-info bg-opacity-10 text-info border border-info">{{ prefix }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if specialty.is_active %}
+                                <span class="badge bg-success">Aktif</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Pasif</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editSpecialty({{ specialty|json_encode }})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSpecialty({{ specialty.id }})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            Henüz kayıtlı branş bulunmuyor.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="specialtyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Yeni Branş Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="specialtyForm">
+                    <input type="hidden" id="specialtyId" name="id">
+                    
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Branş Kodu (Benzersiz)</label>
+                        <input type="text" class="form-control font-monospace" id="code" name="code" required placeholder="ORN: DERMATOLOGY">
+                        <div class="form-text">Büyük harf ve _ kullanılmalı. Kod içinde değişmeyecek sabit değerdir.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Branş Adı</label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="Örn: Dermatoloji">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="icd_prefixes" class="form-label">ICD-10 Hedef Harfleri (Boost)</label>
+                        <input type="text" class="form-control font-monospace" id="icd_prefixes" name="icd_prefixes" placeholder="Örn: A,B,J">
+                        <div class="form-text">Virgülle ayırarak giriniz. Bu harflerle başlayan ICD kodları bu branşta üstte çıkar.</div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="1" checked>
+                        <label class="form-check-label" for="is_active">Aktif</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="saveSpecialty()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let specialtyModal;
+
+document.addEventListener('DOMContentLoaded', () => {
+    specialtyModal = new bootstrap.Modal(document.getElementById('specialtyModal'));
+});
+
+function openSpecialtyModal() {
+    document.getElementById('modalTitle').innerText = 'Yeni Branş Ekle';
+    document.getElementById('specialtyForm').reset();
+    document.getElementById('specialtyId').value = '';
+    document.getElementById('code').disabled = false; // Kod yeni kayıtta girilebilir
+    specialtyModal.show();
+}
+
+function editSpecialty(data) {
+    document.getElementById('modalTitle').innerText = 'Branş Düzenle';
+    document.getElementById('specialtyId').value = data.id;
+    document.getElementById('code').value = data.code;
+    document.getElementById('code').disabled = true; // Kod düzenlemede değiştirilemez
+    document.getElementById('name').value = data.name;
+    document.getElementById('icd_prefixes').value = data.icd_prefixes || '';
+    document.getElementById('is_active').checked = data.is_active == 1;
+    specialtyModal.show();
+}
+
+async function saveSpecialty() {
+    const id = document.getElementById('specialtyId').value;
+    const isEdit = !!id;
+    const url = '{{ base_path }}/platform-api/specialties' + (isEdit ? '/' + id : '');
+    const method = isEdit ? 'PUT' : 'POST';
+
+    const formData = {
+        code: document.getElementById('code').value,
+        name: document.getElementById('name').value,
+        icd_prefixes: document.getElementById('icd_prefixes').value,
+        is_active: document.getElementById('is_active').checked ? 1 : 0
+    };
+
+    try {
+        const response = await axios({
+            method: method,
+            url: url,
+            data: formData,
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('platform_token')}`
+            }
+        });
+
+        if (response.data.status) {
+            Swal.fire('Başarılı', response.data.message || 'İşlem tamamlandı', 'success')
+                .then(() => location.reload());
+        }
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Hata', error.response?.data?.message || 'Bir hata oluştu', 'error');
+    }
+}
+
+async function deleteSpecialty(id) {
+    const result = await Swal.fire({
+        title: 'Emin misiniz?',
+        text: "Bu branş silinecek. İlgili personel kayıtları boşa düşebilir.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Evet, Sil',
+        cancelButtonText: 'İptal'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const response = await axios.delete(`{{ base_path }}/platform-api/specialties/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('platform_token')}`
+                }
+            });
+
+            if (response.data.status) {
+                Swal.fire('Silindi', 'Branş silindi', 'success')
+                    .then(() => location.reload());
+            }
+        } catch (error) {
+            Swal.fire('Hata', error.response?.data?.message || 'Silinemedi', 'error');
+        }
+    }
+}
+</script>
+{% endblock %}

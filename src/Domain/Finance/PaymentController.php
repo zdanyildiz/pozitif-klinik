@@ -46,6 +46,11 @@ class PaymentController extends BaseController
 
         // Eğer data['payments'] varsa parçalı ödemedir
         if (isset($data['payments']) && is_array($data['payments'])) {
+            foreach ($data['payments'] as &$payment) {
+                if (empty($payment['payment_date'])) {
+                    $payment['payment_date'] = date('Y-m-d H:i:s');
+                }
+            }
             $paymentIds = $this->paymentRepository->createMultiple($clinicId, $data['payments'], $userId);
 
             $this->getLogger($clinicId)->info('Multiple payments received', [
