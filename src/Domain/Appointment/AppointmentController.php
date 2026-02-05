@@ -73,6 +73,7 @@ class AppointmentController extends BaseController
 
         $date = $params['date'] ?? date('Y-m-d');
         $doctorId = !empty($params['doctor_id']) ? (int) $params['doctor_id'] : null;
+        $excludeId = !empty($params['exclude_id']) ? (int) $params['exclude_id'] : null;
 
         // Slot süresini belirle
         $slotDuration = 30; // Varsayılan
@@ -86,7 +87,7 @@ class AppointmentController extends BaseController
             $slotDuration = (int) $params['slot_duration'];
         }
 
-        $slots = $this->repository->getAvailableSlots($clinicId, $date, $doctorId, $slotDuration);
+        $slots = $this->repository->getAvailableSlots($clinicId, $date, $doctorId, $slotDuration, $excludeId);
 
         return $this->success($response, $slots);
     }

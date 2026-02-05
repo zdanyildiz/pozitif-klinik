@@ -39,6 +39,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderServiceOptionsForTypes();
     loadAppointments();
+
+    // Modal sıfırlama olayları
+    document.getElementById('appointmentModal').addEventListener('hidden.bs.modal', function () {
+        currentAppointmentId = null;
+        if (typeof resetAppointmentForm === 'function') resetAppointmentForm();
+        if (typeof resetSlotGrid === 'function') resetSlotGrid();
+    });
 });
 
 function displayUserInfo() {
@@ -748,11 +755,11 @@ async function editAppointment(id, e) {
             if (app.patient_id) {
                 patientTomSelect.addOption({
                     id: app.patient_id,
-                    text: app.patient_name || 'Hasta'
+                    text: `${app.patient_name} (${app.patient_tc_no || '-'})`,
+                    phone: app.patient_phone || '-'
                 });
             }
             patientTomSelect.setValue(app.patient_id);
-            // patientTomSelect.disable(); // İsteğe bağlı
         }
 
         document.getElementById('typeSelect').value = app.type_id;
@@ -775,6 +782,16 @@ async function editAppointment(id, e) {
 
         // Buton durumunu güncelle
         validateAppointmentForm();
+
+        // Slotları yükle ve mevcut olanı seç
+        await loadAvailableSlots();
+        if (time) {
+            const timeOnly = time.substring(0, 5);
+            const slotIndex = currentSlots.findIndex(s => s.time === timeOnly);
+            if (slotIndex !== -1) {
+                selectSlot(slotIndex);
+            }
+        }
 
         appointmentModal.show();
     } catch (e) {
@@ -1380,6 +1397,7 @@ async function loadAvailableSlots() {
         const params = { date };
         if (typeId) params.type_id = typeId;
         if (doctorId) params.doctor_id = doctorId;
+        if (currentAppointmentId) params.exclude_id = currentAppointmentId;
 
         const res = await api.get('/api/appointments/available-slots', { params });
         const data = res.data;

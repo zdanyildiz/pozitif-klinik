@@ -230,7 +230,8 @@ class AppointmentRepository
         int $clinicId,
         string $date,
         ?int $doctorId = null,
-        int $slotDurationMinutes = 30
+        int $slotDurationMinutes = 30,
+        ?int $excludeAppointmentId = null
     ): array {
         $result = [
             'date' => $date,
@@ -285,7 +286,7 @@ class AppointmentRepository
         $workEnd = $daySchedule['end'] ?? '18:00';
 
         // 4. O gün için mevcut randevuları al (sadece aktif olanlar)
-        $existingAppointments = $this->getDayAppointmentsForSlotCalculation($clinicId, $date, $doctorId);
+        $existingAppointments = $this->getDayAppointmentsForSlotCalculation($clinicId, $date, $doctorId, $excludeAppointmentId);
 
         // 5. Slotları oluştur
         $slots = [];
@@ -359,7 +360,7 @@ class AppointmentRepository
     /**
      * Slot hesaplaması için gün randevularını getirir
      */
-    private function getDayAppointmentsForSlotCalculation(int $clinicId, string $date, ?int $doctorId = null): array
+    private function getDayAppointmentsForSlotCalculation(int $clinicId, string $date, ?int $doctorId = null, ?int $excludeAppointmentId = null): array
     {
         $activeStatuses = ['unconfirmed', 'confirmed', 'waiting', 'in_test'];
         $statusPlaceholders = implode(',', array_fill(0, count($activeStatuses), '?'));
@@ -384,6 +385,12 @@ class AppointmentRepository
         if ($doctorId) {
             $sql .= " AND a.doctor_id = ?";
             $params[] = $doctorId;
+        }
+
+        // Randevu dışlama (Edit durumunda kendi saatini görsün)
+        if ($excludeAppointmentId) {
+            $sql .= " AND a.id != ?";
+            $params[] = $excludeAppointmentId;
         }
 
         $sql .= " ORDER BY a.appointment_date ASC";
@@ -539,6 +546,8 @@ class AppointmentRepository
         $sql = "SELECT 
                     a.*, 
                     p.name as patient_name_encrypted, 
+                    p.phone as patient_phone_encrypted,
+                    p.tc_no as patient_tc_no,
                     t.name as type_name, 
                     t.color_code,
                     u.name as doctor_name,
@@ -990,6 +999,14 @@ class AppointmentRepository
             $decrypted = $this->crypto->decrypt($appointment['patient_name_encrypted']);
             $appointment['patient_name'] = $decrypted ?? 'Bilinmeyen';
             unset($appointment['patient_name_encrypted']);
+        }
+
+        if (!empty($appointment['patient_phone_encrypted'])) {
+            $decryptedPhone = $this->crypto->decrypt($appointment['patient_phone_encrypted']);
+            $appointment['patient_phone'] = $decryptedPhone ?? '-';
+            unset($appointment['patient_phone_encrypted']);
+        } else {
+            $appointment['patient_phone'] = '-';
         }
 
         return $appointment;
