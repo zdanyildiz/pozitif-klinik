@@ -37,22 +37,99 @@ class GeneralRepository
      * ICD-10 tanılarını arar veya sık kullanılanları getirir.
      * Klinik bazlı favorileri önceliklendirir.
      */
-    public function searchDiagnoses(int $clinicId, ?string $query = null): array
+    /**
+     * ICD-10 tanılarını arar veya sık kullanılanları getirir.
+     * Klinik bazlı favorileri ve doktor branşını (Hybrid Search) önceliklendirir.
+     */
+    public function searchDiagnoses(int $clinicId, ?string $query = null, ?int $userId = null): array
     {
-        $sql = "SELECT i.code, i.name, (f.id IS NOT NULL) as is_favorite
+        // 1. Doktorun branşını bul (Boost için)
+        $specialtyPrefixes = [];
+        if ($userId) {
+            $specialtyPrefixes = $this->getUserSpecialtyPrefixes($userId);
+        }
+
+        // 2. Base SQL
+        $sql = "SELECT i.code, i.name, 
+                       (f.id IS NOT NULL) as is_favorite,
+                       0 as relevance_score -- Default score
                 FROM sys_icd10 i
                 LEFT JOIN cln_diagnosis_favorites f ON i.code = f.icd_code AND f.clinic_id = :clinic_id";
 
-        if (empty($query)) {
-            $sql .= " WHERE f.id IS NOT NULL OR i.is_common = 1 ORDER BY is_favorite DESC, i.name ASC LIMIT 50";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute(['clinic_id' => $clinicId]);
-        } else {
-            $sql .= " WHERE i.name LIKE :q OR i.code LIKE :q 
-                     ORDER BY is_favorite DESC, i.name ASC LIMIT 50";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute(['clinic_id' => $clinicId, 'q' => "%$query%"]);
+        $params = ['clinic_id' => $clinicId];
+        $orderBy = "is_favorite DESC";
+
+        // 3. Branş Boost Logic (SQL Injection'a karşı whitelist kullanıyoruz)
+        if (!empty($specialtyPrefixes)) {
+            $boostCases = [];
+            foreach ($specialtyPrefixes as $prefix) {
+                // Prefix sadece harf olmalı (Güvenlik)
+                if (ctype_alpha($prefix)) {
+                    $boostCases[] = "WHEN i.code LIKE '$prefix%' THEN 1";
+                }
+            }
+            if (!empty($boostCases)) {
+                $sql = str_replace(
+                    "0 as relevance_score",
+                    "(CASE " . implode(' ', $boostCases) . " ELSE 0 END) as relevance_score",
+                    $sql
+                );
+                $orderBy .= ", relevance_score DESC";
+            }
         }
+
+        // 4. Arama Filtresi
+        if (empty($query)) {
+            // Arama yoksa favoriler veya yaygın olanlar
+            $sql .= " WHERE f.id IS NOT NULL OR i.is_common = 1";
+        } else {
+            // Arama varsa (Blind Index yok, ICD public data olduğu için LIKE güvenli)
+            $sql .= " WHERE (i.name LIKE :q OR i.code LIKE :q)";
+            $params['q'] = "%$query%";
+        }
+
+        // 5. Sıralama ve Limit
+        $sql .= " ORDER BY " . $orderBy . ", i.name ASC LIMIT 50";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Kullanıcının uzmanlık alanına göre öncelikli ICD harflerini döner
+     */
+    private function getUserSpecialtyPrefixes(int $userId): array
+    {
+        $stmt = $this->db->prepare("SELECT specialty FROM sys_users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $specialty = $stmt->fetchColumn();
+
+        if (!$specialty) {
+            return [];
+        }
+
+        // 2. sys_medical_specialties tablosundan eşleşen kaydı bul
+        // Hem Code (INTERNAL_MEDICINE) hem de Name (İç Hastalıkları) eşleşmesine bakıyoruz
+        // Böylece eski verilerle de uyumlu çalışır.
+        $stmt = $this->db->prepare("
+            SELECT icd_prefixes 
+            FROM sys_medical_specialties 
+            WHERE code = :code OR name LIKE :name_pattern
+            LIMIT 1
+        ");
+
+        $stmt->execute([
+            'code' => $specialty,
+            'name_pattern' => "%$specialty%"
+        ]);
+
+        $prefixesStr = $stmt->fetchColumn();
+
+        if ($prefixesStr) {
+            return explode(',', $prefixesStr);
+        }
+
+        return [];
     }
 }

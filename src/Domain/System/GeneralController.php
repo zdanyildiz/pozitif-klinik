@@ -56,8 +56,11 @@ class GeneralController extends BaseController
     public function listDiagnoses(Request $request, Response $response): Response
     {
         $clinicId = (int) $request->getAttribute('clinic_id');
+        $userPayload = $request->getAttribute('jwt_payload');
+        $userId = $userPayload->sub ?? null;
         $query = $request->getQueryParams()['q'] ?? null;
-        $diagnoses = $this->repository->searchDiagnoses($clinicId, $query);
+
+        $diagnoses = $this->repository->searchDiagnoses($clinicId, $query, (int) $userId);
         return $this->success($response, $diagnoses);
     }
 }

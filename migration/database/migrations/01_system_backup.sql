@@ -131,36 +131,17 @@ INSERT INTO `sys_appointment_statuses` (`status_code`, `name`, `color_code`, `ic
 ('cancelled', 'İptal Edildi', '#dc3545', 'bi-x-circle', 1, 5),
 ('did_not_come', 'Gelmedi', '#6c757d', 'bi-dash-circle', 1, 6);
 
--- 8. Tıbbi Uzmanlıklar (Branşlar) ve Dinamik Formlar
-DROP TABLE IF EXISTS `sys_medical_specialties`;
-CREATE TABLE `sys_medical_specialties` (
+-- 8. Dinamik Muayene Form Tanımları
+DROP TABLE IF EXISTS `sys_specialty_forms`;
+CREATE TABLE `sys_specialty_forms` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `code` varchar(50) NOT NULL,
+  `specialty_code` varchar(50) NOT NULL,
   `name` varchar(100) NOT NULL,
-  `icd_prefixes` varchar(255) DEFAULT NULL COMMENT 'Comma separated ICD-10 prefixes for search boost (e.g. H,J)',
-  `form_schema` LONGTEXT DEFAULT NULL COMMENT 'JSON storage for form fields definition',
+  `form_schema` LONGTEXT NOT NULL COMMENT 'JSON storage for form fields definition',
   `is_active` tinyint(1) DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `specialty_code` (`code`)
+  UNIQUE KEY `specialty_code` (`specialty_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `sys_medical_specialties` (`code`, `name`, `icd_prefixes`, `form_schema`) VALUES
-('INTERNAL_MEDICINE', 'İç Hastalıkları (Dahiliye)', 'A,B,E,J,I,N', NULL),
-('CARDIOLOGY', 'Kardiyoloji', 'I', NULL),
-('ENT', 'Kulak Burun Boğaz', 'H,J', NULL),
-('OPHTHALMOLOGY', 'Göz Hastalıkları', 'H', NULL),
-('ORTHOPEDICS', 'Ortopedi ve Travmatoloji', 'M', NULL),
-('DERMATOLOGY', 'Dermatoloji (Cildiye)', 'L', NULL),
-('NEUROLOGY', 'Nöroloji', 'G', NULL),
-('PSYCHIATRY', 'Psikiyatri', 'F', NULL),
-('GYNECOLOGY', 'Kadın Hastalıkları ve Doğum', 'O', NULL),
-('PEDIATRICS', 'Çocuk Sağlığı ve Hastalıkları', 'A,B,E,J,P,Q', NULL),
-('UROLOGY', 'Üroloji', 'N', NULL),
-('GENERAL_SURGERY', 'Genel Cerrahi', 'K,C,D', NULL),
-('PULMONOLOGY', 'Göğüs Hastalıkları', 'J', NULL),
-('ENDOCRINOLOGY', 'Endokrinoloji', 'E', NULL),
-('INFECTIOUS_DISEASES', 'Enfeksiyon Hastalıkları', 'A,B', NULL),
-('EMERGENCY', 'Acil Tıp', 'R,S,T', NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;
