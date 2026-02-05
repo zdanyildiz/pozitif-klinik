@@ -127,14 +127,43 @@ class FileManager {
         this.uploadListContainer = document.getElementById('fileUploadList');
         this.pendingCountSpan = document.getElementById('pendingCount');
         this.modalFooter = document.getElementById('uploadModalFooter');
+        this.dropZone = document.getElementById('modalDropZone');
 
-        document.getElementById('startUploadBtn').addEventListener('click', () => this.processQueue());
-        document.getElementById('modalAddFilesBtn').addEventListener('click', () => this.fileInput.click());
-        document.getElementById('modalDropZone').addEventListener('click', (e) => {
-            if (e.target.id === 'modalDropZone' || e.target.closest('#modalDropZone') && e.target.tagName !== 'BUTTON') {
-                this.fileInput.click();
-            }
-        });
+        if (!this.initializedEvents) {
+            document.getElementById('startUploadBtn').addEventListener('click', () => this.processQueue());
+            document.getElementById('modalAddFilesBtn').addEventListener('click', () => this.fileInput.click());
+            this.dropZone.addEventListener('click', (e) => {
+                if (e.target.id === 'modalDropZone' || (e.target.closest('#modalDropZone') && e.target.tagName !== 'BUTTON')) {
+                    this.fileInput.click();
+                }
+            });
+
+            // Event delegation for upload list
+            this.uploadListContainer.addEventListener('input', (e) => {
+                const row = e.target.closest('[data-id]');
+                if (!row) return;
+                const id = row.dataset.id;
+                const item = this.pendingFiles.find(f => f.id === id);
+                if (!item) return;
+
+                if (e.target.tagName === 'INPUT' && e.target.type === 'text') {
+                    item.displayName = e.target.value;
+                }
+                if (e.target.tagName === 'INPUT' && e.target.type === 'radio') {
+                    item.category = e.target.value;
+                }
+            });
+
+            this.uploadListContainer.addEventListener('click', (e) => {
+                const btnRemove = e.target.closest('.btn-remove-pending');
+                if (btnRemove) {
+                    const id = btnRemove.dataset.id;
+                    this.pendingFiles = this.pendingFiles.filter(f => f.id !== id);
+                    this.renderUploadList();
+                }
+            });
+            this.initializedEvents = true;
+        }
     }
 
     openUploadModal() {
@@ -170,9 +199,17 @@ class FileManager {
         this.pendingCountSpan.textContent = count;
         this.modalFooter.style.display = count > 0 ? 'flex' : 'none';
 
+        if (count > 0) {
+            this.dropZone.style.display = 'none';
+            // Show a small 'add more' handle if needed, or just let them use the modal footer
+        } else {
+            this.dropZone.style.display = 'block';
+        }
+
         this.pendingFiles.forEach(item => {
             const div = document.createElement('div');
-            div.className = 'upload-item-card p-3 border rounded-3 bg-white shadow-sm mb-3 position-relative animate__animated animate__fadeIn';
+            div.className = 'upload-item-card p-3 border rounded-3 bg-white shadow-sm mb-3 position-relative animate__animated animate__fadeInUp';
+            div.setAttribute('data-id', item.id);
             div.innerHTML = `
                 <div class="row g-3 align-items-center">
                     <div class="col-auto">
@@ -181,18 +218,17 @@ class FileManager {
                         </div>
                     </div>
                     <div class="col">
-                        <div class="mb-1">
-                            <input type="text" class="form-control form-control-sm border-bottom rounded-0 bg-transparent fw-bold" 
-                                   placeholder="Dosya Adı" value="${item.displayName}" 
-                                   onchange="FileManagerHelper.updateName('${item.id}', this.value)">
+                        <div class="mb-2">
+                            <label class="small text-muted fw-bold mb-1">Dosya Görünüm Adı</label>
+                            <input type="text" class="form-control form-control-sm border shadow-none rounded-2 fw-bold" 
+                                   placeholder="Dosya Adı" value="${item.displayName}">
                         </div>
-                        <div class="d-flex gap-2 mt-2">
+                        <div class="d-flex flex-wrap gap-2 mt-2">
                             ${Object.keys(this.categories).map(catKey => `
                                 <div class="cat-pill">
                                     <input type="radio" class="btn-check" name="cat_${item.id}" id="cat_${item.id}_${catKey}" 
-                                           value="${catKey}" ${item.category === catKey ? 'checked' : ''}
-                                           onchange="FileManagerHelper.updateCat('${item.id}', '${catKey}')">
-                                    <label class="btn btn-outline-secondary btn-xs py-1 px-2 border rounded-pill small" for="cat_${item.id}_${catKey}" title="${this.categories[catKey].name}">
+                                           value="${catKey}" ${item.category === catKey ? 'checked' : ''}>
+                                    <label class="btn btn-outline-primary btn-xs py-1 px-2 border rounded-pill shadow-xs" for="cat_${item.id}_${catKey}">
                                         <i class="bi ${this.categories[catKey].icon} me-1"></i>${this.categories[catKey].name.split(' ')[0]}
                                     </label>
                                 </div>
@@ -200,8 +236,8 @@ class FileManager {
                         </div>
                     </div>
                     <div class="col-auto">
-                        <button class="btn btn-outline-danger btn-sm border-0 rounded-circle" onclick="FileManagerHelper.remove('${item.id}')">
-                            <i class="bi bi-trash"></i>
+                        <button type="button" class="btn btn-outline-danger btn-sm border-0 rounded-circle btn-remove-pending" data-id="${item.id}">
+                            <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
                 </div>
@@ -209,11 +245,16 @@ class FileManager {
             this.uploadListContainer.appendChild(div);
         });
 
-        window.FileManagerHelper = {
-            updateName: (id, val) => { const it = this.pendingFiles.find(f => f.id === id); if (it) it.displayName = val; },
-            updateCat: (id, cat) => { const it = this.pendingFiles.find(f => f.id === id); if (it) it.category = cat; },
-            remove: (id) => { this.pendingFiles = this.pendingFiles.filter(f => f.id !== id); this.renderUploadList(); }
-        };
+        if (count > 0) {
+            const addMore = document.createElement('div');
+            addMore.className = 'text-center mt-3';
+            addMore.innerHTML = `
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill border-dashed px-4" onclick="document.getElementById('global_file_input').click()">
+                    <i class="bi bi-plus-lg me-1"></i> Başka Dosya Ekle
+                </button>
+            `;
+            this.uploadListContainer.appendChild(addMore);
+        }
     }
 
     async processQueue() {
@@ -294,22 +335,22 @@ class FileManager {
 
             html += `
                 <div class="col-md-12 col-xl-6">
-                    <div class="file-card p-3 rounded-3 bg-white border h-100 shadow-sm hover-shadow transition">
+                    <div class="file-card p-3 rounded-3 bg-white border h-100 shadow-sm transition">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="file-thumb flex-shrink-0 bg-${cat.color}-subtle rounded-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="bi ${icon} fs-3 text-${cat.color}"></i>
+                            <div class="file-thumb flex-shrink-0 bg-${cat.color}-subtle rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="bi ${icon} fs-4 text-${cat.color}"></i>
                             </div>
                             <div class="flex-grow-1 min-w-0">
-                                <h6 class="mb-1 text-truncate fw-bold">
+                                <h6 class="mb-1 file-card-title fw-bold">
                                     <a href="/api/files/view/${file.uuid}" target="_blank" class="text-decoration-none text-dark ${file.mime_type.includes('image') ? 'preview-file' : ''}" data-title="${displayName}">
                                         ${displayName}
                                     </a>
                                 </h6>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-${cat.color}-subtle text-${cat.color} border-0 rounded-pill" style="font-size: 0.65rem;">
+                                    <span class="badge cat-badge bg-${cat.color}-subtle">
                                         <i class="bi ${cat.icon} me-1"></i>${cat.name}
                                     </span>
-                                    <span class="text-muted small" style="font-size: 0.75rem;">${size} MB</span>
+                                    <span class="text-muted" style="font-size: 0.7rem;">${size} MB</span>
                                 </div>
                             </div>
                             <div class="actions">
