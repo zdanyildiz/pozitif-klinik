@@ -82,6 +82,7 @@ const PaymentModule = {
         if (discountArea) discountArea.classList.add('d-none');
 
         // Pass extra data to renderItems for general discount display
+        window._currentPaymentData = data; // Store for access in sub-renders
         this.renderItems(data.items || [], data.general_discount_amount, data.general_discount_note);
 
         // Reset rows
@@ -159,6 +160,74 @@ const PaymentModule = {
 
         html += '</tbody></table></div>';
         container.innerHTML = html;
+
+        // Render Existing Payments (History)
+        this.renderPayments(window._currentPaymentData?.payments || []);
+    },
+
+    renderPayments(payments) {
+        const container = document.getElementById('paymentSavedRowsContainer');
+        if (!container) return;
+
+        container.innerHTML = '';
+        if (!payments || payments.length === 0) return;
+
+        payments.forEach(p => {
+            const isCancelled = p.status === 'cancelled';
+
+            const row = document.createElement('div');
+            row.className = `payment-row mb-2 ${isCancelled ? 'opacity-50' : ''}`;
+
+            // Yöntem Seçimi (Disabled)
+            const typeOptions = Object.entries(this.config.types).map(([val, label]) =>
+                `<option value="${val}" ${p.payment_type === val ? 'selected' : ''}>${label}</option>`
+            ).join('');
+
+            row.innerHTML = `
+                <div class="input-group input-group-sm">
+                     <span class="input-group-text bg-success-subtle border-success-subtle text-success">
+                        <i class="bi bi-check-circle-fill"></i>
+                     </span>
+                    <select class="form-select w-40 bg-white" disabled>
+                        ${typeOptions}
+                    </select>
+                    <input type="text" class="form-select w-40 bg-white fw-bold text-dark text-end" 
+                           value="${parseFloat(p.amount).toFixed(2)} ₺" disabled>
+                    ${!isCancelled ? `
+                    <button type="button" class="btn btn-outline-danger" onclick="PaymentModule.deletePayment(${p.id})" title="Tahsilatı İptal Et">
+                        <i class="bi bi-trash"></i>
+                    </button>` :
+                    `<button type="button" class="btn btn-secondary disabled" title="İptal Edildi">İptal</button>`
+                }
+                </div>
+                ${!isCancelled ? `<div class="text-end text-muted fst-italic pe-1" style="font-size: 0.65rem;">${p.payment_date}</div>` : ''}
+             `;
+            container.appendChild(row);
+        });
+    },
+
+    async deletePayment(id) {
+        const res = await Swal.fire({
+            title: 'Ödemeyi İptal Et?',
+            text: 'Bu tahsilat kaydı silinecek ve bakiye güncellenecektir.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'Vazgeç'
+        });
+
+        if (res.isConfirmed) {
+            try {
+                await api.delete(`/api/payments/${id}`);
+                const appId = document.getElementById('paymentAppointmentId').value;
+                await this.refresh(appId);
+                window.dispatchEvent(new CustomEvent('payment-saved', { detail: { appointmentId: appId } }));
+                if (typeof Utils !== 'undefined') Utils.showSuccess('Ödeme iptal edildi.');
+            } catch (e) {
+                console.error(e);
+                if (typeof Utils !== 'undefined') Utils.showError('Ödeme iptal edilemedi.');
+            }
+        }
     },
 
     async handleItemDiscount(itemId, currentDiscount, appointmentId) {
@@ -278,6 +347,27 @@ const PaymentModule = {
                 throw new Error('Lütfen en az bir geçerli tutar girin.');
             }
 
+            // Overpayment Warning
+            const totalPayment = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+            const remaining = window._currentPaymentData?.remaining_debt || window._currentPaymentData?.remaining_amount || 0;
+
+            if (totalPayment > remaining + 0.5) { // 0.5 kuruş tolerans
+                const confirmRes = await Swal.fire({
+                    title: 'Fazla Ödeme Uyarısı',
+                    text: `Toplam ödeme (${this.formatCurrency(totalPayment)}), kalan borçtan (${this.formatCurrency(remaining)}) fazla. Devam etmek istiyor musunuz?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Evet, Kaydet',
+                    cancelButtonText: 'Hayır, Düzelt'
+                });
+
+                if (!confirmRes.isConfirmed) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    return;
+                }
+            }
+
             const response = await fetch('/api/payments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -286,22 +376,36 @@ const PaymentModule = {
 
             const result = await response.json();
 
-            if (result.success) {
+            if (result.status) {
                 this.modal.hide();
                 // Trigger global event for pages to refresh
                 window.dispatchEvent(new CustomEvent('payment-saved', { detail: { appointmentId } }));
 
                 if (typeof Toast !== 'undefined') {
-                    Toast.success('Tahsilat başarıyla kaydedildi.');
-                } else {
-                    alert('Tahsilat başarıyla kaydedildi.');
+                    Toast.success(result.message || 'Tahsilat başarıyla kaydedildi.');
+                } else if (typeof Utils !== 'undefined') {
+                    Utils.showSuccess(result.message || 'Tahsilat başarıyla kaydedildi.');
+                } else if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Başarılı',
+                        text: result.message || 'Tahsilat başarıyla kaydedildi.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                 }
             } else {
                 throw new Error(result.message || 'Bir hata oluştu.');
             }
 
         } catch (error) {
-            alert(error.message);
+            if (typeof Utils !== 'undefined') {
+                Utils.showError(error.message);
+            } else if (typeof Swal !== 'undefined') {
+                Swal.fire('Hata', error.message, 'error');
+            } else {
+                console.error(error.message);
+            }
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
@@ -311,7 +415,8 @@ const PaymentModule = {
     async handleApplyDiscount() {
         const appointmentId = document.getElementById('paymentAppointmentId').value;
         if (!appointmentId) {
-            alert('Randevu ID bulunamadı, indirim uygulanamaz.');
+            if (typeof Utils !== 'undefined') Utils.showError('Randevu ID bulunamadı, indirim uygulanamaz.');
+            else if (typeof Swal !== 'undefined') Swal.fire('Hata', 'Randevu ID bulunamadı', 'error');
             return;
         }
 
@@ -344,7 +449,9 @@ const PaymentModule = {
 
         } catch (e) {
             console.error(e);
-            alert('İndirim uygulanamadı: ' + (e.message || 'Bilinmeyen hata'));
+            const msg = 'İndirim uygulanamadı: ' + (e.message || 'Bilinmeyen hata');
+            if (typeof Utils !== 'undefined') Utils.showError(msg);
+            else if (typeof Swal !== 'undefined') Swal.fire('Hata', msg, 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = 'Uygula';

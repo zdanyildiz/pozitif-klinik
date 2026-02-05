@@ -43,6 +43,10 @@ class PaymentRepository
 
         $paymentId = (int) $this->db->getConnection()->lastInsertId();
 
+        if (!empty($data['appointment_id'])) {
+            $this->updateAppointmentPaymentStatus((int) $data['appointment_id']);
+        }
+
         return $paymentId;
     }
 
@@ -94,7 +98,12 @@ class PaymentRepository
         }
 
         // 4. Güncelle
-        $updateSql = "UPDATE cln_appointments SET payment_status = ? WHERE id = ?";
+        // 4. Güncelle
+        if ($status === 'paid') {
+            $updateSql = "UPDATE cln_appointments SET payment_status = ?, status = 'completed' WHERE id = ?";
+        } else {
+            $updateSql = "UPDATE cln_appointments SET payment_status = ? WHERE id = ?";
+        }
         $this->db->query($updateSql, [$status, $appointmentId]);
     }
 
@@ -531,7 +540,7 @@ class PaymentRepository
             WHERE clinic_id = ? 
               AND patient_id = ? 
               AND DATE(payment_date) = ? 
-              AND status = 'completed'
+              AND DATE(payment_date) = ?
             ORDER BY payment_date DESC
         ";
         $payments = $this->db->fetchAll($paymentsSql, [$clinicId, $patientId, $date]);

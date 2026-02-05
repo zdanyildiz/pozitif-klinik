@@ -578,9 +578,14 @@ class AppointmentRepository
         $appointment['total_amount'] = max(0, $netItemsTotal - $appointment['general_discount_amount']);
 
         // Ödeme bilgileri
-        $paidSql = "SELECT COALESCE(SUM(amount), 0) as total_paid FROM cln_payments WHERE appointment_id = ? AND status = 'completed'";
-        $paidResult = $this->db->fetch($paidSql, [$appointmentId]);
-        $appointment['total_paid'] = (float) $paidResult['total_paid'];
+        $paidSql = "SELECT * FROM cln_payments WHERE appointment_id = ? ORDER BY payment_date DESC";
+        $payments = $this->db->fetchAll($paidSql, [$appointmentId]);
+
+        $appointment['payments'] = $payments;
+        $appointment['total_paid'] = array_reduce($payments, function ($sum, $p) {
+            return $sum + ($p['status'] === 'completed' ? (float) $p['amount'] : 0);
+        }, 0.0);
+
         $appointment['remaining_amount'] = $appointment['total_amount'] - $appointment['total_paid'];
 
         return $appointment;

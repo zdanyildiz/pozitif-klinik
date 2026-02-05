@@ -392,41 +392,19 @@ function renderAppointments() {
         const statusWrapper = document.createElement('div');
         statusWrapper.className = 'd-flex align-items-center gap-2 flex-wrap';
 
-        // Randevu Durumu Badge (Küçük versiyon)
+        // Randevu Durumu Badge
         const statusBadge = document.createElement('span');
         if (app.status_name) {
             statusBadge.className = 'badge';
             statusBadge.style.backgroundColor = `${app.status_color}20`;
             statusBadge.style.color = app.status_color;
             statusBadge.style.border = `1px solid ${app.status_color}40`;
-            statusBadge.style.fontSize = '0.75rem';
             statusBadge.innerHTML = `<i class="bi ${app.status_icon}"></i> ${app.status_name}`;
         } else {
             statusBadge.className = `badge appointment-status-${app.status}`;
-            statusBadge.style.fontSize = '0.75rem';
             statusBadge.textContent = getStatusLabel(app.status);
         }
         statusWrapper.appendChild(statusBadge);
-
-        // Ödeme Durumu Badge (Icon-only veya çok kısa)
-        const paymentBadge = document.createElement('span');
-        paymentBadge.className = 'badge rounded-pill';
-        paymentBadge.style.fontSize = '0.7rem';
-        if (app.payment_status === 'paid') {
-            paymentBadge.className += ' bg-success';
-            paymentBadge.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
-            paymentBadge.title = 'Ödendi';
-        } else if (app.payment_status === 'partially_paid') {
-            paymentBadge.className += ' bg-warning text-dark';
-            paymentBadge.innerHTML = '<i class="bi bi-clock-history"></i>';
-            paymentBadge.title = 'Parçalı Ödeme';
-        } else {
-            paymentBadge.className += ' bg-light text-muted border';
-            paymentBadge.innerHTML = '<i class="bi bi-wallet2"></i>';
-            paymentBadge.title = 'Ödenmedi';
-        }
-        statusWrapper.appendChild(paymentBadge);
-
         tdStatus.appendChild(statusWrapper);
         row.appendChild(tdStatus);
 
@@ -435,33 +413,45 @@ function renderAppointments() {
         const actionWrapper = document.createElement('div');
         actionWrapper.className = 'd-flex justify-content-end align-items-center gap-2';
 
-        // 1. Tahsilat Butonu (Daha şık ve küçük)
-        if (app.payment_status !== 'paid') {
-            const btnPay = document.createElement('button');
-            btnPay.className = 'btn btn-sm btn-outline-success shadow-none';
-            btnPay.style.fontSize = '0.75rem';
-            btnPay.innerHTML = '<i class="bi bi-wallet2"></i> Tahsil';
-            btnPay.onclick = async (e) => {
-                e.stopPropagation();
-                const originalHtml = btnPay.innerHTML;
-                try {
-                    btnPay.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-                    btnPay.disabled = true;
+        // 1. Ödeme/Tahsilat Butonu (Birleştirilmiş Mantık)
+        const remainingDebt = parseFloat(app.remaining_amount || 0);
+        const isPaid = app.payment_status === 'paid' && remainingDebt <= 0;
 
-                    const res = await api.get(`/api/appointments/${app.id}`);
-                    if (res.data) {
-                        openPaymentModal(res.data);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    Utils.showError('Randevu bilgileri yüklenemedi.');
-                } finally {
-                    btnPay.innerHTML = originalHtml;
-                    btnPay.disabled = false;
-                }
-            };
-            actionWrapper.appendChild(btnPay);
+        const btnPayment = document.createElement('button');
+        // Stil: Diğer butonlarla aynı boyutta (btn-sm)
+        if (isPaid) {
+            // Ödendi Durumu
+            btnPayment.className = 'btn btn-sm btn-outline-success shadow-none';
+            btnPayment.textContent = 'Ödendi';
+            btnPayment.title = 'Ödeme Detayları';
+        } else {
+            // Tahsilat Durumu
+            btnPayment.className = 'btn btn-sm btn-primary shadow-none'; // Daha belirgin
+            btnPayment.textContent = 'Tahsilat';
         }
+
+        // Tıklama Olayı (Her iki durumda da açılacak)
+        btnPayment.onclick = async (e) => {
+            e.stopPropagation();
+            const originalHtml = btnPayment.innerHTML;
+            try {
+                btnPayment.disabled = true;
+                btnPayment.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                // Her zaman güncel veriyi çek
+                const res = await api.get(`/api/appointments/${app.id}`);
+                if (res.data) {
+                    openPaymentModal(res.data);
+                }
+            } catch (err) {
+                console.error(err);
+                if (typeof Utils !== 'undefined') Utils.showError('Randevu bilgileri yüklenemedi.');
+            } finally {
+                btnPayment.innerHTML = originalHtml;
+                btnPayment.disabled = false;
+            }
+        };
+        actionWrapper.appendChild(btnPayment);
 
         // 2. Muayene Butonu
         const btnExam = document.createElement('button');

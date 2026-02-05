@@ -14,6 +14,7 @@
                     <div class="col-lg-8 p-4">
                         <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-list-check me-2"></i>Hizmetler ve Ücretler</h6>
                         
+
                         <!-- Item Breakdown -->
                         <div id="paymentItemsContainer" class="mb-4 text-sm"></div>
 
@@ -70,9 +71,15 @@
                             <input type="hidden" id="paymentPatientId" name="patient_id">
                             <input type="hidden" id="paymentAppointmentId" name="appointment_id">
                             
+
                             <!-- Dinamik Ödeme Satırları -->
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-muted mb-2">Ödeme Yöntemi ve Tutar</label>
+                                
+                                <!-- Kayıtlı (Geçmiş) Ödemeler -->
+                                <div id="paymentSavedRowsContainer" class="mb-2"></div>
+
+                                <!-- Yeni Ödeme Satırları -->
                                 <div id="paymentRowsContainer">
                                     <!-- JS ile dinamik satırlar eklenecek -->
                                 </div>
