@@ -64,12 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Collect buttons
     document.querySelectorAll('.btn-collect').forEach(btn => {
         btn.onclick = () => {
-            const data = {
-                patient_id: btn.dataset.patientId,
-                appointment_id: btn.dataset.appointmentId,
-                remaining_debt: parseFloat(btn.dataset.remaining)
-            };
-            PaymentModule.open(data);
+            const appointmentId = btn.dataset.appointmentId;
+            if (appointmentId) {
+                PaymentModule.refresh(appointmentId);
+            } else {
+                // Fallback for patient-only payments if needed
+                PaymentModule.open({
+                    patient_id: btn.dataset.patientId,
+                    remaining_debt: parseFloat(btn.dataset.remaining)
+                });
+            }
         };
     });
 

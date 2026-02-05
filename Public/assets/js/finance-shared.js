@@ -24,6 +24,12 @@ const PaymentModule = {
         document.getElementById('btnAddPaymentRow').addEventListener('click', () => this.addPaymentRow());
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
 
+        // Print listener
+        const btnPrint = document.getElementById('btnSaveAndPrintReceipt');
+        if (btnPrint) {
+            btnPrint.addEventListener('click', (e) => this.handleSubmit(e, true));
+        }
+
         // Discount listeners
         const btnApply = document.getElementById('btnApplyDiscount');
         if (btnApply) btnApply.addEventListener('click', () => this.handleApplyDiscount());
@@ -54,11 +60,15 @@ const PaymentModule = {
         document.getElementById('paymentAppointmentId').value = data.appointment_id || '';
         document.getElementById('paymentNotes').value = '';
 
+        // Handle inconsistent key names from different sources
+        const totalAmount = data.total_debt !== undefined ? data.total_debt : (data.total_amount || 0);
+        const remainingAmount = data.remaining_debt !== undefined ? data.remaining_debt : (data.remaining_amount || 0);
+
         // Show summary if debt info provided
         const summary = document.getElementById('paymentSummaryAlert');
-        if (data.total_debt !== undefined) {
-            document.getElementById('summaryTotalDebt').textContent = this.formatCurrency(data.total_debt);
-            document.getElementById('summaryRemainingDebt').textContent = this.formatCurrency(data.remaining_debt);
+        if (totalAmount !== undefined) {
+            document.getElementById('summaryTotalDebt').textContent = this.formatCurrency(totalAmount);
+            document.getElementById('summaryRemainingDebt').textContent = this.formatCurrency(remainingAmount);
             summary.classList.remove('d-none');
         } else {
             summary.classList.add('d-none');
@@ -66,8 +76,11 @@ const PaymentModule = {
 
         // Populate discount fields if data exists
         const generalDiscount = parseFloat(data.general_discount_amount || 0);
-        document.getElementById('paymentGeneralDiscount').value = generalDiscount > 0 ? generalDiscount.toFixed(2) : '';
-        document.getElementById('paymentDiscountNote').value = data.general_discount_note || '';
+        const discountInput = document.getElementById('paymentGeneralDiscount');
+        const discountNoteInput = document.getElementById('paymentDiscountNote');
+
+        if (discountInput) discountInput.value = generalDiscount > 0 ? generalDiscount.toFixed(2) : '';
+        if (discountNoteInput) discountNoteInput.value = data.general_discount_note || '';
 
         // Buton yazısını güncelle (Uygula vs Düzenle)
         const btnToggle = document.getElementById('btnToggleDiscount');
@@ -87,7 +100,7 @@ const PaymentModule = {
 
         // Reset rows
         this.rowsContainer.innerHTML = '';
-        this.addPaymentRow(data.remaining_debt || 0);
+        this.addPaymentRow(remainingAmount > 0 ? remainingAmount : 0);
 
         this.modal.show();
     },
@@ -111,6 +124,8 @@ const PaymentModule = {
         container.innerHTML = '';
         if ((!items || items.length === 0) && generalDiscountAmount <= 0) {
             container.innerHTML = '<div class="text-muted text-center py-3">Hizmet bulunamadı.</div>';
+            // Even if no items, we must render payments (history)
+            this.renderPayments(window._currentPaymentData?.payments || []);
             return;
         }
 
@@ -311,14 +326,16 @@ const PaymentModule = {
         return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
     },
 
-    async handleSubmit(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnSavePayment');
-        const originalHtml = btn.innerHTML;
+    async handleSubmit(e, shouldPrint = false) {
+        if (e) e.preventDefault();
+        const saveBtn = document.getElementById('btnSavePayment');
+        const printBtn = document.getElementById('btnSaveAndPrintReceipt');
+        const originalHtml = saveBtn.innerHTML;
 
         try {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+            saveBtn.disabled = true;
+            if (printBtn) printBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
 
             const formData = new FormData(this.form);
             const patientId = formData.get('patient_id');
@@ -328,17 +345,17 @@ const PaymentModule = {
             // Parse payments array
             const payments = [];
             const rows = this.rowsContainer.querySelectorAll('.payment-row');
-            rows.forEach((row, i) => {
+            rows.forEach((row) => {
                 const type = row.querySelector(`select`).value;
                 const amount = row.querySelector(`input`).value;
-                if (amount > 0) {
+                if (parseFloat(amount) > 0) {
                     payments.push({
                         patient_id: patientId,
                         appointment_id: appointmentId || null,
                         payment_type: type,
-                        amount: amount,
+                        amount: parseFloat(amount),
                         notes: notes,
-                        payment_date: new Date().toISOString().slice(0, 19).replace('T', ' ')
+                        payment_date: new Date().toLocaleString('sv-SE').slice(0, 19).replace('T', ' ')
                     });
                 }
             });
@@ -362,8 +379,9 @@ const PaymentModule = {
                 });
 
                 if (!confirmRes.isConfirmed) {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
+                    saveBtn.disabled = false;
+                    if (printBtn) printBtn.disabled = false;
+                    saveBtn.innerHTML = originalHtml;
                     return;
                 }
             }
@@ -377,39 +395,108 @@ const PaymentModule = {
             const result = await response.json();
 
             if (result.status) {
+                // Determine print info before closing
+                const printInfo = shouldPrint ? {
+                    patient_name: document.getElementById('detailPatientName')?.textContent || 'Hasta',
+                    payments: payments,
+                    date: new Date().toLocaleDateString('tr-TR'),
+                    clinic_name: 'Pozitif Klinik'
+                } : null;
+
                 this.modal.hide();
                 // Trigger global event for pages to refresh
                 window.dispatchEvent(new CustomEvent('payment-saved', { detail: { appointmentId } }));
 
-                if (typeof Toast !== 'undefined') {
-                    Toast.success(result.message || 'Tahsilat başarıyla kaydedildi.');
-                } else if (typeof Utils !== 'undefined') {
+                if (typeof Utils !== 'undefined') {
                     Utils.showSuccess(result.message || 'Tahsilat başarıyla kaydedildi.');
                 } else if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'success',
                         title: 'Başarılı',
                         text: result.message || 'Tahsilat başarıyla kaydedildi.',
-                        timer: 2000,
+                        timer: 1500,
                         showConfirmButton: false
                     });
+                }
+
+                if (shouldPrint && printInfo) {
+                    this.printReceipt(printInfo);
                 }
             } else {
                 throw new Error(result.message || 'Bir hata oluştu.');
             }
 
         } catch (error) {
+            console.error('Submit Error:', error);
             if (typeof Utils !== 'undefined') {
                 Utils.showError(error.message);
             } else if (typeof Swal !== 'undefined') {
                 Swal.fire('Hata', error.message, 'error');
-            } else {
-                console.error(error.message);
             }
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
+            saveBtn.disabled = false;
+            if (printBtn) printBtn.disabled = false;
+            saveBtn.innerHTML = originalHtml;
         }
+    },
+
+    printReceipt(info) {
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        const paymentsHtml = info.payments.map(p => `
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">${this.config.types[p.payment_type] || p.payment_type}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${this.formatCurrency(p.amount)}</td>
+            </tr>
+        `).join('');
+
+        const total = info.payments.reduce((sum, p) => sum + p.amount, 0);
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Tahsilat Makbuzu</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 40px; color: #333; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                        .info { margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        .total { margin-top: 20px; text-align: right; font-size: 1.2em; font-weight: bold; }
+                        .footer { margin-top: 50px; text-align: center; font-size: 0.8em; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>${info.clinic_name}</h1>
+                        <h3>TAHSİLAT MAKBUZU</h3>
+                    </div>
+                    <div class="info">
+                        <p><strong>Hasta:</strong> ${info.patient_name}</p>
+                        <p><strong>Tarih:</strong> ${info.date}</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Ödeme Türü</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Tutar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${paymentsHtml}
+                        </tbody>
+                    </table>
+                    <div class="total">
+                        Toplam: ${this.formatCurrency(total)}
+                    </div>
+                    <div class="footer">
+                        Bu bir bilgi makbuzudur. Mali değeri yoktur.
+                    </div>
+                    <script>
+                        window.onload = function() { window.print(); window.close(); };
+                    </scrip` + `t>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
     },
 
     async handleApplyDiscount() {

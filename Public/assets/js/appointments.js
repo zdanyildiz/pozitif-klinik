@@ -830,6 +830,7 @@ function openPaymentModal(app) {
             total_debt: app.total_amount || 0,
             remaining_debt: app.remaining_amount !== undefined ? app.remaining_amount : (app.total_amount || 0),
             items: app.items || [],
+            payments: app.payments || [],
             general_discount_amount: app.general_discount_amount || 0,
             general_discount_note: app.general_discount_note || ''
         });

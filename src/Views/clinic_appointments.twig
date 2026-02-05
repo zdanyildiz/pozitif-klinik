@@ -327,6 +327,6 @@
 
 {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-    <script src="{{ base_path }}/assets/js/finance-shared.js?v={{ version }}"></script>
+    <script src="{{ base_path }}/assets/js/finance-shared.js?v={{ version }}&t={{ 'now'|date('U') }}"></script>
     <script src="{{ base_path }}/assets/js/appointments.js?v={{ version }}"></script>
 {% endblock %}
