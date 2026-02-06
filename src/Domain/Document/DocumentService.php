@@ -268,7 +268,9 @@ class DocumentService
 
         if ($savePdf) {
             try {
-                $storageDir = rtrim($_ENV['STORAGE_PATH'] ?? 'storage', '/');
+                // Absolute path kullan: Proje Root/storage
+                $projectRoot = dirname(__DIR__, 3);
+                $storageDir = $projectRoot . '/storage';
                 $clinicDir = $storageDir . '/clinic_' . $clinicId . '/documents';
 
                 // Dizin yoksa oluştur
