@@ -267,32 +267,42 @@ class DocumentService
         $fileUrl = null;
 
         if ($savePdf) {
-            $storageDir = rtrim($_ENV['STORAGE_PATH'] ?? 'storage', '/');
-            $clinicDir = $storageDir . '/clinic_' . $clinicId . '/documents';
+            try {
+                $storageDir = rtrim($_ENV['STORAGE_PATH'] ?? 'storage', '/');
+                $clinicDir = $storageDir . '/clinic_' . $clinicId . '/documents';
 
-            // Dizin yoksa oluştur
-            if (!is_dir($clinicDir)) {
-                mkdir($clinicDir, 0755, true);
+                // Dizin yoksa oluştur
+                if (!is_dir($clinicDir)) {
+                    if (!@mkdir($clinicDir, 0777, true) && !is_dir($clinicDir)) {
+                        $this->logger->error("Epikriz kaydı için dizin oluşturulamadı: $clinicDir");
+                    }
+                }
+
+                // Benzersiz dosya adı
+                $timestamp = date('Ymd_His');
+                $fileName = sprintf('epikriz_%d_%s.pdf', $examinationId, $timestamp);
+                $fullPath = $clinicDir . '/' . $fileName;
+
+                // PDF'i yaz
+                if (@file_put_contents($fullPath, $pdfContent) === false) {
+                    $this->logger->error("Epikriz dosyası yazılamadı: $fullPath");
+                } else {
+                    // Relatif yol (DB ve URL için)
+                    $filePath = 'clinic_' . $clinicId . '/documents/' . $fileName;
+                    $fileUrl = '/storage/' . $filePath;
+
+                    $this->logger->info("Epikriz PDF dosyası kaydedildi", [
+                        'clinic_id' => $clinicId,
+                        'examination_id' => $examinationId,
+                        'file_path' => $filePath
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Dosya hatası ana işlemi durdurmasın
+                $this->logger->error("Dosya kayıt hatası: " . $e->getMessage());
             }
-
-            // Benzersiz dosya adı
-            $timestamp = date('Ymd_His');
-            $fileName = sprintf('epikriz_%d_%s.pdf', $examinationId, $timestamp);
-            $fullPath = $clinicDir . '/' . $fileName;
-
-            // PDF'i yaz
-            file_put_contents($fullPath, $pdfContent);
-
-            // Relatif yol (DB ve URL için)
-            $filePath = 'clinic_' . $clinicId . '/documents/' . $fileName;
-            $fileUrl = '/storage/' . $filePath;
-
-            $this->logger->info("Epikriz PDF dosyası kaydedildi", [
-                'clinic_id' => $clinicId,
-                'examination_id' => $examinationId,
-                'file_path' => $filePath
-            ]);
         }
+
 
         // 4. Veritabanına kaydet
         $documentData = [
