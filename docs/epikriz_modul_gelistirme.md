@@ -7,241 +7,156 @@
 
 ## 1. Mimari Yaklaşım ve Kurallar
 
-Projenin mevcut MVC yapısı ve "Domain Driven" klasörleme mantığına uygun olarak, Epikriz sistemi tek bir "Doküman Oluşturma" fonksiyonu değil, yönetilebilir bir **Domain** olarak kurgulanmalıdır.
+Projenin mevcut MVC yapısı ve "Domain Driven" klasörleme mantığına uygun olarak, Epikriz sistemi tek bir "Doküman Oluşturma" fonksiyonu değil, yönetilebilir bir **Domain** olarak kurgulanmıştır.
 
-### Temel Prensipler (Mimari Kurallar'dan Türetilmiştir):
+### Hibrit Kayıt Modeli (Snapshot Pattern)
 
-1. **İş Mantığı Serviste Kalacak:** Controller sadece HTTP isteğini karşılayıp `DocumentService`'i çağıracak. PDF oluşturma, veri toplama işleri serviste yapılacak.
-2. **Repo Sorumluluğu:** Veritabanından şablon çekme işlemi `DocumentTemplateRepository` içinde olacak.
-3. **Dinamik Yapı:** Şablonlar "Hard-coded" HTML değil, Twig motoru ile render edilen dinamik yapılar olacak.
-4. **Multi-Tenant Uyumu:** Her kliniğin kendi şablonu olabileceği gibi, sistem genelinde "Varsayılan" şablonlar da olacak.
+Tıbbi dokümantasyonun yasal geçerliliği ve veri güvenliği için **Hibrit Model** uygulanmıştır:
+
+1.  **Dinamik Önizleme (Preview):** Doktor, istediği şablonu seçerek anlık verilerle oluşturulan PDF'i görebilir. Bu aşamada veritabanına kayıt atılmaz, sadece bellek üzerinde (on-the-fly) oluşturulur.
+2.  **Kesinleştirip Kaydetme (Finalize & Snapshot):** Doktor "Onayla ve Kaydet" dediğinde:
+    *   PDF fiziksel olarak sunucuya dosya sistemine (`storage/`) kaydedilir.
+    *   Bu dosya, o anki verilerin **değiştirilemez bir anlık görüntüsüdür (snapshot)**.
+    *   Veritabanına dosya yolu ve metadata kaydedilir.
+    *   Sonradan hasta verisi değişse bile, o tarihteki epikriz değişmez.
 
 ---
 
 ## 2. Veritabanı Şeması (Migration Planı)
 
-Epikriz şablonlarını ve oluşturulan dokümanların kaydını tutmak için aşağıdaki tablolar gereklidir.
+Epikriz şablonlarını ve oluşturulan dokümanların kaydını tutmak için aşağıdaki tablolar kullanılmıştır.
 
 ```sql
 -- 1. Doküman Şablonları Tablosu
 CREATE TABLE clinic_document_templates (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NULL, -- NULL ise Sistem Varsayılanı, Dolu ise Kliniğe Özel
-    name VARCHAR(100) NOT NULL, -- Örn: "Standart Epikriz", "Özet Epikriz (İng)"
+    clinic_id INT NULL, -- NULL ise Sistem Varsayılanı (Platform templates), 0 ise tüm klinikler, diğerleri kliniğe özel
+    name VARCHAR(100) NOT NULL,
     type VARCHAR(50) NOT NULL, -- 'epicrisis', 'prescription', 'consent_form'
     content_html MEDIUMTEXT NOT NULL, -- Twig formatında HTML şablon
+    css_styles TEXT NULL, -- Şablona özel CSS
+    footer_html TEXT NULL, -- Sayfa altı bilgisi
+    page_format VARCHAR(20) DEFAULT 'A4',
+    orientation VARCHAR(20) DEFAULT 'portrait', -- 'portrait' veya 'landscape'
+    margin_left INT DEFAULT 15,
+    margin_right INT DEFAULT 15,
+    margin_top INT DEFAULT 15,
+    margin_bottom INT DEFAULT 15,
     is_active BOOLEAN DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Oluşturulan Dokümanlar Logu (Opsiyonel ama önerilir)
-CREATE TABLE patient_documents (
+-- 2. Hasta Dokümanları Tablosu
+CREATE TABLE cln_patient_documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL,
+    clinic_id INT NOT NULL,
     patient_id INT NOT NULL,
     examination_id INT NULL,
+    appointment_id INT NULL,
     template_id INT NOT NULL,
-    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by INT NOT NULL, -- User ID
-    file_path VARCHAR(255) NULL, -- Eğer PDF olarak saklanacaksa
-    FOREIGN KEY (patient_id) REFERENCES patients(id)
+    document_type VARCHAR(50) NOT NULL, -- 'epicrisis'
+    document_title VARCHAR(255) NOT NULL,
+    file_path VARCHAR(255) NULL, -- Relatif yol: clinic_1/documents/dosya.pdf
+    generated_content MEDIUMTEXT NULL, -- HTML içeriğin yedeği (Opsiyonel)
+    metadata JSON NULL, -- Doktor adı, tanı vb. bilgiler (Snapshot)
+    created_by INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX (clinic_id, patient_id),
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 );
-
 ```
 
 ---
 
-## 3. Backend Geliştirme Planı
+## 3. Backend Geliştirme Detayları
 
-### A. Klasör Yapısı (Domain)
+### A. Dosya Depolama (Storage)
 
-Yeni bir domain oluşturulmalıdır: `src/Domain/Document`
+Yasal saklama gereklilikleri nedeniyle, dosya sistemi tabanlı depolama tercih edilmiştir.
 
-```
-src/Domain/Document/
-├── DocumentController.php       # Web/API Endpoint'leri
-├── DocumentService.php          # İş Mantığı ve PDF Render
-├── DocumentRepository.php       # DB İşlemleri
-├── TemplateRenderer.php         # Twig Data Binding (Helper)
-└── Templates/                   # (Opsiyonel) Varsayılan .twig dosyaları
+*   **Ana Dizin:** Proje kök dizininde `/storage` (Absolute path: `PROJECT_ROOT/storage`)
+*   **Klinik Dizini:** `/storage/clinic_{id}/documents/`
+*   **Dosya Adı:** `epikriz_{examId}_{YYYYMMDD_HHMMSS}.pdf`
+*   **Erişim:** `/Public/storage` sembolik linki üzerinden web erişimi sağlanır.
 
-```
+### B. PDF Kütüphanesi (mPDF v8)
 
-### B. Service Katmanı (`DocumentService.php`)
+Modern PHP (8.x) uyumluluğu için **mPDF v8.2.7** kullanılmıştır.
+*Kurulum:* `composer require mpdf/mpdf:^8.2 --ignore-platform-reqs`
 
-Bu servis, bir epikriz oluşturmak için gerekli olan `Patient`, `Examination`, `LabResults` ve `Diagnosis` verilerini toplar ve tek bir veri paketine (DTO) dönüştürür.
-
-**Veri Toplama Mantığı:**
-
-1. `ExaminationRepository`'den muayene detaylarını çek.
-2. `PatientRepository`'den hasta kimlik bilgilerini çek.
-3. `LabRepository`'den o muayeneye (`appointment_id`) bağlı sonuçları çek.
-4. Legacy Veri Kontrolü: Eğer `examination.lab_notes` doluysa bunu da veriye ekle.
-
-### C. PDF Kütüphanesi
-
-Projede PHP tabanlı olduğu için **mPDF** kütüphanesi önerilir (UTF-8 ve CSS desteği güçlüdür).
-*Kurulum:* `composer require mpdf/mpdf`
+Türkçe karakter desteği için `autoScriptToLang: true` ve `autoLangToFont: true` ayarları aktiftir.
 
 ---
 
-## 4. Şablon Motoru (Twig) ve Veri Değişkenleri
+## 4. API Endpoint'leri
 
-Veritabanındaki `content_html` alanında veya `.twig` dosyasında kullanılacak standart değişken seti belirlenmelidir. Bu sayede şablonları düzenleyen kişi hangi verinin nereden geleceğini bilir.
+Doküman yönetimi için aşağıdaki endpoint'ler geliştirilmiştir:
 
-### Standart Değişken Listesi (Variables)
-
-| Değişken | Açıklama | Kaynak |
+| Metod | Endpoint | Açıklama |
 | --- | --- | --- |
-| `{{ clinic.name }}` | Klinik Adı | Tenant |
-| `{{ clinic.logo }}` | Logo URL | Tenant |
-| `{{ patient.full_name }}` | Hasta Adı Soyadı | Patient |
-| `{{ patient.tc_no }}` | TC Kimlik No | Patient |
-| `{{ patient.birth_date }}` | Doğum Tarihi | Patient |
-| `{{ exam.date }}` | Muayene Tarihi | Examination |
-| `{{ exam.complaint }}` | Şikayet | Examination |
-| `{{ exam.history }}` | Hikaye (Anamnez) | Examination |
-| `{{ exam.findings }}` | Bulgular | Examination |
-| `{{ exam.result_note }}` | Sonuç Notu / Tedavi | Examination |
-| `{{ diagnoses }}` | Tanılar (Array) | Examination (ICD Pivot) |
-| `{{ lab_results }}` | Lab Sonuçları (Array) | LabRepository |
-| `{{ legacy_lab_note }}` | Manuel Tetkik Notu | Examination (Textarea) |
-| `{{ doctor.name }}` | Doktor Adı | User |
+| `GET` | `/api/documents/templates?type=epicrisis` | Kullanılabilir şablonları listeler |
+| `GET` | `/api/documents/epicrisis/{examinationId}?template_id=1` | PDF Önizleme (Stream döner, kaydetmez) |
+| `GET` | `/api/documents/epicrisis/{examinationId}/preview` | HTML Önizleme |
+| `POST` | `/api/documents/epicrisis` | **Kesinleştir ve Kaydet** (JSON Body: `{examination_id, template_id}`) |
 
-### Örnek Twig Şablonu (Parça)
-
-```html
-<div class="header">
-    <img src="{{ clinic.logo }}" width="150">
-    <h1>{{ clinic.name }} - Epikriz Raporu</h1>
-</div>
-
-<table class="patient-info">
-    <tr>
-        <td><strong>Hasta:</strong> {{ patient.full_name }}</td>
-        <td><strong>TC:</strong> {{ patient.tc_no }}</td>
-        <td><strong>Tarih:</strong> {{ exam.date|date("d.m.Y") }}</td>
-    </tr>
-</table>
-
-<h3>Tanılar (ICD-10)</h3>
-<ul>
-    {% for diag in diagnoses %}
-        <li>{{ diag.code }} - {{ diag.name }}</li>
-    {% endfor %}
-</ul>
-
-<h3>Tetkik Sonuçları</h3>
-{% if lab_results is not empty %}
-    <table border="1">
-        {% for lab in lab_results %}
-            <tr>
-                <td>{{ lab.test_name }}</td>
-                <td>{{ lab.result_value }} {{ lab.unit }}</td>
-                <td>{{ lab.reference_range }}</td>
-            </tr>
-        {% endfor %}
-    </table>
-{% endif %}
-
-{% if legacy_lab_note %}
-    <div class="legacy-note">
-        <strong>Ek Notlar:</strong><br>
-        {{ legacy_lab_note|nl2br }}
-    </div>
-{% endif %}
-
+**POST Yanıtı:**
+```json
+{
+    "status": true,
+    "message": "Epikriz başarıyla oluşturuldu ve kaydedildi",
+    "data": {
+        "id": 123,
+        "file_url": "/storage/clinic_1/documents/epikriz_75060_20260206.pdf",
+        "file_path": "clinic_1/documents/epikriz_75060_20260206.pdf"
+    }
+}
 ```
 
 ---
 
-## 5. Uygulama Adımları (Implementation Steps)
+## 5. Şablon Motoru (Twig)
 
-### Adım 1: Migration Çalıştırılması
+Şablonlar veritabanında saklanır ve çalışma zamanında render edilir.
 
-`migrations/` klasörüne yeni SQL dosyası eklenip çalıştırılacak.
-
-### Adım 2: Repository ve Entity Oluşturma
-
-`src/Domain/Document/DocumentTemplateRepository.php` oluşturulacak. Sadece `SELECT` ve `INSERT` işlemlerini içerecek.
-
-### Adım 3: Service Kodlaması
-
-`generateEpicrisisPdf(int $examinationId, int $templateId)` metodu yazılacak.
-Bu metod:
-
-1. Verileri toplayacak (`getDataForTemplate`).
-2. Twig'i render edecek (`renderView`).
-3. mPDF'i başlatıp HTML'i verecek.
-4. Çıktıyı (Output) stream olarak dönecek.
-
-### Adım 4: Controller Entegrasyonu
-
-`ExaminationController` veya yeni `DocumentController` içine şu route eklenecek:
-`GET /examination/{id}/epicrisis?template_id=1`
-
-```php
-// Örnek Controller Metodu
-public function printEpicrisis($request, $response, $args) {
-    $examId = $args['id'];
-    $templateId = $request->getQueryParam('template_id', 1); // Varsayılan 1
-
-    $pdfContent = $this->documentService->generateEpicrisisPdf($examId, $templateId);
-
-    $response->getBody()->write($pdfContent);
-    return $response
-        ->withHeader('Content-Type', 'application/pdf')
-        ->withHeader('Content-Disposition', 'inline; filename="epikriz.pdf"');
-}
-
-```
-
-### Adım 5: Frontend (UI) Düzenlemesi
-
-1. Muayene ekranındaki "Yazdır" butonuna tıklandığında küçük bir Modal açılacak.
-2. Modal içinde: "Şablon Seçiniz" (Standart, Özet, İngilizce) dropdown'ı olacak.
-3. "Oluştur" dendiğinde yeni sekmede PDF açılacak.
+### Özellikler:
+*   **Footer Layout:** Doktor imzası (solda) ve Tarih (sağda) için tablo tabanlı layout kullanılır (Flexbox desteği mPDF'de sınırlıdır).
+*   **Değişkenler:** `{{ patient.* }}`, `{{ examination.* }}`, `{{ doctor.* }}`, `{{ clinic.* }}`
 
 ---
 
 ## 6. Özet Kontrol Listesi (Checklist)
 
-* [x] `cln_document_templates` tablosu oluşturuldu mu? ✓ (migration/database/migrations/13_document_templates.sql)
-* [x] Varsayılan şablon (Standart Epikriz) veritabanına seed edildi mi? ✓ (2 şablon: Standart ve Özet)
-* [x] mPDF kütüphanesi projeye dahil edildi mi? ✓ (v6.1.3)
-* [x] `DocumentRepository` tamamlandı mı? ✓ (src/Domain/Document/DocumentRepository.php)
-* [x] `DocumentService` mimari kurallara uygun mu? ✓ (src/Domain/Document/DocumentService.php)
-* [x] `DocumentController` tamamlandı mı? ✓ (src/Domain/Document/DocumentController.php)
-* [x] DI Container kayıtları yapıldı mı? ✓ (config/container.php)
-* [x] API Dokümantasyonu güncellendi mi? ✓ (docs/API.md)
-* [x] Frontend (Muayene Ekranı) epikriz butonu eklendi mi? ✓ (clinic_examination.twig, examination.js)
-* [x] Veritabanı migration'ı çalıştırıldı mı? ✓ (XAMPP üzerinde başarıyla çalıştırıldı)
-* [ ] Legacy veriler (`lab_notes`) şablona dahil edildi mi? (İsteğe bağlı)
-* [ ] Çoklu ICD kodları döngüye (loop) alındı mı? (Şablonlarda mevcut, ICD API bağlantısı bekliyor)
+* [x] `cln_document_templates` tablosu oluşturuldu
+* [x] `cln_patient_documents` tablosu oluşturuldu
+* [x] Varsayılan şablonlar (Standart ve Özet) eklendi
+* [x] mPDF kütüphanesi v8 sürümüne yükseltildi (PHP 8.3 uyumlu)
+* [x] `DocumentService` - Dinamik PDF oluşturma
+* [x] `DocumentService` - Dosya sistemi kayıt (Snapshot)
+* [x] `storage` klasörü yapılandırıldı ve izinleri ayarlandı (chmod 777)
+* [x] `Public/storage` sembolik linki oluşturuldu
+* [x] Frontend: Epikriz butonu (Önizle / Kaydet seçenekleri)
+* [x] Frontend: Onay dialogu ve PDF açma entegrasyonu
+* [x] Platform Yönetimi: Şablon düzenleme arayüzü (`platform_document_templates.twig`)
 
 ---
 
-## 7. Kurulum Rehberi
+## 7. Kurulum ve Sorun Giderme
 
-### Veritabanı Migration
+### Storage İzinleri
+Dosya yazma hatası alınırsa sunucuda izinleri ve sembolik linki kontrol edin:
+
 ```bash
-mysql -u root pozitif_klinik < migration/database/migrations/13_document_templates.sql
+# Proje dizininde
+chmod -R 777 storage/
+# Sembolik link (Eğer yoksa)
+ln -s ../storage Public/storage
 ```
-
-### Kullanım
-1. Muayene ekranında bir hastayı açın
-2. Muayeneyi kaydedin
-3. "Epikriz" butonunun görünmesini bekleyin
-4. Dropdown'dan şablon seçin veya varsayılan ile PDF oluşturun
-5. PDF yeni sekmede açılacaktır
 
 ---
 
 ## 8. Gelecek Geliştirmeler
 
-1. **Şablon Yönetim Ekranı**: Platform admin panelinde şablon CRUD işlemleri
-2. **Klinik Özel Şablonlar**: Her kliniğin kendi şablonunu oluşturabilmesi
-3. **Reçete ve Onay Formları**: Epikriz dışında diğer doküman türleri
-4. **E-İmza Entegrasyonu**: PDF'lere dijital imza ekleme
-5. **Doküman Arşivi**: Oluşturulan tüm dokümanları listeleme ve arama
+1. **E-İmza Entegrasyonu:** Kaydedilen PDF'lerin 5070 sayılı kanuna uygun imzalanması.
+2. **Toplu Yazdırma:** Birden fazla hasta için toplu epikriz dökümü.
+3. **Şablon Versiyonlama:** Şablon değişikliklerinin geçmişini tutma.
+4. **Hasta Portalı:** Hastaların kendi epikrizlerine online erişimi.

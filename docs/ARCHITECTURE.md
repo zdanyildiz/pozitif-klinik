@@ -267,3 +267,31 @@ Mimari bütünlüğü korumak ve teknik borcu önlemek için aşağıdaki katı 
     *   Boş `catch` blokları yasaktır.
     *   Hatalar ya anlamlı bir HttpHatası'na dönüştürülüp kullanıcıya sunulmalı ya da `HttpErrorHandler` tarafından yakalanması için `throw` edilmelidir.
 
+
+---
+
+## Dosya Yönetimi ve Depolama (Storage Architecture)
+
+Sistemdeki dosya yönetimi (Epikriz PDF'leri, Laboratuvar Sonuçları, Yüklenen Belgeler vb.) fiziksel dosya sistemi üzerinde hibrit bir yapı kullanır.
+
+### Depolama Yapısı
+```
+PROJECT_ROOT/
+├── storage/                    # Ana Depolama Dizini (Yazma İzni: 777)
+│   ├── clinic_1/               # Klinik Bazlı İzolasyon
+│   │   ├── documents/          # Oluşturulan Resmi Dokümanlar (Epikriz, Reçete)
+│   │   └── uploads/            # Kullanıcı Yüklemeleri (Tahlil, Rapor vb.)
+│   └── clinic_2/
+└── Public/
+    └── storage -> ../storage   # Web Erişimi için Sembolik Link
+```
+
+### Güvenlik ve Erişim
+*   **Fiziksel Erişim:** `storage/` klasörü Web Root (`Public/`) dışındadır. Doğrudan erişilemez.
+*   **Web Erişimi:** `ln -s ../storage Public/storage` sembolik linki ile sadece okuma erişimi sağlanır.
+*   **Yazma İzni:** Web sunucusu kullanıcısı (daemon/www-data) için `storage/` dizinine yazma izni verilmelidir (`chmod -R 777 storage`).
+
+### Epikriz Kayıt Modeli (Snapshot Pattern)
+Epikriz gibi yasal geçerliliği olan belgeler **Hibrit Kayıt Modeli** ile yönetilir:
+1.  **Önizleme (Preview):** Değişiklikler anlık olarak dinamik render edilir (Stream).
+2.  **Kayıt (Snapshot):** Onaylandığı anda PDF dosyası fiziksel olarak diske yazılır ve bu dosya bir daha değiştirilemez. Veritabanına dosya yolu kaydedilir.
