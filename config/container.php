@@ -91,6 +91,39 @@ return [
         );
     },
 
+    // --- Domain Repositories (Klinik İşlemleri) ---
+
+    // Patient Repository
+    \App\Domain\Patient\PatientRepository::class => function (ContainerInterface $c) {
+        return new \App\Domain\Patient\PatientRepository(
+            $c->get(Database::class),
+            $c->get(CryptoService::class),
+            $c->get(\App\Domain\Activity\ActivityLogger::class)
+        );
+    },
+
+    // Activity Logger (PatientRepository için gerekli)
+    \App\Domain\Activity\ActivityLogger::class => function (ContainerInterface $c) {
+        return new \App\Domain\Activity\ActivityLogger(
+            $c->get(Database::class)
+        );
+    },
+
+    // Examination Repository
+    \App\Domain\Examination\ExaminationRepository::class => function (ContainerInterface $c) {
+        return new \App\Domain\Examination\ExaminationRepository(
+            $c->get(Database::class)
+        );
+    },
+
+    // Lab Repository
+    \App\Domain\Lab\LabRepository::class => function (ContainerInterface $c) {
+        return new \App\Domain\Lab\LabRepository(
+            $c->get(Database::class)
+        );
+    },
+
+
         // Tenant Ayarları Controller
     TenantSettingsController::class => function (ContainerInterface $c) {
         return new TenantSettingsController(
@@ -182,5 +215,46 @@ return [
     // File Controller
     \App\Domain\File\FileController::class => function (ContainerInterface $c) {
         return new \App\Domain\File\FileController($c);
+    },
+
+    // --- Doküman / Epikriz Modülü ---
+
+    // Document Repository (Veritabanı)
+    \App\Domain\Document\DocumentRepository::class => function (ContainerInterface $c) {
+        return new \App\Domain\Document\DocumentRepository(
+            $c->get(Database::class)
+        );
+    },
+
+    // Document Service (İş Mantığı)
+    \App\Domain\Document\DocumentService::class => function (ContainerInterface $c) {
+        return new \App\Domain\Document\DocumentService(
+            $c->get(\App\Domain\Document\DocumentRepository::class),
+            $c->get(\App\Domain\Patient\PatientRepository::class),
+            $c->get(\App\Domain\Examination\ExaminationRepository::class),
+            $c->get(\App\Domain\Lab\LabRepository::class),
+            $c->get(TenantRepository::class),
+            $c->get(CryptoService::class),
+            $c->get(Twig::class),
+            $c->get(\Psr\Log\LoggerInterface::class),
+            $c->get(Database::class)
+        );
+    },
+
+    // Document Controller
+    \App\Domain\Document\DocumentController::class => function (ContainerInterface $c) {
+        return new \App\Domain\Document\DocumentController(
+            $c,
+            $c->get(\App\Domain\Document\DocumentService::class),
+            $c->get(\App\Domain\Document\DocumentRepository::class)
+        );
+    },
+
+    // Platform Document Controller
+    \App\Domain\Platform\PlatformDocumentController::class => function (ContainerInterface $c) {
+        return new \App\Domain\Platform\PlatformDocumentController(
+            $c,
+            $c->get(\App\Domain\Document\DocumentRepository::class)
+        );
     },
 ];

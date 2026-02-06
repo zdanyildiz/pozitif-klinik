@@ -1,0 +1,443 @@
+{% extends "platform_layout.twig" %}
+
+{% block title %}Doküman Şablonları - Pozitif Klinik{% endblock %}
+{% block page_title %}Doküman Şablonları Yönetimi{% endblock %}
+
+{% block head %}
+<style>
+    .template-card { transition: all 0.3s ease; border: 1px solid #eee; }
+    .template-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+    .editor-container { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+    .twig-editor { font-family: 'JetBrains Mono', monospace; font-size: 13px; min-height: 400px; tab-size: 4; }
+    .preview-iframe { width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 8px; }
+    .badge-system { background: #e0e7ff; color: #3730a3; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h5 class="mb-1 fw-bold">Sistem Genel Şablonları</h5>
+            <p class="text-muted small mb-0">Tüm kliniklerin varsayılan olarak görebileceği doküman şablonlarını yönetin.</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary d-flex align-items-center gap-2" onclick="openCreateModal()">
+                <i class="bi bi-plus-lg"></i>
+                Yeni Şablon Ekle
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <select class="form-select form-select-sm" id="filterType" onchange="loadTemplates()">
+                        <option value="">Tüm Türler</option>
+                        <option value="epicrisis">Epikriz</option>
+                        <option value="prescription">Reçete</option>
+                        <option value="report">Rapor</option>
+                        <option value="consent_form">Onam Formu</option>
+                    </select>
+                </div>
+                <div class="col-md-auto ms-auto">
+                    <button class="btn btn-light btn-sm" onclick="loadTemplates()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Şablon Listesi -->
+    <div class="row g-3" id="templateList">
+        <!-- JS ile dolacak -->
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Şablonlar yükleniyor...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Şablon Düzenleme/Ekleme Modalı -->
+<div class="modal fade" id="templateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="modalTitle">Şablon Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body p-0">
+                <form id="templateForm" class="h-100">
+                    <input type="hidden" name="id" id="templateId">
+                    <div class="d-flex h-100 flex-column flex-lg-row">
+                        <!-- Ayarlar Paneli -->
+                        <div class="p-4 border-end bg-white overflow-auto" style="min-width: 350px; max-width: 400px;">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">Temel Bilgiler</h6>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Şablon Adı</label>
+                                <input type="text" class="form-control" name="name" id="tmplName" required placeholder="Örn: Standart Epikriz">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Tür</label>
+                                <select class="form-select" name="type" id="tmplType">
+                                    <option value="epicrisis">Epikriz</option>
+                                    <option value="prescription">Reçete</option>
+                                    <option value="report">Rapor</option>
+                                    <option value="consent_form">Onam Formu</option>
+                                </select>
+                            </div>
+                            <div class="mb-3 d-flex align-items-center gap-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_default" id="tmplIsDefault" value="1">
+                                    <label class="form-check-label small fw-bold" for="tmplIsDefault">Varsayılan Şablon</label>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-3 border-bottom pb-2 mt-4">Sayfa Yapısı (PDF)</h6>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Format</label>
+                                    <select class="form-select form-select-sm" name="page_format" id="tmplFormat">
+                                        <option value="A4">A4</option>
+                                        <option value="A5">A5</option>
+                                        <option value="Letter">Letter</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Yön</label>
+                                    <select class="form-select form-select-sm" name="orientation" id="tmplOrientation">
+                                        <option value="portrait">Dikey</option>
+                                        <option value="landscape">Yatay</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Kenar Üst (mm)</label>
+                                    <input type="number" class="form-control form-control-sm" name="margin_top" id="tmplMarginTop" value="20">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Kenar Alt (mm)</label>
+                                    <input type="number" class="form-control form-control-sm" name="margin_bottom" id="tmplMarginBottom" value="20">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Kenar Sol (mm)</label>
+                                    <input type="number" class="form-control form-control-sm" name="margin_left" id="tmplMarginLeft" value="15">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Kenar Sağ (mm)</label>
+                                    <input type="number" class="form-control form-control-sm" name="margin_right" id="tmplMarginRight" value="15">
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-outline-info btn-sm w-100 mt-4" onclick="showVariableGuide()">
+                                <i class="bi bi-info-circle me-1"></i>Kullanılabilir Değişkenler
+                            </button>
+                        </div>
+
+                        <!-- Editör Paneli -->
+                        <div class="flex-grow-1 bg-light d-flex flex-column" style="min-width: 0;">
+                            <ul class="nav nav-tabs px-3 pt-2 bg-white border-bottom" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active py-2 small fw-bold" data-bs-toggle="tab" href="#tab-content" role="tab">İçerik (HTML/Twig)</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link py-2 small fw-bold" data-bs-toggle="tab" href="#tab-header" role="tab">Üst Bilgi (Header)</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link py-2 small fw-bold" data-bs-toggle="tab" href="#tab-footer" role="tab">Alt Bilgi (Footer)</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link py-2 small fw-bold" data-bs-toggle="tab" href="#tab-css" role="tab">Özel CSS</a>
+                                </li>
+                                <li class="nav-item ms-auto">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary mb-1" onclick="previewInEditor()">
+                                        <i class="bi bi-eye me-1"></i>Hızlı Önizleme
+                                    </button>
+                                </li>
+                            </ul>
+                            <div class="tab-content flex-grow-1 overflow-hidden p-3">
+                                <div class="tab-pane fade show active h-100" id="tab-content" role="tabpanel">
+                                    <textarea name="content_html" id="tmplContent" class="form-control twig-editor h-100" placeholder="Örn: {'{'}{'{'} patient.name {'}'}{'}'}"></textarea>
+                                </div>
+                                <div class="tab-pane fade h-100" id="tab-header" role="tabpanel">
+                                    <textarea name="header_html" id="tmplHeader" class="form-control twig-editor h-100" placeholder="Klinik Başlığı..."></textarea>
+                                </div>
+                                <div class="tab-pane fade h-100" id="tab-footer" role="tabpanel">
+                                    <textarea name="footer_html" id="tmplFooter" class="form-control twig-editor h-100" placeholder="Sayfa Altı..."></textarea>
+                                </div>
+                                <div class="tab-pane fade h-100" id="tab-css" role="tabpanel">
+                                    <textarea name="css_styles" id="tmplCss" class="form-control twig-editor h-100" placeholder="body { ... }"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer shadow-sm">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="submit" form="templateForm" class="btn btn-primary px-4" id="btnSaveTemplate">Değişiklikleri Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Önizleme Modalı -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Şablon Önizleme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="previewContainer" class="p-3">
+                    <iframe id="previewIframe" class="preview-iframe"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let templates = [];
+    let templateModal = null;
+    let previewModal = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        templateModal = new bootstrap.Modal(document.getElementById('templateModal'));
+        previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+        
+        loadTemplates();
+
+        document.getElementById('templateForm').addEventListener('submit', handleSave);
+    });
+
+    /**
+     * Şablonları yükle
+     */
+    async function loadTemplates() {
+        const type = document.getElementById('filterType').value;
+        const listEl = document.getElementById('templateList');
+        listEl.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary"></div></div>';
+
+        try {
+            const res = await api.get(`/platform-admin/documents/templates?type=${type}`);
+
+            templates = res.data || [];
+            renderTemplates();
+        } catch (e) {
+            console.error('Yükleme hatası', e);
+            listEl.innerHTML = '<div class="alert alert-danger">Şablonlar yüklenirken bir hata oluştu.</div>';
+        }
+    }
+
+    /**
+     * Şablonları render et
+     */
+    function renderTemplates() {
+        // ... (Değişiklik yok)
+        const listEl = document.getElementById('templateList');
+        if (templates.length === 0) {
+            listEl.innerHTML = '<div class="col-12 text-center py-5 text-muted">Şablon bulunmuyor.</div>';
+            return;
+        }
+
+        listEl.innerHTML = templates.map(t => `
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-body h-100 template-card shadow-sm">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 small">
+                            ${t.type.toUpperCase()}
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-link link-dark p-0" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" onclick="openEditModal(${t.id})"><i class="bi bi-pencil me-2"></i>Düzenle</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="duplicateTemplate(${t.id})"><i class="bi bi-copy me-2"></i>Kopyala</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteTemplate(${t.id})"><i class="bi bi-trash me-2"></i>Sil</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <h6 class="fw-bold mb-1">${t.name}</h6>
+                    <small class="text-muted d-block mb-3">ID: #${t.id} | ${t.page_format} - ${t.orientation === 'portrait' ? 'Dikey' : 'Yatay'}</small>
+                    
+                    <div class="d-flex gap-2 mt-auto pt-2">
+                        <button class="btn btn-outline-primary btn-sm flex-grow-1" onclick="openEditModal(${t.id})">Düzenle</button>
+                        ${t.is_default ? '<span class="badge bg-success-subtle text-success py-2">VARSAYILAN</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Ekleme modalı aç
+     */
+    function openCreateModal() {
+        document.getElementById('modalTitle').textContent = 'Yeni Şablon Ekle';
+        document.getElementById('templateForm').reset();
+        document.getElementById('templateId').value = '';
+        templateModal.show();
+    }
+
+    /**
+     * Düzenleme modalı aç
+     */
+    async function openEditModal(id) {
+        document.getElementById('modalTitle').textContent = 'Şablon Düzenle (#' + id + ')';
+        const t = templates.find(item => item.id == id);
+        if (!t) return;
+
+        document.getElementById('templateId').value = t.id;
+        document.getElementById('tmplName').value = t.name;
+        document.getElementById('tmplType').value = t.type;
+        document.getElementById('tmplIsDefault').checked = t.is_default == 1;
+        document.getElementById('tmplFormat').value = t.page_format || 'A4';
+        document.getElementById('tmplOrientation').value = t.orientation || 'portrait';
+        document.getElementById('tmplMarginTop').value = t.margin_top || 20;
+        document.getElementById('tmplMarginBottom').value = t.margin_bottom || 20;
+        document.getElementById('tmplMarginLeft').value = t.margin_left || 15;
+        document.getElementById('tmplMarginRight').value = t.margin_right || 15;
+        
+        document.getElementById('tmplContent').value = t.content_html;
+        document.getElementById('tmplHeader').value = t.header_html || '';
+        document.getElementById('tmplFooter').value = t.footer_html || '';
+        document.getElementById('tmplCss').value = t.css_styles || '';
+
+        templateModal.show();
+    }
+
+    /**
+     * Kaydetme işlemi
+     */
+    async function handleSave(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const id = document.getElementById('templateId').value;
+        const data = Object.fromEntries(formData);
+        
+        // Checkbox value fix
+        data.is_default = document.getElementById('tmplIsDefault').checked ? 1 : 0;
+
+        try {
+            const btn = document.getElementById('btnSaveTemplate');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Kaydediliyor...';
+
+            let res;
+            if (id) {
+                res = await api.put(`/platform-admin/documents/templates/${id}`, data);
+            } else {
+                res = await api.post('/platform-admin/documents/templates', data);
+            }
+
+            Swal.fire('Başarılı', 'Şablon kaydedildi.', 'success');
+            templateModal.hide();
+            loadTemplates();
+        } catch (e) {
+            Swal.fire('Hata', 'Kaydedilirken bir hata oluştu: ' + (e?.message || 'Bilinmeyen hata'), 'error');
+        } finally {
+            const btn = document.getElementById('btnSaveTemplate');
+            btn.disabled = false;
+            btn.innerHTML = 'Değişiklikleri Kaydet';
+        }
+    }
+
+    /**
+     * Şablon sil
+     */
+    async function deleteTemplate(id) {
+        const result = await Swal.fire({
+            title: 'Emin misiniz?',
+            text: "Bu şablon tamamen silinecektir!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'Vazgeç'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await api.delete(`/platform-admin/documents/templates/${id}`);
+                Swal.fire('Silindi', 'Şablon başarıyla silindi.', 'success');
+                loadTemplates();
+            } catch (e) {
+                Swal.fire('Hata', 'Silme işlemi başarısız oldu.', 'error');
+            }
+        }
+    }
+
+    /**
+     * Şablon kopyala (Duplicate)
+     */
+    async function duplicateTemplate(id) {
+        const t = templates.find(item => item.id == id);
+        if (!t) return;
+
+        const data = { ...t };
+        delete data.id;
+        data.name = t.name + ' (Kopya)';
+        data.is_default = 0;
+
+        try {
+            await api.post('/platform-admin/documents/templates', data);
+            loadTemplates();
+            Swal.fire('Başarılı', 'Şablon kopyalandı.', 'success');
+        } catch (e) {
+            Swal.fire('Hata', 'Şablon kopyalanamadı.', 'error');
+        }
+    }
+
+    /**
+     * Değişken Rehberi
+     */
+    function showVariableGuide() {
+        Swal.fire({
+            title: 'Kullanılabilir Twig Değişkenleri',
+            html: `
+                <div class="text-start small" style="max-height: 400px; overflow-y: auto;">
+                    <p><strong>Hasta:</strong> <code>{{ '{{' }} patient.name {{ '}}' }}, {{ '{{' }} patient.tc_no {{ '}}' }}, {{ '{{' }} patient.phone {{ '}}' }}, {{ '{{' }} patient.birth_date {{ '}}' }}, {{ '{{' }} patient.gender_text {{ '}}' }}</code></p>
+                    <p><strong>Muayene:</strong> <code>{{ '{{' }} examination.date {{ '}}' }}, {{ '{{' }} examination.complaint {{ '}}' }}, {{ '{{' }} examination.anamnez {{ '}}' }}, {{ '{{' }} examination.bulgular {{ '}}' }}, {{ '{{' }} examination.diagnosis {{ '}}' }}, {{ '{{' }} examination.treatment {{ '}}' }}, {{ '{{' }} examination.result_note {{ '}}' }}</code></p>
+                    <p><strong>Klinik:</strong> <code>{{ '{{' }} clinic.name {{ '}}' }}, {{ '{{' }} clinic.address {{ '}}' }}, {{ '{{' }} clinic.phone {{ '}}' }}, {{ '{{' }} clinic.email {{ '}}' }}, {{ '{{' }} clinic.logo_url {{ '}}' }}</code></p>
+                    <p><strong>Doktor:</strong> <code>{{ '{{' }} doctor.name {{ '}}' }}, {{ '{{' }} doctor.specialty {{ '}}' }}</code></p>
+                    <p><strong>Döngüler:</strong><br>
+                        <code>{{ '{%' }} for lab in lab_results {{ '%}' }}{{ '{%' }} for item in lab.items {{ '%}' }}{{ '{{' }} item.test_name {{ '}}' }}: {{ '{{' }} item.result_value {{ '}}' }}{{ '{%' }} endfor {{ '%}' }}{{ '{%' }} endfor {{ '%}' }}</code></p>
+                </div>
+            `,
+            confirmButtonText: 'Anladım'
+        });
+    }
+
+    /**
+     * Hızlı Önizleme (Basit HTML)
+     */
+    function previewInEditor() {
+        const modalEl = document.getElementById('templateModal');
+        const content = document.getElementById('tmplContent').value;
+        const header = document.getElementById('tmplHeader').value;
+        const footer = document.getElementById('tmplFooter').value;
+        const css = document.getElementById('tmplCss').value;
+
+        // Çok basit bir string replacement ile önizleme
+        let previewHtml = `<html><head><style>${css}</style></head><body>${header}${content}${footer}</body></html>`;
+        
+        // Twig taglerini temizle (sadece görsel amaçlı)
+        previewHtml = previewHtml.replace(/\{\{[^}]+\}\}/g, '<span style="color:blue">[DEĞİŞKEN]</span>');
+
+        const iframe = document.getElementById('previewIframe');
+        iframe.srcdoc = previewHtml;
+        previewModal.show();
+    }
+</script>
+{% endblock %}

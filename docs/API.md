@@ -1247,3 +1247,114 @@ Kliniğin kayıtlı veya formdaki güncel ayarlarıyla gerçek bir SMS gönderim
 > **Not:** `config` alanı boş bırakılırsa, veritabanındaki kayıtlı (şifreli) ayarlar çözülerek kullanılır.
 
 ---
+
+## Domain API (Doküman / Epikriz Yönetimi)
+
+Bu endpoint'ler klinik bazlı epikriz ve doküman oluşturma işlemlerini kapsar.
+
+### Epikriz Şablonları
+
+#### `GET /api/documents/templates`
+Kliniğin kullanabileceği tüm doküman şablonlarını listeler.
+
+**Query Parametreleri:**
+- `type` (opsiyonel): Şablon türü filtresi (`epicrisis`, `prescription`, `report`)
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 1,
+      "clinic_id": null,
+      "name": "Standart Epikriz",
+      "type": "epicrisis",
+      "is_default": 1,
+      "source": "Sistem"
+    },
+    {
+      "id": 2,
+      "clinic_id": 5,
+      "name": "Klinik Özel Şablon",
+      "type": "epicrisis",
+      "is_default": 0,
+      "source": "Özel"
+    }
+  ]
+}
+```
+
+### Epikriz PDF Oluşturma
+
+#### `GET /api/documents/epicrisis/{examinationId}`
+Belirtilen muayene için epikriz PDF dosyası oluşturur ve stream eder. Tarayıcıda yeni sekmede açılabilir.
+
+**Path Parametreleri:**
+- `examinationId` (zorunlu): Muayene ID'si
+
+**Query Parametreleri:**
+- `template_id` (opsiyonel): Kullanılacak şablon ID. Belirtilmezse varsayılan şablon kullanılır.
+
+**Başarılı Yanıt (200 OK):**
+- `Content-Type: application/pdf`
+- PDF binary içeriği döner
+
+**Hata Yanıtları:**
+- `404`: Muayene veya şablon bulunamadı
+- `500`: PDF oluşturma hatası
+
+### Epikriz Önizleme
+
+#### `GET /api/documents/epicrisis/{examinationId}/preview`
+Epikriz'in HTML önizlemesini döner. PDF oluşturmadan önce kontrol amaçlıdır.
+
+**Query Parametreleri:**
+- `template_id` (opsiyonel): Kullanılacak şablon ID
+
+**Başarılı Yanıt (200 OK):**
+- `Content-Type: text/html`
+- Tam HTML sayfası döner
+
+### Epikriz Kaydetme
+
+#### `POST /api/documents/epicrisis`
+Epikriz oluşturur ve veritabanına kaydeder (audit trail için).
+
+**Payload:**
+```json
+{
+  "examination_id": 123,
+  "template_id": 1
+}
+```
+
+**Başarılı Yanıt (201 Created):**
+```json
+{
+  "status": true,
+  "data": {
+    "id": 45,
+    "message": "Epikriz başarıyla oluşturuldu"
+  }
+}
+```
+
+### Hasta Dokümanları
+
+#### `GET /api/documents/patient/{patientId}`
+Bir hastanın tüm oluşturulmuş dokümanlarını listeler.
+
+**Query Parametreleri:**
+- `type` (opsiyonel): Doküman türü filtresi
+
+#### `GET /api/documents/examination/{examinationId}`
+Bir muayeneye ait tüm dokümanları listeler.
+
+#### `GET /api/documents/{id}`
+Tekil doküman detayını getirir.
+
+#### `DELETE /api/documents/{id}`
+Dokümanı siler.
+
+---

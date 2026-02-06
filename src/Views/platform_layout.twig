@@ -17,6 +17,13 @@
     <!-- Custom CSS -->
     <link href="{{ base_path }}/assets/css/dashboard.css?v={{ version }}" rel="stylesheet">
     
+    <meta name="csrf-name" content="{{ csrf.name }}">
+    <meta name="csrf-value" content="{{ csrf.value }}">
+    
+    <script>
+        window.base_path = "{{ base_path }}";
+    </script>
+    
     {% block head %}{% endblock %}
 </head>
 
@@ -54,6 +61,9 @@
                 <div class="nav-section-title">Sistem</div>
                 <a href="{{ base_path }}/platform/sms-providers" class="nav-link-custom {% if page == 'sms-providers' %}active{% endif %}">
                     <i class="bi bi-chat-square-text"></i>SMS Sağlayıcıları
+                </a>
+                <a href="{{ base_path }}/platform/documents/templates" class="nav-link-custom {% if page == 'documents-templates' %}active{% endif %}">
+                    <i class="bi bi-file-earmark-diff"></i>Doküman Şablonları
                 </a>
                 <a href="#" class="nav-link-custom {% if page == 'settings' %}active{% endif %}">
                     <i class="bi bi-gear"></i>Ayarlar

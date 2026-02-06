@@ -9,6 +9,7 @@ let diagnosisTomSelect = null;
 let billingModal = null;
 let allServices = [];
 let examFileManager = null;
+let epicrisisTemplates = []; // Epikriz şablonları
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Get appointment ID from URL
@@ -64,6 +65,10 @@ async function loadCurrentExamination() {
             fillExaminationForm(examRes.data);
             currentExaminationId = examRes.data.id;
             initExamFileManager(currentExaminationId);
+
+            // Epikriz butonunu göster ve şablonları yükle
+            showEpicrisisButton();
+            loadEpicrisisTemplates();
         }
     } catch (e) {
         console.error('Examination load error:', e);
@@ -472,6 +477,9 @@ async function handleSave() {
             if (oldId !== currentExaminationId) {
                 initExamFileManager(currentExaminationId);
             }
+
+            // Her kayıtta epikriz butonunu aktifleştir (görünmüyorsa göster)
+            showEpicrisisButton();
         }
 
         Utils.showToast('Muayene başarıyla kaydedildi');
@@ -517,3 +525,122 @@ function initExamFileManager(examId) {
         csrfToken: window.csrfToken || ''
     });
 }
+
+// ==========================================
+// EPİKRİZ (DISCHARGE SUMMARY) İŞLEVLERİ
+// ==========================================
+
+/**
+ * Epikriz butonunu göster
+ */
+function showEpicrisisButton() {
+    console.log('[Epikriz] showEpicrisisButton called, currentExaminationId:', currentExaminationId);
+    const epicrisisGroup = document.getElementById('epicrisisGroup');
+    if (epicrisisGroup && currentExaminationId) {
+        epicrisisGroup.style.display = 'inline-flex';
+        console.log('[Epikriz] Button is now visible');
+
+        // Şablonlar henüz yüklenmediyse yükle
+        if (epicrisisTemplates.length === 0) {
+            loadEpicrisisTemplates();
+        }
+    }
+}
+
+/**
+ * Epikriz şablonlarını API'den yükle
+ */
+async function loadEpicrisisTemplates() {
+    try {
+        const res = await api.get('/api/documents/templates?type=epicrisis');
+        epicrisisTemplates = res.data || [];
+        renderEpicrisisTemplateList();
+    } catch (e) {
+        console.error('Epicrisis templates load error:', e);
+        epicrisisTemplates = [];
+        renderEpicrisisTemplateList();
+    }
+}
+
+/**
+ * Epikriz şablon listesini dropdown'a render et
+ */
+function renderEpicrisisTemplateList() {
+    const listEl = document.getElementById('epicrisisTemplateList');
+    if (!listEl) return;
+
+    if (epicrisisTemplates.length === 0) {
+        listEl.innerHTML = '<a class="dropdown-item text-muted disabled" href="#">Şablon bulunamadı</a>';
+        return;
+    }
+
+    listEl.innerHTML = epicrisisTemplates.map(t => `
+        <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" 
+           onclick="generateEpicrisis(${t.id}); return false;">
+            <span>
+                <i class="bi bi-file-text me-2 text-primary"></i>
+                ${t.name}
+            </span>
+            ${t.is_default ? '<span class="badge bg-success-subtle text-success">Varsayılan</span>' : ''}
+        </a>
+    `).join('');
+}
+
+/**
+ * Epikriz PDF oluştur ve yeni sekmede aç
+ */
+window.generateEpicrisis = async function (templateId = null) {
+    if (!currentExaminationId) {
+        Utils.showError('Önce muayeneyi kaydetmeniz gerekmektedir.');
+        return;
+    }
+
+    try {
+        Utils.showLoading('Epikriz oluşturuluyor...');
+
+        // API endpoint'i PDF döner, yeni sekmede aç
+        let url = `/api/documents/epicrisis/${currentExaminationId}`;
+        if (templateId) {
+            url += `?template_id=${templateId}`;
+        }
+
+        // Yeni sekmede PDF'i aç
+        window.open(url, '_blank');
+
+        Utils.closeLoading();
+        Utils.showToast('Epikriz PDF oluşturuldu', 'success');
+
+    } catch (e) {
+        Utils.closeLoading();
+        Utils.showError('Epikriz oluşturulurken bir hata oluştu.');
+        console.error('Epicrisis generation error:', e);
+    }
+};
+
+/**
+ * Epikriz önizleme - HTML olarak yeni sekmede aç
+ */
+window.previewEpicrisis = async function (templateId = null) {
+    if (!currentExaminationId) {
+        Utils.showError('Önce muayeneyi kaydetmeniz gerekmektedir.');
+        return;
+    }
+
+    let url = `/api/documents/epicrisis/${currentExaminationId}/preview`;
+    if (templateId) {
+        url += `?template_id=${templateId}`;
+    }
+
+    window.open(url, '_blank');
+};
+
+// Önizleme butonu event listener
+document.addEventListener('DOMContentLoaded', () => {
+    const btnPreview = document.getElementById('btnPreviewEpicrisis');
+    if (btnPreview) {
+        btnPreview.addEventListener('click', (e) => {
+            e.preventDefault();
+            previewEpicrisis();
+        });
+    }
+});

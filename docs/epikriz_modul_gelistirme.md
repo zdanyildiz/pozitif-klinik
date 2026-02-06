@@ -207,9 +207,41 @@ public function printEpicrisis($request, $response, $args) {
 
 ## 6. Özet Kontrol Listesi (Checklist)
 
-* [ ] `clinic_document_templates` tablosu oluşturuldu mu?
-* [ ] Varsayılan şablon (Standart Epikriz) veritabanına seed edildi mi?
-* [ ] mPDF kütüphanesi projeye dahil edildi mi?
-* [ ] Legacy veriler (`lab_notes`) şablona dahil edildi mi?
-* [ ] Çoklu ICD kodları döngüye (loop) alındı mı?
-* [ ] `DocumentService` mimari kurallara uygun (Logic içeriyor, SQL içermiyor) mu?
+* [x] `cln_document_templates` tablosu oluşturuldu mu? ✓ (migration/database/migrations/13_document_templates.sql)
+* [x] Varsayılan şablon (Standart Epikriz) veritabanına seed edildi mi? ✓ (2 şablon: Standart ve Özet)
+* [x] mPDF kütüphanesi projeye dahil edildi mi? ✓ (v6.1.3)
+* [x] `DocumentRepository` tamamlandı mı? ✓ (src/Domain/Document/DocumentRepository.php)
+* [x] `DocumentService` mimari kurallara uygun mu? ✓ (src/Domain/Document/DocumentService.php)
+* [x] `DocumentController` tamamlandı mı? ✓ (src/Domain/Document/DocumentController.php)
+* [x] DI Container kayıtları yapıldı mı? ✓ (config/container.php)
+* [x] API Dokümantasyonu güncellendi mi? ✓ (docs/API.md)
+* [x] Frontend (Muayene Ekranı) epikriz butonu eklendi mi? ✓ (clinic_examination.twig, examination.js)
+* [x] Veritabanı migration'ı çalıştırıldı mı? ✓ (XAMPP üzerinde başarıyla çalıştırıldı)
+* [ ] Legacy veriler (`lab_notes`) şablona dahil edildi mi? (İsteğe bağlı)
+* [ ] Çoklu ICD kodları döngüye (loop) alındı mı? (Şablonlarda mevcut, ICD API bağlantısı bekliyor)
+
+---
+
+## 7. Kurulum Rehberi
+
+### Veritabanı Migration
+```bash
+mysql -u root pozitif_klinik < migration/database/migrations/13_document_templates.sql
+```
+
+### Kullanım
+1. Muayene ekranında bir hastayı açın
+2. Muayeneyi kaydedin
+3. "Epikriz" butonunun görünmesini bekleyin
+4. Dropdown'dan şablon seçin veya varsayılan ile PDF oluşturun
+5. PDF yeni sekmede açılacaktır
+
+---
+
+## 8. Gelecek Geliştirmeler
+
+1. **Şablon Yönetim Ekranı**: Platform admin panelinde şablon CRUD işlemleri
+2. **Klinik Özel Şablonlar**: Her kliniğin kendi şablonunu oluşturabilmesi
+3. **Reçete ve Onay Formları**: Epikriz dışında diğer doküman türleri
+4. **E-İmza Entegrasyonu**: PDF'lere dijital imza ekleme
+5. **Doküman Arşivi**: Oluşturulan tüm dokümanları listeleme ve arama

@@ -97,4 +97,15 @@ class PlatformWebController
             'page' => 'sms-providers'
         ]);
     }
+
+    /**
+     * Doküman Şablonları Yönetimi Sayfası
+     */
+    #[Route('GET', '/platform/documents/templates')]
+    public function documentTemplatesPage(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'platform_document_templates.twig', [
+            'page' => 'documents-templates'
+        ]);
+    }
 }
