@@ -187,14 +187,19 @@ INSERT INTO cln_document_templates (clinic_id, name, type, content_html, header_
 </div>',
 
 '<div class="footer">
-    <div class="signature-area">
-        <p>Düzenleyen Hekim</p>
-        <p><strong>{{ doctor.name }}</strong></p>
-        {% if doctor.specialty %}<p>{{ doctor.specialty }}</p>{% endif %}
-    </div>
-    <div class="date-area">
-        <p>Düzenleme Tarihi: {{ "now"|date("d.m.Y") }}</p>
-    </div>
+    <table class="footer-table">
+        <tr>
+            <td class="signature-area">
+                <p>Düzenleyen Hekim</p>
+                <p><strong>{{ doctor.name }}</strong></p>
+                {% if doctor.specialty %}<p>{{ doctor.specialty }}</p>{% endif %}
+            </td>
+            <td class="date-area">
+                <p>Düzenleme Tarihi</p>
+                <p><strong>{{ "now"|date("d.m.Y") }}</strong></p>
+            </td>
+        </tr>
+    </table>
 </div>',
 
 'body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 11pt; line-height: 1.4; color: #333; }
@@ -218,10 +223,13 @@ INSERT INTO cln_document_templates (clinic_id, name, type, content_html, header_
 .lab-table th { background: #e0e7ff; color: #1e40af; }
 .lab-table tr.abnormal { background: #fef2f2; }
 .lab-table tr.abnormal td { color: #dc2626; font-weight: bold; }
-.footer { margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px; display: flex; justify-content: space-between; }
-.signature-area { text-align: center; }
+.footer { margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px; }
+.footer-table { width: 100%; border-collapse: collapse; }
+.footer-table td { padding: 10px 20px; vertical-align: top; }
+.signature-area { text-align: left; width: 50%; }
 .signature-area p { margin: 3px 0; }
-.date-area { text-align: right; font-size: 9pt; color: #666; }',
+.date-area { text-align: right; width: 50%; color: #666; }
+.date-area p { margin: 3px 0; }',
 1, 1),
 
 (NULL, 'Özet Epikriz', 'epicrisis',
