@@ -15,6 +15,7 @@ use App\Core\Service\LoggerService;
 use Psr\Container\ContainerInterface;
 use App\Domain\Appointment\AppointmentRepository;
 use App\Domain\File\FileRepository;
+use App\Domain\Lab\LabRepository;
 
 #[Group('/api/examinations')]
 #[Middleware(TenantMiddleware::class)]
@@ -23,6 +24,7 @@ class ExaminationController extends BaseController
     private ExaminationRepository $repository;
     private AppointmentRepository $appointmentRepository;
     private FileRepository $fileRepository;
+    private LabRepository $labRepository;
     private LoggerService $logger;
 
     public function __construct(
@@ -30,12 +32,14 @@ class ExaminationController extends BaseController
         ExaminationRepository $repository,
         AppointmentRepository $appointmentRepository,
         FileRepository $fileRepository,
+        LabRepository $labRepository,
         LoggerService $logger
     ) {
         parent::__construct($container);
         $this->repository = $repository;
         $this->appointmentRepository = $appointmentRepository;
         $this->fileRepository = $fileRepository;
+        $this->labRepository = $labRepository;
         $this->logger = $logger;
     }
 
@@ -69,6 +73,19 @@ class ExaminationController extends BaseController
 
         foreach ($examinations as &$exam) {
             $exam['files'] = $filesByExam[$exam['id']] ?? [];
+        }
+
+        // Lab sonuçlarını çek ve appointment_id üzerinden eşleştir
+        $labResults = $this->labRepository->findAllByPatient($clinicId, $patientId);
+        $labsByAppointment = [];
+        foreach ($labResults as $lab) {
+            if (!empty($lab['appointment_id'])) {
+                $labsByAppointment[$lab['appointment_id']][] = $lab;
+            }
+        }
+
+        foreach ($examinations as &$exam) {
+            $exam['lab_results'] = $labsByAppointment[$exam['appointment_id']] ?? [];
         }
 
         return $this->success($response, $examinations);

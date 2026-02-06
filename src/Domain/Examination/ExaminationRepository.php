@@ -18,16 +18,58 @@ class ExaminationRepository
 
     public function findAllByPatient(int $clinicId, int $patientId): array
     {
-        $stmt = $this->db->getConnection()->prepare("
-            SELECT e.*, u.name as doctor_name
-            FROM cln_examinations e
-            LEFT JOIN sys_users u ON e.doctor_user_id = u.id
-            WHERE e.clinic_id = :clinic_id AND e.patient_id = :patient_id
-            ORDER BY e.created_at DESC
-        ");
+        $sql = "
+            (
+                SELECT 
+                    e.id, 
+                    e.clinic_id, e.patient_id, e.doctor_user_id,
+                    e.anamnez, e.complaint, e.story, e.bulgular, e.diagnosis, e.treatment, e.result_note,
+                    e.appointment_id, e.specialty_code, e.specialty_data,
+                    e.created_at,
+                    u.name as doctor_name
+                FROM cln_examinations e
+                LEFT JOIN sys_users u ON e.doctor_user_id = u.id
+                WHERE e.clinic_id = :cid1 AND e.patient_id = :pid1
+            )
+            UNION ALL
+            (
+                SELECT 
+                    (CAST(a.id AS SIGNED) * -1) as id,
+                    a.clinic_id, a.patient_id, 
+                    NULL as doctor_user_id,
+                    NULL as anamnez, 
+                    NULL as complaint, 
+                    NULL as story, 
+                    NULL as bulgular,
+                    'Randevu (Detay Girilmedi)' as diagnosis,
+                    NULL as treatment, 
+                    NULL as result_note,
+                    a.id as appointment_id,
+                    NULL as specialty_code, 
+                    NULL as specialty_data,
+                    a.appointment_date as created_at,
+                    u.name as doctor_name
+                FROM cln_appointments a
+                LEFT JOIN sys_users u ON a.doctor_id = u.id
+                WHERE a.clinic_id = :cid2 
+                  AND a.patient_id = :pid2
+                  AND (a.status != 'cancelled' OR a.status IS NULL)
+                  AND a.id NOT IN (
+                      SELECT appointment_id FROM cln_examinations 
+                      WHERE patient_id = :pid3 AND appointment_id IS NOT NULL
+                  )
+            )
+            ORDER BY created_at DESC
+            LIMIT 50
+        ";
+
+        $stmt = $this->db->getConnection()->prepare($sql);
         $stmt->execute([
-            'clinic_id' => $clinicId,
-            'patient_id' => $patientId
+            'cid1' => $clinicId,
+            'pid1' => $patientId,
+            'cid2' => $clinicId,
+            'pid2' => $patientId,
+            'pid3' => $patientId
         ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

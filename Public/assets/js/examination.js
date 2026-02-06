@@ -98,12 +98,23 @@ async function loadHistory() {
             const summary = exam.diagnosis || exam.complaint || 'Detay belirtilmemiş';
 
             let filesHtml = '';
-            if (exam.files && exam.files.length > 0) {
+            const hasFiles = exam.files && exam.files.length > 0;
+            const hasLabs = exam.lab_results && exam.lab_results.length > 0;
+
+            if (hasFiles || hasLabs) {
                 filesHtml = `<div class="mt-2 d-flex gap-1 flex-wrap">`;
-                exam.files.forEach(f => {
-                    const catIcons = { radiology: 'bi-x-ray', lab: 'bi-eyedropper', report: 'bi-file-earmark-medical', prescription: 'bi-capsule', other: 'bi-file-earmark' };
-                    filesHtml += `<span class="badge bg-light text-primary border px-1" title="${f.display_name || f.original_name}"><i class="bi ${catIcons[f.file_category] || 'bi-file-earmark'}"></i></span>`;
-                });
+
+                if (hasFiles) {
+                    exam.files.forEach(f => {
+                        const catIcons = { radiology: 'bi-x-ray', lab: 'bi-eyedropper', report: 'bi-file-earmark-medical', prescription: 'bi-capsule', other: 'bi-file-earmark' };
+                        filesHtml += `<span class="badge bg-light text-primary border px-1" title="${f.display_name || f.original_name}"><i class="bi ${catIcons[f.file_category] || 'bi-file-earmark'}"></i></span>`;
+                    });
+                }
+
+                if (hasLabs) {
+                    filesHtml += `<span class="badge bg-light text-danger border px-1" title="Laboratuvar Sonuçları (${exam.lab_results.length})"><i class="bi bi-eyedropper"></i></span>`;
+                }
+
                 filesHtml += `</div>`;
             }
 
@@ -360,6 +371,31 @@ function viewHistoricalExam(exam) {
                         </a>
                     `).join('') || '<span class="text-muted">Dosya yok</span>'}
                 </div>
+
+                ${(exam.lab_results && exam.lab_results.length > 0) ? `
+                    <hr class="my-2">
+                    <h6 class="mb-2"><i class="bi bi-eyedropper me-1"></i>Tetkikler</h6>
+                    <div class="list-group list-group-flush border rounded-2">
+                        ${exam.lab_results.map(lab => `
+                            <div class="list-group-item bg-light-subtle p-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">${Utils.formatDate(lab.result_date)}</small>
+                                    <small class="badge bg-success-subtle text-success">Sonuçlandı</small>
+                                </div>
+                                <ul class="mb-0 ps-3 small text-secondary">
+                                    ${(lab.items || []).map(item => `
+                                        <li>
+                                            ${item.test_name}: 
+                                            <span class="fw-bold text-dark">${item.result_value}</span> 
+                                            ${item.unit || ''}
+                                            ${item.is_abnormal ? '<i class="bi bi-exclamation-circle-fill text-danger ms-1" title="Referans dışı"></i>' : ''}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
             </div>
         `,
         confirmButtonText: 'Kapat',

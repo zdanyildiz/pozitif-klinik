@@ -84,8 +84,9 @@ class GeneralRepository
             $sql .= " WHERE f.id IS NOT NULL OR i.is_common = 1";
         } else {
             // Arama varsa (Blind Index yok, ICD public data olduğu için LIKE güvenli)
-            $sql .= " WHERE (i.name LIKE :q OR i.code LIKE :q)";
-            $params['q'] = "%$query%";
+            $sql .= " WHERE (i.name LIKE :q_name OR i.code LIKE :q_code)";
+            $params['q_name'] = "%$query%";
+            $params['q_code'] = "%$query%";
         }
 
         // 5. Sıralama ve Limit
