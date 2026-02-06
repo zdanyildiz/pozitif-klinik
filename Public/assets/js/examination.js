@@ -634,13 +634,78 @@ window.previewEpicrisis = async function (templateId = null) {
     window.open(url, '_blank');
 };
 
-// Önizleme butonu event listener
+/**
+ * Epikriz Kaydet - Kalıcı PDF oluşturur ve dosyaya kaydeder
+ */
+window.saveEpicrisis = async function (templateId = null) {
+    if (!currentExaminationId) {
+        Utils.showError('Önce muayeneyi kaydetmeniz gerekmektedir.');
+        return;
+    }
+
+    // Onay iste
+    const confirmed = await Utils.showConfirm(
+        'Epikriz Kaydet',
+        'Bu işlem epikriz dokümanını kalıcı olarak kaydedecektir. Kaydedilen doküman, hastanın dijital arşivinde görünecektir. Devam etmek istiyor musunuz?',
+        'Evet, Kaydet',
+        'Vazgeç'
+    );
+
+    if (!confirmed) return;
+
+    try {
+        Utils.showLoading('Epikriz kaydediliyor...');
+
+        const payload = {
+            examination_id: currentExaminationId
+        };
+
+        if (templateId) {
+            payload.template_id = templateId;
+        }
+
+        const res = await api.post('/api/documents/epicrisis', payload);
+
+        Utils.closeLoading();
+
+        // Başarı mesajı ve PDF'i aç
+        await Swal.fire({
+            icon: 'success',
+            title: 'Epikriz Kaydedildi',
+            html: `
+                <p>Doküman başarıyla oluşturuldu ve kaydedildi.</p>
+                <p class="small text-muted">Dosya hastanın dijital arşivinde görünecektir.</p>
+            `,
+            confirmButtonText: 'PDF\'i Aç',
+            showCancelButton: true,
+            cancelButtonText: 'Kapat'
+        }).then((result) => {
+            if (result.isConfirmed && res.file_url) {
+                window.open(res.file_url, '_blank');
+            }
+        });
+
+        console.log('[Epikriz] Saved successfully:', res);
+
+    } catch (e) {
+        Utils.closeLoading();
+        Utils.showError('Epikriz kaydedilirken bir hata oluştu: ' + (e || 'Bilinmeyen hata'));
+        console.error('Epicrisis save error:', e);
+    }
+};
+
+// Epikriz butonları event listener
 document.addEventListener('DOMContentLoaded', () => {
-    const btnPreview = document.getElementById('btnPreviewEpicrisis');
-    if (btnPreview) {
-        btnPreview.addEventListener('click', (e) => {
+    // Şablon seçerek taslak önizleme (mevcut generateEpicrisis fonksiyonu kullanılıyor)
+    // Şablonlar listede onclick ile çağrılıyor
+
+    // "Onayla ve Kaydet" butonu
+    const btnSave = document.getElementById('btnSaveEpicrisis');
+    if (btnSave) {
+        btnSave.addEventListener('click', (e) => {
             e.preventDefault();
-            previewEpicrisis();
+            // Varsayılan şablon ile kaydet (veya seçili şablon)
+            saveEpicrisis();
         });
     }
 });

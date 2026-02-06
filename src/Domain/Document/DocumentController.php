@@ -159,12 +159,15 @@ class DocumentController extends BaseController
                 $clinicId,
                 (int) $data['examination_id'],
                 $userId,
-                isset($data['template_id']) ? (int) $data['template_id'] : null
+                isset($data['template_id']) ? (int) $data['template_id'] : null,
+                true // PDF dosyasını kaydet
             );
 
             return $this->createdResponse($response, [
                 'id' => $result['id'],
-                'message' => 'Epikriz başarıyla oluşturuldu'
+                'file_url' => $result['file_url'],
+                'file_path' => $result['file_path'],
+                'message' => 'Epikriz başarıyla oluşturuldu ve kaydedildi'
             ]);
 
         } catch (\Exception $e) {

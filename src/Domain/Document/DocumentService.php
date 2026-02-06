@@ -246,18 +246,55 @@ class DocumentService
         int $examinationId,
         int $userId,
         ?int $templateId = null,
-        bool $savePdf = false
+        bool $savePdf = true // Varsayılan olarak dosyaya kaydet
     ): array {
-        // 1. PDF ve HTML oluştur
+        // 1. Şablonu al
         $template = $templateId
             ? $this->documentRepo->getTemplateById($templateId)
             : $this->documentRepo->getDefaultTemplate($clinicId, 'epicrisis');
 
+        if (!$template) {
+            throw new \RuntimeException("Epikriz şablonu bulunamadı.");
+        }
+
+        // 2. Verileri topla ve PDF oluştur
         $data = $this->collectEpicrisisData($clinicId, $examinationId);
         $html = $this->renderTemplate($template, $data);
         $pdfContent = $this->createPdf($template, $html);
 
-        // 2. Veritabanına kaydet
+        // 3. PDF'i dosya sistemine kaydet (Snapshot/Anlık Görüntü)
+        $filePath = null;
+        $fileUrl = null;
+
+        if ($savePdf) {
+            $storageDir = rtrim($_ENV['STORAGE_PATH'] ?? 'storage', '/');
+            $clinicDir = $storageDir . '/clinic_' . $clinicId . '/documents';
+
+            // Dizin yoksa oluştur
+            if (!is_dir($clinicDir)) {
+                mkdir($clinicDir, 0755, true);
+            }
+
+            // Benzersiz dosya adı
+            $timestamp = date('Ymd_His');
+            $fileName = sprintf('epikriz_%d_%s.pdf', $examinationId, $timestamp);
+            $fullPath = $clinicDir . '/' . $fileName;
+
+            // PDF'i yaz
+            file_put_contents($fullPath, $pdfContent);
+
+            // Relatif yol (DB ve URL için)
+            $filePath = 'clinic_' . $clinicId . '/documents/' . $fileName;
+            $fileUrl = '/storage/' . $filePath;
+
+            $this->logger->info("Epikriz PDF dosyası kaydedildi", [
+                'clinic_id' => $clinicId,
+                'examination_id' => $examinationId,
+                'file_path' => $filePath
+            ]);
+        }
+
+        // 4. Veritabanına kaydet
         $documentData = [
             'clinic_id' => $clinicId,
             'patient_id' => $data['patient']['id'],
@@ -265,23 +302,32 @@ class DocumentService
             'appointment_id' => $data['examination']['appointment_id'] ?? null,
             'template_id' => $template['id'],
             'document_type' => 'epicrisis',
-            'document_title' => 'Epikriz - ' . $data['patient']['name'] . ' - ' . date('d.m.Y'),
+            'document_title' => 'Epikriz - ' . $data['patient']['name'] . ' - ' . date('d.m.Y H:i'),
             'generated_content' => $html,
-            'metadata' => [
+            'file_path' => $filePath,
+            'metadata' => json_encode([
                 'doctor_id' => $data['examination']['doctor_user_id'],
                 'doctor_name' => $data['doctor']['name'] ?? null,
-                'diagnosis' => $data['examination']['diagnosis'] ?? null
-            ],
+                'diagnosis' => $data['examination']['diagnosis'] ?? null,
+                'template_name' => $template['name'],
+                'created_at' => date('Y-m-d H:i:s')
+            ]),
             'created_by' => $userId
         ];
 
-        // İsteğe bağlı olarak dosya olarak da kaydet
-        // (Bu aşamada sadece DB kaydı yapıyoruz)
-
         $documentId = $this->documentRepo->saveDocument($documentData);
+
+        $this->logger->info("Epikriz kaydedildi", [
+            'document_id' => $documentId,
+            'clinic_id' => $clinicId,
+            'examination_id' => $examinationId,
+            'patient_id' => $data['patient']['id']
+        ]);
 
         return [
             'id' => $documentId,
+            'file_path' => $filePath,
+            'file_url' => $fileUrl,
             'pdf' => $pdfContent,
             'html' => $html
         ];
