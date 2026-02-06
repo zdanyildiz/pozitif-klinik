@@ -680,8 +680,8 @@ window.saveEpicrisis = async function (templateId = null) {
             showCancelButton: true,
             cancelButtonText: 'Kapat'
         }).then((result) => {
-            if (result.isConfirmed && res.file_url) {
-                window.open(res.file_url, '_blank');
+            if (result.isConfirmed && res.data && res.data.file_url) {
+                window.open(res.data.file_url, '_blank');
             }
         });
 
