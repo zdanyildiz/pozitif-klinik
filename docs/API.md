@@ -370,6 +370,20 @@ Belirli bir ile ait ilçeleri listeler.
 **Query Params:**
 - `province_id` (int): İlin plakası veya ID'si.
 
+### `GET /api/general/specialties`
+Tüm tıbbi branşları (uzmanlık alanlarını) listeler.
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+    "status": true,
+    "data": [
+        { "code": "INTERNAL_MEDICINE", "name": "İç Hastalıkları" },
+        { "code": "CARDIOLOGY", "name": "Kardiyoloji" }
+    ]
+}
+```
+
 ### `GET /api/general/diagnoses`
 ICD-10 tanılarını listeler veya arar. Klinik bazlı favorileri önceliklendirir.
 
@@ -491,7 +505,23 @@ Yeni personel ekler (Doktor veya Sekreter).
 {
   "username": "doktor_ahmet",
   "password": "secure_password123",
-  "role": "doctor"
+  "role": "doctor",
+  "specialty": "INTERNAL_MEDICINE" // Opsiyonel, doktorsa zorunlu
+}
+```
+
+### `PUT /api/users/{id}`
+Mevcut personel bilgilerini günceller.
+
+**Payload:**
+```json
+{
+  "name": "Dr. Ahmet Yılmaz",
+  "username": "doktor_ahmet",
+  "role": "doctor",
+  "specialty": "CARDIOLOGY",
+  "is_active": 1,
+  "password": "optional_new_password"
 }
 ```
 

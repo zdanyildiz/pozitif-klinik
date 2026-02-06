@@ -33,6 +33,15 @@ class GeneralRepository
         $stmt->execute(['province_id' => $provinceId]);
         return $stmt->fetchAll();
     }
+
+    /**
+     * Tüm tıbbi branşları listeler
+     */
+    public function getMedicalSpecialties(): array
+    {
+        $stmt = $this->db->query("SELECT code, name FROM sys_medical_specialties WHERE is_active = 1 ORDER BY name ASC");
+        return $stmt->fetchAll();
+    }
     /**
      * ICD-10 tanılarını arar veya sık kullanılanları getirir.
      * Klinik bazlı favorileri önceliklendirir.

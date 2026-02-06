@@ -39,8 +39,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('userRole')) document.getElementById('userRole').textContent = roleText;
 
     loadUsers();
+    loadMedicalSpecialties();
     setupEventListeners();
 });
+
+let medicalSpecialties = [];
+async function loadMedicalSpecialties() {
+    try {
+        const result = await api.get('/api/general/specialties');
+        medicalSpecialties = result.data || [];
+
+        const newSelect = document.getElementById('newSpecialty');
+        const editSelect = document.getElementById('editSpecialty');
+
+        [newSelect, editSelect].forEach(select => {
+            if (select) {
+                select.innerHTML = '<option value="">Seçiniz</option>';
+                medicalSpecialties.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.code;
+                    opt.textContent = s.name;
+                    select.appendChild(opt);
+                });
+            }
+        });
+    } catch (error) {
+        console.error('Branşlar yüklenirken hata:', error);
+    }
+}
 
 // Event Listeners
 function setupEventListeners() {
@@ -55,6 +81,20 @@ function setupEventListeners() {
     // Personel Güncelle
     document.getElementById('updateUserBtn').addEventListener('click', handleUpdateUser);
 
+    // Role change listeners for specialty visibility
+    const newRoleSelect = document.getElementById('newRole');
+    if (newRoleSelect) {
+        newRoleSelect.addEventListener('change', () => {
+            document.getElementById('newSpecialtyContainer').style.display = newRoleSelect.value === 'doctor' ? 'block' : 'none';
+        });
+    }
+
+    const editRoleSelect = document.getElementById('editRole');
+    if (editRoleSelect) {
+        editRoleSelect.addEventListener('change', () => {
+            document.getElementById('editSpecialtyContainer').style.display = editRoleSelect.value === 'doctor' ? 'block' : 'none';
+        });
+    }
 }
 
 // Personelleri Yükle
@@ -137,12 +177,22 @@ async function handleSaveUser() {
         name: document.getElementById('newName').value.trim(),
         username: document.getElementById('newUsername').value.trim(),
         password: document.getElementById('newPassword').value,
-        role: document.getElementById('newRole').value
+        role: document.getElementById('newRole').value,
+        specialty: document.getElementById('newSpecialty').value
     };
 
     if (!data.name || !data.username || !data.password || !data.role) {
         Utils.showError('Lütfen tüm alanları doldurun.');
         return;
+    }
+
+    if (data.role === 'doctor' && !data.specialty) {
+        Utils.showError('Doktor için branş seçimi zorunludur.');
+        return;
+    }
+
+    if (data.role !== 'doctor') {
+        data.specialty = null;
     }
 
     saveUserBtn.disabled = true;
@@ -189,6 +239,15 @@ window.handleEditUser = function (userId) {
     document.getElementById('editStatus').value = (user.is_active === 1 || user.is_active === '1' || user.is_active === true) ? 'active' : 'inactive';
     document.getElementById('editPassword').value = ''; // Clear password field for security
 
+    const specialtySelect = document.getElementById('editSpecialty');
+    const specialtyContainer = document.getElementById('editSpecialtyContainer');
+    if (specialtySelect) {
+        specialtySelect.value = user.specialty || '';
+    }
+    if (specialtyContainer) {
+        specialtyContainer.style.display = user.role === 'doctor' ? 'block' : 'none';
+    }
+
     editUserModal.show();
 }
 
@@ -200,6 +259,7 @@ async function handleUpdateUser() {
         name: document.getElementById('editName').value.trim(),
         username: document.getElementById('editUsername').value.trim(),
         role: document.getElementById('editRole').value,
+        specialty: document.getElementById('editSpecialty').value,
         is_active: document.getElementById('editStatus').value === 'active' ? 1 : 0
     };
 
@@ -211,6 +271,15 @@ async function handleUpdateUser() {
     if (!data.name || !data.username || !data.role) {
         Utils.showError('Lütfen tüm gerekli alanları doldurun.');
         return;
+    }
+
+    if (data.role === 'doctor' && !data.specialty) {
+        Utils.showError('Doktor için branş seçimi zorunludur.');
+        return;
+    }
+
+    if (data.role !== 'doctor') {
+        data.specialty = null;
     }
 
     updateUserBtn.disabled = true;

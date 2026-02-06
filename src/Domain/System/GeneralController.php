@@ -48,6 +48,16 @@ class GeneralController extends BaseController
         $districts = $this->repository->getDistricts($provinceId);
         return $this->success($response, $districts);
     }
+
+    /**
+     * Tıbbi branşları listeler
+     */
+    #[Route('GET', '/specialties')]
+    public function listSpecialties(Request $request, Response $response): Response
+    {
+        $specialties = $this->repository->getMedicalSpecialties();
+        return $this->success($response, $specialties);
+    }
     /**
      * ICD-10 tanılarını listeler
      */

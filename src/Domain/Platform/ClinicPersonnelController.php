@@ -54,6 +54,7 @@ class ClinicPersonnelController extends BaseController
         $name = $body['name'] ?? '';
         $password = $body['password'] ?? '';
         $role = $body['role'] ?? 'secretary';
+        $specialty = $body['specialty'] ?? null;
 
         if (empty($username) || empty($password) || empty($role)) {
             return $this->error($response, 'Kullanıcı adı, şifre ve rol zorunludur.', 400);
@@ -69,7 +70,8 @@ class ClinicPersonnelController extends BaseController
                 'username' => $username,
                 'name' => $name,
                 'password' => $password,
-                'role' => $role
+                'role' => $role,
+                'specialty' => $specialty
             ]);
             return $this->createdResponse($response, ['id' => $id], 'Personel oluşturuldu.');
         } catch (Throwable $e) {
@@ -96,6 +98,7 @@ class ClinicPersonnelController extends BaseController
             'username' => $body['username'] ?? $existing['username'],
             'name' => $body['name'] ?? $existing['name'],
             'role' => $body['role'] ?? $existing['role'],
+            'specialty' => $body['specialty'] ?? $existing['specialty'],
             'is_active' => isset($body['is_active']) ? (int) $body['is_active'] : $existing['is_active'],
             'password' => $body['password'] ?? null
         ];

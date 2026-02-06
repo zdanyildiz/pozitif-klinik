@@ -68,7 +68,8 @@ class UserController extends BaseController
         $validator = v::key('username', v::alnum()->noWhitespace()->length(3))
             ->key('name', v::stringType()->length(2))
             ->key('password', v::stringType()->length(6))
-            ->key('role', v::in(['doctor', 'secretary']));
+            ->key('role', v::in(['doctor', 'secretary']))
+            ->key('specialty', v::optional(v::stringType()));
 
         try {
             $validator->assert($data);
@@ -148,6 +149,7 @@ class UserController extends BaseController
         $validator = v::key('username', v::alnum()->noWhitespace()->length(3))
             ->key('name', v::stringType()->length(2))
             ->key('role', v::in(['admin', 'doctor', 'secretary']))
+            ->key('specialty', v::optional(v::stringType()))
             ->key('is_active', v::optional(v::intVal()));
 
         // Şifre varsa ayrı validation

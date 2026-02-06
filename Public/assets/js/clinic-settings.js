@@ -60,9 +60,30 @@ document.addEventListener('DOMContentLoaded', () => {
     testEmailModal = new bootstrap.Modal(document.getElementById('testEmailModal'));
     personnelModal = new bootstrap.Modal(document.getElementById('personnelModal'));
     loadClinicData();
+    loadPlatformMedicalSpecialties();
     setupEventListeners();
     setupTabs();
 });
+
+let medicalSpecialties = [];
+async function loadPlatformMedicalSpecialties() {
+    try {
+        const result = await api.get('/platform-api/specialties');
+        medicalSpecialties = result.data || [];
+        const select = document.getElementById('personnelSpecialty');
+        if (select) {
+            select.innerHTML = '<option value="">Seçiniz</option>';
+            medicalSpecialties.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.code;
+                opt.textContent = s.name;
+                select.appendChild(opt);
+            });
+        }
+    } catch (error) {
+        console.error('Branşlar yüklenirken hata:', error);
+    }
+}
 
 // Event Listeners
 function setupEventListeners() {
@@ -94,6 +115,17 @@ function setupEventListeners() {
     // Personnel Events
     document.getElementById('btnAddNewPersonnel').addEventListener('click', () => openPersonnelModal());
     document.getElementById('savePersonnelBtn').addEventListener('click', handleSavePersonnel);
+
+    // Role change listener for specialty visibility
+    const roleSelect = document.getElementById('personnelRole');
+    if (roleSelect) {
+        roleSelect.addEventListener('change', () => {
+            const specialtyContainer = document.getElementById('specialtyContainer');
+            if (specialtyContainer) {
+                specialtyContainer.style.display = roleSelect.value === 'doctor' ? 'block' : 'none';
+            }
+        });
+    }
 }
 
 // Tab Navigasyonu
@@ -423,7 +455,7 @@ async function loadPersonnel() {
                     ${isActive ? 'Aktif' : 'Pasif'}
                 </td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary" onclick="openPersonnelModal(${user.id}, '${escapeHtml(user.username)}', '${escapeHtml(user.name || '')}', '${user.role}', ${user.is_active})">
+                    <button class="btn btn-sm btn-outline-primary" onclick="openPersonnelModal(${user.id}, '${escapeHtml(user.username)}', '${escapeHtml(user.name || '')}', '${user.role}', ${user.is_active}, '${escapeHtml(user.specialty || '')}')">
                         <i class="bi bi-pencil"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deletePersonnel(${user.id})">
@@ -439,7 +471,7 @@ async function loadPersonnel() {
     }
 }
 
-window.openPersonnelModal = function (id = null, username = '', name = '', role = 'secretary', isActive = 1) {
+window.openPersonnelModal = function (id = null, username = '', name = '', role = 'secretary', isActive = 1, specialty = '') {
     currentPersonnelEditId = id;
     document.getElementById('personnelModalTitle').textContent = id ? 'Personel Düzenle' : 'Yeni Personel Ekle';
     document.getElementById('personnelId').value = id || '';
@@ -448,6 +480,17 @@ window.openPersonnelModal = function (id = null, username = '', name = '', role 
     document.getElementById('personnelRole').value = role;
     document.getElementById('personnelStatus').value = isActive ? "1" : "0";
     document.getElementById('personnelPassword').value = '';
+
+    const specialtySelect = document.getElementById('personnelSpecialty');
+    const specialtyContainer = document.getElementById('specialtyContainer');
+
+    if (specialtySelect) {
+        specialtySelect.value = specialty;
+    }
+
+    if (specialtyContainer) {
+        specialtyContainer.style.display = role === 'doctor' ? 'block' : 'none';
+    }
 
     // Şifre ipucu
     const hint = document.getElementById('personnelPasswordHint');
@@ -465,6 +508,7 @@ async function handleSavePersonnel() {
     const username = document.getElementById('personnelUsername').value.trim();
     const name = document.getElementById('personnelName').value.trim();
     const role = document.getElementById('personnelRole').value;
+    const specialty = document.getElementById('personnelSpecialty').value;
     const password = document.getElementById('personnelPassword').value;
     const isActive = document.getElementById('personnelStatus').value;
 
@@ -473,11 +517,16 @@ async function handleSavePersonnel() {
         return;
     }
 
+    if (role === 'doctor' && !specialty) {
+        Utils.showError('Doktor için branş seçimi zorunludur.');
+        return;
+    }
+
     const saveBtn = document.getElementById('savePersonnelBtn');
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
 
-    const payload = { username, name, role, is_active: isActive };
+    const payload = { username, name, role, is_active: isActive, specialty: role === 'doctor' ? specialty : null };
     if (password) payload.password = password;
 
     try {

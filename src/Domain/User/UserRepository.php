@@ -22,7 +22,7 @@ class UserRepository
      */
     public function findAll(int $clinicId): array
     {
-        $sql = "SELECT id, clinic_id, username, name, role, is_active, created_at 
+        $sql = "SELECT id, clinic_id, username, name, role, specialty, is_active, created_at 
                 FROM sys_users 
                 WHERE clinic_id = ? 
                 ORDER BY id DESC";
@@ -34,7 +34,7 @@ class UserRepository
      */
     public function findByUsername(int $clinicId, string $username): ?array
     {
-        $sql = "SELECT id, clinic_id, username, name, role, is_active 
+        $sql = "SELECT id, clinic_id, username, name, role, specialty, is_active 
                 FROM sys_users 
                 WHERE clinic_id = ? AND username = ?";
         $result = $this->db->fetch($sql, [$clinicId, $username]);
@@ -60,7 +60,7 @@ class UserRepository
         }
 
         // 2. Kullanıcıyı sorgula (Tenant ID ile)
-        $sqlUser = "SELECT id, clinic_id, username, name, password_hash, role, is_active 
+        $sqlUser = "SELECT id, clinic_id, username, name, password_hash, role, specialty, is_active 
                     FROM sys_users 
                     WHERE clinic_id = ? AND username = ?";
 
@@ -78,8 +78,8 @@ class UserRepository
      */
     public function create(int $clinicId, array $data): int
     {
-        $sql = "INSERT INTO sys_users (clinic_id, username, name, password_hash, role, is_active) 
-                VALUES (?, ?, ?, ?, ?, 1)";
+        $sql = "INSERT INTO sys_users (clinic_id, username, name, password_hash, role, specialty, is_active) 
+                VALUES (?, ?, ?, ?, ?, ?, 1)";
 
         $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
 
@@ -93,7 +93,8 @@ class UserRepository
             $data['username'],
             $data['name'] ?? null,
             $hashedPassword,
-            $data['role']
+            $data['role'],
+            $data['specialty'] ?? null
         ]);
 
         return (int) $this->db->getConnection()->lastInsertId();
@@ -124,7 +125,7 @@ class UserRepository
      */
     public function findById(int $clinicId, int $userId): ?array
     {
-        $sql = "SELECT id, clinic_id, username, name, role, is_active, created_at 
+        $sql = "SELECT id, clinic_id, username, name, role, specialty, is_active, created_at 
                 FROM sys_users 
                 WHERE clinic_id = ? AND id = ?";
         $result = $this->db->fetch($sql, [$clinicId, $userId]);
@@ -142,6 +143,7 @@ class UserRepository
                         username = ?,
                         name = ?,
                         role = ?,
+                        specialty = ?,
                         is_active = ?,
                         password_hash = ?
                     WHERE clinic_id = ? AND id = ?";
@@ -158,6 +160,7 @@ class UserRepository
                 $data['username'],
                 $data['name'] ?? null,
                 $data['role'],
+                $data['specialty'] ?? null,
                 $data['is_active'] ?? 1,
                 $hashedPassword,
                 $clinicId,
@@ -169,6 +172,7 @@ class UserRepository
                         username = ?,
                         name = ?,
                         role = ?,
+                        specialty = ?,
                         is_active = ?
                     WHERE clinic_id = ? AND id = ?";
 
@@ -176,6 +180,7 @@ class UserRepository
                 $data['username'],
                 $data['name'] ?? null,
                 $data['role'],
+                $data['specialty'] ?? null,
                 $data['is_active'] ?? 1,
                 $clinicId,
                 $userId
