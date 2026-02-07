@@ -310,7 +310,8 @@ class DataMigrator {
 
             // JSON olarak kaydet
             const fs = require('fs');
-            const outputPath = '/home/zafer/htdocs/pozitif-klinik/docs/migration_data.json';
+const path = require('path');
+            const outputPath = path.resolve(__dirname, 'data', 'migration_data.json');
             fs.writeFileSync(outputPath, JSON.stringify(data, null, 2));
 
             console.log('\n========================================');

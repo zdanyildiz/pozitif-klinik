@@ -15,7 +15,7 @@ Bu rapor, Intermedia (MSSQL) sisteminden Pozitif Klinik (MySQL) platformuna yap�
 | Sıra | Script Adı | Konum | Kısa Amaç | Bağımlılıklar | Opsiyonel mi? |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1A** | `prepare_mysql_schema.js` | `migration/` | MySQL şemasını legacy sütunlar (legacy_id, legacy_visit_id vb.) ile hazırlar. | - | Hayır |
-| **2A** | `extract_mssql.js` | `migration/` | MSSQL'den temel verileri (Hasta, Randevu, Muayene, Hizmet, Kullanıcı) çeker ve `docs/migration_data.json` dosyasına kaydeder. | `prepare_mysql_schema.js` | Hayır |
+| **2A** | `extract_mssql.js` | `migration/` | MSSQL'den temel verileri (Hasta, Randevu, Muayene, Hizmet, Kullanıcı) çeker ve `scripts/intermedia-migration/data/migration_data.json` dosyasına kaydeder. | `prepare_mysql_schema.js` | Hayır |
 | **3A** | `load_mysql.js` | `migration/` | Çıkarılan JSON verilerini MySQL'e aktarır, KVKK şifrelemesi yapar. | `extract_mssql.js` | Hayır |
 | **1B** | `migrate_data.js` | Kök dizin | Eski MSSQL'den doğrudan MySQL'e temel verileri aktarır (tek adım, JSON yok). | - | Hayır |
 | **4** | `merge_specialty_data.js` | Kök dizin | Branş tablosundaki (`UZM_...`) notları `cln_examinations`'a aktarır. LABORATUVAR ve RADYOLOJI alanlarını birleştirir. | `load_mysql.js` **veya** `migrate_data.js` | Hayır |
@@ -30,7 +30,7 @@ Bu rapor, Intermedia (MSSQL) sisteminden Pozitif Klinik (MySQL) platformuna yap�
 | Script | Açıklama | Not |
 | :--- | :--- | :--- |
 | `migrate_data.js` (Kök dizin) | Eski tek-adim akış: MSSQL -> MySQL doğrudan aktarım (JSON yok). | `migration/*` akışı ile karıştırılmamalı. |
-| `import_data.js` (Kök dizin) | `migration/load_mysql.js` ile aynı mantıkta JSON -> MySQL yükler. | Kaynak dosya `docs/migration_data.json` bekler. |
+| `import_data.js` (Kök dizin) | `migration/load_mysql.js` ile aynı mantıkta JSON -> MySQL yükler. | Kaynak dosya `scripts/intermedia-migration/data/migration_data.json` bekler. |
 
 ---
 

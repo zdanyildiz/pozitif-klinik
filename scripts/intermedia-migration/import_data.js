@@ -1,11 +1,12 @@
 /**
  * Pozitif Klinik - Veri İçe Aktarım Scripti
  * 
- * extracted_data.json dosyasındaki verileri MySQL veritabanına aktarır.
+ * migration_data.json dosyasındaki verileri MySQL veritabanına aktarır.
  */
 
 const mysql = require('mysql2/promise');
 const fs = require('fs');
+const path = require('path');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
@@ -36,7 +37,7 @@ function blindIndex(data) {
 }
 
 async function main() {
-    const dataPath = '/home/zafer/htdocs/pozitif-klinik/docs/migration_data.json';
+    const dataPath = path.resolve(__dirname, 'data', 'migration_data.json');
     if (!fs.existsSync(dataPath)) {
         console.error('Veri dosyası bulunamadı!');
         return;

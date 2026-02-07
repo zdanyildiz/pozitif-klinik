@@ -12,11 +12,11 @@ Bu klasör, farklı kliniklerden (MSSQL tabanlı eski sistemlerden) Pozitif Klin
 *   **`prepare_mysql_schema.js`**: Yeni MySQL veritabanına, eski sistemden gelen verileri (legacy_id, vb.) ve ek alanları (baba adı, şikayetler, vb.) eklemek için gerekli `ALTER TABLE` komutlarını çalıştırır. **Önemli:** Veri aktarımından önce mutlaka bir kez çalıştırılmalıdır.
 
 ### 3. Veri Çıkarma (Extract)
-*   **`extract_mssql.js`**: MSSQL veritabanına bağlanır ve tüm ana tabloları (Hastalar, Randevular, Tıbbi Notlar, Hizmetler, Kullanıcılar) ilişkisel olarak çeker. Çıktı olarak `docs/migration_data.json` dosyasını oluşturur.
+*   **`extract_mssql.js`**: MSSQL veritabanına bağlanır ve tüm ana tabloları (Hastalar, Randevular, Tıbbi Notlar, Hizmetler, Kullanıcılar) ilişkisel olarak çeker. Çıktı olarak `scripts/intermedia-migration/data/migration_data.json` dosyasını oluşturur.
     *   *Yapılandırma:* Dosya başındaki `mssqlConfig` ve `CLINIC_ID` değişkenlerini her klinik için güncelleyin.
 
 ### 4. Veri Yükleme (Load)
-*   **`load_mysql.js`**: `docs/migration_data.json` dosyasını okur ve verileri yeni sisteme aktarır.
+*   **`load_mysql.js`**: `scripts/intermedia-migration/data/migration_data.json` dosyasını okur ve verileri yeni sisteme aktarır.
     *   **Kritik İşlevler:**
         *   KVKK uyumu için Hasta adlarını, telefonlarını ve TC kimlik numaralarını **şifreler** (`src/Core/Security/CryptoService.php` ile tam uyumlu).
         *   Şifreli veriler üzerinde arama yapılabilmesi için **Blind Index** (hash) oluşturur.
