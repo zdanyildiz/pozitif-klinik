@@ -299,6 +299,7 @@ class PaymentRepository
             SELECT 
                 pm.appointment_id,
                 MAX(pm.payment_date) as last_payment_date,
+                MAX(a.appointment_date) as appointment_date,
                 SUM(pm.amount) as total_amount,
                 COUNT(pm.id) as item_count,
                  DATE(MAX(pm.payment_date)) as date_group,
@@ -388,14 +389,17 @@ class PaymentRepository
             }
         }
 
-        // Gruplama: Randevu Bazlı (Her randevu bir satır)
+        // Gruplama: Randevu Bazlı (Randevusu olanlar birleşir, olmayanlar tekil kalır)
         $sql .= "
             GROUP BY 
-                pm.appointment_id
+                CASE 
+                    WHEN pm.appointment_id IS NOT NULL THEN pm.appointment_id 
+                    ELSE pm.id 
+                END
         ";
 
         // Sıralama ve Limit
-        $sql .= " ORDER BY last_payment_date DESC LIMIT ? OFFSET ?";
+        $sql .= " ORDER BY last_payment_date DESC, MAX(pm.id) DESC LIMIT ? OFFSET ?";
         $params[] = $perPage;
         $params[] = $offset;
 
@@ -495,7 +499,13 @@ class PaymentRepository
             }
         }
 
-        $sql .= " GROUP BY pm.appointment_id ) as grouped_table";
+        $sql .= " 
+            GROUP BY 
+                CASE 
+                    WHEN pm.appointment_id IS NOT NULL THEN pm.appointment_id 
+                    ELSE pm.id 
+                END
+        ) as grouped_table";
 
         $result = $this->db->fetch($sql, $params);
         return (int) ($result['total'] ?? 0);
@@ -528,18 +538,23 @@ class PaymentRepository
             LEFT JOIN cln_services s ON i.service_id = s.id
             LEFT JOIN sys_users u ON i.performer_id = u.id
             WHERE i.clinic_id = ? 
-              AND a.patient_id = ? 
-              AND (a.id = ? OR DATE(a.appointment_date) = ? OR DATE(i.created_at) = ?)
+              AND i.appointment_id = ?
         ";
-        $items = $this->db->fetchAll($itemsSql, [$clinicId, $patientId, $appointmentId, $date, $date]);
+        $items = $this->db->fetchAll($itemsSql, [$clinicId, $appointmentId]);
 
         // 2. O güne ait TÜM Tahsilatlar
+        // Değişiklik: Randevu varsa sadece o randevuya ait olanları getir.
+        // Randevu yoksa (Tarih bazlı işlem), o günkü randevusuz ödemeleri getir.
         $paymentsSql = "
             SELECT * 
             FROM cln_payments 
             WHERE clinic_id = ? 
               AND patient_id = ? 
-              AND (appointment_id = ? OR DATE(payment_date) = ?) 
+              AND (
+                  (appointment_id IS NOT NULL AND appointment_id = ?) 
+                  OR 
+                  (appointment_id IS NULL AND DATE(payment_date) = ?)
+              )
             ORDER BY payment_date DESC
         ";
         $payments = $this->db->fetchAll($paymentsSql, [$clinicId, $patientId, $appointmentId, $date]);

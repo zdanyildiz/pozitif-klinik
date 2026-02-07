@@ -3,6 +3,11 @@
     <td>
         <div class="fw-bold">{{ item.last_payment_date|date('d.m.Y') }}</div>
         <small class="text-muted">{{ item.last_payment_date|date('H:i') }}</small>
+        {% if item.appointment_date %}
+            <div class="text-muted small mt-1" style="font-size: 0.75rem;">
+                <i class="bi bi-calendar-event"></i> Randevu: {{ item.appointment_date|date('d.m.Y') }}
+            </div>
+        {% endif %}
     </td>
     <td>
         <div>{{ item.patient_name }}</div>
