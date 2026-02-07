@@ -297,11 +297,14 @@ class PaymentRepository
         // Temel Sorgu
         $sql = "
             SELECT 
-                pm.id,
-                pm.payment_date,
-                pm.amount as total_amount,
-                pm.payment_type,
-                DATE(pm.payment_date) as date_group,
+                pm.appointment_id,
+                MAX(pm.payment_date) as last_payment_date,
+                SUM(pm.amount) as total_amount,
+                COUNT(pm.id) as item_count,
+                 DATE(MAX(pm.payment_date)) as date_group,
+                 
+                -- Grup içindeki ödeme tiplerini birleştir (örn: Credit Card, Cash)
+                GROUP_CONCAT(DISTINCT pm.payment_type ORDER BY pm.id DESC SEPARATOR ', ') as payment_types,
                 
                 -- Hasta Bilgileri
                 p.id as patient_id,
@@ -309,8 +312,7 @@ class PaymentRepository
                 p.tc_no as patient_tc,
                 
                 -- Doktor (Randevu varsa)
-                doc.name as doctor_name,
-                pm.appointment_id
+                doc.name as doctor_name
                 
             FROM cln_payments pm
             JOIN ptn_cards p ON pm.patient_id = p.id
@@ -386,8 +388,14 @@ class PaymentRepository
             }
         }
 
+        // Gruplama: Randevu Bazlı (Her randevu bir satır)
+        $sql .= "
+            GROUP BY 
+                pm.appointment_id
+        ";
+
         // Sıralama ve Limit
-        $sql .= " ORDER BY pm.payment_date DESC LIMIT ? OFFSET ?";
+        $sql .= " ORDER BY last_payment_date DESC LIMIT ? OFFSET ?";
         $params[] = $perPage;
         $params[] = $offset;
 
@@ -402,14 +410,16 @@ class PaymentRepository
                 $row['patient_tc'] = $this->crypto->decrypt($row['patient_tc']) ?? $row['patient_tc'];
             }
 
-            // Tek bir tipi formatla
-            $row['payment_types_label'] = match ($row['payment_type']) {
-                'cash' => 'Nakit',
-                'credit_card' => 'Kredi Kartı',
-                'bank_transfer' => 'Havale/EFT',
-                'other' => 'Diğer',
-                default => $row['payment_type']
-            };
+            // Tipleri formatla (örn: cash, credit_card -> Nakit, Kredi Kartı)
+            $row['payment_types_label'] = implode(', ', array_map(function ($t) {
+                return match ($t) {
+                    'cash' => 'Nakit',
+                    'credit_card' => 'Kredi Kartı',
+                    'bank_transfer' => 'Havale/EFT',
+                    'other' => 'Diğer',
+                    default => $t
+                };
+            }, explode(', ', $row['payment_types'] ?? '')));
 
             return $row;
         }, $rows);
@@ -483,6 +493,8 @@ class PaymentRepository
                 }
             }
         }
+
+        $sql .= " GROUP BY pm.appointment_id ) as grouped_table";
 
         $result = $this->db->fetch($sql, $params);
         return (int) ($result['total'] ?? 0);
