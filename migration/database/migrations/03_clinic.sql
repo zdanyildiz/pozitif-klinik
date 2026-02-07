@@ -105,6 +105,7 @@ CREATE TABLE `cln_examinations` (
   `bulgular` text DEFAULT NULL,
   `diagnosis` text DEFAULT NULL COMMENT 'Tanı/Teşhis',
   `treatment` text DEFAULT NULL COMMENT 'Tedavi',
+  `lab_result_text` text DEFAULT NULL COMMENT 'Tetkik Sonuçları (Metin)',
   `result_note` text DEFAULT NULL COMMENT 'Sonuç',
   `legacy_visit_id` bigint(20) DEFAULT NULL COMMENT 'Link to HST_GELISLER.GELISNO',
   `specialty_code` varchar(50) DEFAULT NULL COMMENT 'Dynamic specialty identifier',
