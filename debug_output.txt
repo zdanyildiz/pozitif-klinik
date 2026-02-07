@@ -1,0 +1,17 @@
+DB Connection Debug:
+Host: localhost
+DB: pozitif_klinik
+User: root
+PHP Fatal error:  Uncaught RuntimeException: Database connection failed: could not find driver in /opt/lampp/htdocs/pozitif-klinik/src/Core/Database.php:30
+Stack trace:
+#0 /opt/lampp/htdocs/pozitif-klinik/src/Core/Database.php(40): App\Core\Database->__construct()
+#1 /opt/lampp/htdocs/pozitif-klinik/config/container.php(33): App\Core\Database::getInstance()
+#2 [internal function]: DI\Definition\Source\DefinitionFile->{closure}()
+#3 /opt/lampp/htdocs/pozitif-klinik/vendor/php-di/invoker/src/Invoker.php(74): call_user_func_array()
+#4 /opt/lampp/htdocs/pozitif-klinik/vendor/php-di/php-di/src/Definition/Resolver/FactoryResolver.php(69): Invoker\Invoker->call()
+#5 /opt/lampp/htdocs/pozitif-klinik/vendor/php-di/php-di/src/Definition/Resolver/ResolverDispatcher.php(62): DI\Definition\Resolver\FactoryResolver->resolve()
+#6 /opt/lampp/htdocs/pozitif-klinik/vendor/php-di/php-di/src/Container.php(360): DI\Definition\Resolver\ResolverDispatcher->resolve()
+#7 /opt/lampp/htdocs/pozitif-klinik/vendor/php-di/php-di/src/Container.php(142): DI\Container->resolveDefinition()
+#8 /opt/lampp/htdocs/pozitif-klinik/scripts/demo/create_demo_data.php(219): DI\Container->get()
+#9 {main}
+  thrown in /opt/lampp/htdocs/pozitif-klinik/src/Core/Database.php on line 30
