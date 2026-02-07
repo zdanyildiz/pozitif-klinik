@@ -58,10 +58,14 @@ async function mergeSpecialtyData() {
                 TANI, 
                 TEDAVI, 
                 TAVSIYELER, 
-                FIZIKMUA
+                FIZIKMUA,
+                RADYOLOJI,
+                LABORATUVAR
             FROM UZM_ICHASTALIKLARI_HST_ANAMNEZ
             WHERE (SIKAYETLER IS NOT NULL AND SIKAYETLER != '') 
                OR (TANI IS NOT NULL AND TANI != '')
+               OR (RADYOLOJI IS NOT NULL AND RADYOLOJI != '')
+               OR (LABORATUVAR IS NOT NULL AND LABORATUVAR != '')
         `);
 
         console.log(`${result.recordset.length} adet dolu klinik not bulundu. İşlem başlıyor...`);
@@ -85,7 +89,8 @@ async function mergeSpecialtyData() {
                          story = COALESCE(story, ?),
                          diagnosis = COALESCE(diagnosis, ?),
                          treatment = COALESCE(treatment, ?),
-                         bulgular = COALESCE(bulgular, ?)
+                         bulgular = COALESCE(bulgular, ?),
+                         lab_result_text = COALESCE(lab_result_text, ?)
                      WHERE legacy_visit_id = ? AND clinic_id = ?`,
                     [
                         row.SIKAYETLER || null,
@@ -93,6 +98,8 @@ async function mergeSpecialtyData() {
                         row.TANI || null,
                         row.TEDAVI || null,
                         row.FIZIKMUA || null,
+                        (row.LABORATUVAR ? 'LABORATUVAR:\n' + row.LABORATUVAR + '\n\n' : '') +
+                        (row.RADYOLOJI ? 'RADYOLOJI:\n' + row.RADYOLOJI : '') || null,
                         row.GELISNO,
                         CLINIC_ID
                     ]
@@ -103,8 +110,8 @@ async function mergeSpecialtyData() {
                 await mysqlConn.execute(
                     `INSERT INTO cln_examinations (
                         clinic_id, patient_id, doctor_user_id, appointment_id, 
-                        complaint, story, diagnosis, treatment, bulgular, legacy_visit_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        complaint, story, diagnosis, treatment, bulgular, lab_result_text, legacy_visit_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         CLINIC_ID,
                         appt.patient_id,
@@ -115,6 +122,8 @@ async function mergeSpecialtyData() {
                         row.TANI || null,
                         row.TEDAVI || null,
                         row.FIZIKMUA || null,
+                        (row.LABORATUVAR ? 'LABORATUVAR:\n' + row.LABORATUVAR + '\n\n' : '') +
+                        (row.RADYOLOJI ? 'RADYOLOJI:\n' + row.RADYOLOJI : '') || null,
                         row.GELISNO
                     ]
                 );

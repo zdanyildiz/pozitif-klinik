@@ -24,6 +24,7 @@ class ExaminationRepository
                     e.id, 
                     e.clinic_id, e.patient_id, e.doctor_user_id,
                     e.anamnez, e.complaint, e.story, e.bulgular, e.diagnosis, e.treatment, e.result_note,
+                    e.lab_result_text,
                     e.appointment_id, e.specialty_code, e.specialty_data,
                     e.created_at,
                     u.name as doctor_name
@@ -44,6 +45,7 @@ class ExaminationRepository
                     'Randevu (Detay Girilmedi)' as diagnosis,
                     NULL as treatment, 
                     NULL as result_note,
+                    NULL as lab_result_text,
                     a.id as appointment_id,
                     NULL as specialty_code, 
                     NULL as specialty_data,
@@ -113,12 +115,12 @@ class ExaminationRepository
         $sql = "INSERT INTO cln_examinations (
                     clinic_id, patient_id, doctor_user_id, 
                     anamnez, complaint, story, bulgular, 
-                    diagnosis, treatment, result_note, appointment_id,
+                    diagnosis, treatment, result_note, lab_result_text, appointment_id,
                     specialty_code, specialty_data
                 ) VALUES (
                     :clinic_id, :patient_id, :doctor_user_id, 
                     :anamnez, :complaint, :story, :bulgular, 
-                    :diagnosis, :treatment, :result_note, :appointment_id,
+                    :diagnosis, :treatment, :result_note, :lab_result_text, :appointment_id,
                     :specialty_code, :specialty_data
                 )";
 
@@ -134,6 +136,7 @@ class ExaminationRepository
             'diagnosis' => $data['diagnosis'] ?? null,
             'treatment' => $data['treatment'] ?? null,
             'result_note' => $data['result_note'] ?? null,
+            'lab_result_text' => $data['lab_result_text'] ?? null,
             'appointment_id' => $data['appointment_id'] ?? null,
             'specialty_code' => $data['specialty_code'] ?? null,
             'specialty_data' => $data['specialty_data'] ?? null
@@ -151,7 +154,8 @@ class ExaminationRepository
                     bulgular = :bulgular,
                     diagnosis = :diagnosis,
                     treatment = :treatment,
-                    result_note = :result_note
+                    result_note = :result_note,
+                    lab_result_text = :lab_result_text
                 WHERE clinic_id = :clinic_id AND id = :id";
 
         $stmt = $this->db->getConnection()->prepare($sql);
@@ -164,7 +168,8 @@ class ExaminationRepository
             'bulgular' => $data['bulgular'] ?? null,
             'diagnosis' => $data['diagnosis'] ?? null,
             'treatment' => $data['treatment'] ?? null,
-            'result_note' => $data['result_note'] ?? null
+            'result_note' => $data['result_note'] ?? null,
+            'lab_result_text' => $data['lab_result_text'] ?? null
         ]);
     }
 }

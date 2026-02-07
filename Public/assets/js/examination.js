@@ -349,6 +349,7 @@ function fillExaminationForm(exam) {
     document.getElementById('bulgular').value = exam.bulgular || '';
     document.getElementById('diagnosis').value = exam.diagnosis || '';
     document.getElementById('treatment').value = exam.treatment || '';
+    document.getElementById('lab_result_text').value = exam.lab_result_text || '';
     document.getElementById('result_note').value = exam.result_note || '';
 
     if (exam.created_at) {
@@ -366,6 +367,7 @@ function viewHistoricalExam(exam) {
                 <p><strong>Bulgular:</strong> ${exam.bulgular || '-'}</p>
                 <p><strong>Tanı:</strong> ${exam.diagnosis || '-'}</p>
                 <p><strong>Tedavi:</strong> ${exam.treatment || '-'}</p>
+                <p><strong>Tetkik Sonuçları:</strong> ${exam.lab_result_text ? exam.lab_result_text.replace(/\n/g, '<br>') : '-'}</p>
                 <p><strong>Not:</strong> ${exam.result_note || '-'}</p>
                 <hr>
                 <h6>Dosyalar:</h6>
