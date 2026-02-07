@@ -540,7 +540,6 @@ class PaymentRepository
             WHERE clinic_id = ? 
               AND patient_id = ? 
               AND DATE(payment_date) = ? 
-              AND DATE(payment_date) = ?
             ORDER BY payment_date DESC
         ";
         $payments = $this->db->fetchAll($paymentsSql, [$clinicId, $patientId, $date]);
