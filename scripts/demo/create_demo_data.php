@@ -263,8 +263,20 @@ foreach ($demoScenarios as $scenario) {
             }
         }
 
-        // 3. Ödeme Kaydı
+        // 3. Finans Kayıtları (Adisyon Kalemi ve Ödeme)
         if (isset($visit['payment'])) {
+            // Adisyon Kalemi (Borç)
+            $sqlItem = "INSERT INTO cln_appointment_items (clinic_id, appointment_id, item_name, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?, ?)";
+            $db->query($sqlItem, [
+                $clinicId,
+                $apptId,
+                $visit['payment']['reason'],
+                1,
+                $visit['payment']['amount'],
+                $visit['payment']['amount']
+            ]);
+
+            // Ödeme Kaydı (Tahsilat)
             $sqlPay = "INSERT INTO cln_payments (clinic_id, patient_id, appointment_id, payment_type, amount, currency, payment_date, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $db->query($sqlPay, [
                 $clinicId,
@@ -273,7 +285,7 @@ foreach ($demoScenarios as $scenario) {
                 $visit['payment']['method'],
                 $visit['payment']['amount'],
                 'TRY',
-                date('Y-m-d H:i:s'),
+                $visit['date'], // Üretilen randevu tarihi ile aynı olsun
                 $visit['payment']['reason'],
                 'completed'
             ]);

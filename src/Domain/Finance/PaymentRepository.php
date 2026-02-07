@@ -529,9 +529,9 @@ class PaymentRepository
             LEFT JOIN sys_users u ON i.performer_id = u.id
             WHERE i.clinic_id = ? 
               AND a.patient_id = ? 
-              AND DATE(a.appointment_date) = ?
+              AND (a.id = ? OR DATE(a.appointment_date) = ?)
         ";
-        $items = $this->db->fetchAll($itemsSql, [$clinicId, $patientId, $date]);
+        $items = $this->db->fetchAll($itemsSql, [$clinicId, $patientId, $appointmentId, $date]);
 
         // 2. O güne ait TÜM Tahsilatlar
         $paymentsSql = "
@@ -539,10 +539,10 @@ class PaymentRepository
             FROM cln_payments 
             WHERE clinic_id = ? 
               AND patient_id = ? 
-              AND DATE(payment_date) = ? 
+              AND (appointment_id = ? OR DATE(payment_date) = ?) 
             ORDER BY payment_date DESC
         ";
-        $payments = $this->db->fetchAll($paymentsSql, [$clinicId, $patientId, $date]);
+        $payments = $this->db->fetchAll($paymentsSql, [$clinicId, $patientId, $appointmentId, $date]);
 
         // 3. Özet Hesaplama
         $totalDebt = 0;
