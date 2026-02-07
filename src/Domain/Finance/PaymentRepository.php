@@ -432,10 +432,11 @@ class PaymentRepository
     {
         $params = [$clinicId];
         $sql = "
-            SELECT COUNT(pm.id) as total
-            FROM cln_payments pm
-            JOIN ptn_cards p ON pm.patient_id = p.id
-            WHERE pm.clinic_id = ? AND pm.status = 'completed'
+            SELECT COUNT(*) as total FROM (
+                SELECT pm.appointment_id
+                FROM cln_payments pm
+                JOIN ptn_cards p ON pm.patient_id = p.id
+                WHERE pm.clinic_id = ? AND pm.status = 'completed'
         ";
 
         if (!empty($filters['start_date'])) {
