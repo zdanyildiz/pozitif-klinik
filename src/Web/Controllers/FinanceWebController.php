@@ -79,6 +79,7 @@ class FinanceWebController
             'thisWeekTotal' => $thisWeekTotal,
             'trendPercent' => $trendPercent,
 
+            'pendingPayments' => $pendingPayments,
             'pageTitle' => 'Kasa ve Finans',
             'page' => 'finance'
         ]);

@@ -60,6 +60,67 @@
     </div>
 </div>
 
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning cx-bg-opacity-10 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 text-dark"><i class="bi bi-exclamation-circle me-2"></i>Bekleyen Ödemeler (Tahsilat Listesi)</h5>
+                <a href="/admin/finance/pending" class="btn btn-sm btn-outline-dark">Tümünü Gör</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Hasta</th>
+                                <th>Doktor</th>
+                                <th class="text-end">Toplam Borç</th>
+                                <th class="text-end">Ödenen</th>
+                                <th class="text-end text-danger">Kalan Bakiye</th>
+                                <th class="text-end" style="width: 150px;">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in pendingPayments %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ item.appointment_date|date('d.m.Y') }}</div>
+                                    <small class="text-muted">{{ item.appointment_date|date('H:i') }}</small>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ item.patient_name }}</div>
+                                    <small class="text-muted">{{ item.patient_phone }}</small>
+                                </td>
+                                <td>{{ item.doctor_name }}</td>
+                                <td class="text-end">{{ item.total_debt|number_format(2) }} ₺</td>
+                                <td class="text-end text-success">{{ item.total_paid|number_format(2) }} ₺</td>
+                                <td class="text-end fw-bold text-danger">{{ item.remaining_amount|number_format(2) }} ₺</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-primary btn-collect shadow-sm" 
+                                            data-patient-id="{{ item.patient_id }}"
+                                            data-appointment-id="{{ item.appointment_id }}"
+                                            data-remaining="{{ item.remaining_amount }}">
+                                        <i class="bi bi-wallet2 me-1"></i> Tahsil Et
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="bi bi-check-circle fs-2 d-block mb-2"></i>
+                                    Bekleyen ödeme bulunmuyor.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <!-- Ödeme Tipi Dağılımı -->
     <div class="col-md-6 mb-4">
@@ -149,7 +210,7 @@
     </div>
 </div>
 
-{% include 'finance/modals/payment_modal.twig' %}
+{% include 'components/payment_modal.twig' %}
 {% include 'finance/modals/payment_detail_modal.twig' %}
 {% endblock %}
 
@@ -213,5 +274,35 @@
                 contentDiv.innerHTML = '<div class="alert alert-danger">Veri yüklenirken hata oluştu.</div>';
             });
     }
+
+    // Payment Module Integration for Dashboard
+    document.addEventListener('DOMContentLoaded', () => {
+        // Collect buttons (Tahsil Et)
+        document.querySelectorAll('.btn-collect').forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                const appointmentId = btn.dataset.appointmentId;
+
+                if (appointmentId) {
+                    // Open the shared payment modal for this appointment
+                    if (typeof PaymentModule !== 'undefined') {
+                        // PaymentModule.refresh handles fetching data and opening the modal correctly
+                        PaymentModule.refresh(appointmentId);
+                    } else {
+                        console.error('PaymentModule not loaded');
+                    }
+                }
+            };
+        });
+
+        // Listen for successful payments to refresh the dashboard
+        window.addEventListener('payment-saved', () => {
+            // Optional: Show success message then reload
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        });
+    });
 </script>
+<script src="{{ base_path }}/assets/js/finance-shared.js?v={{ version }}"></script>
 {% endblock %}

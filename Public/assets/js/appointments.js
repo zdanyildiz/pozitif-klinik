@@ -467,7 +467,11 @@ function renderAppointments() {
         btnExam.innerHTML = '<i class="bi bi-person-pulse"></i> Muayene';
         btnExam.onclick = (e) => {
             e.stopPropagation();
-            window.location.href = `${API_URL}/admin/examination?appointment_id=${app.id}`;
+            if (app.status === 'completed') {
+                window.location.href = `${API_URL}/admin/patients/${app.patient_id}`;
+            } else {
+                window.location.href = `${API_URL}/admin/examination?appointment_id=${app.id}`;
+            }
         };
         actionWrapper.appendChild(btnExam);
 

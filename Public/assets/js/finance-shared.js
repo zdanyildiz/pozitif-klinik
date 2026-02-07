@@ -57,7 +57,14 @@ const PaymentModule = {
      */
     open(data) {
         document.getElementById('paymentPatientId').value = data.patient_id;
-        document.getElementById('paymentAppointmentId').value = data.appointment_id || '';
+
+        // Fix: Map API response 'id' to 'appointment_id' if missing (because /api/appointments/{id} returns the appointment with 'id' key)
+        let appointmentId = data.appointment_id;
+        if (!appointmentId && data.id) {
+            appointmentId = data.id;
+        }
+        document.getElementById('paymentAppointmentId').value = appointmentId || '';
+
         document.getElementById('paymentNotes').value = '';
 
         // Handle inconsistent key names from different sources
