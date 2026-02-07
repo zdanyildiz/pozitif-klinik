@@ -161,7 +161,7 @@
             });
     }
 
-    function openPaymentDetail(appointmentId) {
+    function openPaymentDetail(appointmentId, dateGroup = '') {
         const modalEl = document.getElementById('paymentDetailModal');
         const modal = new bootstrap.Modal(modalEl);
         
@@ -172,7 +172,8 @@
         modal.show();
 
         // Veriyi çek
-        api.get('/api/payments/transaction-detail/' + appointmentId)
+        const url = '/api/payments/transaction-detail/' + appointmentId + (dateGroup ? '?date=' + dateGroup : '');
+        api.get(url)
             .then(res => {
                 const data = res.data;
                 let html = '';

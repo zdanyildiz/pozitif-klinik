@@ -142,8 +142,9 @@ class PaymentController extends BaseController
     {
         $clinicId = (int) $this->getClinicId($request);
         $appointmentId = (int) $args['appointmentId'];
+        $date = $request->getQueryParams()['date'] ?? null;
 
-        $details = $this->paymentRepository->getTransactionDetailWithServices($clinicId, $appointmentId);
+        $details = $this->paymentRepository->getTransactionDetailWithServices($clinicId, $appointmentId, $date);
 
         return $this->success($response, $details);
     }

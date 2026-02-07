@@ -297,22 +297,20 @@ class PaymentRepository
         // Temel Sorgu
         $sql = "
             SELECT 
+                pm.id,
+                pm.payment_date,
+                pm.amount as total_amount,
+                pm.payment_type,
                 DATE(pm.payment_date) as date_group,
-                pm.patient_id,
-                MAX(pm.payment_date) as last_payment_date,
-                SUM(pm.amount) as total_amount,
-                COUNT(pm.id) as item_count,
-                
-                -- Grup içindeki ödeme tiplerini birleştir (örn: Credit Card, Cash)
-                GROUP_CONCAT(DISTINCT pm.payment_type ORDER BY pm.id DESC SEPARATOR ', ') as payment_types,
                 
                 -- Hasta Bilgileri
+                p.id as patient_id,
                 p.name as patient_name,
                 p.tc_no as patient_tc,
                 
                 -- Doktor (Randevu varsa)
                 doc.name as doctor_name,
-                MAX(pm.appointment_id) as appointment_id
+                pm.appointment_id
                 
             FROM cln_payments pm
             JOIN ptn_cards p ON pm.patient_id = p.id
@@ -388,15 +386,8 @@ class PaymentRepository
             }
         }
 
-        // Gruplama: Sadece Gün + Hasta bazlı (Aynı gün içindeki tüm randevuları ve ödemeleri birleştirir)
-        $sql .= "
-            GROUP BY 
-                pm.patient_id,
-                DATE(pm.payment_date)
-        ";
-
         // Sıralama ve Limit
-        $sql .= " ORDER BY last_payment_date DESC LIMIT ? OFFSET ?";
+        $sql .= " ORDER BY pm.payment_date DESC LIMIT ? OFFSET ?";
         $params[] = $perPage;
         $params[] = $offset;
 
@@ -410,16 +401,15 @@ class PaymentRepository
             if (!empty($row['patient_tc'])) {
                 $row['patient_tc'] = $this->crypto->decrypt($row['patient_tc']) ?? $row['patient_tc'];
             }
-            // Tipleri formatla (örn: cash, credit_card -> Nakit, Kredi Kartı)
-            $row['payment_types_label'] = implode(', ', array_map(function ($t) {
-                return match ($t) {
-                    'cash' => 'Nakit',
-                    'credit_card' => 'Kredi Kartı',
-                    'bank_transfer' => 'Havale/EFT',
-                    'other' => 'Diğer',
-                    default => $t
-                };
-            }, explode(', ', $row['payment_types'] ?? '')));
+
+            // Tek bir tipi formatla
+            $row['payment_types_label'] = match ($row['payment_type']) {
+                'cash' => 'Nakit',
+                'credit_card' => 'Kredi Kartı',
+                'bank_transfer' => 'Havale/EFT',
+                'other' => 'Diğer',
+                default => $row['payment_type']
+            };
 
             return $row;
         }, $rows);
@@ -432,11 +422,10 @@ class PaymentRepository
     {
         $params = [$clinicId];
         $sql = "
-            SELECT COUNT(*) as total FROM (
-                SELECT pm.id
-                FROM cln_payments pm
-                JOIN ptn_cards p ON pm.patient_id = p.id
-                WHERE pm.clinic_id = ? AND pm.status = 'completed'
+            SELECT COUNT(pm.id) as total
+            FROM cln_payments pm
+            JOIN ptn_cards p ON pm.patient_id = p.id
+            WHERE pm.clinic_id = ? AND pm.status = 'completed'
         ";
 
         if (!empty($filters['start_date'])) {
@@ -495,8 +484,6 @@ class PaymentRepository
             }
         }
 
-        $sql .= " GROUP BY pm.patient_id, DATE(pm.payment_date) ) as grouped_table";
-
         $result = $this->db->fetch($sql, $params);
         return (int) ($result['total'] ?? 0);
     }
@@ -505,7 +492,7 @@ class PaymentRepository
      * Randevu Detaylı Finansal Görünüm (Modal için)
      * Hizmetler ve Ödeme Geçmişini getirir.
      */
-    public function getTransactionDetailWithServices(int $clinicId, int $appointmentId): array
+    public function getTransactionDetailWithServices(int $clinicId, int $appointmentId, ?string $paymentDate = null): array
     {
         // Önce referans randevuyu bul ki tarih ve hastayı bilelim
         $refSql = "SELECT patient_id, DATE(appointment_date) as app_date FROM cln_appointments WHERE id = ?";
@@ -515,7 +502,7 @@ class PaymentRepository
             return ['services' => [], 'payments' => [], 'summary' => []];
 
         $patientId = (int) $ref['patient_id'];
-        $date = $ref['app_date'];
+        $date = $paymentDate ?? $ref['app_date'];
 
         // 1. O güne ait TÜM Hizmet Kalemleri (Borçlar)
         $itemsSql = "
@@ -529,9 +516,9 @@ class PaymentRepository
             LEFT JOIN sys_users u ON i.performer_id = u.id
             WHERE i.clinic_id = ? 
               AND a.patient_id = ? 
-              AND (a.id = ? OR DATE(a.appointment_date) = ?)
+              AND (a.id = ? OR DATE(a.appointment_date) = ? OR DATE(i.created_at) = ?)
         ";
-        $items = $this->db->fetchAll($itemsSql, [$clinicId, $patientId, $appointmentId, $date]);
+        $items = $this->db->fetchAll($itemsSql, [$clinicId, $patientId, $appointmentId, $date, $date]);
 
         // 2. O güne ait TÜM Tahsilatlar
         $paymentsSql = "

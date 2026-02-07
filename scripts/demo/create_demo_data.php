@@ -220,20 +220,35 @@ foreach ($demoScenarios as $scenario) {
             continue;
         }
 
-        // 1. Randevu Oluştur
+        // 1. Randevu Oluştur (Mükerrer kontrolü ile)
         $status = $visit['status'] ?? $visit['status_code'] ?? 'confirmed';
 
-        $sqlAppt = "INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $db->query($sqlAppt, [$clinicId, $patientId, $docId, $defaultTypeId, $visit['date'], $status, date('Y-m-d H:i:s')]);
-        $apptId = (int) $db->getConnection()->lastInsertId();
+        $existingAppt = $db->fetch("SELECT id FROM cln_appointments WHERE patient_id = ? AND doctor_id = ? AND appointment_date = ?", [
+            $patientId,
+            $docId,
+            $visit['date']
+        ]);
+
+        if ($existingAppt) {
+            $apptId = (int) $existingAppt['id'];
+            echo "      . Randevu zaten mevcut (ID: $apptId). Geçiliyor...\n";
+        } else {
+            $sqlAppt = "INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $db->query($sqlAppt, [$clinicId, $patientId, $docId, $defaultTypeId, $visit['date'], $status, date('Y-m-d H:i:s')]);
+            $apptId = (int) $db->getConnection()->lastInsertId();
+            echo "      + Yeni randevu oluşturuldu (ID: $apptId).\n";
+        }
 
         // 2. İşlem Türüne Göre Detay (Muayene veya Lab)
-        if ($visit['type'] === 'examination') {
+        // Eğer randevu yeni değilse bile muayene kaydını kontrol et/ekle
+        $existingExam = $db->fetch("SELECT id FROM cln_examinations WHERE appointment_id = ?", [$apptId]);
+
+        if ($visit['type'] === 'examination' && !$existingExam) {
             $visit['data']['clinic_id'] = $clinicId;
             $visit['data']['patient_id'] = $patientId;
             $visit['data']['doctor_user_id'] = $docId;
             $visit['data']['appointment_id'] = $apptId;
-            $visit['data']['specialty_code'] = $doctors[$visit['doctor']]['specialty']; // Ön tanımlı branş kodu
+            $visit['data']['specialty_code'] = $doctors[$visit['doctor']]['specialty'];
 
             // Mapping for AI Agents Inputs
             if (isset($visit['data']['general_notes'])) {
@@ -265,30 +280,47 @@ foreach ($demoScenarios as $scenario) {
 
         // 3. Finans Kayıtları (Adisyon Kalemi ve Ödeme)
         if (isset($visit['payment'])) {
-            // Adisyon Kalemi (Borç)
-            $sqlItem = "INSERT INTO cln_appointment_items (clinic_id, appointment_id, item_name, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?, ?)";
-            $db->query($sqlItem, [
-                $clinicId,
+            // Adisyon Kalemi var mı?
+            $existingItem = $db->fetch("SELECT id FROM cln_appointment_items WHERE appointment_id = ? AND item_name = ?", [
                 $apptId,
-                $visit['payment']['reason'],
-                1,
-                $visit['payment']['amount'],
-                $visit['payment']['amount']
+                $visit['payment']['reason']
             ]);
 
-            // Ödeme Kaydı (Tahsilat)
-            $sqlPay = "INSERT INTO cln_payments (clinic_id, patient_id, appointment_id, payment_type, amount, currency, payment_date, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $db->query($sqlPay, [
-                $clinicId,
-                $patientId,
+            if (!$existingItem) {
+                // Adisyon Kalemi (Borç)
+                $sqlItem = "INSERT INTO cln_appointment_items (clinic_id, appointment_id, item_name, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?, ?)";
+                $db->query($sqlItem, [
+                    $clinicId,
+                    $apptId,
+                    $visit['payment']['reason'],
+                    1,
+                    $visit['payment']['amount'],
+                    $visit['payment']['amount']
+                ]);
+            }
+
+            // Ödeme var mı?
+            $existingPay = $db->fetch("SELECT id FROM cln_payments WHERE appointment_id = ? AND amount = ? AND payment_date = ?", [
                 $apptId,
-                $visit['payment']['method'],
                 $visit['payment']['amount'],
-                'TRY',
-                $visit['date'], // Üretilen randevu tarihi ile aynı olsun
-                $visit['payment']['reason'],
-                'completed'
+                $visit['date']
             ]);
+
+            if (!$existingPay) {
+                // Ödeme Kaydı (Tahsilat)
+                $sqlPay = "INSERT INTO cln_payments (clinic_id, patient_id, appointment_id, payment_type, amount, currency, payment_date, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $db->query($sqlPay, [
+                    $clinicId,
+                    $patientId,
+                    $apptId,
+                    $visit['payment']['method'],
+                    $visit['payment']['amount'],
+                    'TRY',
+                    $visit['date'],
+                    $visit['payment']['reason'],
+                    'completed'
+                ]);
+            }
         }
     }
 }

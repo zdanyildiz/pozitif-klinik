@@ -130,7 +130,7 @@
                                 </td>
                                 <td class="text-end">
                                     {% if item.appointment_id %}
-                                        <button class="btn btn-sm btn-outline-primary" onclick="openPaymentDetail({{ item.appointment_id }})">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="openPaymentDetail({{ item.appointment_id }}, '{{ item.payment_date|date('Y-m-d') }}')">
                                             <i class="bi bi-eye"></i>
                                         </button>
                                     {% endif %}
@@ -155,7 +155,7 @@
 
 {% block scripts %}
 <script>
-    function openPaymentDetail(appointmentId) {
+    function openPaymentDetail(appointmentId, dateGroup = '') {
         const modalEl = document.getElementById('paymentDetailModal');
         const modal = new bootstrap.Modal(modalEl);
         
@@ -164,7 +164,8 @@
         
         modal.show();
 
-        api.get('/api/payments/transaction-detail/' + appointmentId)
+        const url = '/api/payments/transaction-detail/' + appointmentId + (dateGroup ? '?date=' + dateGroup : '');
+        api.get(url)
             .then(res => {
                 const data = res.data;
                 let html = '';
