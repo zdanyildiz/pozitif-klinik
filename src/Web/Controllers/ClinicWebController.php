@@ -16,15 +16,18 @@ class ClinicWebController
     private Twig $view;
     private \App\Core\Service\SessionService $session;
     private \App\Domain\Appointment\AppointmentRepository $appointmentRepository;
+    private \App\Domain\Surgery\SurgeryRepository $surgeryRepository;
 
     public function __construct(
         Twig $view,
         \App\Core\Service\SessionService $session,
-        \App\Domain\Appointment\AppointmentRepository $appointmentRepository
+        \App\Domain\Appointment\AppointmentRepository $appointmentRepository,
+        \App\Domain\Surgery\SurgeryRepository $surgeryRepository
     ) {
         $this->view = $view;
         $this->session = $session;
         $this->appointmentRepository = $appointmentRepository;
+        $this->surgeryRepository = $surgeryRepository;
     }
 
     /**
@@ -37,10 +40,17 @@ class ClinicWebController
         $clinicId = (int) $this->session->get('clinic_id');
         $dashboardStats = $this->appointmentRepository->getDashboardStats($clinicId);
 
+        // Planlanan ameliyatları getir
+        $plannedSurgeries = $this->surgeryRepository->list($clinicId, [
+            'status' => 'planned',
+            'start_date' => date('Y-m-d') // Bugünden itibaren olanlar
+        ]);
+
         return $this->view->render($response, 'clinic_dashboard.twig', [
             'page' => 'dashboard',
             'stats' => $dashboardStats['stats'],
-            'next_appointment' => $dashboardStats['next_appointment']
+            'next_appointment' => $dashboardStats['next_appointment'],
+            'planned_surgeries' => $plannedSurgeries
         ]);
     }
 
