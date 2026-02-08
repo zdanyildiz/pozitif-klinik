@@ -268,9 +268,9 @@ async function main() {
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         CLINIC_ID,
-                        encrypt(p.tc_no),
+                        encrypt(p.tc_no || '11111111111'),
                         encrypt(p.name),
-                        encrypt(p.phone),
+                        encrypt(p.phone || '5111111111'),
                         encrypt(p.email), p.birth_date, p.gender, p.blood_type,
                         encrypt(p.address),
                         provinceId, districtId,
@@ -323,9 +323,10 @@ async function main() {
 
                 if (!patientId) return; // Geçersiz hasta ise atla
 
+                const today = new Date().toISOString().slice(0, 19).replace('T', ' ');
                 const [res] = await conn.query(
                     'INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, protocol_no, legacy_visit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    [CLINIC_ID, patientId, doctorId, DEFAULT_TYPE_ID, a.appointment_date, a.status, a.protocol_no, a.legacy_visit_id]
+                    [CLINIC_ID, patientId, doctorId, DEFAULT_TYPE_ID, a.appointment_date || today, a.status, a.protocol_no, a.legacy_visit_id]
                 );
                 appointmentMap.set(a.legacy_visit_id, res.insertId);
             });
