@@ -41,10 +41,13 @@ CREATE TABLE `sys_email_logs` (
     `error_message` text DEFAULT NULL COMMENT 'Hata durumunda mesaj',
     `sent_via` enum('tenant','fallback') NOT NULL DEFAULT 'fallback' COMMENT 'Hangi config kullanıldı',
     `sent_at` timestamp NULL DEFAULT NULL,
+    `legacy_table` varchar(128) DEFAULT NULL,
+    `legacy_record_id` bigint(20) DEFAULT NULL,
     `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
     PRIMARY KEY (`id`),
     KEY `idx_clinic_status` (`clinic_id`, `status`),
     KEY `idx_sent_at` (`sent_at`),
+    UNIQUE KEY `uk_legacy_email` (`clinic_id`, `legacy_table`, `legacy_record_id`),
     CONSTRAINT `sys_email_logs_ibfk_1` 
         FOREIGN KEY (`clinic_id`) 
         REFERENCES `sys_tenants` (`id`) 

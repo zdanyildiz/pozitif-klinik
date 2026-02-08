@@ -119,8 +119,8 @@ class DataMigrator {
         console.log('\n--- HASTALAR ---');
         const result = await this.mssqlPool.request().query(`
             SELECT 
-                HASTANO,
-                AD, SOYAD, KIMLIKNO,
+                P.HASTANO,
+                P.AD, P.SOYAD, P.KIMLIKNO,
                 EV_TELEFON, EV_MOBIL, EV_EMAIL,
                 DGMTRH, DOGUMYERI, CINSIYET, KANGRUBU,
                 EV_ADRES1, EV_ADRES2, EV_ADRES_SEMT, EV_ADRES_ILCE, EV_ADRES_IL,
@@ -133,7 +133,7 @@ class DataMigrator {
                 -- KVKK ve Onam Bilgileri
                 K.KVKKabulEdiyorum, K.KVKKabulEtmiyorum, K.KVKK_IYSOnayID, 
                 K.HukukiTemsilci_Isim, K.HukukiTemsilci_YakinlikDerecesi,
-                K.BilgilendirmeTalebi_Sms, K.BilgilendirmeTalebi_Email, K.BilgilendirmeTalebi_Arama, -- Arama sütunu ismi tahminidir
+                K.BilgilendirmeTalebi_Sms, K.BilgilendirmeTalebi_Email, K.BilgilendirmeTalebi_Telefon as BilgilendirmeTalebi_Arama,
                 K.eIYS_ETKSmsIzniOnayTarihi, K.eIYS_ETKEmailIzniOnayTarihi, K.eIYS_ETKAramaIzniOnayTarihi,
                 K.SonIslemTarihi as ConsentDate
             FROM HST_ANADOSYA P

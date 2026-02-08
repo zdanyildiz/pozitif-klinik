@@ -16,31 +16,33 @@ const fs = require('fs');
 const MIGRATION_ROOT = __dirname;
 
 const steps = [
-    // 1. Şubeler / Tenant Migrasyonu
-    {
-        name: '1. Şube Migrasyonu (migrate_tenants.js)',
-        command: 'node migrate_tenants.js',
-        description: 'MSSQL SUBE verilerini sys_tenants tablosuna aktarır.'
-    },
-    // 2. Şema Hazırlığı
-    {
-        name: '2. MySQL Şema Hazırlığı (prepare_mysql_schema.js)',
-        command: 'node migration/prepare_mysql_schema.js',
-        description: 'Legacy sütunları (legacy_id, legacy_visit_id) hazırlar.'
-    },
-    // 3. Veri Çıkarma (MSSQL -> JSON)
-    {
-        name: '3. MSSQL Veri Çıkarma (extract_mssql.js)',
-        command: 'node migration/extract_mssql.js',
-        description: 'MSSQL verilerini okur ve json dosyasına kaydeder.'
-    },
-    // 4. Veri Yükleme (JSON -> MySQL)
+    /*
+        // 1. Şube Migrasyonu
+        {
+            name: '1. Şube Migrasyonu (migrate_tenants.js)',
+            command: 'node migrate_tenants.js',
+            description: 'MSSQL SUBE verilerini sys_tenants tablosuna aktarır.'
+        },
+        // 2. Şema Hazırlığı
+        {
+            name: '2. MySQL Şema Hazırlığı (prepare_mysql_schema.js)',
+            command: 'node migration/prepare_mysql_schema.js',
+            description: 'Legacy sütunları (legacy_id, legacy_visit_id) hazırlar.'
+        },
+        // 3. Veri Çıkarma
+        {
+            name: '3. MSSQL Veri Çıkarma (extract_mssql.js)',
+            command: 'node migration/extract_mssql.js',
+            description: 'MSSQL verilerini okur ve json dosyasına kaydeder.'
+        },
+    */
+    // 4. Veri Yükleme
     {
         name: '4. MySQL Veri Yükleme (load_mysql.js)',
         command: 'node migration/load_mysql.js',
         description: 'JSON verilerini MySQL veritabanına yükler.'
     },
-    // 5. Branş Verileri (Anamnez Birleştirme)
+    // 5. Branş Verileri
     {
         name: '5. Branş Verileri Birleştirme (merge_specialty_data.js)',
         command: 'node merge_specialty_data.js',
@@ -70,17 +72,47 @@ const steps = [
         command: 'node migrate_files.js',
         description: 'Hasta dosyalarını ve radyoloji raporlarını aktarır.'
     },
-    // 10. Ödemeler
+    // 10. Ödeme Migrasyonu
     {
         name: '10. Ödeme Migrasyonu (migrate_payments.js)',
         command: 'node migrate_payments.js',
-        description: 'Finansal kayıtları ve ödemeleri aktarır.'
+        description: 'Finansal kayıtları ve ödemeleri aktarır. (batch: 500)'
     },
     // 11. Blind Index (Arama Endeksi)
     {
         name: '11. Blind Index Migrasyonu (migrate_blind_index.php)',
-        command: 'php migrate_blind_index.php',
+        command: 'DB_HOST=127.0.0.1 DB_NAME=test_klinik /opt/lampp/bin/php migrate_blind_index.php',
         description: 'Şifreli hasta verileri için arama endekslerini oluşturur.'
+    },
+    // 12. Legacy Table Map
+    {
+        name: '12. Legacy Table Mapping (seed_legacy_table_map.js)',
+        command: 'node migration/seed_legacy_table_map.js',
+        description: 'Legacy tablo eşleşmelerini (map_legacy_tables) oluşturur.'
+    },
+    // 13. Activity Logs
+    {
+        name: '13. Activity Logs Migrasyonu (migrate_activity_logs.js)',
+        command: 'node migrate_activity_logs.js',
+        description: 'GENELLOG ve LOG_KAYITDEGISIKLIGI kayıtlarını cln_activity_logs tablosuna aktarır.'
+    },
+    // 14. Data Access Logs
+    {
+        name: '14. Data Access Logs Migrasyonu (migrate_data_access_logs.js)',
+        command: 'node migrate_data_access_logs.js',
+        description: 'Kullanici_Log_KayitErisim kayıtlarını cln_data_access_logs tablosuna aktarır.'
+    },
+    // 15. Consent Logs
+    {
+        name: '15. Consent Logs Migrasyonu (migrate_consent_logs.js)',
+        command: 'node migrate_consent_logs.js',
+        description: 'Gizlilik onam loglarını ptn_consent_logs tablosuna aktarır.'
+    },
+    // 16. SMS/Email Logs
+    {
+        name: '16. Message Logs Migrasyonu (migrate_message_logs.js)',
+        command: 'node migrate_message_logs.js',
+        description: 'SMS ve Email loglarını sys_sms_logs ve sys_email_logs tablolarına aktarır.'
     }
 ];
 

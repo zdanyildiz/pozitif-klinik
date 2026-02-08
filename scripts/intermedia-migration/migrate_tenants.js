@@ -7,6 +7,23 @@ const sql = require('mssql');
 const mysql = require('mysql2/promise');
 const { getSourceConfig, getTargetConfig } = require('./db.helper');
 
+// Function to convert Turkish characters to English equivalents
+function turkishToEnglish(text) {
+    return text
+        .replace(/ç/g, 'c')
+        .replace(/ğ/g, 'g')
+        .replace(/ı/g, 'i')
+        .replace(/ö/g, 'o')
+        .replace(/ş/g, 's')
+        .replace(/ü/g, 'u')
+        .replace(/Ç/g, 'C')
+        .replace(/Ğ/g, 'G')
+        .replace(/İ/g, 'I')
+        .replace(/Ö/g, 'O')
+        .replace(/Ş/g, 'S')
+        .replace(/Ü/g, 'U');
+}
+
 async function migrateTenants() {
     let mssqlPool;
     let mysqlConn;
@@ -37,7 +54,7 @@ async function migrateTenants() {
             console.log(`🔹 İşleniyor: ${sube.SubeAdi} (ID: ${sube.ID})`);
 
             // domain_prefix için şube adından güvenli bir string oluştur
-            const domainPrefix = sube.SubeAdi
+            const domainPrefix = turkishToEnglish(sube.SubeAdi)
                 .toLowerCase()
                 .replace(/[^a-z0-9]/g, '-')
                 .replace(/-+/g, '-')

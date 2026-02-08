@@ -16,6 +16,40 @@ const dbConfig = getTargetConfig();
 const APP_KEY = getAppKey();
 const BINARY_KEY = Buffer.from(APP_KEY, 'hex');
 
+function readEnvKey(key) {
+    if (process.env[key]) {
+        return process.env[key];
+    }
+    const envPath = path.resolve(__dirname, '..', '..', '..', '.env');
+    if (!fs.existsSync(envPath)) {
+        return null;
+    }
+    const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+    for (const line of lines) {
+        if (!line || line.trim().startsWith('#')) continue;
+        const match = line.match(/^\s*([^=\s]+)\s*=\s*(.*)\s*$/);
+        if (!match) continue;
+        const name = match[1].trim();
+        if (name !== key) continue;
+        let value = match[2].trim();
+        if (
+            (value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'"))
+        ) {
+            value = value.slice(1, -1);
+        }
+        return value || null;
+    }
+    return null;
+}
+
+const BLIND_INDEX_KEY = readEnvKey('BLIND_INDEX_KEY');
+if (!BLIND_INDEX_KEY) {
+    console.error('BLIND_INDEX_KEY environment variable is not set. Search index cannot be generated.');
+    process.exit(1);
+}
+const BINARY_BLIND_INDEX_KEY = Buffer.from(BLIND_INDEX_KEY, 'hex');
+
 // Crypto functions (Matching PHP implementation)
 function encrypt(data) {
     if (!data) return null;
@@ -26,9 +60,89 @@ function encrypt(data) {
     return Buffer.concat([iv, tag, encrypted]).toString('base64');
 }
 
+function normalize(text) {
+    if (!text) return '';
+    const search = ['KI', 'kI', 'İ', 'I', 'Ğ', 'Ü', 'Ş', 'Ö', 'Ç'];
+    const replace = ['ki', 'ki', 'i', 'ı', 'ğ', 'ü', 'ş', 'ö', 'ç'];
+    let normalized = text;
+    for (let i = 0; i < search.length; i++) {
+        normalized = normalized.split(search[i]).join(replace[i]);
+    }
+    return normalized.trim().toLocaleLowerCase('tr-TR');
+}
+
 function blindIndex(data) {
     if (!data) return null;
-    return crypto.createHmac('sha256', BINARY_KEY).update(data).digest('hex');
+    const normalized = normalize(String(data));
+    if (!normalized) return null;
+    return crypto.createHmac('sha256', BINARY_BLIND_INDEX_KEY).update(normalized).digest('hex');
+}
+
+function tokenizeName(name) {
+    if (!name) return [];
+    const normalized = normalize(name);
+    if (!normalized) return [];
+    const tokens = normalized.split(/\s+/u).filter(t => t.length >= 2);
+    return Array.from(new Set(tokens));
+}
+
+function buildPhoneTokens(phone) {
+    if (!phone) return [];
+    const tokens = new Set();
+
+    // Tam hali (formatlı olabilir)
+    tokens.add(phone);
+
+    // Sadece rakamlar
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    if (cleanPhone && cleanPhone !== phone) {
+        tokens.add(cleanPhone);
+    }
+
+    // Başındaki sıfır olmadan
+    if (cleanPhone && cleanPhone.startsWith('0')) {
+        const noZeroPhone = cleanPhone.replace(/^0+/, '');
+        if (noZeroPhone) {
+            tokens.add(noZeroPhone);
+        }
+    }
+
+    // Boşluklu parçalar
+    if (phone.includes(' ')) {
+        for (const raw of phone.split(' ')) {
+            const token = raw.replace(/^[\s()-]+|[\s()-]+$/g, '');
+            if (token.length >= 3) {
+                tokens.add(token);
+            }
+        }
+    }
+
+    return Array.from(tokens);
+}
+
+function buildSearchIndexRows(tableName, recordId, patient) {
+    const rows = [];
+
+    const nameTokens = tokenizeName(patient.name);
+    for (const token of nameTokens) {
+        const hash = blindIndex(token);
+        if (hash) rows.push([tableName, recordId, 'name', hash]);
+    }
+
+    if (patient.tc_no) {
+        const hash = blindIndex(patient.tc_no);
+        if (hash) rows.push([tableName, recordId, 'tc_no', hash]);
+    }
+
+    if (patient.phone) {
+        const phoneTokens = buildPhoneTokens(patient.phone);
+        for (const token of phoneTokens) {
+            const hash = blindIndex(token);
+            if (hash) rows.push([tableName, recordId, 'phone', hash]);
+        }
+    }
+
+    return rows;
 }
 
 async function main() {
@@ -75,6 +189,7 @@ async function main() {
         await conn.query('TRUNCATE cln_appointments');
         await conn.query('TRUNCATE cln_appointment_items');
         await conn.query('TRUNCATE cln_examinations');
+        await conn.query("DELETE FROM search_index WHERE table_name = 'ptn_cards'");
         await conn.query('SET FOREIGN_KEY_CHECKS = 1');
 
         // 1. KULLANICILAR
@@ -92,41 +207,60 @@ async function main() {
         console.log(`${data.users.length} kullanıcı aktarıldı.`);
 
         // 2. HİZMETLER
-        console.log('\nHizmetler aktarılıyor...');
+        console.log('\nHizmetler aktarılıyor (Bulk Insert)...');
         const serviceMap = new Map(); // legacy_code -> new_id
-        for (const s of data.services) {
-            const [res] = await conn.query(
-                'INSERT INTO cln_services (clinic_id, name, legacy_code, price, is_active) VALUES (?, ?, ?, ?, ?)',
-                [CLINIC_ID, s.name, s.legacy_code, s.price, s.is_active]
-            );
-            serviceMap.set(s.legacy_code, res.insertId);
+
+        // Prepare bulk insert for Services
+        if (data.services.length > 0) {
+            const serviceValues = data.services.map(s => [
+                CLINIC_ID,
+                s.name,
+                s.legacy_code,
+                s.price,
+                s.is_active
+            ]);
+
+            // Insert in chunks of 5000 to avoid packet size limits
+            for (let i = 0; i < serviceValues.length; i += 5000) {
+                const chunk = serviceValues.slice(i, i + 5000);
+                await conn.query(
+                    'INSERT INTO cln_services (clinic_id, name, legacy_code, price, is_active) VALUES ?',
+                    [chunk]
+                );
+            }
+
+            // Re-fetch to build map (faster than individual inserts)
+            const [svcRows] = await conn.query('SELECT id, legacy_code FROM cln_services');
+            svcRows.forEach(row => serviceMap.set(row.legacy_code, row.id));
         }
         console.log(`${data.services.length} hizmet aktarıldı.`);
 
         // 3. HASTALAR
         console.log('\nHastalar aktarılıyor (Şifrelenerek ve İl/İlçe eşleştirilerek)...');
         const patientMap = new Map(); // legacy_id -> new_id
-        const batchSize = 100;
+        const batchSize = 2000;
 
         for (let i = 0; i < data.patients.length; i += batchSize) {
             const batch = data.patients.slice(i, i + batchSize);
+            const searchIndexRows = [];
+            const tableName = 'ptn_cards';
             const promises = batch.map(async (p) => {
                 const provinceId = findProvinceId(p.city);
                 const districtId = findDistrictId(provinceId, p.district);
 
                 const [res] = await conn.query(
                     `INSERT INTO ptn_cards (
-                        clinic_id, tc_no, tc_no_hash, name, name_hash, phone, phone_hash, 
+                        clinic_id, tc_no, name, phone, 
                         email, birth_date, gender, blood_type, address, province_id, district_id,
                         father_name, mother_name, birth_place, nationality, profession, 
                         medical_info, work_details, identity_details, insurance_info, legacy_metadata, legal_consents,
                         notes, legacy_id, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         CLINIC_ID,
-                        encrypt(p.tc_no), blindIndex(p.tc_no),
-                        encrypt(p.name), blindIndex(p.name),
-                        encrypt(p.phone), blindIndex(p.phone),
+                        encrypt(p.tc_no),
+                        encrypt(p.name),
+                        encrypt(p.phone),
                         encrypt(p.email), p.birth_date, p.gender, p.blood_type,
                         encrypt(p.address),
                         provinceId, districtId,
@@ -142,8 +276,21 @@ async function main() {
                     ]
                 );
                 patientMap.set(p.legacy_id, res.insertId);
+                const rows = buildSearchIndexRows(tableName, res.insertId, p);
+                if (rows.length) {
+                    searchIndexRows.push(...rows);
+                }
             });
             await Promise.all(promises);
+            if (searchIndexRows.length) {
+                for (let j = 0; j < searchIndexRows.length; j += 5000) {
+                    const chunk = searchIndexRows.slice(j, j + 5000);
+                    await conn.query(
+                        'INSERT INTO search_index (table_name, record_id, type, search_hash) VALUES ?',
+                        [chunk]
+                    );
+                }
+            }
             if (i % 1000 === 0) console.log(`${i} hasta aktarıldı...`);
         }
         console.log(`${data.patients.length} hasta aktarıldı.`);

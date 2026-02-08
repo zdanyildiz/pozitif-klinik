@@ -88,8 +88,11 @@ CREATE TABLE `sys_sms_logs` (
   `provider_response` text DEFAULT NULL,
   `status` enum('pending','sent','failed') DEFAULT 'pending',
   `sent_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `legacy_table` varchar(128) DEFAULT NULL,
+  `legacy_record_id` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `clinic_id` (`clinic_id`),
+  UNIQUE KEY `uk_legacy_sms` (`clinic_id`, `legacy_table`, `legacy_record_id`),
   CONSTRAINT `sys_sms_logs_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -80,4 +80,29 @@ CREATE TABLE `ptn_kvkk_consents` (
   CONSTRAINT `ptn_kvkk_consents_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `ptn_cards` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 4. KVKK/ETK/IYS Onam Geçmişi
+DROP TABLE IF EXISTS `ptn_consent_logs`;
+CREATE TABLE `ptn_consent_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `clinic_id` bigint(20) unsigned NOT NULL,
+  `patient_id` bigint(20) unsigned NOT NULL,
+  `consent_type` varchar(32) NOT NULL COMMENT 'kvkk, etk, iys, privacy, other',
+  `consent_status` enum('granted','revoked','unknown') NOT NULL DEFAULT 'unknown',
+  `source` varchar(32) NOT NULL DEFAULT 'legacy',
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_id` bigint(20) unsigned DEFAULT NULL,
+  `details` JSON DEFAULT NULL,
+  `consented_at` timestamp NULL DEFAULT NULL,
+  `legacy_record_id` bigint(20) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_clinic_patient` (`clinic_id`, `patient_id`),
+  KEY `idx_consent_type` (`consent_type`),
+  KEY `idx_consented_at` (`consented_at`),
+  UNIQUE KEY `uk_legacy_consent` (`clinic_id`, `source`, `legacy_record_id`),
+  CONSTRAINT `ptn_consent_logs_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ptn_consent_logs_ibfk_2` FOREIGN KEY (`patient_id`) REFERENCES `ptn_cards` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ptn_consent_logs_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `sys_users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

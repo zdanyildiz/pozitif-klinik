@@ -12,6 +12,10 @@ require __DIR__ . '/../../vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../..');
 $dotenv->safeLoad();
 
+echo "DEBUG: DB_HOST (env): " . ($_ENV['DB_HOST'] ?? 'NOT SET') . "\n";
+echo "DEBUG: DB_NAME (env): " . ($_ENV['DB_NAME'] ?? 'NOT SET') . "\n";
+echo "DEBUG: Dotenv Path: " . realpath(__DIR__ . '/../..') . "\n";
+
 // Container Setup
 $containerBuilder = new ContainerBuilder();
 $containerBuilder->addDefinitions(__DIR__ . '/../../config/container.php');
@@ -77,7 +81,7 @@ foreach ($patients as $patient) {
     }
 
     $count++;
-    if ($count % 100 == 0) {
+    if ($count % 250 == 0) {
         echo "$count hasta islendi...\n";
     }
 }
