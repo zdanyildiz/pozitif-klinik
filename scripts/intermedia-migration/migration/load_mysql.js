@@ -44,6 +44,27 @@ async function main() {
     const conn = await mysql.createConnection(dbConfig);
     console.log('Veritabanına bağlanıldı.');
 
+    // İl ve İlçe lookup tablolarını yükle
+    console.log('İl ve İlçe verileri yükleniyor...');
+    const [provinces] = await conn.query('SELECT id, name FROM sys_provinces');
+    const [districts] = await conn.query('SELECT id, province_id, name FROM sys_districts');
+
+    // Yardımcı lookup fonksiyonları
+    const findProvinceId = (name) => {
+        if (!name) return null;
+        const p = provinces.find(p => p.name.toLocaleUpperCase('tr-TR') === name.toLocaleUpperCase('tr-TR'));
+        return p ? p.id : null;
+    };
+
+    const findDistrictId = (provinceId, name) => {
+        if (!provinceId || !name) return null;
+        const d = districts.find(d =>
+            d.province_id === provinceId &&
+            d.name.toLocaleUpperCase('tr-TR') === name.toLocaleUpperCase('tr-TR')
+        );
+        return d ? d.id : null;
+    };
+
     try {
         console.log('Eski veriler siliniyor (Fresh start)...');
         await conn.query('SET FOREIGN_KEY_CHECKS = 0');
@@ -55,6 +76,7 @@ async function main() {
         await conn.query('TRUNCATE cln_appointment_items');
         await conn.query('TRUNCATE cln_examinations');
         await conn.query('SET FOREIGN_KEY_CHECKS = 1');
+
         // 1. KULLANICILAR
         console.log('\nKullanıcılar aktarılıyor...');
         const userMap = new Map(); // legacy_id -> new_id
@@ -82,20 +104,24 @@ async function main() {
         console.log(`${data.services.length} hizmet aktarıldı.`);
 
         // 3. HASTALAR
-        console.log('\nHastalar aktarılıyor (Şifrelenerek)...');
+        console.log('\nHastalar aktarılıyor (Şifrelenerek ve İl/İlçe eşleştirilerek)...');
         const patientMap = new Map(); // legacy_id -> new_id
-        const patientBatches = [];
         const batchSize = 100;
 
         for (let i = 0; i < data.patients.length; i += batchSize) {
             const batch = data.patients.slice(i, i + batchSize);
             const promises = batch.map(async (p) => {
+                const provinceId = findProvinceId(p.city);
+                const districtId = findDistrictId(provinceId, p.district);
+
                 const [res] = await conn.query(
                     `INSERT INTO ptn_cards (
                         clinic_id, tc_no, tc_no_hash, name, name_hash, phone, phone_hash, 
-                        email, birth_date, gender, blood_type, address, 
-                        father_name, mother_name, birth_place, nationality, profession, notes, legacy_id, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        email, birth_date, gender, blood_type, address, province_id, district_id,
+                        father_name, mother_name, birth_place, nationality, profession, 
+                        medical_info, work_details, identity_details, insurance_info, legacy_metadata, legal_consents,
+                        notes, legacy_id, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         CLINIC_ID,
                         encrypt(p.tc_no), blindIndex(p.tc_no),
@@ -103,7 +129,14 @@ async function main() {
                         encrypt(p.phone), blindIndex(p.phone),
                         encrypt(p.email), p.birth_date, p.gender, p.blood_type,
                         encrypt(p.address),
+                        provinceId, districtId,
                         p.father_name, p.mother_name, p.birth_place, p.nationality, p.profession,
+                        JSON.stringify(p.medical_info),
+                        JSON.stringify(p.work_details),
+                        JSON.stringify(p.identity_details),
+                        JSON.stringify(p.insurance_info),
+                        JSON.stringify(p.legacy_metadata),
+                        JSON.stringify(p.legal_consents),
                         encrypt(p.notes),
                         p.legacy_id, p.status
                     ]

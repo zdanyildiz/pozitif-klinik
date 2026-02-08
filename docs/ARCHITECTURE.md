@@ -242,6 +242,7 @@ Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını payl
 7.  **Sıfır Hardcoded Sır Politikası**: Kod içinde hiçbir şekilde API key, JWT secret veya veritabanı şifresi (fallback olarak bile) bulundurulamaz. Tüm hassas veriler sadece `.env` dosyasından okunmalıdır. Aksi durum denetimlerde kritik hata olarak işaretlenir.
 8.  **Kriptografi ve Veri Şifreleme (Privacy by Design):**
     - **Depolama (AES-256-GCM):** Hasta hassas verileri (Ad Soyad, TC No, Telefon, Email, Adres) veritabanında AES-256-GCM algoritması ile şifrelenmiş olarak saklanır.
+    - **Yapılandırılmış Metadata (JSON):** Hasta detayları `medical_info`, `work_details`, `identity_details` ve `insurance_info` olmak üzere ayrıştırılmış JSON sütunlarında tutulur. Bu, veri erişimini optimize eder ve bağlama göre (context-aware) veri sunumunu kolaylaştırır.
         - **IV (Initialization Vector):** Her şifreleme işlemi için benzersiz bir IV üretilir. Bu sayede aynı veri (örn. aynı isimli iki hasta) veritabanında tamamen farklı şifreli metinler olarak görünür.
         - **Bütünlük:** GCM modu, verinin şifrelendikten sonra değiştirilmediğini garanti eden bir "Authentication Tag" kullanır.
         - **Geri Döndürülebilirlik:** Şifrelenmiş veriler, `CryptoService::decrypt()` metodu kullanılarak her zaman orijinal haline geri döndürülebilir.

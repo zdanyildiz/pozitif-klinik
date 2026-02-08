@@ -79,20 +79,21 @@ Bu birlestirme su scriptte yapilmaktadir:
 - Hedef: cln_examinations
 - Eslesen alanlar: complaint, story, diagnosis, treatment, bulgular
 
-## 4) Aktarim Sirasina Dair On Notlar
-Bu dokuman sadece iliski ve mapping seviyesinde taslaktir.
-Aktarim sira ve bagimliliklari Intermedia icin ayrica listelenecek.
+## 4) Aktarım Sırası ve Bağımlılıklar
 
-Onerilen sira (taslak):
-1. sys_tenants, sys_users
-2. ptn_cards
-3. cln_services, cln_appointment_types
-4. cln_appointments
-5. cln_examinations
-6. cln_appointment_items
-7. cln_payments
-8. cln_lab_* (sonuclar ve tanimlar)
-9. sys_files (radyoloji vb.)
+Aktarım işlemleri veritabanı bütünlüğü (Foreign Key) nedeniyle aşağıdaki sırayla yapılmalıdır:
+
+1.  **sys_tenants:** (Kaynak: `SUBE`) Klinik ana kaydı oluşturulmadan diğer veriler aktarılamaz.
+2.  **sys_users:** (Kaynak: `KULLANICILAR`) Doktor ve personel tanımları.
+3.  **ptn_cards:** (Kaynak: `HASTA`) Hasta kartları.
+4.  **cln_services & types:** Katalog tanımları.
+5.  **cln_appointments:** Randevu ve geliş kayıtları.
+6.  **cln_examinations:** Muayene ana kayıtları.
+7.  **merge_specialty_data:** Branş verileri, lab ve radyoloji metinlerinin muayenelere işlenmesi.
+8.  **cln_payments:** Finansal kayıtlar.
+9.  **cln_lab_results:** Yapılandırılmış laboratuvar sonuçları.
+10. **sys_files:** Radyoloji görüntüleri ve hasta dosyaları.
+11. **migrate_blind_index:** KVKK güvenlik endeksleme.
 
 ## 5) Acik Noktalar
 - Intermedia tarafinda radyoloji verisi dosya olarak geliyorsa, sys_files'a mapping ayrintisi yazilacak.

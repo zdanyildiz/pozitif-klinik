@@ -120,49 +120,137 @@ class DataMigrator {
         const result = await this.mssqlPool.request().query(`
             SELECT 
                 HASTANO,
-                AD,
-                SOYAD,
-                KIMLIKNO,
-                EV_TELEFON,
-                EV_MOBIL,
-                EV_EMAIL,
-                DGMTRH,
-                DOGUMYERI,
-                CINSIYET,
-                KANGRUBU,
-                EV_ADRES1,
-                EV_ADRES2,
-                BABAADI,
-                ANNEADI,
-                MESLEK,
-                NK_UYRUGU,
-                NOTLAR,
-                IPTAL
-            FROM HST_ANADOSYA
-            ORDER BY HASTANO
+                AD, SOYAD, KIMLIKNO,
+                EV_TELEFON, EV_MOBIL, EV_EMAIL,
+                DGMTRH, DOGUMYERI, CINSIYET, KANGRUBU,
+                EV_ADRES1, EV_ADRES2, EV_ADRES_SEMT, EV_ADRES_ILCE, EV_ADRES_IL,
+                BABAADI, ANNEADI, MESLEK, NK_UYRUGU, NOTLAR,
+                ILACALERJISI, MADDEALERJISI, TIBBIUYARI,
+                ARSIVNO, AILENO, K_HASTANO,
+                HASTALIK_DIYABET, HASTALIK_HEPATIT, HASTALIK_HIV, HASTALIK_COVID, HASTALIK_DIGER,
+                SIGORTA_POLICENO, SGK_KURUM, SGK_SOSYALGUVNO,
+                IPTAL,
+                -- KVKK ve Onam Bilgileri
+                K.KVKKabulEdiyorum, K.KVKKabulEtmiyorum, K.KVKK_IYSOnayID, 
+                K.HukukiTemsilci_Isim, K.HukukiTemsilci_YakinlikDerecesi,
+                K.BilgilendirmeTalebi_Sms, K.BilgilendirmeTalebi_Email, K.BilgilendirmeTalebi_Arama, -- Arama sütunu ismi tahminidir
+                K.eIYS_ETKSmsIzniOnayTarihi, K.eIYS_ETKEmailIzniOnayTarihi, K.eIYS_ETKAramaIzniOnayTarihi,
+                K.SonIslemTarihi as ConsentDate
+            FROM HST_ANADOSYA P
+            LEFT JOIN Hst_Anadosya_GizlilikOnamFormu K ON P.HASTANO = K.HastaNo
+            ORDER BY P.HASTANO
         `);
 
-        const patients = result.recordset.map(row => ({
-            legacy_id: row.HASTANO,
-            name: `${row.AD || ''} ${row.SOYAD || ''}`.trim() || `Hasta ${row.HASTANO}`,
-            tc_no: row.KIMLIKNO || '',
-            phone: row.EV_MOBIL || row.EV_TELEFON || '',
-            email: row.EV_EMAIL || null,
-            birth_date: row.DGMTRH ? new Date(row.DGMTRH).toISOString().split('T')[0] : null,
-            birth_place: row.DOGUMYERI || null,
-            gender: row.CINSIYET === 'E' ? 'M' : (row.CINSIYET === 'K' ? 'F' : 'U'),
-            blood_type: row.KANGRUBU || null,
-            address: [row.EV_ADRES1, row.EV_ADRES2].filter(Boolean).join(' ') || null,
-            father_name: row.BABAADI || null,
-            mother_name: row.ANNEADI || null,
-            profession: row.MESLEK || null,
-            nationality: row.NK_UYRUGU || 'TR',
-            notes: row.NOTLAR || null,
-            status: row.IPTAL ? 0 : 1
-        }));
+        const patients = result.recordset.map(row => {
+            // Kronik hastalıkları dizleyelim
+            const chronicDiseases = [];
+            if (row.HASTALIK_DIYABET) chronicDiseases.push('Diyabet');
+            if (row.HASTALIK_HEPATIT) chronicDiseases.push('Hepatit');
+            if (row.HASTALIK_HIV && row.HASTALIK_HIV !== 'H') chronicDiseases.push('HIV');
+            if (row.HASTALIK_COVID) chronicDiseases.push('COVID');
+            if (row.HASTALIK_DIGER) chronicDiseases.push(row.HASTALIK_DIGER);
+
+            // Adres birleştirme (Sadece sokak/mahalle detayları)
+            const streetAddress = [
+                row.EV_ADRES1,
+                row.EV_ADRES2,
+                row.EV_ADRES_SEMT
+            ].filter(val => val && val.trim()).join(', ');
+
+            return {
+                legacy_id: row.HASTANO,
+                name: `${row.AD || ''} ${row.SOYAD || ''}`.trim() || `Hasta ${row.HASTANO}`,
+                tc_no: row.KIMLIKNO || '',
+                phone: row.EV_MOBIL || row.EV_TELEFON || '',
+                email: row.EV_EMAIL || null,
+                birth_date: row.DGMTRH ? new Date(row.DGMTRH).toISOString().split('T')[0] : null,
+                birth_place: row.DOGUMYERI || null,
+                gender: row.CINSIYET === 'E' ? 'M' : (row.CINSIYET === 'K' ? 'F' : 'U'),
+                blood_type: row.KANGRUBU || null,
+                address: streetAddress || null,
+                city: row.EV_ADRES_IL || null,
+                district: row.EV_ADRES_ILCE || null,
+                father_name: row.BABAADI || null,
+                mother_name: row.ANNEADI || null,
+                profession: row.MESLEK || null,
+                nationality: row.NK_UYRUGU || 'TR',
+                notes: row.NOTLAR || null,
+                status: row.IPTAL ? 0 : 1,
+                // Yeni Modern Yapı: Context-Aware JSON Sütunları
+                medical_info: {
+                    allergies: {
+                        drug: row.ILACALERJISI || null,
+                        substance: row.MADDEALERJISI || null
+                    },
+                    chronic_diseases: chronicDiseases,
+                    warnings: row.TIBBIUYARI || null,
+                    blood_type_details: row.KANGRUBU || null, // Kan grubu zaten ana sütunda var ama detay veya teyit için
+                    disabilities: null // MSSQL'de varsa buraya eklenebilir
+                },
+                work_details: {
+                    company_name: row.IS_ADI || null,
+                    role: row.IS_GOREVI || null,
+                    phone: row.IS_TELEFON || null,
+                    address: [row.IS_ADRES1, row.IS_ADRES2, row.IS_ADRES_SEMT, row.IS_ADRES_ILCE, row.IS_ADRES_IL].filter(Boolean).join(', ') || null,
+                    email: row.IS_EMAIL || null
+                },
+                identity_details: {
+                    marital_status: row.NK_MEDENIHALI || null,
+                    spouse_name: row.ESININADI || null,
+                    tax_no: row.VERGINO || null,
+                    population_registry: {
+                        province_code: row.NK_ILKODU || null,
+                        district_code: row.NK_ILCEKODU || null,
+                        volume_no: row.NK_CILTNO || null,
+                        family_order_no: row.NK_AILENO || null,
+                        order_no: row.NK_SIRANO || null
+                    }
+                },
+                insurance_info: {
+                    policies: row.SIGORTA_POLICENO ? [{
+                        policy_no: row.SIGORTA_POLICENO,
+                        institution: row.SGK_KURUM
+                    }] : [],
+                    sgk_status: row.SGK_SIGORTALIDURUMU || null,
+                    social_security_no: row.SGK_SOSYALGUVNO || null
+                },
+                legacy_metadata: {
+                    archive_no: row.ARSIVNO || null,
+                    legacy_patient_no: row.HASTANO,
+                    k_hastano: row.K_HASTANO || null,
+                    migration_notes: "Migrated from Intermedia"
+                },
+                legal_consents: {
+                    kvkk: {
+                        is_accepted: !!row.KVKKabulEdiyorum,
+                        is_rejected: !!row.KVKKabulEtmiyorum,
+                        accepted_at: row.ConsentDate || null,
+                        legal_representative: row.HukukiTemsilci_Isim ? {
+                            name: row.HukukiTemsilci_Isim,
+                            degree: row.HukukiTemsilci_YakinlikDerecesi
+                        } : null,
+                        iys_id: row.KVKK_IYSOnayID || null
+                    },
+                    etk: {
+                        sms: {
+                            allowed: !!row.BilgilendirmeTalebi_Sms,
+                            date: row.eIYS_ETKSmsIzniOnayTarihi || null
+                        },
+                        email: {
+                            allowed: !!row.BilgilendirmeTalebi_Email,
+                            date: row.eIYS_ETKEmailIzniOnayTarihi || null
+                        },
+                        call: {
+                            allowed: !!row.BilgilendirmeTalebi_Arama, // Sütun adı varsayım, kontrol edilecek
+                            date: row.eIYS_ETKAramaIzniOnayTarihi || null
+                        }
+                    }
+                }
+            };
+        });
 
         this.stats.patients = patients.length;
-        console.log(`${patients.length} hasta bulundu.`);
+        console.log(`${patients.length} hasta bulundu (Modern metadata dahil).`);
         return patients;
     }
 

@@ -6,15 +6,15 @@ use DI\ContainerBuilder;
 use App\Core\Database;
 use App\Core\Security\CryptoService;
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
 // Load Environment Variables
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../..');
 $dotenv->safeLoad();
 
 // Container Setup
 $containerBuilder = new ContainerBuilder();
-$containerBuilder->addDefinitions(__DIR__ . '/../config/container.php');
+$containerBuilder->addDefinitions(__DIR__ . '/../../config/container.php');
 $container = $containerBuilder->build();
 
 $db = $container->get(Database::class);

@@ -14,7 +14,20 @@ async function main() {
 
     const conn = await mysql.createConnection(dbConfig);
 
-    console.log('Veritabanına bağlanıldı. Eksik sütunlar ekleniyor...');
+    console.log('Veritabanına bağlanıldı.');
+
+    // KRITIK: Önce sys_tenants tablosunda clinic_id=1 kaydının varlığını kontrol et ve oluştur
+    console.log('\\nTenant (Klinik) kaydı kontrol ediliyor...');
+    const [tenants] = await conn.query('SELECT id FROM sys_tenants WHERE id = 1');
+    if (tenants.length === 0) {
+        console.log('Tenant bulunamadı, varsayılan klinik kaydı oluşturuluyor...');
+        await conn.query(`INSERT INTO sys_tenants (id, name, slug, is_active, created_at) VALUES (1, 'Migrasyon Kliniği', 'migrasyon-klinigi', 1, NOW())`);
+        console.log('Tenant kaydı oluşturuldu: id=1, name=Migrasyon Kliniği');
+    } else {
+        console.log('Tenant kaydı zaten mevcut: id=1');
+    }
+
+    console.log('\\nEksik sütunlar ekleniyor...');
 
     const alters = [
         // Patients
@@ -26,6 +39,12 @@ async function main() {
         "ALTER TABLE `ptn_cards` ADD COLUMN `birth_place` varchar(100) DEFAULT NULL AFTER `birth_date` ",
         "ALTER TABLE `ptn_cards` ADD COLUMN `nationality` varchar(10) DEFAULT 'TR' AFTER `birth_place` ",
         "ALTER TABLE `ptn_cards` ADD COLUMN `profession` varchar(100) DEFAULT NULL AFTER `notes` ",
+        "ALTER TABLE `ptn_cards` ADD COLUMN `medical_info` JSON DEFAULT NULL COMMENT 'Chronic diseases, allergies, medical warnings' AFTER `profession` ",
+        "ALTER TABLE `ptn_cards` ADD COLUMN `work_details` JSON DEFAULT NULL COMMENT 'Company, role, work phone, work address' AFTER `medical_info` ",
+        "ALTER TABLE `ptn_cards` ADD COLUMN `identity_details` JSON DEFAULT NULL COMMENT 'Marital status, spouse name, tax no, registry details' AFTER `work_details` ",
+        "ALTER TABLE `ptn_cards` ADD COLUMN `insurance_info` JSON DEFAULT NULL COMMENT 'Policies, SGK status, green card' AFTER `identity_details` ",
+        "ALTER TABLE `ptn_cards` ADD COLUMN `legacy_metadata` JSON DEFAULT NULL COMMENT 'Archive no, legacy patient ID, migration notes' AFTER `insurance_info` ",
+        "ALTER TABLE `ptn_cards` ADD COLUMN `legal_consents` JSON DEFAULT NULL COMMENT 'KVKK, ETK, IYS consents and history' AFTER `legacy_metadata` ",
         "ALTER TABLE `ptn_cards` ADD COLUMN `legacy_id` bigint(20) DEFAULT NULL COMMENT 'Old System Patient ID' ",
         "ALTER TABLE `ptn_cards` ADD INDEX `idx_legacy_id` (`clinic_id`, `legacy_id`) ",
 

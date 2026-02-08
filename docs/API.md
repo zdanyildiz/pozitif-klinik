@@ -459,7 +459,37 @@ Yeni hasta kaydı oluşturur.
   "province_id": 34,
   "district_id": 3423,
   "address": "Kadıköy, İstanbul",
-  "notes": "Alerjisi var"
+  "notes": "Genel notlar",
+  "work_details": {
+    "company_name": "Teknoloji A.Ş.",
+    "role": "Yazılım Mühendisi",
+    "phone": "0212 123 45 67",
+    "address": "Levent, İstanbul",
+    "email": "ali.veli@sirket.com"
+  },
+  "medical_info": {
+    "chronic_diseases": ["Hipertansiyon"],
+    "allergies": { "drug": "Penisilin" },
+    "warnings": "Kan sulandırıcı kullanıyor"
+  },
+  "insurance_info": {
+    "sgk_status": "Çalışan",
+    "policies": []
+  },
+  "identity_details": {
+    "marital_status": "Evli",
+    "tax_no": "1234567890"
+  },
+  "legal_consents": {
+    "kvkk": {
+      "is_accepted": true,
+      "accepted_at": "2026-01-20T10:00:00Z"
+    },
+    "etk": {
+      "sms": { "allowed": true },
+      "email": { "allowed": false }
+    }
+  }
 }
 ```
 
