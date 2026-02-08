@@ -1,0 +1,39 @@
+MSSQL Bağlantısı Başarılı.
+
+--- TC NO Boş Olanlar (KIMLIKNO IS NULL OR KIMLIKNO = '') ---
+┌─────────┬─────────┬───────────┬────────────┬──────────┐
+│ (index) │ HASTANO │ AD        │ SOYAD      │ KIMLIKNO │
+├─────────┼─────────┼───────────┼────────────┼──────────┤
+│ 0       │ 1       │ 'Deneme'  │ 'Hastası'  │ ''       │
+│ 1       │ 2       │ 'Hamit'   │ 'Hemşinli' │ null     │
+│ 2       │ 3       │ 'Şahine'  │ 'Kaya'     │ null     │
+│ 3       │ 4       │ 'Kani'    │ 'Düz'      │ null     │
+│ 4       │ 6       │ 'Nihat'   │ 'Akkaş'    │ null     │
+│ 5       │ 7       │ 'Bekir'   │ 'Tekeli'   │ null     │
+│ 6       │ 8       │ 'Metehan' │ 'Tekeli'   │ null     │
+│ 7       │ 9       │ 'Uğur'    │ 'Özkan'    │ null     │
+│ 8       │ 10      │ 'Onur'    │ 'Atakan'   │ null     │
+│ 9       │ 11      │ 'Nihal'   │ 'Özel'     │ null     │
+└─────────┴─────────┴───────────┴────────────┴──────────┘
+
+--- İSİM Boş Olanlar (AD ve SOYAD IS NULL OR empty) ---
+┌─────────┐
+│ (index) │
+├─────────┤
+└─────────┘
+
+--- TELEFON Boş Olanlar (MOBIL ve EV TEL IS NULL OR empty) ---
+┌─────────┬─────────┬───────────┬─────────────────┬────────────┬──────────┐
+│ (index) │ HASTANO │ AD        │ SOYAD           │ EV_TELEFON │ EV_MOBIL │
+├─────────┼─────────┼───────────┼─────────────────┼────────────┼──────────┤
+│ 0       │ 481     │ 'Zehra'   │ 'Erol Kaldırım' │ null       │ null     │
+│ 1       │ 1401    │ 'Rasime'  │ 'Rençber'       │ null       │ null     │
+│ 2       │ 1483    │ 'Nezehat' │ 'Akbora'        │ null       │ null     │
+│ 3       │ 1530    │ 'Ebru'    │ 'Aydoğan'       │ null       │ null     │
+│ 4       │ 1704    │ 'Mustafa' │ 'Güngör'        │ null       │ null     │
+│ 5       │ 2112    │ 'Ebru'    │ 'Şenli'         │ null       │ null     │
+│ 6       │ 2164    │ 'Ahmet'   │ 'Şayir'         │ null       │ null     │
+│ 7       │ 2355    │ 'İlknur'  │ 'Pala'          │ null       │ null     │
+│ 8       │ 2670    │ 'Hüsetin' │ 'Tiryaki'       │ null       │ null     │
+│ 9       │ 2868    │ 'Gülsüm'  │ 'Çınar'         │ null       │ null     │
+└─────────┴─────────┴───────────┴─────────────────┴────────────┴──────────┘
