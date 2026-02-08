@@ -12,7 +12,12 @@ const bcrypt = require('bcryptjs');
 
 // Config
 const { getTargetConfig, getAppKey } = require('../db.helper');
-const dbConfig = getTargetConfig();
+const dbConfig = {
+    ...getTargetConfig(),
+    connectTimeout: 60000,
+    // Set max_allowed_packet equivalent for large bulk inserts
+    maxPreparedStatements: 16000
+};
 const APP_KEY = getAppKey();
 const BINARY_KEY = Buffer.from(APP_KEY, 'hex');
 
@@ -246,51 +251,66 @@ async function main() {
         }
         console.log(`${data.services.length} hizmet aktarıldı.`);
 
-        // 3. HASTALAR
-        console.log('\nHastalar aktarılıyor (Şifrelenerek ve İl/İlçe eşleştirilerek)...');
+        // 3. HASTALAR (BULK INSERT)
+        console.log('\nHastalar aktarılıyor (Şifrelenerek ve İl/İlçe eşleştirilerek - BULK INSERT)...');
         const patientMap = new Map(); // legacy_id -> new_id
-        const batchSize = 2000;
+        const batchSize = 500; // Reduced for encrypted data to avoid packet limits
+        const tableName = 'ptn_cards';
 
         for (let i = 0; i < data.patients.length; i += batchSize) {
             const batch = data.patients.slice(i, i + batchSize);
-            const searchIndexRows = [];
-            const tableName = 'ptn_cards';
-            const promises = batch.map(async (p) => {
+
+            // Prepare bulk insert values
+            const patientValues = batch.map(p => {
                 const provinceId = findProvinceId(p.city);
                 const districtId = findDistrictId(provinceId, p.district);
+                return [
+                    CLINIC_ID,
+                    encrypt(p.tc_no || '11111111111'),
+                    encrypt(p.name),
+                    encrypt(p.phone || '5111111111'),
+                    encrypt(p.email), p.birth_date, p.gender, p.blood_type,
+                    encrypt(p.address),
+                    provinceId, districtId,
+                    JSON.stringify(p.medical_info),
+                    JSON.stringify(p.work_details),
+                    JSON.stringify(p.identity_details),
+                    JSON.stringify(p.insurance_info),
+                    JSON.stringify(p.legacy_metadata),
+                    JSON.stringify(p.legal_consents),
+                    encrypt(p.notes),
+                    p.legacy_id, p.status
+                ];
+            });
 
-                const [res] = await conn.query(
-                    `INSERT INTO ptn_cards (
-                        clinic_id, tc_no, name, phone, 
-                        email, birth_date, gender, blood_type, address, province_id, district_id,
-                        medical_info, work_details, identity_details, insurance_info, legacy_metadata, legal_consents,
-                        notes, legacy_id, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        CLINIC_ID,
-                        encrypt(p.tc_no || '11111111111'),
-                        encrypt(p.name),
-                        encrypt(p.phone || '5111111111'),
-                        encrypt(p.email), p.birth_date, p.gender, p.blood_type,
-                        encrypt(p.address),
-                        provinceId, districtId,
-                        JSON.stringify(p.medical_info),
-                        JSON.stringify(p.work_details),
-                        JSON.stringify(p.identity_details),
-                        JSON.stringify(p.insurance_info),
-                        JSON.stringify(p.legacy_metadata),
-                        JSON.stringify(p.legal_consents),
-                        encrypt(p.notes),
-                        p.legacy_id, p.status
-                    ]
-                );
-                patientMap.set(p.legacy_id, res.insertId);
-                const rows = buildSearchIndexRows(tableName, res.insertId, p);
+            // Bulk insert patients
+            const [res] = await conn.query(
+                `INSERT INTO ptn_cards (
+                    clinic_id, tc_no, name, phone, 
+                    email, birth_date, gender, blood_type, address, province_id, district_id,
+                    medical_info, work_details, identity_details, insurance_info, legacy_metadata, legal_consents,
+                    notes, legacy_id, status
+                ) VALUES ?`,
+                [patientValues]
+            );
+
+            // Map legacy IDs to new IDs (auto-increment garantisiyle)
+            let currentId = res.insertId;
+            batch.forEach(p => {
+                patientMap.set(p.legacy_id, currentId++);
+            });
+
+            // Build search index rows for this batch
+            const searchIndexRows = [];
+            batch.forEach(p => {
+                const recordId = patientMap.get(p.legacy_id);
+                const rows = buildSearchIndexRows(tableName, recordId, p);
                 if (rows.length) {
                     searchIndexRows.push(...rows);
                 }
             });
-            await Promise.all(promises);
+
+            // Bulk insert search index
             if (searchIndexRows.length) {
                 for (let j = 0; j < searchIndexRows.length; j += 5000) {
                     const chunk = searchIndexRows.slice(j, j + 5000);
@@ -300,7 +320,8 @@ async function main() {
                     );
                 }
             }
-            if (i % 1000 === 0) console.log(`${i} hasta aktarıldı...`);
+
+            if (i % 2000 === 0) console.log(`${i} hasta aktarıldı...`);
         }
         console.log(`${data.patients.length} hasta aktarıldı.`);
 
@@ -317,21 +338,35 @@ async function main() {
 
         for (let i = 0; i < data.appointments.length; i += batchSize) {
             const batch = data.appointments.slice(i, i + batchSize);
-            const promises = batch.map(async (a) => {
-                const patientId = patientMap.get(a.patient_legacy_id);
-                const doctorId = userMap.get(a.doctor_legacy_id) || null;
+            const today = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-                if (!patientId) return; // Geçersiz hasta ise atla
+            // Filtreleme: Geçerli hastası olanları ayır
+            const validBatch = batch.filter(a => patientMap.has(a.patient_legacy_id));
 
-                const today = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            if (validBatch.length > 0) {
+                const values = validBatch.map(a => [
+                    CLINIC_ID,
+                    patientMap.get(a.patient_legacy_id),
+                    userMap.get(a.doctor_legacy_id) || null,
+                    DEFAULT_TYPE_ID,
+                    a.appointment_date || today,
+                    a.status,
+                    a.protocol_no,
+                    a.legacy_visit_id
+                ]);
+
                 const [res] = await conn.query(
-                    'INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, protocol_no, legacy_visit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    [CLINIC_ID, patientId, doctorId, DEFAULT_TYPE_ID, a.appointment_date || today, a.status, a.protocol_no, a.legacy_visit_id]
+                    'INSERT INTO cln_appointments (clinic_id, patient_id, doctor_id, type_id, appointment_date, status, protocol_no, legacy_visit_id) VALUES ?',
+                    [values]
                 );
-                appointmentMap.set(a.legacy_visit_id, res.insertId);
-            });
-            await Promise.all(promises);
-            if (i % 5000 === 0) console.log(`${i} randevu aktarıldı...`);
+
+                // Bulk insert sonrası ID'leri eşleştir (Auto-increment garantisiyle)
+                let currentId = res.insertId;
+                validBatch.forEach(a => {
+                    appointmentMap.set(a.legacy_visit_id, currentId++);
+                });
+            }
+            if (i % 10000 === 0) console.log(`${i} randevu aktarıldı...`);
         }
         console.log(`${data.appointments.length} randevu aktarıldı.`);
 
@@ -339,20 +374,26 @@ async function main() {
         console.log('\nİşlem kalemleri aktarılıyor...');
         for (let i = 0; i < data.appointment_items.length; i += batchSize) {
             const batch = data.appointment_items.slice(i, i + batchSize);
-            const promises = batch.map(async (item) => {
-                const appointmentId = appointmentMap.get(item.appointment_legacy_id);
-                const serviceId = serviceMap.get(item.service_legacy_code) || null;
-                const performerId = userMap.get(item.performer_legacy_id) || null;
+            const validBatch = batch.filter(item => appointmentMap.has(item.appointment_legacy_id));
 
-                if (!appointmentId) return;
+            if (validBatch.length > 0) {
+                const values = validBatch.map(item => [
+                    CLINIC_ID,
+                    appointmentMap.get(item.appointment_legacy_id),
+                    serviceMap.get(item.service_legacy_code) || null,
+                    item.item_name,
+                    item.quantity,
+                    item.unit_price,
+                    item.total_price,
+                    userMap.get(item.performer_legacy_id) || null
+                ]);
 
                 await conn.query(
-                    'INSERT INTO cln_appointment_items (clinic_id, appointment_id, service_id, item_name, quantity, unit_price, total_price, performer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    [CLINIC_ID, appointmentId, serviceId, item.item_name, item.quantity, item.unit_price, item.total_price, performerId]
+                    'INSERT INTO cln_appointment_items (clinic_id, appointment_id, service_id, item_name, quantity, unit_price, total_price, performer_id) VALUES ?',
+                    [values]
                 );
-            });
-            await Promise.all(promises);
-            if (i % 5000 === 0) console.log(`${i} işlem kalemi aktarıldı...`);
+            }
+            if (i % 10000 === 0) console.log(`${i} işlem kalemi aktarıldı...`);
         }
         console.log(`${data.appointment_items.length} işlem kalemi aktarıldı.`);
 
@@ -360,26 +401,38 @@ async function main() {
         console.log('\nTıbbi kayıtlar aktarılıyor...');
         for (let i = 0; i < data.examinations.length; i += batchSize) {
             const batch = data.examinations.slice(i, i + batchSize);
-            const promises = batch.map(async (e) => {
+            const validBatch = [];
+
+            for (const e of batch) {
                 const appointmentId = appointmentMap.get(e.legacy_visit_id);
-                if (!appointmentId) return;
+                if (!appointmentId) continue;
 
-                // Appointment'tan patient_id ve doctor_id almalıyız
-                const [appt] = await conn.query('SELECT patient_id, doctor_id FROM cln_appointments WHERE id = ?', [appointmentId]);
-                if (appt.length === 0) return;
+                // Not: bulk insert yaparken patient_id ve doctor_id'yi map'lerden alıyoruz
+                // Bu adımda cln_appointments tablosuna tekrar gitmek performansı düşürür, map kullanıyoruz.
+                // find patientId for this appointment
+                const apptInfo = data.appointments.find(a => a.legacy_visit_id === e.legacy_visit_id);
+                if (!apptInfo) continue;
 
+                const patientId = patientMap.get(apptInfo.patient_legacy_id);
+                const doctorId = userMap.get(apptInfo.doctor_legacy_id) || 1;
+
+                if (patientId) {
+                    validBatch.push([
+                        CLINIC_ID, patientId, doctorId, appointmentId,
+                        '', e.complaint, e.story, e.bulgular, e.diagnosis, e.treatment, e.result_note, e.legacy_visit_id, e.created_at
+                    ]);
+                }
+            }
+
+            if (validBatch.length > 0) {
                 await conn.query(
                     `INSERT INTO cln_examinations (
-                        clinic_id, patient_id, doctor_user_id, anamnez, complaint, story, bulgular, diagnosis, treatment, result_note, created_at, legacy_visit_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        CLINIC_ID, appt[0].patient_id, appt[0].doctor_id || 1,
-                        '', e.complaint, e.story, e.bulgular, e.diagnosis, e.treatment, e.result_note, e.created_at, e.legacy_visit_id
-                    ]
+                        clinic_id, patient_id, doctor_user_id, appointment_id, anamnez, complaint, story, bulgular, diagnosis, treatment, result_note, legacy_visit_id, created_at
+                    ) VALUES ?`,
+                    [validBatch]
                 );
-            });
-            await Promise.all(promises);
-            if (i % 5000 === 0) console.log(`${i} tıbbi kayıt aktarıldı...`);
+            }
+            if (i % 10000 === 0) console.log(`${i} tıbbi kayıt aktarıldı...`);
         }
         console.log(`${data.examinations.length} tıbbi kayıt aktarıldı.`);
 

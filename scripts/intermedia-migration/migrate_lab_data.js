@@ -3,6 +3,7 @@ const mysql = require('mysql2/promise');
 
 // Configurations
 const CLINIC_ID = 1;
+const BATCH_SIZE = 2000; // Increased for bulk operations
 
 const { getSourceConfig, getTargetConfig } = require('./db.helper');
 const mssqlConfig = getSourceConfig();
@@ -13,7 +14,8 @@ class LabMigrator {
         this.mssqlPool = null;
         this.mysqlConn = null;
         this.mapping = new Map(); // legacy_visit_id -> { appt_id, patient_id, doctor_id }
-        this.stats = { total: 0, imported: 0, errors: 0 };
+        this.existingHeaders = new Map(); // legacy_visit_id -> result_id
+        this.stats = { total: 0, imported: 0, errors: 0, headersCreated: 0 };
     }
 
     async connect() {
@@ -47,30 +49,32 @@ class LabMigrator {
         console.log(`Loaded ${this.mapping.size} mappings.`);
     }
 
+    async loadExistingHeaders() {
+        console.log('Loading existing lab result headers...');
+        const [rows] = await this.mysqlConn.execute(
+            'SELECT id, legacy_visit_id FROM cln_lab_results WHERE legacy_visit_id IS NOT NULL AND clinic_id = ?',
+            [CLINIC_ID]
+        );
+
+        for (const row of rows) {
+            this.existingHeaders.set(row.legacy_visit_id, row.id);
+        }
+        console.log(`Loaded ${this.existingHeaders.size} existing headers.`);
+    }
+
     async migrate() {
         await this.connect();
         await this.loadMappings();
+        await this.loadExistingHeaders();
 
-        console.log('Starting HST_LAB_BIYOKIMYA migration...');
+        console.log('Starting HST_LAB_BIYOKIMYA migration with BULK INSERT...');
 
-        // Fetch data grouped by GELISNO (Visit ID) to create Headers first
-        // We use a stream or paging to handle 1.6M rows efficiently
-        const BATCH_SIZE = 500;
         let lastId = 0;
 
         while (true) {
             const request = this.mssqlPool.request();
             request.input('lastId', sql.Int, lastId);
 
-            // Fetch unique GELISNOs first to create Headers
-            // Note: This is a simplified logic. In a real scenario with 1.6M rows, 
-            // we should likely migrate row-by-row but group them in memory or use a cursor.
-            // Given the constraints, let's process raw items and insert headers on the fly or utilize ON DUPLICATE KEY UPDATE logic?
-            // Better approach: Select distinct GELISNO from HST_LAB_BIYOKIMYA where RECORD_ID > lastId
-
-            // Let's grab raw data and process
-            // Removed BIRIM as it does not exist in TETKIK
-            // Fixed SonucTarihi case
             const result = await request.query(`
                 SELECT TOP ${BATCH_SIZE}
                     b.RECORD_ID, b.GELISNO, b.TARIH, b.SonucTarihi, 
@@ -85,83 +89,121 @@ class LabMigrator {
 
             if (result.recordset.length === 0) break;
 
-            for (const row of result.recordset) {
-                await this.processRow(row);
-                lastId = row.RECORD_ID;
-            }
+            await this.processBatch(result.recordset);
+            lastId = result.recordset[result.recordset.length - 1].RECORD_ID;
 
-            process.stdout.write(`\rProcessed ${this.stats.total} records...`);
+            process.stdout.write(`\rProcessed ${this.stats.total} records (${this.stats.headersCreated} headers, ${this.stats.imported} details)...`);
         }
 
         console.log('\nDone.');
-        console.log(`Summary: Total ${this.stats.total}, Imported ${this.stats.imported}, Errors ${this.stats.errors}`);
+        console.log(`Summary: Total ${this.stats.total}, Headers Created ${this.stats.headersCreated}, Details Imported ${this.stats.imported}, Errors ${this.stats.errors}`);
 
         await this.close();
     }
 
-    async processRow(row) {
-        this.stats.total++;
-        const map = this.mapping.get(row.GELISNO);
-        if (!map) return; // Skip if no appointment found
+    async processBatch(rows) {
+        // Step 1: Identify which headers need to be created
+        const headersToCreate = new Map(); // legacy_visit_id -> row data (first occurrence)
+        const detailRows = [];
 
-        try {
-            // 1. Ensure Header (cln_lab_results) exists
-            // Since we process line by line, checking DB every time is slow.
-            // Ideally we cache created result_ids.
+        for (const row of rows) {
+            this.stats.total++;
+            const map = this.mapping.get(row.GELISNO);
+            if (!map) continue; // Skip if no appointment found
 
-            // For now, let's assume we create one result header per appointment if not exists
-            const [existing] = await this.mysqlConn.execute(
-                'SELECT id FROM cln_lab_results WHERE legacy_visit_id = ? LIMIT 1',
-                [row.GELISNO]
-            );
-
-            let resultId;
-            if (existing.length > 0) {
-                resultId = existing[0].id;
-            } else {
-                const [ins] = await this.mysqlConn.execute(
-                    `INSERT INTO cln_lab_results 
-                    (clinic_id, appointment_id, patient_id, doctor_id, request_date, result_date, legacy_visit_id, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 'completed')`,
-                    [
-                        CLINIC_ID,
-                        map.appt_id,
-                        map.patient_id,
-                        map.doctor_id,
-                        row.TARIH || new Date(),
-                        row.SONUCTARIHI || row.TARIH || new Date(),
-                        row.GELISNO
-                    ]
-                );
-                resultId = ins.insertId;
+            // Collect header info if not exists (use first row's dates)
+            if (!this.existingHeaders.has(row.GELISNO) && !headersToCreate.has(row.GELISNO)) {
+                headersToCreate.set(row.GELISNO, {
+                    map,
+                    tarih: row.TARIH,
+                    sonucTarihi: row.SONUCTARIHI
+                });
             }
 
-            // 2. Insert Detail
+            // Collect detail row
+            detailRows.push(row);
+        }
+
+        // Step 2: Bulk insert headers
+        if (headersToCreate.size > 0) {
+            const headerValues = [];
+            for (const [legacyVisitId, data] of headersToCreate) {
+                headerValues.push([
+                    CLINIC_ID,
+                    data.map.appt_id,
+                    data.map.patient_id,
+                    data.map.doctor_id,
+                    data.tarih || new Date(),
+                    data.sonucTarihi || data.tarih || new Date(),
+                    legacyVisitId,
+                    'completed'
+                ]);
+            }
+
+            try {
+                await this.mysqlConn.query(
+                    `INSERT IGNORE INTO cln_lab_results 
+                    (clinic_id, appointment_id, patient_id, doctor_id, request_date, result_date, legacy_visit_id, status)
+                    VALUES ?`,
+                    [headerValues]
+                );
+                this.stats.headersCreated += headersToCreate.size;
+
+                // Re-fetch newly created headers to get their IDs
+                const legacyIds = Array.from(headersToCreate.keys());
+                const placeholders = legacyIds.map(() => '?').join(',');
+                const [newHeaders] = await this.mysqlConn.query(
+                    `SELECT id, legacy_visit_id FROM cln_lab_results WHERE legacy_visit_id IN (${placeholders})`,
+                    legacyIds
+                );
+                for (const h of newHeaders) {
+                    this.existingHeaders.set(h.legacy_visit_id, h.id);
+                }
+            } catch (err) {
+                console.error('\nError inserting headers:', err.message);
+                this.stats.errors += headersToCreate.size;
+            }
+        }
+
+        // Step 3: Bulk insert details
+        const detailValues = [];
+        for (const row of detailRows) {
+            const resultId = this.existingHeaders.get(row.GELISNO);
+            if (!resultId) continue;
+
             const isAbnormal = row.SINIRDISINDA || row.UYARISINIRINDA ? 1 : 0;
             const refRange = (row.NORMAL_ALT && row.NORMAL_UST)
                 ? `${row.NORMAL_ALT} - ${row.NORMAL_UST}`
                 : (row.NORMALDEGERLER || '');
 
-            await this.mysqlConn.execute(
-                `INSERT INTO cln_lab_result_items
-                (result_id, test_name, result_value, unit, reference_range, is_abnormal, legacy_test_code)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    resultId,
-                    row.TEST_ADI || `Test ${row.TESTNO}`,
-                    row.BULUNAN || row.BULUNAN_SAYISAL || '',
-                    '', // Unit not found in source
-                    refRange,
-                    isAbnormal,
-                    String(row.TESTNO)
-                ]
-            );
+            detailValues.push([
+                resultId,
+                row.TEST_ADI || `Test ${row.TESTNO}`,
+                row.BULUNAN || row.BULUNAN_SAYISAL || '',
+                '', // Unit not found in source
+                refRange,
+                isAbnormal,
+                String(row.TESTNO)
+            ]);
+        }
 
-            this.stats.imported++;
-
-        } catch (err) {
-            console.error(`Error on row ${row.RECORD_ID}:`, err.message);
-            this.stats.errors++;
+        if (detailValues.length > 0) {
+            try {
+                // Insert in chunks to avoid packet size limits
+                for (let i = 0; i < detailValues.length; i += 5000) {
+                    const chunk = detailValues.slice(i, i + 5000);
+                    await this.mysqlConn.query(
+                        `INSERT INTO cln_lab_result_items
+                        (result_id, test_name, result_value, unit, reference_range, is_abnormal, legacy_test_code)
+                        VALUES ?`,
+                        [chunk]
+                    );
+                }
+                this.stats.imported += detailValues.length;
+            } catch (err) {
+                console.error('\nError inserting details:', err.message);
+                this.stats.errors += detailValues.length;
+            }
         }
     }
 

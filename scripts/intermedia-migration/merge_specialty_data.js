@@ -2,6 +2,7 @@ const sql = require('mssql');
 const mysql = require('mysql2/promise');
 
 const CLINIC_ID = 1;
+const BATCH_SIZE = 2000;
 
 const { getSourceConfig, getTargetConfig } = require('./db.helper');
 const mssqlConfig = getSourceConfig();
@@ -35,10 +36,11 @@ async function mergeSpecialtyData() {
 
         // 2. Mevcut muayene kayıtlarını yükle (Mükerrer insert önlemek için)
         const [examRows] = await mysqlConn.execute(
-            'SELECT legacy_visit_id FROM cln_examinations WHERE legacy_visit_id IS NOT NULL AND clinic_id = ?',
+            'SELECT id, legacy_visit_id FROM cln_examinations WHERE legacy_visit_id IS NOT NULL AND clinic_id = ?',
             [CLINIC_ID]
         );
-        const existingExamSet = new Set(examRows.map(r => r.legacy_visit_id));
+        const existingExamMap = new Map();
+        examRows.forEach(r => existingExamMap.set(r.legacy_visit_id, r.id));
 
         // 3. İç Hastalıkları verilerini çek
         console.log('Eski sistemden İç Hastalıkları notları okunuyor...');
@@ -66,66 +68,106 @@ async function mergeSpecialtyData() {
         let insertedCount = 0;
         let skippedCount = 0;
 
-        for (const row of result.recordset) {
-            const appt = apptMap.get(row.GELISNO);
-            if (!appt) {
-                skippedCount++;
-                continue;
-            }
+        // Process in batches
+        for (let batchStart = 0; batchStart < result.recordset.length; batchStart += BATCH_SIZE) {
+            const batchEnd = Math.min(batchStart + BATCH_SIZE, result.recordset.length);
+            const batch = result.recordset.slice(batchStart, batchEnd);
 
-            if (existingExamSet.has(row.GELISNO)) {
-                // Güncelleme
-                const [res] = await mysqlConn.execute(
-                    `UPDATE cln_examinations 
-                     SET complaint = COALESCE(complaint, ?),
-                         story = COALESCE(story, ?),
-                         diagnosis = COALESCE(diagnosis, ?),
-                         treatment = COALESCE(treatment, ?),
-                         bulgular = COALESCE(bulgular, ?),
-                         lab_result_text = COALESCE(lab_result_text, ?)
-                     WHERE legacy_visit_id = ? AND clinic_id = ?`,
-                    [
-                        row.SIKAYETLER || null,
-                        row.HIKAYESI || null,
-                        row.TANI || null,
-                        row.TEDAVI || null,
-                        row.FIZIKMUA || null,
-                        (row.LABORATUVAR ? 'LABORATUVAR:\n' + row.LABORATUVAR + '\n\n' : '') +
-                        (row.RADYOLOJI ? 'RADYOLOJI:\n' + row.RADYOLOJI : '') || null,
-                        row.GELISNO,
-                        CLINIC_ID
-                    ]
-                );
-                updatedCount++;
-            } else {
-                // Yeni kayıt ekleme
-                await mysqlConn.execute(
-                    `INSERT INTO cln_examinations (
-                        clinic_id, patient_id, doctor_user_id, appointment_id, 
-                        complaint, story, diagnosis, treatment, bulgular, lab_result_text, legacy_visit_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
+            const updateCases = {
+                complaint: [],
+                story: [],
+                diagnosis: [],
+                treatment: [],
+                bulgular: [],
+                lab_result_text: [],
+                ids: []
+            };
+            const insertValues = [];
+
+            for (const row of batch) {
+                const appt = apptMap.get(row.GELISNO);
+                if (!appt) {
+                    skippedCount++;
+                    continue;
+                }
+
+                const labResultText = (row.LABORATUVAR ? 'LABORATUVAR:\n' + row.LABORATUVAR + '\n\n' : '') +
+                    (row.RADYOLOJI ? 'RADYOLOJI:\n' + row.RADYOLOJI : '') || null;
+
+                if (existingExamMap.has(row.GELISNO)) {
+                    // Collect for bulk update
+                    const examId = existingExamMap.get(row.GELISNO);
+                    updateCases.ids.push(examId);
+                    updateCases.complaint.push({ id: examId, value: row.SIKAYETLER || null });
+                    updateCases.story.push({ id: examId, value: row.HIKAYESI || null });
+                    updateCases.diagnosis.push({ id: examId, value: row.TANI || null });
+                    updateCases.treatment.push({ id: examId, value: row.TEDAVI || null });
+                    updateCases.bulgular.push({ id: examId, value: row.FIZIKMUA || null });
+                    updateCases.lab_result_text.push({ id: examId, value: labResultText });
+                    updatedCount++;
+                } else {
+                    // Collect for bulk insert
+                    insertValues.push([
                         CLINIC_ID,
                         appt.patient_id,
-                        appt.doctor_id || 1, // Atanmış doktor yoksa sistem admini
+                        appt.doctor_id || 1,
                         appt.id,
                         row.SIKAYETLER || null,
                         row.HIKAYESI || null,
                         row.TANI || null,
                         row.TEDAVI || null,
                         row.FIZIKMUA || null,
-                        (row.LABORATUVAR ? 'LABORATUVAR:\n' + row.LABORATUVAR + '\n\n' : '') +
-                        (row.RADYOLOJI ? 'RADYOLOJI:\n' + row.RADYOLOJI : '') || null,
+                        labResultText,
                         row.GELISNO
-                    ]
-                );
-                insertedCount++;
-                existingExamSet.add(row.GELISNO); // Mükerrerliği önle
+                    ]);
+                    existingExamMap.set(row.GELISNO, -1); // Prevent duplicate inserts within batch
+                    insertedCount++;
+                }
             }
 
-            if ((updatedCount + insertedCount + skippedCount) % 1000 === 0) {
-                process.stdout.write(`\rİşlenen: ${updatedCount + insertedCount + skippedCount}...`);
+            // Execute bulk UPDATE using CASE WHEN (more efficient than individual updates)
+            if (updateCases.ids.length > 0) {
+                // Build CASE statements for each field
+                const buildCaseStatement = (field, cases) => {
+                    const whenClauses = cases.map(c => `WHEN ${c.id} THEN ${c.value === null ? 'NULL' : mysqlConn.escape(c.value)}`).join(' ');
+                    return `${field} = COALESCE(${field}, CASE id ${whenClauses} ELSE ${field} END)`;
+                };
+
+                const idList = updateCases.ids.join(',');
+                const updateQuery = `
+                    UPDATE cln_examinations SET
+                        ${buildCaseStatement('complaint', updateCases.complaint)},
+                        ${buildCaseStatement('story', updateCases.story)},
+                        ${buildCaseStatement('diagnosis', updateCases.diagnosis)},
+                        ${buildCaseStatement('treatment', updateCases.treatment)},
+                        ${buildCaseStatement('bulgular', updateCases.bulgular)},
+                        ${buildCaseStatement('lab_result_text', updateCases.lab_result_text)}
+                    WHERE id IN (${idList}) AND clinic_id = ${CLINIC_ID}
+                `;
+
+                try {
+                    await mysqlConn.query(updateQuery);
+                } catch (err) {
+                    console.error('\nBulk update error:', err.message);
+                }
             }
+
+            // Execute bulk INSERT
+            if (insertValues.length > 0) {
+                try {
+                    await mysqlConn.query(
+                        `INSERT INTO cln_examinations (
+                            clinic_id, patient_id, doctor_user_id, appointment_id, 
+                            complaint, story, diagnosis, treatment, bulgular, lab_result_text, legacy_visit_id
+                        ) VALUES ?`,
+                        [insertValues]
+                    );
+                } catch (err) {
+                    console.error('\nBulk insert error:', err.message);
+                }
+            }
+
+            process.stdout.write(`\rİşlenen: ${batchEnd}/${result.recordset.length}...`);
         }
 
         console.log('\n--- AKTARIM ÖZETİ ---');

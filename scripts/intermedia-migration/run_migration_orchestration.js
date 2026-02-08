@@ -135,7 +135,7 @@ for (let i = 0; i < steps.length; i++) {
         const output = execSync(step.command, {
             stdio: 'inherit',
             cwd: MIGRATION_ROOT,
-            timeout: 600000 // 10 dakika maksimum çalışma süresi
+            timeout: 3600000 // 1 saat maksimum çalışma süresi (Büyük veriler için)
         });
 
         console.log(`\n>>> BAŞARILI: ${step.name} tamamlandı.`);
