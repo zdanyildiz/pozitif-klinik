@@ -268,9 +268,9 @@ async function main() {
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         CLINIC_ID,
-                        encrypt(p.tc_no),
+                        encrypt(p.tc_no) || '',
                         encrypt(p.name),
-                        encrypt(p.phone),
+                        encrypt(p.phone || ''),
                         encrypt(p.email), p.birth_date, p.gender, p.blood_type,
                         encrypt(p.address),
                         provinceId, districtId,
