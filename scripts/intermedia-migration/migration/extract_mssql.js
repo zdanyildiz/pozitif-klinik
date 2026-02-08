@@ -164,16 +164,11 @@ class DataMigrator {
                 phone: row.EV_MOBIL || row.EV_TELEFON || '',
                 email: row.EV_EMAIL || null,
                 birth_date: row.DGMTRH ? new Date(row.DGMTRH).toISOString().split('T')[0] : null,
-                birth_place: row.DOGUMYERI || null,
                 gender: row.CINSIYET === 'E' ? 'M' : (row.CINSIYET === 'K' ? 'F' : 'U'),
                 blood_type: row.KANGRUBU || null,
                 address: streetAddress || null,
                 city: row.EV_ADRES_IL || null,
                 district: row.EV_ADRES_ILCE || null,
-                father_name: row.BABAADI || null,
-                mother_name: row.ANNEADI || null,
-                profession: row.MESLEK || null,
-                nationality: row.NK_UYRUGU || 'TR',
                 notes: row.NOTLAR || null,
                 status: row.IPTAL ? 0 : 1,
                 // Yeni Modern Yapı: Context-Aware JSON Sütunları
@@ -192,9 +187,14 @@ class DataMigrator {
                     role: row.IS_GOREVI || null,
                     phone: row.IS_TELEFON || null,
                     address: [row.IS_ADRES1, row.IS_ADRES2, row.IS_ADRES_SEMT, row.IS_ADRES_ILCE, row.IS_ADRES_IL].filter(Boolean).join(', ') || null,
-                    email: row.IS_EMAIL || null
+                    email: row.IS_EMAIL || null,
+                    profession: row.MESLEK || null
                 },
                 identity_details: {
+                    father_name: row.BABAADI || null,
+                    mother_name: row.ANNEADI || null,
+                    birth_place: row.DOGUMYERI || null,
+                    nationality: row.NK_UYRUGU || 'TR',
                     marital_status: row.NK_MEDENIHALI || null,
                     spouse_name: row.ESININADI || null,
                     tax_no: row.VERGINO || null,

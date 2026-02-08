@@ -65,7 +65,8 @@ Yapılan tüm geliştirmeler projenin orijinal SQL dosyalarına (`migration/data
 ### 3.1 Hasta Kartları (`ptn_cards`)
 - **`extra_metadata` (JSON):** Yukarıda açıklanan tıbbi ve idari profili tutar.
 - **`legacy_id`:** Eski sistemdeki `HASTANO` bilgisini tutar (Geriye dönük takip için).
-- **`father_name`, `mother_name`, `birth_place`:** Standart hasta profilini tamamlayan ek alanlar.
+- **`identity_details` JSON:** `father_name`, `mother_name`, `birth_place`, `nationality` gibi kimlik detayları JSON içinde tutulur.
+- **`work_details` JSON:** `profession` ve iş bilgileri JSON içinde tutulur.
 
 ### 3.2 Muayene Kayıtları (`cln_examinations`)
 - **Tıbbi Alanlar:** `complaint` (Şikayet), `story` (Hikaye), `diagnosis` (Tanı), `treatment` (Tedavi), `bulgular` (Fizik Muayene) ve `result_note` (Genel Sonuç) alanları eklendi.

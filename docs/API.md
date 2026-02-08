@@ -465,7 +465,8 @@ Yeni hasta kaydı oluşturur.
     "role": "Yazılım Mühendisi",
     "phone": "0212 123 45 67",
     "address": "Levent, İstanbul",
-    "email": "ali.veli@sirket.com"
+    "email": "ali.veli@sirket.com",
+    "profession": "Yazılım Mühendisi"
   },
   "medical_info": {
     "chronic_diseases": ["Hipertansiyon"],
@@ -477,6 +478,10 @@ Yeni hasta kaydı oluşturur.
     "policies": []
   },
   "identity_details": {
+    "father_name": "Mehmet",
+    "mother_name": "Ayşe",
+    "birth_place": "Ankara",
+    "nationality": "TR",
     "marital_status": "Evli",
     "tax_no": "1234567890"
   },

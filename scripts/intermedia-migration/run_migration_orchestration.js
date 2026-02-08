@@ -16,26 +16,24 @@ const fs = require('fs');
 const MIGRATION_ROOT = __dirname;
 
 const steps = [
-    /*
-        // 1. Şube Migrasyonu
-        {
-            name: '1. Şube Migrasyonu (migrate_tenants.js)',
-            command: 'node migrate_tenants.js',
-            description: 'MSSQL SUBE verilerini sys_tenants tablosuna aktarır.'
-        },
-        // 2. Şema Hazırlığı
-        {
-            name: '2. MySQL Şema Hazırlığı (prepare_mysql_schema.js)',
-            command: 'node migration/prepare_mysql_schema.js',
-            description: 'Legacy sütunları (legacy_id, legacy_visit_id) hazırlar.'
-        },
-        // 3. Veri Çıkarma
-        {
-            name: '3. MSSQL Veri Çıkarma (extract_mssql.js)',
-            command: 'node migration/extract_mssql.js',
-            description: 'MSSQL verilerini okur ve json dosyasına kaydeder.'
-        },
-    */
+    // 1. Şube Migrasyonu
+    {
+        name: '1. Şube Migrasyonu (migrate_tenants.js)',
+        command: 'node migrate_tenants.js',
+        description: 'MSSQL SUBE verilerini sys_tenants tablosuna aktarır.'
+    },
+    // 2. Şema Hazırlığı
+    {
+        name: '2. MySQL Şema Hazırlığı (prepare_mysql_schema.js)',
+        command: 'node migration/prepare_mysql_schema.js',
+        description: 'Legacy sütunları (legacy_id, legacy_visit_id) hazırlar.'
+    },
+    // 3. Veri Çıkarma
+    {
+        name: '3. MSSQL Veri Çıkarma (extract_mssql.js)',
+        command: 'node migration/extract_mssql.js',
+        description: 'MSSQL verilerini okur ve json dosyasına kaydeder.'
+    },
     // 4. Veri Yükleme
     {
         name: '4. MySQL Veri Yükleme (load_mysql.js)',

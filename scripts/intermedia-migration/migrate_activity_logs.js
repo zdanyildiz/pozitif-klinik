@@ -29,6 +29,13 @@ async function migrateActivityLogs() {
 
         console.log('✅ Connected to databases.');
 
+        // KRITIK: Klinik var mı kontrol et
+        const [tenants] = await mysqlConn.execute('SELECT id FROM sys_tenants WHERE id = ?', [CLINIC_ID]);
+        if (tenants.length === 0) {
+            console.error(`\n❌ HATA: Klinik ID=${CLINIC_ID} bulunamadı!`);
+            process.exit(1);
+        }
+
         // 1. Load Legacy Table Map
         const [rows] = await mysqlConn.query('SELECT legacy_table_id, legacy_table_name, record_type, module FROM map_legacy_tables');
         const tableMap = {}; // ID -> Info

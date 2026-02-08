@@ -149,15 +149,19 @@ class DataMigrator {
             phone: row.EV_MOBIL || row.EV_TELEFON || '',
             email: row.EV_EMAIL || null,
             birth_date: row.DGMTRH ? new Date(row.DGMTRH).toISOString().split('T')[0] : null,
-            birth_place: row.DOGUMYERI || null,
             gender: row.CINSIYET === 'E' ? 'M' : (row.CINSIYET === 'K' ? 'F' : 'U'),
             blood_type: row.KANGRUBU || null,
             address: [row.EV_ADRES1, row.EV_ADRES2].filter(Boolean).join(' ') || null,
-            father_name: row.BABAADI || null,
-            mother_name: row.ANNEADI || null,
-            profession: row.MESLEK || null,
-            nationality: row.NK_UYRUGU || 'TR',
             notes: row.NOTLAR || null,
+            identity_details: {
+                father_name: row.BABAADI || null,
+                mother_name: row.ANNEADI || null,
+                birth_place: row.DOGUMYERI || null,
+                nationality: row.NK_UYRUGU || 'TR'
+            },
+            work_details: {
+                profession: row.MESLEK || null
+            },
             status: row.IPTAL ? 0 : 1
         }));
 

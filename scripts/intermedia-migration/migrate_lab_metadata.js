@@ -15,6 +15,13 @@ async function migrateMetadata() {
         mysqlConn = await mysql.createConnection(mysqlConfig);
         console.log('Connected.');
 
+        // KRITIK: Klinik var mı kontrol et
+        const [tenants] = await mysqlConn.execute('SELECT id FROM sys_tenants WHERE id = ?', [CLINIC_ID]);
+        if (tenants.length === 0) {
+            console.error(`\n❌ HATA: Klinik ID=${CLINIC_ID} bulunamadı!`);
+            process.exit(1);
+        }
+
         // 1. Migrate Definitions (sys_lab_test_definitions)
         console.log('Migrating definitions...');
         const testResult = await mssqlPool.request().query(`
@@ -121,7 +128,8 @@ async function migrateMetadata() {
         console.log('Migration completed successfully.');
 
     } catch (err) {
-        console.error('Migration failed:', err);
+        console.error('❌ Migration failed:', err);
+        process.exit(1);
     } finally {
         if (mssqlPool) await mssqlPool.close();
         if (mysqlConn) await mysqlConn.end();

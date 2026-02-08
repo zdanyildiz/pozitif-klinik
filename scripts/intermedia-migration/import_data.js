@@ -93,9 +93,10 @@ async function main() {
                 const [res] = await conn.query(
                     `INSERT INTO ptn_cards (
                         clinic_id, tc_no, tc_no_hash, name, name_hash, phone, phone_hash, 
-                        email, birth_date, gender, blood_type, address, 
-                        father_name, mother_name, birth_place, nationality, profession, notes, legacy_id, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        email, birth_date, gender, blood_type, address,
+                        medical_info, work_details, identity_details, insurance_info, legacy_metadata, legal_consents,
+                        notes, legacy_id, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         CLINIC_ID,
                         encrypt(p.tc_no), blindIndex(p.tc_no),
@@ -103,7 +104,12 @@ async function main() {
                         encrypt(p.phone), blindIndex(p.phone),
                         encrypt(p.email), p.birth_date, p.gender, p.blood_type,
                         encrypt(p.address),
-                        p.father_name, p.mother_name, p.birth_place, p.nationality, p.profession,
+                        JSON.stringify(p.medical_info),
+                        JSON.stringify(p.work_details),
+                        JSON.stringify(p.identity_details),
+                        JSON.stringify(p.insurance_info),
+                        JSON.stringify(p.legacy_metadata),
+                        JSON.stringify(p.legal_consents),
                         encrypt(p.notes),
                         p.legacy_id, p.status
                     ]

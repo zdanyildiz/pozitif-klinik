@@ -33,6 +33,13 @@ class FileMigrator {
         this.mssqlPool = await sql.connect(mssqlConfig);
         this.mysqlConn = await mysql.createConnection(mysqlConfig);
         console.log('Connected.');
+
+        // KRITIK: Klinik var mı kontrol et
+        const [tenants] = await this.mysqlConn.execute('SELECT id FROM sys_tenants WHERE id = ?', [CLINIC_ID]);
+        if (tenants.length === 0) {
+            console.error(`\n❌ HATA: Klinik ID=${CLINIC_ID} bulunamadı!`);
+            process.exit(1);
+        }
     }
 
     async loadMappings() {

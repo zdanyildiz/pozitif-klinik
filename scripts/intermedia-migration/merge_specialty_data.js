@@ -16,6 +16,13 @@ async function mergeSpecialtyData() {
         mysqlConn = await mysql.createConnection(mysqlConfig);
         console.log('Bağlantı başarılı.');
 
+        // KRITIK: Klinik var mı kontrol et
+        const [tenants] = await mysqlConn.execute('SELECT id FROM sys_tenants WHERE id = ?', [CLINIC_ID]);
+        if (tenants.length === 0) {
+            console.error(`\n❌ HATA: Klinik ID=${CLINIC_ID} bulunamadı!`);
+            process.exit(1);
+        }
+
         // 1. Yeni sistemdeki randevu eşleşmelerini yükle
         console.log('Randevu eşleşmeleri yükleniyor...');
         const [apptRows] = await mysqlConn.execute(
@@ -128,7 +135,8 @@ async function mergeSpecialtyData() {
         console.log('---------------------');
 
     } catch (err) {
-        console.error('Hata:', err);
+        console.error('❌ Hata:', err);
+        process.exit(1);
     } finally {
         if (mssqlPool) await mssqlPool.close();
         if (mysqlConn) await mysqlConn.end();

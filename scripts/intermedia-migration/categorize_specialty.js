@@ -14,6 +14,13 @@ async function categorizeData() {
         mssqlPool = await sql.connect(mssqlConfig);
         mysqlConn = await mysql.createConnection(mysqlConfig);
 
+        // KRITIK: Klinik var mı kontrol et
+        const [tenants] = await mysqlConn.execute('SELECT id FROM sys_tenants WHERE id = ?', [CLINIC_ID]);
+        if (tenants.length === 0) {
+            console.error(`\n❌ HATA: Klinik ID=${CLINIC_ID} bulunamadı!`);
+            process.exit(1);
+        }
+
         console.log('İç Hastalıkları GELISNO listesi alınıyor...');
         const result = await mssqlPool.request().query("SELECT DISTINCT GELISNO FROM UZM_ICHASTALIKLARI_HST_ANAMNEZ");
         const visitIds = result.recordset.map(r => r.GELISNO);
@@ -35,7 +42,8 @@ async function categorizeData() {
         console.log('\nKategorizasyon tamamlandı.');
 
     } catch (err) {
-        console.error(err);
+        console.error('❌ Hata:', err);
+        process.exit(1);
     } finally {
         if (mssqlPool) await mssqlPool.close();
         if (mysqlConn) await mysqlConn.end();

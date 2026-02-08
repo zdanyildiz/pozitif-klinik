@@ -179,6 +179,17 @@ async function main() {
         return d ? d.id : null;
     };
 
+    // Kritik Kontrol: Klinik (Tenant) var mı?
+    console.log(`\nKontrol ediliyor: Clinic ID ${CLINIC_ID}...`);
+    const [tenants] = await conn.query('SELECT id FROM sys_tenants WHERE id = ?', [CLINIC_ID]);
+    if (tenants.length === 0) {
+        console.error(`\n❌ HATA: sys_tenants tablosunda ID=${CLINIC_ID} olan bir klinik bulunamadı!`);
+        console.error(`Lütfen önce migrate_tenants.js scriptini çalıştırın veya klinik oluşturun.`);
+        await conn.end();
+        process.exit(1);
+    }
+    console.log(`✅ Klinik bulundu: ID ${CLINIC_ID}`);
+
     try {
         console.log('Eski veriler siliniyor (Fresh start)...');
         await conn.query('SET FOREIGN_KEY_CHECKS = 0');
@@ -252,10 +263,9 @@ async function main() {
                     `INSERT INTO ptn_cards (
                         clinic_id, tc_no, name, phone, 
                         email, birth_date, gender, blood_type, address, province_id, district_id,
-                        father_name, mother_name, birth_place, nationality, profession, 
                         medical_info, work_details, identity_details, insurance_info, legacy_metadata, legal_consents,
                         notes, legacy_id, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         CLINIC_ID,
                         encrypt(p.tc_no),
@@ -264,7 +274,6 @@ async function main() {
                         encrypt(p.email), p.birth_date, p.gender, p.blood_type,
                         encrypt(p.address),
                         provinceId, districtId,
-                        p.father_name, p.mother_name, p.birth_place, p.nationality, p.profession,
                         JSON.stringify(p.medical_info),
                         JSON.stringify(p.work_details),
                         JSON.stringify(p.identity_details),
@@ -376,7 +385,9 @@ async function main() {
         console.log('\nAKTARIM TAMAMLANDI!');
 
     } catch (err) {
-        console.error('Aktarım sırasında hata:', err);
+        console.error('\n❌ AKTARIM SIRASINDA KRİTİK HATA:');
+        console.error(err);
+        process.exit(1); // Orchestration scriptine durması gerektiğini bildirir
     } finally {
         await conn.end();
     }

@@ -96,6 +96,7 @@ async function migrateTenants() {
 
     } catch (err) {
         console.error('🛑 Migration Hatası:', err.message);
+        process.exit(1);
     } finally {
         if (mssqlPool) await mssqlPool.close();
         if (mysqlConn) await mysqlConn.end();
