@@ -57,17 +57,22 @@ class DataMigrator {
                 GIRISKODU,
                 ISIMSOYISIM,
                 GOREVNO,
+                UZMANLIK,
                 IPTAL
             FROM KULLANICILAR
             WHERE TAKIPNO > 0
             ORDER BY TAKIPNO
         `);
 
+        // Uzmanlık isimlerini al
+        const specialtyMap = await this.getSpecialtyMap();
+
         const users = result.recordset.map(row => ({
             legacy_id: row.TAKIPNO,
             username: (row.GIRISKODU || `user_${row.TAKIPNO}`).toLowerCase().substring(0, 50),
             name: row.ISIMSOYISIM || `Kullanıcı ${row.TAKIPNO}`,
             role: this.mapUserRole(row.GOREVNO),
+            specialty: this.mapSpecialty(row.UZMANLIK, specialtyMap),
             is_active: row.IPTAL ? 0 : 1
         }));
 
@@ -85,6 +90,48 @@ class DataMigrator {
             case 11: return 'secretary';
             default: return 'admin';
         }
+    }
+
+    async getSpecialtyMap() {
+        const result = await this.mssqlPool.request().query(`
+            SELECT TAKIPNO, UZMANLIK FROM LST_UZMANLIKDALLARI
+        `);
+
+        const map = {};
+        result.recordset.forEach(row => {
+            map[row.TAKIPNO] = row.UZMANLIK;
+        });
+        return map;
+    }
+
+    mapSpecialty(specialtyId, map) {
+        if (!specialtyId) return null;
+
+        const name = map[specialtyId];
+        if (!name) return null;
+
+        // İsim bazlı eşleştirme
+        const n = name.toLowerCase();
+
+        if (n.includes('iç hastalıkları') || n.includes('dahiliye')) return 'INTERNAL_MEDICINE';
+        if (n.includes('diyetisyen') || n.includes('beslenme')) return 'DIETITIAN';
+        if (n.includes('kardiyoloji')) return 'CARDIOLOGY';
+        if (n.includes('kulak') || n.includes('kbb')) return 'ENT';
+        if (n.includes('göz')) return 'OPHTHALMOLOGY';
+        if (n.includes('ortopedi')) return 'ORTHOPEDICS';
+        if (n.includes('dermatoloji') || n.includes('cildiye')) return 'DERMATOLOGY';
+        if (n.includes('nöroloji')) return 'NEUROLOGY';
+        if (n.includes('psikiyatri') || n.includes('psikolog')) return 'PSYCHIATRY';
+        if (n.includes('kadın') || n.includes('jinekoloji')) return 'GYNECOLOGY';
+        if (n.includes('çocuk') || n.includes('pediatri')) return 'PEDIATRICS';
+        if (n.includes('üroloji')) return 'UROLOGY';
+        if (n.includes('cerrahi')) return 'GENERAL_SURGERY';
+        if (n.includes('göğüs')) return 'PULMONOLOGY';
+        if (n.includes('endokrin')) return 'ENDOCRINOLOGY';
+        if (n.includes('enfeksiyon')) return 'INFECTIOUS_DISEASES';
+        if (n.includes('acil')) return 'EMERGENCY';
+
+        return null;
     }
 
     // 2. Hizmetleri Aktarma

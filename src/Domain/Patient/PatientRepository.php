@@ -99,8 +99,9 @@ class PatientRepository
         // 1. Şifreli Veriyi Kaydet (Hash sütunları artık kullanılmıyor, NULL geçilecek)
         $sql = "INSERT INTO ptn_cards (
                     clinic_id, tc_no, name, phone, 
-                    email, birth_date, gender, blood_type, address, province_id, district_id, notes, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
+                    email, birth_date, gender, blood_type, address, province_id, district_id, notes, status,
+                    medical_info, work_details, identity_details, insurance_info, legacy_metadata, legal_consents
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $this->db->query($sql, [
             $clinicId,
@@ -114,7 +115,14 @@ class PatientRepository
             $this->crypto->encryptSafe($data['address'] ?? null),
             $data['province_id'] ?? null,
             $data['district_id'] ?? null,
-            $this->crypto->encryptSafe($data['notes'] ?? null)
+            $this->crypto->encryptSafe($data['notes'] ?? null),
+            1, // status = 1 (Active)
+            !empty($data['medical_info']) ? json_encode($data['medical_info']) : null,
+            !empty($data['work_details']) ? json_encode($data['work_details']) : null,
+            !empty($data['identity_details']) ? json_encode($data['identity_details']) : null,
+            !empty($data['insurance_info']) ? json_encode($data['insurance_info']) : null,
+            !empty($data['legacy_metadata']) ? json_encode($data['legacy_metadata']) : null,
+            !empty($data['legal_consents']) ? json_encode($data['legal_consents']) : null
         ]);
 
         $patientId = (int) $this->db->getConnection()->lastInsertId();
@@ -133,7 +141,9 @@ class PatientRepository
         $sql = "UPDATE ptn_cards SET 
                     tc_no = ?, name = ?, phone = ?, 
                     email = ?, birth_date = ?, gender = ?, blood_type = ?,
-                    address = ?, province_id = ?, district_id = ?, notes = ?
+                    address = ?, province_id = ?, district_id = ?, notes = ?,
+                    medical_info = ?, work_details = ?, identity_details = ?, 
+                    insurance_info = ?, legacy_metadata = ?, legal_consents = ?
                 WHERE clinic_id = ? AND id = ?";
 
         $this->db->query($sql, [
@@ -148,6 +158,12 @@ class PatientRepository
             $data['province_id'] ?? null,
             $data['district_id'] ?? null,
             $this->crypto->encryptSafe($data['notes'] ?? null),
+            !empty($data['medical_info']) ? json_encode($data['medical_info']) : null,
+            !empty($data['work_details']) ? json_encode($data['work_details']) : null,
+            !empty($data['identity_details']) ? json_encode($data['identity_details']) : null,
+            !empty($data['insurance_info']) ? json_encode($data['insurance_info']) : null,
+            !empty($data['legacy_metadata']) ? json_encode($data['legacy_metadata']) : null,
+            !empty($data['legal_consents']) ? json_encode($data['legal_consents']) : null,
             $clinicId,
             $patientId
         ]);
@@ -293,6 +309,19 @@ class PatientRepository
             if (!empty($patient[$field])) {
                 $decrypted = $this->crypto->decrypt($patient[$field]);
                 $patient[$field] = $decrypted ?? $patient[$field];
+            }
+        }
+
+        // JSON alanlarını decode et
+        $jsonFields = ['medical_info', 'work_details', 'identity_details', 'insurance_info', 'legacy_metadata', 'legal_consents'];
+        foreach ($jsonFields as $field) {
+            if (!empty($patient[$field]) && is_string($patient[$field])) {
+                $decoded = json_decode($patient[$field], true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $patient[$field] = $decoded;
+                }
+            } elseif (empty($patient[$field])) {
+                $patient[$field] = []; // Boşsa boş array dönsün
             }
         }
 

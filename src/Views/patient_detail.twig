@@ -117,6 +117,11 @@
                             </button>
                         </li>
                         <li class="nav-item">
+                            <button class="nav-link tab-link-custom" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button">
+                                <i class="bi bi-person-vcard me-2"></i>Profil
+                            </button>
+                        </li>
+                        <li class="nav-item">
                             <button class="nav-link tab-link-custom" id="labs-tab" data-bs-toggle="tab" data-bs-target="#labs" type="button">
                                 <i class="bi bi-eyedropper me-2"></i>Laboratuvar
                             </button>
@@ -217,6 +222,209 @@
                                     </div>
                                     {% endfor %}
                                 {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Profile Tab (NEW) -->
+                        <div class="tab-pane fade" id="profile" role="tabpanel">
+                            <h6 class="fw-bold mb-4">Detaylı Hasta Bilgileri</h6>
+                            
+                            <div class="row g-4">
+                                <!-- Identity Details -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border bg-light-subtle">
+                                        <div class="card-body">
+                                            <h6 class="card-title fw-bold text-secondary mb-3"><i class="bi bi-person-lines-fill me-2"></i>Kimlik Bilgileri</h6>
+                                            <table class="table table-sm table-borderless mb-0">
+                                                <tr>
+                                                    <td class="text-muted w-50">Baba Adı:</td>
+                                                    <td class="fw-medium">{{ patient.identity_details.father_name|default('-') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Anne Adı:</td>
+                                                    <td class="fw-medium">{{ patient.identity_details.mother_name|default('-') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Doğum Yeri:</td>
+                                                    <td class="fw-medium">{{ patient.identity_details.birth_place|default('-') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Medeni Hal:</td>
+                                                    <td class="fw-medium">{{ patient.identity_details.marital_status|default('-') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Uyruk:</td>
+                                                    <td class="fw-medium">{{ patient.identity_details.nationality|default('TR') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Vergi No:</td>
+                                                    <td class="fw-medium">{{ patient.identity_details.tax_no|default('-') }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Work Details -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border bg-light-subtle">
+                                        <div class="card-body">
+                                            <h6 class="card-title fw-bold text-secondary mb-3"><i class="bi bi-briefcase me-2"></i>Çalışma Bilgileri</h6>
+                                            <table class="table table-sm table-borderless mb-0">
+                                                <tr>
+                                                    <td class="text-muted w-50">Meslek:</td>
+                                                    <td class="fw-medium">{{ patient.work_details.profession|default('-') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Şirket:</td>
+                                                    <td class="fw-medium">{{ patient.work_details.company_name|default('-') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Ünvan/Rol:</td>
+                                                    <td class="fw-medium">{{ patient.work_details.role|default('-') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">İş Telefonu:</td>
+                                                    <td class="fw-medium">{{ patient.work_details.phone|default('-') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">İş E-postası:</td>
+                                                    <td class="fw-medium">{{ patient.work_details.email|default('-') }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Medical Info -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border bg-light-subtle">
+                                        <div class="card-body">
+                                            <h6 class="card-title fw-bold text-danger mb-3"><i class="bi bi-heart-pulse me-2"></i>Tıbbi Uyarılar</h6>
+                                            
+                                            <div class="mb-3">
+                                                <label class="small text-muted fw-bold">Kronik Hastalıklar</label>
+                                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                                    {% if patient.medical_info.chronic_diseases is not empty %}
+                                                        {% for disease in patient.medical_info.chronic_diseases %}
+                                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{ disease }}</span>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <span class="text-muted small fst-italic">-</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="small text-muted fw-bold">Alerjiler</label>
+                                                <div class="mt-1">
+                                                     {% if patient.medical_info.allergies is not empty %}
+                                                        {% for type, allergy in patient.medical_info.allergies %}
+                                                            <div class="d-flex align-items-center mb-1">
+                                                                <span class="badge bg-warning text-dark me-2">{{ type|capitalize }}</span>
+                                                                <span class="small">{{ allergy }}</span>
+                                                            </div>
+                                                        {% endfor %}
+                                                     {% else %}
+                                                        <span class="text-muted small fst-italic">-</span>
+                                                     {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                 <label class="small text-muted fw-bold">Önemli Uyarılar</label>
+                                                 <p class="mb-0 small text-dark temp-text-pre-wrap">{{ patient.medical_info.warnings|default('-') }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Insurance Info -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 border bg-light-subtle">
+                                        <div class="card-body">
+                                            <h6 class="card-title fw-bold text-secondary mb-3"><i class="bi bi-shield-check me-2"></i>Sigorta Bilgileri</h6>
+                                            
+                                            <div class="mb-3">
+                                                 <label class="small text-muted fw-bold">SGK Durumu</label>
+                                                 <div class="mt-1">
+                                                     <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-3 py-2">
+                                                         {{ patient.insurance_info.sgk_status|default('Bilinmiyor') }}
+                                                     </span>
+                                                 </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="small text-muted fw-bold mb-2">Özel Sigorta Poliçeleri</label>
+                                                {% if patient.insurance_info.policies is not empty %}
+                                                    <ul class="list-group list-group-flush bg-transparent">
+                                                        {% for policy in patient.insurance_info.policies %}
+                                                            <li class="list-group-item bg-transparent px-0 py-1 d-flex justify-content-between align-items-center small">
+                                                                <span class="fw-medium">{{ policy.company|default('Şirket Yok') }}</span>
+                                                                <span class="text-muted">{{ policy.policy_no|default('-') }}</span>
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    <p class="mb-0 text-muted small fst-italic">-</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Legal Consents -->
+                                <div class="col-12">
+                                     <div class="card border bg-light-subtle">
+                                        <div class="card-body">
+                                            <h6 class="card-title fw-bold text-secondary mb-3"><i class="bi bi-file-earmark-lock me-2"></i>Yasal İzinler & Onaylar</h6>
+                                            <div class="d-flex gap-4 flex-wrap">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi {{ patient.legal_consents.kvkk.is_accepted ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-secondary' }} fs-5 me-2"></i>
+                                                    <div>
+                                                        <div class="fw-medium">KVKK Aydınlatma Metni</div>
+                                                        <small class="text-muted">{{ patient.legal_consents.kvkk.accepted_at ? patient.legal_consents.kvkk.accepted_at|date('d.m.Y H:i') : 'Onaylanmadı' }}</small>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi {{ patient.legal_consents.etk.sms.allowed ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-secondary' }} fs-5 me-2"></i>
+                                                    <div>
+                                                        <div class="fw-medium">SMS İzni (ETK)</div>
+                                                        <small class="text-muted">{{ patient.legal_consents.etk.sms.allowed ? 'İzinli' : 'İzinsiz' }}</small>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi {{ patient.legal_consents.etk.email.allowed ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-secondary' }} fs-5 me-2"></i>
+                                                    <div>
+                                                        <div class="fw-medium">E-posta İzni (ETK)</div>
+                                                        <small class="text-muted">{{ patient.legal_consents.etk.email.allowed ? 'İzinli' : 'İzinsiz' }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                     </div>
+                                </div>
+
+                                <!-- Legacy Metadata (Technical Info) -->
+                                {% if patient.legacy_metadata is not empty %}
+                                <div class="col-12">
+                                    <div class="accordion" id="legacyAccord">
+                                        <div class="accordion-item bg-transparent border-0">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed py-2 bg-light rounded shadow-sm text-muted small" type="button" data-bs-toggle="collapse" data-bs-target="#legacyData">
+                                                    <i class="bi bi-code-slash me-2"></i>Teknik Veri (Legacy Metadata)
+                                                </button>
+                                            </h2>
+                                            <div id="legacyData" class="accordion-collapse collapse" data-bs-parent="#legacyAccord">
+                                                <div class="accordion-body">
+                                                    <pre class="small bg-dark text-light p-3 rounded mb-0" style="max-height: 200px; overflow-y: auto;">{{ patient.legacy_metadata|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
                             </div>
                         </div>
                         

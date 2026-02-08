@@ -164,6 +164,7 @@ INSERT INTO `sys_medical_specialties` (`code`, `name`, `icd_prefixes`, `form_sch
 ('PULMONOLOGY', 'Göğüs Hastalıkları', 'J', NULL),
 ('ENDOCRINOLOGY', 'Endokrinoloji', 'E', NULL),
 ('INFECTIOUS_DISEASES', 'Enfeksiyon Hastalıkları', 'A,B', NULL),
+('DIETITIAN', 'Beslenme ve Diyet', 'E', NULL),
 ('EMERGENCY', 'Acil Tıp', 'R,S,T', NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;

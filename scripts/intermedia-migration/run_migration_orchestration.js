@@ -76,42 +76,33 @@ const steps = [
         command: 'node migrate_payments.js',
         description: 'Finansal kayıtları ve ödemeleri aktarır. (batch: 500)'
     },
-    // 11. Blind Index (Arama Endeksi)
+    // 11. Legacy Table Map (Blind Index artık load_mysql.js içinde yapılıyor)
     {
-        name: '11. Blind Index Migrasyonu (migrate_blind_index.php)',
-        command: 'DB_HOST=127.0.0.1 DB_NAME=test_klinik /opt/lampp/bin/php migrate_blind_index.php',
-        description: 'Şifreli hasta verileri için arama endekslerini oluşturur.'
-    },
-    // 12. Legacy Table Map
-    {
-        name: '12. Legacy Table Mapping (seed_legacy_table_map.js)',
+        name: '11. Legacy Table Mapping (seed_legacy_table_map.js)',
         command: 'node migration/seed_legacy_table_map.js',
         description: 'Legacy tablo eşleşmelerini (map_legacy_tables) oluşturur.'
     },
-    // 13. Activity Logs
+    // 12. Activity Logs
     {
-        name: '13. Activity Logs Migrasyonu (migrate_activity_logs.js)',
+        name: '12. Activity Logs Migrasyonu (migrate_activity_logs.js)',
         command: 'node migrate_activity_logs.js',
         description: 'GENELLOG ve LOG_KAYITDEGISIKLIGI kayıtlarını cln_activity_logs tablosuna aktarır.'
     },
-    // 14. Data Access Logs
+    // 13. Data Access Logs
     {
-        name: '14. Data Access Logs Migrasyonu (migrate_data_access_logs.js)',
+        name: '13. Data Access Logs Migrasyonu (migrate_data_access_logs.js)',
         command: 'node migrate_data_access_logs.js',
         description: 'Kullanici_Log_KayitErisim kayıtlarını cln_data_access_logs tablosuna aktarır.'
     },
-    // 15. Consent Logs
+    // 14. Consent Logs
     {
-        name: '15. Consent Logs Migrasyonu (migrate_consent_logs.js)',
+        name: '14. Consent Logs Migrasyonu (migrate_consent_logs.js)',
         command: 'node migrate_consent_logs.js',
         description: 'Gizlilik onam loglarını ptn_consent_logs tablosuna aktarır.'
-    },
-    // 16. SMS/Email Logs
-    {
-        name: '16. Message Logs Migrasyonu (migrate_message_logs.js)',
-        command: 'node migrate_message_logs.js',
-        description: 'SMS ve Email loglarını sys_sms_logs ve sys_email_logs tablolarına aktarır.'
     }
+    // NOT: SMS/Email Logs (migrate_message_logs.js) kaldırıldı.
+    // ILET_SMS_LOG tablosu sadece sistem hata logları içeriyor (failed status).
+    // Gerçek SMS kayıtları (randevu hatırlatma, OTP vs.) zaten sistemde yok.
 ];
 
 console.log('==================================================');

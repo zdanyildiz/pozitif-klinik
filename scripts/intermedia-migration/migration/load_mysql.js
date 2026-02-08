@@ -215,8 +215,8 @@ async function main() {
             // Şifre varsayılan olarak legacy_id (Daha sonra değiştirilmeli)
             const passwordHash = await bcrypt.hash(String(u.legacy_id), 10);
             const [res] = await conn.query(
-                'INSERT INTO sys_users (clinic_id, username, name, password_hash, role, is_active, legacy_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [CLINIC_ID, u.username, u.name, passwordHash, u.role, u.is_active, u.legacy_id]
+                'INSERT INTO sys_users (clinic_id, username, name, password_hash, role, specialty, is_active, legacy_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [CLINIC_ID, u.username, u.name, passwordHash, u.role, u.specialty, u.is_active, u.legacy_id]
             );
             userMap.set(u.legacy_id, res.insertId);
         }
