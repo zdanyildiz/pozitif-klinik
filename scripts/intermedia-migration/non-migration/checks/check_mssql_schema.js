@@ -1,16 +1,7 @@
 const sql = require('mssql');
 
-const mssqlConfig = {
-    user: 'sa',
-    password: '#Global2025*',
-    server: 'localhost',
-    database: 'ErhanOzel',
-    port: 1433,
-    options: {
-        encrypt: false,
-        trustServerCertificate: true
-    }
-};
+const { getSourceConfig } = require('./db.helper');
+const mssqlConfig = getSourceConfig();
 
 async function checkSchema() {
     try {

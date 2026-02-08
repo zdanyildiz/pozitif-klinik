@@ -1,12 +1,9 @@
 const mysql = require('mysql2/promise');
 
+const { getTargetConfig } = require('./db.helper');
+
 async function main() {
-    const conn = await mysql.createConnection({
-        host: 'localhost',
-        user: 'root',
-        password: '',
-        database: 'pozitif_klinik'
-    });
+    const conn = await mysql.createConnection(getTargetConfig());
 
     console.log('Veritabanına bağlanıldı. Eksik sütunlar ekleniyor...');
 

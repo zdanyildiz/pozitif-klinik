@@ -1,17 +1,8 @@
 const sql = require('mssql');
+const { getSourceConfig } = require('../../db.helper');
 
 async function checkUzmTables(port) {
-    const config = {
-        user: 'sa',
-        password: '#Global2025*',
-        server: 'localhost',
-        database: 'ErhanOzel',
-        port: port,
-        options: {
-            encrypt: false,
-            trustServerCertificate: true
-        }
-    };
+    const config = getSourceConfig({ port });
 
     try {
         let pool = await sql.connect(config);

@@ -9,22 +9,14 @@
 
 const sql = require('mssql');
 const fs = require('fs');
+const path = require('path');
 
 // MSSQL Config (Eski Sistem)
-const mssqlConfig = {
-    user: 'sa',
-    password: '#Global2025*',
-    server: 'localhost',
-    database: 'ErhanOzel',
-    port: 1433,
-    options: {
-        encrypt: false,
-        trustServerCertificate: true
-    }
-};
+const { getSourceConfig } = require('./db.helper');
+const mssqlConfig = getSourceConfig();
 
 const CLINIC_ID = 1;
-const OUTPUT_FILE = '/home/zafer/htdocs/pozitif-klinik/docs/payments_data.json';
+const OUTPUT_FILE = path.resolve(__dirname, '../../docs/payments_data.json');
 
 class PaymentMigrator {
     constructor() {

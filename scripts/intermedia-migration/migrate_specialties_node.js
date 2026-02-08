@@ -1,12 +1,7 @@
 const mysql = require('mysql2/promise');
 
-const dbConfig = {
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'pozitif_klinik',
-    charset: 'utf8mb4'
-};
+const { getTargetConfig } = require('./db.helper');
+const dbConfig = getTargetConfig();
 
 async function migrateSpecialties() {
     try {

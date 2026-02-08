@@ -11,14 +11,9 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
 // Config
-const dbConfig = {
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'pozitif_klinik'
-};
-
-const APP_KEY = 'a1b2c3d4e5f678901234567890abcdef1234567890abcdef1234567890abcdef';
+const { getTargetConfig, getAppKey } = require('../db.helper');
+const dbConfig = getTargetConfig();
+const APP_KEY = getAppKey();
 const BINARY_KEY = Buffer.from(APP_KEY, 'hex');
 
 // Crypto functions (Matching PHP implementation)

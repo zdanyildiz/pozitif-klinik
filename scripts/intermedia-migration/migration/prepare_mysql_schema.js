@@ -1,12 +1,18 @@
+/**
+ * MySQL Şema Hazırlık Scripti
+ * Legacy sütunları (legacy_id, legacy_visit_id vb.) ekler
+ * 
+ * Kullanım: node migration/prepare_mysql_schema.js
+ */
+
 const mysql = require('mysql2/promise');
+const { getTargetConfig } = require('../db.helper');
 
 async function main() {
-    const conn = await mysql.createConnection({
-        host: 'localhost',
-        user: 'root',
-        password: '',
-        database: 'pozitif_klinik'
-    });
+    const dbConfig = getTargetConfig();
+    console.log(`Hedef veritabanı: ${dbConfig.database}`);
+
+    const conn = await mysql.createConnection(dbConfig);
 
     console.log('Veritabanına bağlanıldı. Eksik sütunlar ekleniyor...');
 

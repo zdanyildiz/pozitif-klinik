@@ -2,29 +2,14 @@ const fs = require('fs');
 const mysql = require('mysql2/promise');
 const path = require('path');
 
+const { getTargetConfig } = require('./db.helper');
+
 async function run() {
     try {
-        // 1. .env dosyasını oku
-        const envPath = path.resolve(__dirname, '../.env');
-        const envContent = fs.readFileSync(envPath, 'utf8');
-        const env = {};
-        envContent.split('\n').forEach(line => {
-            const parts = line.split('=');
-            if (parts.length >= 2) {
-                const key = parts[0].trim();
-                const val = parts.slice(1).join('=').trim();
-                env[key] = val;
-            }
-        });
-
         // 2. Bağlantı Ayarları
-        const config = {
-            host: env.DB_HOST || 'localhost',
-            user: env.DB_USER || 'root',
-            password: env.DB_PASS || '',
-            database: env.DB_NAME || 'pozitif_klinik',
+        const config = getTargetConfig({
             multipleStatements: true // SQL dosyasını tek seferde çalıştırmak için
-        };
+        });
 
         console.log('Connecting to MySQL...', { ...config, password: '***' });
         const connection = await mysql.createConnection(config);

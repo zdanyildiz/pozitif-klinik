@@ -9,15 +9,12 @@
 
 const mysql = require('mysql2/promise');
 const fs = require('fs');
+const path = require('path');
 
-const dbConfig = {
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'pozitif_klinik'
-};
+const { getTargetConfig } = require('./db.helper');
+const dbConfig = getTargetConfig();
 
-const INPUT_FILE = '/home/zafer/htdocs/pozitif-klinik/docs/payments_data.json';
+const INPUT_FILE = path.resolve(__dirname, '../../docs/payments_data.json');
 
 async function main() {
     if (!fs.existsSync(INPUT_FILE)) {

@@ -19,7 +19,7 @@ async function exportTable(tableName, limit = 20) {
         let pool = await sql.connect(config);
         let result = await pool.request().query(`SELECT TOP ${limit} * FROM ${tableName}`);
 
-        const outputPath = path.join('/home/zafer/htdocs/pozitif-klinik/docs/tablo-sql', `${tableName}_EXPORT.json`);
+        const outputPath = path.join(__dirname, '../../../docs/tablo-sql', `${tableName}_EXPORT.json`);
         fs.writeFileSync(outputPath, JSON.stringify(result.recordset, null, 2));
         console.log(`Exported ${tableName} to ${outputPath}`);
 

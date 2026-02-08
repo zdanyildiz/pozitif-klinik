@@ -1,31 +1,10 @@
 const sql = require('mssql');
 const mysql = require('mysql2/promise');
-// require('dotenv').config({ path: '/home/zafer/htdocs/pozitif-klinik/.env' });
+const { getSourceConfig, getTargetConfig } = require('./db.helper');
 
-const dbConfig = {
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'pozitif_klinik',
-    charset: 'utf8mb4'
-};
-
-const mssqlConfig1 = {
-    user: 'sa',
-    password: '#Global2025*',
-    server: 'localhost',
-    database: 'ErhanOzel',
-    port: 1433,
-    options: {
-        encrypt: false,
-        trustServerCertificate: true
-    }
-};
-
-const mssqlConfig2 = {
-    ...mssqlConfig1,
-    port: 433
-};
+const dbConfig = getTargetConfig();
+const mssqlConfig1 = getSourceConfig();
+const mssqlConfig2 = getSourceConfig({ port: 433 });
 
 async function migrateICD() {
     let pool;

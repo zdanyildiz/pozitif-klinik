@@ -15,17 +15,8 @@
 const sql = require('mssql');
 
 // MSSQL Config (Eski Sistem)
-const mssqlConfig = {
-    user: 'sa',
-    password: '#Global2025*',
-    server: 'localhost',
-    database: 'ErhanOzel',
-    port: 1433,
-    options: {
-        encrypt: false,
-        trustServerCertificate: true
-    }
-};
+const { getSourceConfig } = require('./db.helper');
+const mssqlConfig = getSourceConfig();
 
 // Migration hedef klinik ID (yeni sistemde)
 const CLINIC_ID = 1;
@@ -310,7 +301,7 @@ class DataMigrator {
 
             // JSON olarak kaydet
             const fs = require('fs');
-const path = require('path');
+            const path = require('path');
             const outputPath = path.resolve(__dirname, 'data', 'migration_data.json');
             fs.writeFileSync(outputPath, JSON.stringify(data, null, 2));
 

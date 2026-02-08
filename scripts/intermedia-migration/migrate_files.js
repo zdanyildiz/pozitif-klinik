@@ -8,28 +8,12 @@ const crypto = require('crypto');
 
 // --- Configuration ---
 const CLINIC_ID = 1;
-const UPLOAD_ROOT = '/htdocs/pozitif-klinik/storage/app/uploads'; // Absolute path
+const UPLOAD_ROOT = path.resolve(__dirname, '../../storage/app/uploads'); // Relative path
 
-// MSSQL Config (Legacy)
-const mssqlConfig = {
-    user: 'sa',
-    password: '#Global2025*',
-    server: 'localhost',
-    database: 'ErhanOzel',
-    port: 1433,
-    options: {
-        encrypt: false,
-        trustServerCertificate: true
-    }
-};
-
-// MySQL Config (New)
-const mysqlConfig = {
-    host: '127.0.0.1',
-    user: 'root',
-    password: '',
-    database: 'pozitif_klinik'
-};
+// Database Config
+const { getSourceConfig, getTargetConfig } = require('./db.helper');
+const mssqlConfig = getSourceConfig();
+const mysqlConfig = getTargetConfig();
 
 class FileMigrator {
     constructor() {

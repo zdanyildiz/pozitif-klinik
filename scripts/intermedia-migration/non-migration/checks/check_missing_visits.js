@@ -3,14 +3,9 @@ const mysql = require('mysql2/promise');
 
 const CLINIC_ID = 1;
 
-const mssqlConfig = {
-    user: 'sa', password: '#Global2025*', server: 'localhost', database: 'ErhanOzel', port: 1433,
-    options: { encrypt: false, trustServerCertificate: true }
-};
-
-const mysqlConfig = {
-    host: '127.0.0.1', user: 'root', password: '', database: 'pozitif_klinik'
-};
+const { getSourceConfig } = require('./db.helper');
+const { getSourceConfig } = require('./db.helper');
+const mssqlConfig = getSourceConfig();
 
 async function checkMissing() {
     let mssqlPool, mysqlConn;
