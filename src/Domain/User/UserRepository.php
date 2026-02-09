@@ -137,55 +137,35 @@ class UserRepository
      */
     public function update(int $clinicId, int $userId, array $data): bool
     {
-        // Şifre güncellemesi varsa
+        $fields = [
+            'username = ?',
+            'name = ?',
+            'role = ?',
+            'specialty = ?',
+            'is_active = ?'
+        ];
+
+        $params = [
+            $data['username'],
+            $data['name'] ?? null,
+            $data['role'],
+            $data['specialty'] ?? null,
+            $data['is_active'] ?? 1
+        ];
+
+        // Şifre alanı varsa ve doluysa güncellemeye dahil et
         if (!empty($data['password'])) {
-            $sql = "UPDATE sys_users SET 
-                        username = ?,
-                        name = ?,
-                        role = ?,
-                        specialty = ?,
-                        is_active = ?,
-                        password_hash = ?
-                    WHERE clinic_id = ? AND id = ?";
-
-            $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
-
-            $this->logger->debug("[UserRepository] Updating User WITH password", [
-                'clinic_id' => $clinicId,
-                'user_id' => $userId,
-                'username' => $data['username']
-            ]);
-
-            $this->db->query($sql, [
-                $data['username'],
-                $data['name'] ?? null,
-                $data['role'],
-                $data['specialty'] ?? null,
-                $data['is_active'] ?? 1,
-                $hashedPassword,
-                $clinicId,
-                $userId
-            ]);
-        } else {
-            // Şifre güncellemesi yok
-            $sql = "UPDATE sys_users SET 
-                        username = ?,
-                        name = ?,
-                        role = ?,
-                        specialty = ?,
-                        is_active = ?
-                    WHERE clinic_id = ? AND id = ?";
-
-            $this->db->query($sql, [
-                $data['username'],
-                $data['name'] ?? null,
-                $data['role'],
-                $data['specialty'] ?? null,
-                $data['is_active'] ?? 1,
-                $clinicId,
-                $userId
-            ]);
+            $fields[] = 'password_hash = ?';
+            $params[] = password_hash($data['password'], PASSWORD_BCRYPT);
         }
+
+        // WHERE koşulları
+        $params[] = $clinicId;
+        $params[] = $userId;
+
+        $sql = "UPDATE sys_users SET " . implode(', ', $fields) . " WHERE clinic_id = ? AND id = ?";
+
+        $this->db->query($sql, $params);
 
         return true;
     }

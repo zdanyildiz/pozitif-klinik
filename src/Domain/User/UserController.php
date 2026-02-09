@@ -67,10 +67,10 @@ class UserController extends BaseController
         // Validasyon
         // Kullanıcı adı: En az 2 karakter, boşluksuz
         $validator = v::key('username', v::stringType()->noWhitespace()->length(2))
-            ->key('name', v::stringType()->length(2))
-            ->key('password', v::stringType()->length(6))
-            ->key('role', v::in(['doctor', 'secretary']))
-            ->key('specialty', v::optional(v::stringType()));
+            ->key('name', v::stringType()->length(2)->setName('Ad Soyad'))
+            ->key('password', v::stringType()->length(4)->setName('Şifre'))
+            ->key('role', v::in(['doctor', 'secretary'])->setName('Rol'))
+            ->key('specialty', v::optional(v::stringType())->setName('Uzmanlık'));
 
         try {
             $validator->assert($data);
@@ -140,6 +140,10 @@ class UserController extends BaseController
         $userId = (int) $args['id'];
         $data = $request->getParsedBody();
 
+        $clinicId = (int) $this->getClinicId($request);
+        $userId = (int) $args['id'];
+        $data = $request->getParsedBody();
+
         // Mevcut kullanıcıyı kontrol et
         $existingUser = $this->userRepository->findById($clinicId, $userId);
         if (!$existingUser) {
@@ -154,9 +158,18 @@ class UserController extends BaseController
             ->key('specialty', v::optional(v::stringType()))
             ->key('is_active', v::optional(v::intVal()));
 
-        // Şifre varsa ayrı validation
-        if (!empty($data['password'])) {
-            $validator = $validator->key('password', v::stringType()->length(6));
+        // Şifre verisi hazırlığı ve validasyon
+        if (isset($data['password'])) {
+            $password = trim($data['password']);
+
+            if ($password !== '') {
+                // Şifre doluysa güncelle listesine hazırlanmış halini ekle ve kural koy
+                $data['password'] = $password;
+                $validator = $validator->key('password', v::stringType()->length(4)->setName('Şifre'));
+            } else {
+                // Şifre boş veya sadece boşluksa, güncelleme listesinden çıkar
+                unset($data['password']);
+            }
         }
 
         try {
