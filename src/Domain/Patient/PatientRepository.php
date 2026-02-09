@@ -372,9 +372,8 @@ class PatientRepository
         $placeholders = implode(',', array_fill(0, count($hashes), '?'));
 
         // 3. Search Index Üzerinden Join
-        // Sorgudaki herhangi bir token ile eşleşen (OR mantığı) kayıtları getir.
-        // DISTINCT p.id ile aynı kaydın birden fazla kez gelmesini engelle.
-        $sql = "SELECT DISTINCT p.*, pr.name as province_name, d.name as district_name 
+        // Sorgudaki tokenlar ile en çok eşleşen (relevance ranking) kayıtları getir.
+        $sql = "SELECT p.*, pr.name as province_name, d.name as district_name, COUNT(*) as match_count
                 FROM ptn_cards p
                 JOIN search_index si ON p.id = si.record_id
                 LEFT JOIN sys_provinces pr ON p.province_id = pr.id
@@ -382,6 +381,8 @@ class PatientRepository
                 WHERE p.clinic_id = ? AND p.status = 1 
                 AND si.table_name = 'ptn_cards'
                 AND si.search_hash IN ($placeholders)
+                GROUP BY p.id
+                ORDER BY match_count DESC, p.id DESC
                 LIMIT 50";
 
         // Parametreleri birleştir: [clinicId, hash1, hash2, ...]
