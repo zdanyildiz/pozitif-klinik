@@ -1,3 +1,4 @@
+DİKKAT PROJE CANLIDA AKTİF, WEBHOOK İLE GİT TETİKLENİYOR, PUSH YAPMADAN ONAY ALIN.
 # Mimari Dokümantasyonu
 
 ## Genel Bakış

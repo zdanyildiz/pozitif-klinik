@@ -44,13 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const editUserModalEl = document.getElementById('editUserModal');
     if (editUserModalEl) editUserModal = new bootstrap.Modal(editUserModalEl);
 
-    // Kullanıcı bilgilerini göster
-    const fullName = localStorage.getItem('user_full_name');
-    const role = localStorage.getItem('user_role');
-    const roleText = role === 'admin' ? 'Yönetici' : (role === 'doctor' ? 'Doktor' : 'Sekreter');
-
-    if (document.getElementById('userName')) document.getElementById('userName').textContent = fullName || 'Klinik Personeli';
-    if (document.getElementById('userRole')) document.getElementById('userRole').textContent = roleText;
+    // Kullanıcı bilgileri artık SSR (layout.twig) üzerinden UserViewMiddleware ile geliyor.
+    // Client-side override kaldırıldı.
 
     loadUsers(false); // Pass false to skip API call if we already have data
     loadMedicalSpecialties();

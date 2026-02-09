@@ -83,8 +83,8 @@
             <div class="navbar-actions">
                 <div class="user-profile me-3 d-none d-md-flex">
                     <div class="text-end me-2">
-                        <div class="fw-bold" id="userName">Klinik Personeli</div>
-                        <div class="small text-secondary" id="userRole">Yetkili</div>
+                        <div class="fw-bold" id="userName">{{ user.name|default('Klinik Personeli') }}</div>
+                        <div class="small text-secondary" id="userRole">{{ user.role_text|default('Yetkili') }}</div>
                     </div>
                     <div class="avatar">
                         <i class="bi bi-person-circle fs-2"></i>

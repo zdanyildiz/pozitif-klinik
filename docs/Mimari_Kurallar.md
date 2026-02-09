@@ -1,3 +1,4 @@
+DİKKAT PROJE CANLIDA AKTİF, WEBHOOK İLE GİT TETİKLENİYOR, PUSH YAPMADAN ONAY ALIN.
 ### 📜 BÖLÜM 1: MİMARİ KURALLAR (AI Ajanı İçin)
 
 Bu kurallar **kesindir** ve esnetilemez. Ajana önce bunları okutmalısın.

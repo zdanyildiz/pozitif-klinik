@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     appointmentModal = new bootstrap.Modal(document.getElementById('appointmentModal'));
     typeModal = new bootstrap.Modal(document.getElementById('typeModal'));
 
-    displayUserInfo();
+    // displayUserInfo(); // SSR (UserViewMiddleware) üzerinden geliyor.
     setupFilters();
     setupEventListeners();
 
@@ -48,12 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-function displayUserInfo() {
-    const name = localStorage.getItem('user_full_name') || 'Personel';
-    const role = localStorage.getItem('user_role') || 'staff';
-    document.getElementById('userName').textContent = name;
-    document.getElementById('userRole').textContent = role.toUpperCase();
-}
+// function displayUserInfo() { ... } // Artık SSR (UserViewMiddleware) kullanılıyor.
 
 function setupFilters() {
     const today = new Date().toISOString().split('T')[0];

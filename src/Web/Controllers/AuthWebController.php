@@ -145,6 +145,7 @@ class AuthWebController
         $this->session->set('user_id', $user['id']);
         $this->session->set('clinic_id', $user['clinic_id']);
         $this->session->set('username', $user['username']);
+        $this->session->set('name', $user['name'] ?? $user['username']);
         $this->session->set('role', $user['role']);
         $this->session->set('logged_in_at', time());
 

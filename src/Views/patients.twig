@@ -386,11 +386,8 @@
             vitalsTableBody = document.getElementById('vitalsTableBody');
             btnAddVital = document.getElementById('btnAddVital');
 
-            // Kullanıcı bilgilerini göster
-            const userEl = document.getElementById('userName');
-            if (userEl) userEl.textContent = 'Klinik Personeli';
-            const roleEl = document.getElementById('userRole');
-            if (roleEl) roleEl.textContent = 'Yetkili';
+            // Kullanıcı bilgileri artık SSR (UserViewMiddleware) üzerinden geliyor.
+            // Client-side hardcoded değerler kaldırıldı.
 
             // Sayfa açılışında gerekli olan veriler artık SSR (Twig) ile geliyor.
             // loadProvinces(); // İPTAL: SSR ile geliyor
