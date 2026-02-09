@@ -16,7 +16,7 @@ const { getSourceConfig } = require('./db.helper');
 const mssqlConfig = getSourceConfig();
 
 const CLINIC_ID = 1;
-const OUTPUT_FILE = path.resolve(__dirname, '../../docs/payments_data.json');
+const OUTPUT_FILE = path.resolve(__dirname, 'payments_data.json');
 
 class PaymentMigrator {
     constructor() {

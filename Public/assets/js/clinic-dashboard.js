@@ -6,20 +6,20 @@
 // No client-side token check needed for SSR pages.
 
 // Global state
-let users = [];
+let users = window.users || [];
 
-// DOM Elements
-const usersTableBody = document.getElementById('usersTableBody');
-const newUserForm = document.getElementById('newUserForm');
-const saveUserBtn = document.getElementById('saveUserBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const btnAddUser = document.getElementById('btnAddUser');
-const updateUserBtn = document.getElementById('updateUserBtn');
+// DOM Elements (Initialized in DOMContentLoaded)
+let usersTableBody;
+let newUserForm;
+let saveUserBtn;
+let logoutBtn;
+let btnAddUser;
+let updateUserBtn;
 
-// Stats Elements
-const totalUsersCountEl = document.getElementById('totalUsersCount');
-const doctorCountEl = document.getElementById('doctorCount');
-const secretaryCountEl = document.getElementById('secretaryCount');
+// Stats Elements (Initialized in DOMContentLoaded)
+let totalUsersCountEl;
+let doctorCountEl;
+let secretaryCountEl;
 
 // Modal
 let newUserModal;
@@ -27,8 +27,22 @@ let editUserModal; // Add this line
 
 // Sayfa Yüklendiğinde
 document.addEventListener('DOMContentLoaded', () => {
-    newUserModal = new bootstrap.Modal(document.getElementById('newUserModal'));
-    editUserModal = new bootstrap.Modal(document.getElementById('editUserModal')); // Initialize editUserModal
+    // Initialize DOM Elements
+    usersTableBody = document.getElementById('usersTableBody');
+    newUserForm = document.getElementById('newUserForm');
+    saveUserBtn = document.getElementById('saveUserBtn');
+    logoutBtn = document.getElementById('logoutBtn');
+    btnAddUser = document.getElementById('btnAddUser');
+    updateUserBtn = document.getElementById('updateUserBtn');
+    totalUsersCountEl = document.getElementById('totalUsersCount');
+    doctorCountEl = document.getElementById('doctorCount');
+    secretaryCountEl = document.getElementById('secretaryCount');
+
+    const newUserModalEl = document.getElementById('newUserModal');
+    if (newUserModalEl) newUserModal = new bootstrap.Modal(newUserModalEl);
+
+    const editUserModalEl = document.getElementById('editUserModal');
+    if (editUserModalEl) editUserModal = new bootstrap.Modal(editUserModalEl);
 
     // Kullanıcı bilgilerini göster
     const fullName = localStorage.getItem('user_full_name');
@@ -38,10 +52,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('userName')) document.getElementById('userName').textContent = fullName || 'Klinik Personeli';
     if (document.getElementById('userRole')) document.getElementById('userRole').textContent = roleText;
 
-    loadUsers();
+    loadUsers(false); // Pass false to skip API call if we already have data
     loadMedicalSpecialties();
     setupEventListeners();
+    updateStats(); // Initial stats update from SSR data
 });
+
+function updateStats() {
+    if (totalUsersCountEl) totalUsersCountEl.textContent = users.length;
+    if (doctorCountEl) doctorCountEl.textContent = users.filter(u => u.role === 'doctor').length;
+    if (secretaryCountEl) secretaryCountEl.textContent = users.filter(u => u.role === 'secretary').length;
+}
 
 let medicalSpecialties = [];
 async function loadMedicalSpecialties() {
@@ -71,15 +92,22 @@ async function loadMedicalSpecialties() {
 // Event Listeners
 function setupEventListeners() {
     // Modal Aç
-    btnAddUser.addEventListener('click', () => {
-        newUserModal.show();
-    });
+    if (btnAddUser) {
+        btnAddUser.addEventListener('click', () => {
+            if (newUserModal) newUserModal.show();
+        });
+    }
 
     // Yeni Personel Kaydet
-    saveUserBtn.addEventListener('click', handleSaveUser);
+    if (saveUserBtn) {
+        saveUserBtn.addEventListener('click', handleSaveUser);
+    }
 
     // Personel Güncelle
-    document.getElementById('updateUserBtn').addEventListener('click', handleUpdateUser);
+    const updateBtn = document.getElementById('updateUserBtn');
+    if (updateBtn) {
+        updateBtn.addEventListener('click', handleUpdateUser);
+    }
 
     // Role change listeners for specialty visibility
     const newRoleSelect = document.getElementById('newRole');
@@ -98,16 +126,19 @@ function setupEventListeners() {
 }
 
 // Personelleri Yükle
-async function loadUsers() {
+async function loadUsers(forceFetch = true) {
+    if (!forceFetch && users.length > 0) {
+        updateStats();
+        return;
+    }
+
     try {
         const result = await api.get('/api/users');
         // Backend {count: X, users: [...]} şeklinde bir obje dönüyor
         users = result.data?.users || [];
 
         // Stats güncelle
-        totalUsersCountEl.textContent = users.length;
-        doctorCountEl.textContent = users.filter(u => u.role === 'doctor').length;
-        secretaryCountEl.textContent = users.filter(u => u.role === 'secretary').length;
+        updateStats();
 
         usersTableBody.innerHTML = '';
 
@@ -195,14 +226,16 @@ async function handleSaveUser() {
         data.specialty = null;
     }
 
-    saveUserBtn.disabled = true;
-    saveUserBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+    if (saveUserBtn) {
+        saveUserBtn.disabled = true;
+        saveUserBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+    }
 
     try {
         await api.post('/api/users', data);
 
-        newUserModal.hide();
-        newUserForm.reset();
+        if (newUserModal) newUserModal.hide();
+        if (newUserForm) newUserForm.reset();
 
         await Swal.fire({
             icon: 'success',
@@ -218,8 +251,10 @@ async function handleSaveUser() {
         console.error('Personel eklenirken hata:', error);
         Utils.showError(typeof error === 'string' ? error : 'İşlem başarısız.');
     } finally {
-        saveUserBtn.disabled = false;
-        saveUserBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Kaydet';
+        if (saveUserBtn) {
+            saveUserBtn.disabled = false;
+            saveUserBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Kaydet';
+        }
     }
 }
 
@@ -248,7 +283,7 @@ window.handleEditUser = function (userId) {
         specialtyContainer.style.display = user.role === 'doctor' ? 'block' : 'none';
     }
 
-    editUserModal.show();
+    if (editUserModal) editUserModal.show();
 }
 
 // Personel Güncelle (API Çağrısı)
@@ -282,13 +317,15 @@ async function handleUpdateUser() {
         data.specialty = null;
     }
 
-    updateUserBtn.disabled = true;
-    updateUserBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Güncelleniyor...';
+    if (updateUserBtn) {
+        updateUserBtn.disabled = true;
+        updateUserBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Güncelleniyor...';
+    }
 
     try {
         await api.put(`/api/users/${userId}`, data);
 
-        editUserModal.hide();
+        if (editUserModal) editUserModal.hide();
         // Clear the password field explicitly after successful update
         document.getElementById('editPassword').value = '';
 
@@ -306,8 +343,10 @@ async function handleUpdateUser() {
         console.error('Personel güncellenirken hata:', error);
         Utils.showError(typeof error === 'string' ? error : 'Güncelleme işlemi başarısız.');
     } finally {
-        updateUserBtn.disabled = false;
-        updateUserBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Güncelle';
+        if (updateUserBtn) {
+            updateUserBtn.disabled = false;
+            updateUserBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Güncelle';
+        }
     }
 }
 

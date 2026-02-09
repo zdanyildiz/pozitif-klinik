@@ -17,17 +17,20 @@ class ClinicWebController
     private \App\Core\Service\SessionService $session;
     private \App\Domain\Appointment\AppointmentRepository $appointmentRepository;
     private \App\Domain\Surgery\SurgeryRepository $surgeryRepository;
+    private \App\Domain\User\UserRepository $userRepository;
 
     public function __construct(
         Twig $view,
         \App\Core\Service\SessionService $session,
         \App\Domain\Appointment\AppointmentRepository $appointmentRepository,
-        \App\Domain\Surgery\SurgeryRepository $surgeryRepository
+        \App\Domain\Surgery\SurgeryRepository $surgeryRepository,
+        \App\Domain\User\UserRepository $userRepository
     ) {
         $this->view = $view;
         $this->session = $session;
         $this->appointmentRepository = $appointmentRepository;
         $this->surgeryRepository = $surgeryRepository;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -73,8 +76,12 @@ class ClinicWebController
     #[Middleware(SessionAuthMiddleware::class)]
     public function personnel(Request $request, Response $response): Response
     {
+        $clinicId = (int) $this->session->get('clinic_id');
+        $users = $this->userRepository->findAll($clinicId);
+
         return $this->view->render($response, 'clinic_personnel.twig', [
-            'page' => 'personnel'
+            'page' => 'personnel',
+            'users' => $users
         ]);
     }
 

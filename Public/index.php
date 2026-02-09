@@ -56,9 +56,6 @@ $twig->addGlobal('version', $container->get('settings')['settings']['version']);
  * ORDER IS CRITICAL!
  */
 
-// 1. Body Parsing (Inner-most logic helper)
-$app->addBodyParsingMiddleware();
-
 // 2. Routing (Maps URL to Controller)
 $app->addRoutingMiddleware();
 
@@ -78,6 +75,9 @@ $errorMiddleware->setDefaultErrorHandler(
 
 // 3. Request Logging (Logs all requests, wraps Error Middleware to capture final response)
 $app->add(\App\Core\Middleware\RequestLoggingMiddleware::class);
+
+// 1. Body Parsing (Outer layer so logger can see parsed body)
+$app->addBodyParsingMiddleware();
 
 // 5. Security Headers (Adds headers to ALL responses, including Errors)
 $app->add(new \App\Core\Middleware\SecurityHeadersMiddleware());

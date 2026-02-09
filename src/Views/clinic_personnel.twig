@@ -58,19 +58,62 @@
                     </tr>
                 </thead>
                 <tbody id="usersTableBody">
-                    <tr id="loadingRow">
-                        <td colspan="7">
-                            <div class="loading-state">
-                                <div class="loading-spinner"></div>
-                                <p>Personel listesi yükleniyor...</p>
-                            </div>
-                        </td>
-                    </tr>
+                    {% if users is empty %}
+                        <tr id="emptyRow">
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">
+                                        <i class="bi bi-people"></i>
+                                    </div>
+                                    <h5>Henüz personel bulunmuyor</h5>
+                                    <p>Klinik personelini eklemek için "Yeni Personel Ekle" butonuna tıklayın.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        {% for user in users %}
+                            {% set isActive = user.is_active == 1 %}
+                            <tr>
+                                <td class="d-none d-md-table-cell"><strong>#{{ user.id }}</strong></td>
+                                <td><span class="user-full-name fw-bold">{{ user.name|default('-') }}</span></td>
+                                <td class="d-none d-lg-table-cell"><span class="text-secondary">{{ user.username }}</span></td>
+                                <td>
+                                    {% if user.role == 'admin' %}
+                                        <span class="badge bg-danger px-2 py-1 rounded-2" style="font-size: 0.75rem;">Yönetici</span>
+                                    {% elseif user.role == 'doctor' %}
+                                        <span class="badge bg-primary px-2 py-1 rounded-2" style="font-size: 0.75rem;">Doktor</span>
+                                    {% else %}
+                                        <span class="badge bg-info px-2 py-1 rounded-2" style="font-size: 0.75rem;">Sekreter</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge {{ isActive ? 'active' : 'inactive' }}">
+                                        <i class="bi {{ isActive ? 'bi-check-circle-fill' : 'bi-x-circle-fill' }}"></i>
+                                        <span class="d-none d-sm-inline">{{ isActive ? 'Aktif' : 'Pasif' }}</span>
+                                    </span>
+                                </td>
+                                <td class="date-cell d-none d-xl-table-cell">{{ user.created_at|date('d.m.Y H:i') }}</td>
+                                <td>
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="handleEditUser({{ user.id }})" title="Düzenle">
+                                            <i class="bi bi-pencil"></i> <span class="d-none d-md-inline">Düzenle</span>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="handleDeleteUser({{ user.id }}, '{{ user.username|escape('js') }}')" title="Sil">
+                                            <i class="bi bi-trash"></i> <span class="d-none d-md-inline">Sil</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
     </div>
 
+{% endblock %}
+
+{% block extra_content %}
     <!-- New User Modal -->
     <div class="modal fade" id="newUserModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -174,5 +217,9 @@
 {% endblock %}
 
 {% block scripts %}
+    <script>
+        // SSR'den gelen kullanıcıları JS state'ine aktar
+        window.users = {{ users|json_encode|raw }};
+    </script>
     <script src="{{ base_path }}/assets/js/clinic-dashboard.js?v={{ version }}"></script>
 {% endblock %}

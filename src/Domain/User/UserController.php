@@ -65,7 +65,8 @@ class UserController extends BaseController
         $data = $request->getParsedBody();
 
         // Validasyon
-        $validator = v::key('username', v::alnum()->noWhitespace()->length(3))
+        // Kullanıcı adı: En az 2 karakter, boşluksuz
+        $validator = v::key('username', v::stringType()->noWhitespace()->length(2))
             ->key('name', v::stringType()->length(2))
             ->key('password', v::stringType()->length(6))
             ->key('role', v::in(['doctor', 'secretary']))
@@ -146,7 +147,8 @@ class UserController extends BaseController
         }
 
         // Validasyon - şifre opsiyonel
-        $validator = v::key('username', v::alnum()->noWhitespace()->length(3))
+        // Kullanıcı adı: En az 2 karakter, boşluksuz
+        $validator = v::key('username', v::stringType()->noWhitespace()->length(2))
             ->key('name', v::stringType()->length(2))
             ->key('role', v::in(['admin', 'doctor', 'secretary']))
             ->key('specialty', v::optional(v::stringType()))
