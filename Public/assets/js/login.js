@@ -91,14 +91,12 @@ document.addEventListener('DOMContentLoaded', function () {
             // Validasyon
             if (isPlatformMode) {
                 if (!username || !password) {
-                    if (window.Utils) Utils.showError('Lütfen kullanıcı adı ve şifre giriniz.');
-                    else alert('Lütfen kullanıcı adı ve şifre giriniz.');
+                    Utils.showError('Lütfen kullanıcı adı ve şifre giriniz.');
                     return;
                 }
             } else {
                 if (!clinicCode || !username || !password) {
-                    if (window.Utils) Utils.showError('Lütfen kurum kodu, kullanıcı adı ve şifre giriniz.');
-                    else alert('Lütfen kurum kodu, kullanıcı adı ve şifre giriniz.');
+                    Utils.showError('Lütfen kurum kodu, kullanıcı adı ve şifre giriniz.');
                     return;
                 }
             }
@@ -165,8 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (error) {
                 console.error('Login error:', error);
                 const errorMessage = typeof error === 'string' ? error : (error.message || 'Giriş yapılırken bir hata oluştu');
-                if (window.Utils) Utils.showError(errorMessage);
-                else alert(errorMessage);
+                Utils.showError(errorMessage);
             } finally {
                 // Butonu tekrar aktif et
                 if (btnLogin) {

@@ -553,7 +553,8 @@ const PaymentModule = {
     },
 
     async removeGeneralDiscount() {
-        if (!confirm('Genel indirimi kaldırmak istediğinize emin misiniz?')) return;
+        const isConfirmed = await Utils.showConfirm('İndirimi Kaldır', 'Genel indirimi kaldırmak istediğinize emin misiniz?');
+        if (!isConfirmed) return;
 
         document.getElementById('paymentGeneralDiscount').value = 0;
         document.getElementById('paymentDiscountNote').value = '';

@@ -236,7 +236,8 @@
     }
 
     async function deleteProvider(id) {
-        if (!confirm('Bu SMS sağlayıcısını silmek istediğinize emin misiniz? Bu işlem geri alınamaz!')) return;
+        const isConfirmed = await Utils.showConfirm('Silme Onayı', 'Bu SMS sağlayıcısını silmek istediğinize emin misiniz? Bu işlem geri alınamaz!');
+        if (!isConfirmed) return;
 
         try {
             await axios.delete(`${API_BASE}/providers/${id}`, {
@@ -372,7 +373,7 @@
         const testPhone = document.getElementById('testPhone').value;
 
         if (!testPhone) {
-            alert('Lütfen test telefonu giriniz.');
+            Utils.showToast('Lütfen test telefonu giriniz.', 'warning');
             return;
         }
 
@@ -427,7 +428,7 @@
     // --- Save ---
     async function saveProvider() {
         const name = document.querySelector('[name=name]').value;
-        if (!name) return alert('Lütfen sağlayıcı adı giriniz.');
+        if (!name) return Utils.showToast('Lütfen sağlayıcı adı giriniz.', 'warning');
 
         // Build Schema from Detected Vars
         const configSchema = [];
@@ -445,7 +446,8 @@
 
         if (configSchema.length === 0) {
             // If no vars, verify if that's intended
-            if(!confirm('Hiçbir özel değişken (kullanıcı adı, şifre vb.) tanımlamadınız. Bu sağlayıcı herhangi bir kimlik doğrulama gerektirmiyor mu?')) return;
+            const isIntentional = await Utils.showConfirm('Emin misiniz?', 'Hiçbir özel değişken (kullanıcı adı, şifre vb.) tanımlamadınız. Bu sağlayıcı herhangi bir kimlik doğrulama gerektirmiyor mu?');
+            if(!isIntentional) return;
         }
 
         // Collect Headers again

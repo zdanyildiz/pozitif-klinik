@@ -255,8 +255,7 @@
 
         async function editSurgery(id) {
             try {
-                const response = await fetch(`/api/surgeries/${id}`);
-                const res = await response.json();
+                const res = await api.get(`/api/surgeries/${id}`);
                 
                 if (res.status) {
                     const data = res.data;
@@ -279,11 +278,11 @@
 
                     modal.show();
                 } else {
-                    alert('Hata: ' + res.message);
+                    Utils.showError(res.message);
                 }
             } catch (err) {
                 console.error(err);
-                alert('Bir hata oluştu.');
+                Utils.showError(typeof err === 'string' ? err : 'Ameliyat detayları yüklenemedi.');
             }
         }
 
@@ -293,49 +292,47 @@
             const id = data.id;
             
             if (!data.patient_id || !data.surgery_date || !data.doctor_id) {
-                alert('Lütfen zorunlu alanları doldurun.');
+                Utils.showToast('Lütfen zorunlu alanları doldurun.', 'error');
                 return;
             }
 
-            const method = id ? 'PUT' : 'POST';
+            const method = id ? 'put' : 'post';
             const url = id ? `/api/surgeries/${id}` : '/api/surgeries';
 
             try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                const res = await response.json();
+                const res = await api[method](url, data);
                 
                 if (res.status) {
-                    location.reload();
+                    Utils.showSuccess('İşlem başarılı.');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    alert('Hata: ' + res.message);
+                    Utils.showError(res.message);
                 }
             } catch (err) {
                 console.error(err);
-                alert('Bir hata oluştu.');
+                Utils.showError(typeof err === 'string' ? err : 'Kaydedilirken bir hata oluştu.');
             }
         }
 
         async function deleteSurgery(id) {
-            if (!confirm('Bu ameliyat kaydını silmek istediğinize emin misiniz?')) return;
+            const isConfirmed = await Utils.showConfirm(
+                'Emin misiniz?', 
+                'Bu ameliyat kaydını silmek istediğinize emin misiniz?'
+            );
+            
+            if (!isConfirmed) return;
 
             try {
-                const response = await fetch(`/api/surgeries/${id}`, {
-                    method: 'DELETE'
-                });
-                const res = await response.json();
-                 if (res.status) {
-                    location.reload();
+                const res = await api.delete(`/api/surgeries/${id}`);
+                if (res.status) {
+                    Utils.showSuccess('Başarıyla silindi.');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    alert('Hata: ' + res.message);
+                    Utils.showError(res.message);
                 }
             } catch (err) {
                  console.error(err);
-                alert('Bir hata oluştu.');
+                 Utils.showError(typeof err === 'string' ? err : 'Silme işlemi sırasında bir hata oluştu.');
             }
         }
     </script>

@@ -120,19 +120,19 @@
                     <textarea class="form-control-exam w-100" name="result_note" id="result_note" placeholder="Kontrol tarihi, sevk durumu vb..."></textarea>
                 </div>
 
-                <!-- Dosyalar ve Ekler (YENİ) -->
-                <div class="exam-section" id="examFilesSection" style="display: none;">
+                <!-- Dosyalar ve Ekler -->
+                <div class="exam-section" id="examFilesSection">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <label class="section-title mb-0"><i class="bi bi-paperclip"></i> Dosyalar ve Ekler</label>
-                        <div>
+                        <label class="section-title mb-0"><i class="bi bi-paperclip"></i> Muayene Dosyaları & Ekler</label>
+                        <div id="examFileUploadContainer" style="display: none;">
                             <button type="button" id="exam_file_upload" class="btn btn-sm btn-outline-primary shadow-sm rounded-pill px-3">
                                 <i class="bi bi-cloud-upload me-1"></i> Dosya Ekle
                             </button>
                         </div>
                     </div>
                     <div id="exam_file_list" class="bg-light rounded border p-2" style="min-height: 100px;">
-                        <div class="text-center p-4 text-muted">
-                            <i class="bi bi-info-circle me-1"></i> Muayene kaydedildikten sonra dosya ekleyebilirsiniz.
+                        <div class="text-center p-4 text-muted" id="examFilePlaceholder">
+                            <i class="bi bi-info-circle me-1"></i> Muayene kaydedildikten sonra bu bölüme dosya ekleyebilirsiniz.
                         </div>
                     </div>
                 </div>
@@ -149,15 +149,46 @@
         </div>
     </div>
 
-    <!-- History Sidebar (Right) -->
+    <!-- History & Files Sidebar (Right) -->
     <div class="history-sidebar">
-        <div class="history-header">
-            <i class="bi bi-clock-history"></i> Önceki Muayeneler
-        </div>
-        <div class="history-list" id="historyList">
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-hourglass-split mb-2 fs-3"></i>
-                <p class="small">Yükleniyor...</p>
+        <ul class="nav nav-tabs nav-fill sidebar-tabs" id="sidebarTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="history-tab" data-bs-toggle="tab" data-bs-target="#historyPane" type="button">
+                    <i class="bi bi-clock-history me-1"></i> Geçmiş
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="files-tab" data-bs-toggle="tab" data-bs-target="#filesPane" type="button">
+                    <i class="bi bi-folder2-open me-1"></i> Arşiv
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content sidebar-tab-content">
+            <!-- History Pane -->
+            <div class="tab-pane fade show active" id="historyPane" role="tabpanel">
+                <div class="history-list" id="historyList">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-hourglass-split mb-2 fs-3"></i>
+                        <p class="small">Yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Files Archive Pane -->
+            <div class="tab-pane fade" id="filesPane" role="tabpanel">
+                <div class="archive-header d-flex justify-content-between align-items-center">
+                    <span class="archive-title">HASTA DOSYA ARŞİVİ</span>
+                    <button type="button" id="archive_file_upload" class="btn btn-sm btn-primary rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </div>
+                <div id="archive_file_list" class="p-1">
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi bi-files mb-2 fs-4 opacity-50"></i>
+                        <p>Yükleniyor...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -38,6 +38,7 @@ async function initPageData() {
         const appointment = appRes.data;
         currentPatientId = appointment.patient_id;
         renderPatientInfo(appointment);
+        initArchiveFileManager(currentPatientId);
     } catch (e) {
         Utils.showError('Randevu detayları yüklenemedi. Lütfen sayfayı yenileyin.');
         console.error('Critical load error:', e);
@@ -516,8 +517,12 @@ window.addText = (targetId, text) => {
 function initExamFileManager(examId) {
     if (!examId) return;
 
-    // Arayüzü göster
-    document.getElementById('examFilesSection').style.display = 'block';
+    // Arayüzü güncelle
+    const uploadContainer = document.getElementById('examFileUploadContainer');
+    const placeholder = document.getElementById('examFilePlaceholder');
+
+    if (uploadContainer) uploadContainer.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
 
     examFileManager = new FileManager({
         module: 'examination',
@@ -525,6 +530,22 @@ function initExamFileManager(examId) {
         containerId: 'exam_file_list',
         uploadBtnId: 'exam_file_upload',
         csrfToken: window.csrfToken || ''
+    });
+}
+
+/**
+ * Hasta Arşiv Dosyalarını Başlat
+ */
+function initArchiveFileManager(patientId) {
+    if (!patientId) return;
+
+    new FileManager({
+        module: 'patient',
+        relatedId: patientId,
+        containerId: 'archive_file_list',
+        uploadBtnId: 'archive_file_upload',
+        csrfToken: window.csrfToken || '',
+        customListUrl: `/api/files/search?patient_id=${patientId}`
     });
 }
 

@@ -298,7 +298,7 @@ async function loadPatients() {
                 valueField: 'id',
                 labelField: 'text',
                 searchField: ['text', 'phone'],
-                placeholder: 'Hasta Ara (En az 2 karakter)...',
+                placeholder: 'Hasta Ara (isim, telefon, tc)...',
                 allowEmptyOption: true,
                 preload: false, // Preload disabled
                 loadThrottle: 500,

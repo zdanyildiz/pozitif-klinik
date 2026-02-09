@@ -316,17 +316,19 @@
     });
 
     // Delete Func (Simple implementation)
-    function deleteFile(uuid) {
-        if(!confirm('Bu dosyayı silmek istediğinize emin misiniz?')) return;
+    async function deleteFile(uuid) {
+        const isConfirmed = await Utils.showConfirm('Silme Onayı', 'Bu dosyayı silmek istediğinize emin misiniz?');
+        if(!isConfirmed) return;
         
-        fetch('/api/files/' + uuid, { method: 'DELETE' })
-            .then(res => {
-                if(res.ok) {
-                    fetchFiles(); // Refresh
-                } else {
-                    alert('Silme başarısız');
-                }
-            });
+        try {
+            const res = await api.delete('/api/files/' + uuid);
+            if(res.status) {
+                Utils.showToast('Dosya silindi.');
+                fetchFiles(); // Refresh
+            }
+        } catch (err) {
+            Utils.showError(typeof err === 'string' ? err : 'Dosya silinirken bir hata oluştu.');
+        }
     }
 
     // Initial load? No, wait for interaction as requested. 

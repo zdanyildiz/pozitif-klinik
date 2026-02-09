@@ -368,12 +368,17 @@ class FileManager {
     }
 
     async deleteFile(uuid) {
-        if (!confirm('Silmek istediğinize emin misiniz?')) return;
+        const isConfirmed = await Utils.showConfirm('Silme Onayı', 'Bu dosyayı silmek istediğinize emin misiniz?');
+        if (!isConfirmed) return;
+
         try {
             const res = await api.delete(`/api/files/${uuid}`);
-            if (res.status) this.loadFiles();
+            if (res.status) {
+                Utils.showToast('Dosya silindi.');
+                this.loadFiles();
+            }
         } catch (e) {
-            alert('Hata!');
+            Utils.showError(typeof e === 'string' ? e : 'Dosya silinirken bir hata oluştu.');
         }
     }
 

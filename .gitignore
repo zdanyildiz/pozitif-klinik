@@ -68,3 +68,4 @@ docs/tablo-sql/
 *.json_export
 scripts/intermedia-migration/db.config.json
 docs/payments_data.json
+storage/app/*

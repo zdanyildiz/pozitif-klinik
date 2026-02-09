@@ -709,3 +709,31 @@ LOG_LEVEL=DEBUG
 - **Test Mekanizması:**
     - "Test SMS" özelliği ile kurulumların doğruluğu (kayıt edilmeden önce veya sonra) anlık olarak kontrol edilebiliyor.
 - **Dökümantasyon:** SMS modülü mimarisi ve API uçları `ARCHITECTURE.md` ve `API.md` dosyalarına işlendi.
+
+---
+
+### 51. Ortama Duyarlı Veritabanı Yapılandırması (✅ Tamamlandı)
+**Tarih:** 2026-02-09
+- **Dinamik Yapılandırma:** `config/settings.php` güncellenerek `APP_ENV` değişkenine göre (`development` veya `production`) farklı veritabanı bilgilerinin kullanılması sağlandı.
+- **Çevresel Değişkenler:** `.env` ve `.env.example` dosyalarına `LOCAL_DB_*` önekli yeni değişkenler eklendi.
+- **Avantaj:** Geliştiricilerin yerel `test_klinik` veritabanı ile canlı `pozitif_klinik` veritabanı arasında `.env` dosyasındaki `APP_ENV` değerini değiştirerek kolayca geçiş yapabilmesi sağlandı.
+
+---
+
+---
+
+### 52. Muayene Ekranı Dosya Yönetimi İyileştirmesi (✅ Tamamlandı)
+**Tarih:** 2026-02-09
+- ** Görünürlük:** Muayene ekranındaki dosya bölümü artık her zaman görünür hale getirildi. Henüz kaydedilmemiş muayeneler için bilgilendirme mesajı eklendi.
+- **Hasta Arşivi Entegrasyonu:** Sağ yan menüye (sidebar) "Arşiv" sekmesi eklendi. Doktorlar artık muayene sırasında hastanın tüm geçmiş dosyalarına (röntgen, tahlil vb.) kolayca erişebilir ve yeni dosya yükleyebilir.
+- **UI/UX:** Sidebar tabanlı yapı ile muayene geçmişi ve dosya arşivi arasında hızlı geçiş sağlandı.
+---
+
+---
+
+### 53. Bildirim Sisteminin Modernizasyonu (✅ Tamamlandı)
+**Tarih:** 2026-02-09
+- **Native Alert/Confirm Değişimi:** Uygulama genelindeki (Ameliyat takibi, dosya yönetimi, finans, login vb.) tüm "kötü" görünümlü tarayıcı bildirimleri (`alert`, `confirm`) kaldırıldı.
+- **Utils Entegrasyonu:** Tüm bildirimler `window.Utils` üzerinden SweetAlert2 ve Toastify tabanlı modern, şık ve projeye uyumlu bildirimlerle değiştirildi.
+- **Hata Yönetimi ve UX:** İşlem başarı/hata mesajları daha kullanıcı dostu hale getirildi. Silme işlemleri için onay kutuları modernize edildi.
+---
