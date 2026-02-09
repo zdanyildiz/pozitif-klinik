@@ -450,6 +450,7 @@ async function loadPersonnel() {
                 <td><span class="fw-medium">${escapeHtml(user.name || '-')}</span></td>
                 <td><code>${escapeHtml(user.username)}</code></td>
                 <td><span class="badge bg-light text-dark border">${translateRole(user.role)}</span></td>
+                <td><span class="text-muted small">${translateSpecialty(user.specialty)}</span></td>
                 <td>
                     <span class="status-indicator ${isActive ? 'bg-success' : 'bg-danger'}"></span>
                     ${isActive ? 'Aktif' : 'Pasif'}
@@ -582,6 +583,12 @@ function translateRole(role) {
         'secretary': 'Sekreter'
     };
     return roles[role] || role;
+}
+
+function translateSpecialty(code) {
+    if (!code) return '-';
+    const specialty = medicalSpecialties.find(s => s.code === code);
+    return specialty ? specialty.name : code;
 }
 
 function escapeHtml(text) {

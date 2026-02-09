@@ -112,6 +112,11 @@ function setupFilters() {
 
 function setupEventListeners() {
     document.getElementById('btnNewAppointment').addEventListener('click', () => {
+        if (appointmentTypes.length === 0) {
+            Utils.showError('Önce en az bir randevu türü tanımlamalısınız.');
+            typeModal.show();
+            return;
+        }
         resetAppointmentForm();
         appointmentModal.show();
     });
@@ -244,11 +249,42 @@ function getWeekRange() {
 }
 
 async function loadTypes() {
-    const res = await api.get('/api/appointments/types');
-    appointmentTypes = res.data || [];
-    renderTypeOptions();
-    renderTypeList();
-    // NOT: renderServiceOptionsForTypes loadServices'dan sonra çağrılacak
+    try {
+        const res = await api.get('/api/appointments/types');
+        appointmentTypes = res.data || [];
+        renderTypeOptions();
+        renderTypeList();
+
+        // Eğer randevu türü tanımlı değilse kullanıcıyı uyar
+        checkEmptyTypeState();
+    } catch (e) {
+        console.error('Randevu türleri yüklenemedi', e);
+    }
+}
+
+function checkEmptyTypeState() {
+    const btnNew = document.getElementById('btnNewAppointment');
+    if (appointmentTypes.length === 0) {
+        // Uyarı mesajı göster (Eğer daha önce eklenmemişse)
+        if (!document.getElementById('emptyTypeWarning')) {
+            const warning = document.createElement('div');
+            warning.id = 'emptyTypeWarning';
+            warning.className = 'alert alert-warning mb-4 d-flex align-items-center';
+            warning.innerHTML = `
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <div>
+                    <strong>Henüz randevu türü tanımlanmamış!</strong><br>
+                    Randevu oluşturabilmek için en az bir adet muayene/randevu türü tanımlamalısınız.
+                    <a href="javascript:void(0)" class="alert-link ms-2" data-bs-toggle="modal" data-bs-target="#typeModal">Şimdi Tanımla</a>
+                </div>
+            `;
+            const statsGrid = document.querySelector('.stats-grid');
+            if (statsGrid) statsGrid.after(warning);
+        }
+    } else {
+        const warning = document.getElementById('emptyTypeWarning');
+        if (warning) warning.remove();
+    }
 }
 
 async function loadPatients() {

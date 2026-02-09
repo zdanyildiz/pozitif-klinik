@@ -28,6 +28,7 @@ DROP TABLE IF EXISTS `cln_appointment_types`;
 CREATE TABLE `cln_appointment_types` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `clinic_id` bigint(20) unsigned NOT NULL,
+  `service_id` bigint(20) unsigned DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `color_code` varchar(10) DEFAULT '#3788d8',
   `duration_minutes` int(11) DEFAULT 30,
@@ -36,7 +37,9 @@ CREATE TABLE `cln_appointment_types` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `clinic_id` (`clinic_id`),
-  CONSTRAINT `cln_appointment_types_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE
+  KEY `service_id` (`service_id`),
+  CONSTRAINT `cln_appointment_types_ibfk_1` FOREIGN KEY (`clinic_id`) REFERENCES `sys_tenants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cln_appointment_types_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `cln_services` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 3. Randevular

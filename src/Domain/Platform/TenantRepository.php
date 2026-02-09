@@ -61,6 +61,27 @@ class TenantRepository
                 'password_hash' => $hashedPassword
             ]);
 
+            // 3. Varsayılan Randevu Türlerini Oluştur
+            $sqlTypes = "INSERT INTO cln_appointment_types (clinic_id, name, color_code, duration_minutes, is_active) 
+                         VALUES (:clinic_id, :name, :color, :dur, 1)";
+            $stmtTypes = $connection->prepare($sqlTypes);
+
+            // Muayene
+            $stmtTypes->execute([
+                'clinic_id' => $clinicId,
+                'name' => 'Genel Muayene',
+                'color' => '#3788d8',
+                'dur' => 30
+            ]);
+
+            // Kontrol
+            $stmtTypes->execute([
+                'clinic_id' => $clinicId,
+                'name' => 'Kontrol',
+                'color' => '#10b981',
+                'dur' => 15
+            ]);
+
             $connection->commit();
 
             return $clinicId;

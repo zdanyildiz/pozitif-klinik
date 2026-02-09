@@ -66,16 +66,21 @@ class ClinicPersonnelController extends BaseController
         }
 
         try {
+            // Doktor ise branş kontrolü
+            if ($role === 'doctor' && empty($specialty)) {
+                return $this->error($response, 'Doktor için branş (uzmanlık) seçilmesi zorunludur.', 400);
+            }
+
             $id = $this->userRepository->create($clinicId, [
                 'username' => $username,
                 'name' => $name,
                 'password' => $password,
                 'role' => $role,
-                'specialty' => $specialty
+                'specialty' => $role === 'doctor' ? $specialty : null
             ]);
             return $this->createdResponse($response, ['id' => $id], 'Personel oluşturuldu.');
         } catch (Throwable $e) {
-            return $this->error($response, 'Kullanıcı oluşturulurken bir hata oluştu.');
+            return $this->error($response, 'Kullanıcı oluşturulurken bir hata oluştu: ' . $e->getMessage());
         }
     }
 
@@ -94,11 +99,19 @@ class ClinicPersonnelController extends BaseController
             return $this->error($response, 'Personel bulunamadı.', 404);
         }
 
+        $role = $body['role'] ?? $existing['role'];
+        $specialty = $body['specialty'] ?? $existing['specialty'];
+
+        // Doktor ise branş kontrolü
+        if ($role === 'doctor' && empty($specialty)) {
+            return $this->error($response, 'Doktor için branş (uzmanlık) seçilmesi zorunludur.', 400);
+        }
+
         $data = [
             'username' => $body['username'] ?? $existing['username'],
             'name' => $body['name'] ?? $existing['name'],
-            'role' => $body['role'] ?? $existing['role'],
-            'specialty' => $body['specialty'] ?? $existing['specialty'],
+            'role' => $role,
+            'specialty' => $role === 'doctor' ? $specialty : null,
             'is_active' => isset($body['is_active']) ? (int) $body['is_active'] : $existing['is_active'],
             'password' => $body['password'] ?? null
         ];
@@ -107,7 +120,7 @@ class ClinicPersonnelController extends BaseController
             $this->userRepository->update($clinicId, $userId, $data);
             return $this->success($response, null, 'Personel güncellendi.');
         } catch (Throwable $e) {
-            return $this->error($response, 'Güncelleme sırasında bir hata oluştu.');
+            return $this->error($response, 'Güncelleme sırasında bir hata oluştu: ' . $e->getMessage());
         }
     }
 
