@@ -193,7 +193,7 @@ return [
 
     // Storage Service (Fiziksel Dosya Yönetimi)
     \App\Core\Service\StorageService::class => function (ContainerInterface $c) {
-        return new \App\Core\Service\StorageService(); // Varsayılan: project_root/var/uploads
+        return new \App\Core\Service\StorageService();
     },
 
     // File Repository (Veritabanı)
@@ -237,7 +237,8 @@ return [
             $c->get(CryptoService::class),
             $c->get(Twig::class),
             $c->get(\Psr\Log\LoggerInterface::class),
-            $c->get(Database::class)
+            $c->get(Database::class),
+            $c->get(\App\Core\Service\StorageService::class)
         );
     },
 

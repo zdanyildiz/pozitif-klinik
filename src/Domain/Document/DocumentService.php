@@ -30,6 +30,7 @@ class DocumentService
     private Twig $twig;
     private LoggerInterface $logger;
     private Database $db;
+    private \App\Core\Service\StorageService $storage;
 
     public function __construct(
         DocumentRepository $documentRepo,
@@ -40,7 +41,8 @@ class DocumentService
         CryptoService $crypto,
         Twig $twig,
         LoggerInterface $logger,
-        Database $db
+        Database $db,
+        \App\Core\Service\StorageService $storage
     ) {
         $this->documentRepo = $documentRepo;
         $this->patientRepo = $patientRepo;
@@ -51,6 +53,7 @@ class DocumentService
         $this->twig = $twig;
         $this->logger = $logger;
         $this->db = $db;
+        $this->storage = $storage;
     }
 
     /**
@@ -268,40 +271,20 @@ class DocumentService
 
         if ($savePdf) {
             try {
-                // Absolute path kullan: Proje Root/storage
-                $projectRoot = dirname(__DIR__, 3);
-                $storageDir = $projectRoot . '/storage';
-                $clinicDir = $storageDir . '/clinic_' . $clinicId . '/documents';
-
-                // Dizin yoksa oluştur
-                if (!is_dir($clinicDir)) {
-                    if (!@mkdir($clinicDir, 0777, true) && !is_dir($clinicDir)) {
-                        $this->logger->error("Epikriz kaydı için dizin oluşturulamadı: $clinicDir");
-                    }
-                }
-
                 // Benzersiz dosya adı
                 $timestamp = date('Ymd_His');
                 $fileName = sprintf('epikriz_%d_%s.pdf', $examinationId, $timestamp);
-                $fullPath = $clinicDir . '/' . $fileName;
 
-                // PDF'i yaz
-                if (@file_put_contents($fullPath, $pdfContent) === false) {
-                    $this->logger->error("Epikriz dosyası yazılamadı: $fullPath");
-                } else {
-                    // Relatif yol (DB ve URL için)
-                    $filePath = 'clinic_' . $clinicId . '/documents/' . $fileName;
-                    $fileUrl = '/storage/' . $filePath;
+                // Dosya Sistemine Kaydet (Yeni Merkezi Servis Üzerinden)
+                $filePath = $this->storage->saveDocument($clinicId, $pdfContent, $fileName);
 
-                    $this->logger->info("Epikriz PDF dosyası kaydedildi", [
-                        'clinic_id' => $clinicId,
-                        'examination_id' => $examinationId,
-                        'file_path' => $filePath
-                    ]);
-                }
+                $this->logger->info("Epikriz PDF dosyası kaydedildi", [
+                    'clinic_id' => $clinicId,
+                    'examination_id' => $examinationId,
+                    'file_path' => $filePath
+                ]);
             } catch (\Exception $e) {
-                // Dosya hatası ana işlemi durdurmasın
-                $this->logger->error("Dosya kayıt hatası: " . $e->getMessage());
+                $this->logger->error("Epikriz dosya kayıt hatası: " . $e->getMessage());
             }
         }
 
@@ -317,17 +300,18 @@ class DocumentService
             'document_title' => 'Epikriz - ' . $data['patient']['name'] . ' - ' . date('d.m.Y H:i'),
             'generated_content' => $html,
             'file_path' => $filePath,
-            'metadata' => json_encode([
+            'metadata' => [
                 'doctor_id' => $data['examination']['doctor_user_id'],
                 'doctor_name' => $data['doctor']['name'] ?? null,
                 'diagnosis' => $data['examination']['diagnosis'] ?? null,
                 'template_name' => $template['name'],
                 'created_at' => date('Y-m-d H:i:s')
-            ]),
+            ],
             'created_by' => $userId
         ];
 
         $documentId = $this->documentRepo->saveDocument($documentData);
+        $fileUrl = '/api/documents/' . $documentId . '/view';
 
         $this->logger->info("Epikriz kaydedildi", [
             'document_id' => $documentId,

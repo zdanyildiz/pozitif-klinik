@@ -230,6 +230,44 @@ class DocumentController extends BaseController
     }
 
     /**
+     * Kaydedilmiş doküman dosyasını (snapshot) sunar
+     * GET /api/documents/{id}/view
+     */
+    #[Route('GET', '/{id:[0-9]+}/view')]
+    public function view(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = $this->getClinicId($request);
+        $id = (int) $args['id'];
+
+        try {
+            $document = $this->repository->getDocumentById($clinicId, $id);
+            if (!$document || empty($document['file_path'])) {
+                return $this->error($response, 'Doküman dosyası bulunamadı', 404);
+            }
+
+            $storage = $this->container->get(\App\Core\Service\StorageService::class);
+            $absolutePath = $storage->getAbsolutePath($document['file_path']);
+
+            if (!file_exists($absolutePath)) {
+                return $this->error($response, 'Fiziksel dosya eksik', 404);
+            }
+
+            // Dosya içeriğini stream et
+            $stream = new \Slim\Psr7\Stream(fopen($absolutePath, 'rb'));
+            $fileSize = filesize($absolutePath);
+
+            return $response
+                ->withHeader('Content-Type', 'application/pdf')
+                ->withHeader('Content-Disposition', 'inline; filename="' . basename($absolutePath) . '"')
+                ->withHeader('Content-Length', (string) $fileSize)
+                ->withBody($stream);
+
+        } catch (\Exception $e) {
+            return $this->error($response, 'Dosya okuma hatası: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Doküman siler
      * DELETE /api/documents/{id}
      */

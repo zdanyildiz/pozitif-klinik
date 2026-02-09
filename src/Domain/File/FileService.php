@@ -50,8 +50,17 @@ class FileService
         ?string $displayName = null,
         string $fileCategory = 'other'
     ): array {
-        // 1. Fiziksel Kayıt
-        $storageResult = $this->storage->save($file, $clinicId);
+        // 1. Fiziksel Kayıt (Yeni Standartlara Göre Modül Bazlı)
+        if ($module === 'patient') {
+            // Hasta dosyası: tenants/{cid}/uploads/patients/{pid}/
+            $storageResult = $this->storage->savePatientFile($file, $clinicId, $relatedId);
+        } elseif ($module === 'personnel') {
+            // Personel dosyası: tenants/{cid}/uploads/personnel/
+            $storageResult = $this->storage->saveSystemFile($file, $clinicId, 'personnel');
+        } else {
+            // Genel: tenants/{cid}/uploads/Y/m/
+            $storageResult = $this->storage->save($file, $clinicId);
+        }
 
         // 2. Veritabanı Hazırlığı
         $fileData = [

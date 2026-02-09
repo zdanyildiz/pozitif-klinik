@@ -179,11 +179,12 @@ class FileController extends BaseController
 
             // Dosya içeriğini stream et
             $stream = new \Slim\Psr7\Stream(fopen($path, 'rb'));
+            $fileSize = filesize($path);
 
             return $response
                 ->withHeader('Content-Type', $meta['mime_type'])
                 ->withHeader('Content-Disposition', 'inline; filename="' . $meta['original_name'] . '"')
-                ->withHeader('Content-Length', (string) ($meta['size_kb'] * 1024))
+                ->withHeader('Content-Length', (string) $fileSize)
                 ->withBody($stream);
 
         } catch (\RuntimeException $e) {

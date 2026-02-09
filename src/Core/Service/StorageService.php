@@ -12,8 +12,7 @@ use InvalidArgumentException;
  * StorageService
  * 
  * Fiziksel dosya sistemi işlemlerini yönetir.
- * Dosyaları proje kök dizinindeki 'var/uploads' klasörüne kaydeder.
- * Yıl/Ay tabanlı klasör yapısı kullanır.
+ * Tüm dosyalar 'storage/app/tenants/{clinic_id}' altında izole edilir.
  */
 class StorageService
 {
@@ -21,66 +20,118 @@ class StorageService
 
     public function __construct(string $basePath = null)
     {
-        // Sabit olarak var/uploads kullanıyoruz, harici verilmezse
+        // Yeni standart kök dizin: storage/app/tenants
         if ($basePath === null) {
-            $this->basePath = dirname(__DIR__, 3) . '/var/uploads';
+            $this->basePath = dirname(__DIR__, 3) . '/storage/app/tenants';
         } else {
             $this->basePath = rtrim($basePath, '/');
+        }
+
+        // Kök dizin kontrolü
+        if (!is_dir($this->basePath)) {
+            if (!@mkdir($this->basePath, 0777, true) && !is_dir($this->basePath)) {
+                // Kritik hata, ama constructor içinde throw etmek yerine 
+                // metodlarda kontrol etmek daha güvenli olabilir.
+            }
         }
     }
 
     /**
-     * Dosyayı diske kaydeder.
-     * 
-     * @param UploadedFileInterface $file
-     * @param int $clinicId
-     * @return array {path: string, hash: string, size: int}
-     * @throws RuntimeException
+     * Genel dosya kaydetme (Geriye dönük uyumluluk için)
+     * Hedef: {clinic_id}/uploads/{year}/{month}/
      */
     public function save(UploadedFileInterface $file, int $clinicId): array
+    {
+        $date = new \DateTime();
+        $relativeDir = sprintf('%d/uploads/%s/%s', $clinicId, $date->format('Y'), $date->format('m'));
+        return $this->processSave($file, $relativeDir);
+    }
+
+    /**
+     * Epikriz veya resmi doküman kaydeder.
+     * Hedef: {clinic_id}/documents/
+     */
+    public function saveDocument(int $clinicId, string $content, string $filename): string
+    {
+        $relativeDir = $clinicId . '/documents';
+        $targetDir = $this->basePath . '/' . $relativeDir;
+        $this->ensureDirectory($targetDir);
+
+        $targetPath = $targetDir . '/' . $filename;
+        if (file_put_contents($targetPath, $content) === false) {
+            throw new RuntimeException('Doküman dosyası yazılamadı: ' . $targetPath);
+        }
+
+        return $relativeDir . '/' . $filename;
+    }
+
+    /**
+     * Hasta dosyası kaydeder (Röntgen, tahlil vb.)
+     * Hedef: {clinic_id}/uploads/patients/{patient_id}/
+     */
+    public function savePatientFile(UploadedFileInterface $file, int $clinicId, int $patientId): array
+    {
+        $relativeDir = sprintf('%d/uploads/patients/%d', $clinicId, $patientId);
+        return $this->processSave($file, $relativeDir);
+    }
+
+    /**
+     * Sistem dosyası kaydeder (Logo vb.)
+     * Hedef: {clinic_id}/system/
+     */
+    public function saveSystemFile(UploadedFileInterface $file, int $clinicId, string $subType = ''): array
+    {
+        $relativeDir = $clinicId . '/system' . ($subType ? '/' . $subType : '');
+        return $this->processSave($file, $relativeDir);
+    }
+
+    /**
+     * Ortak dosya işleme mantığı
+     */
+    private function processSave(UploadedFileInterface $file, string $relativeDir): array
     {
         if ($file->getError() !== UPLOAD_ERR_OK) {
             throw new RuntimeException('Dosya yükleme hatası: ' . $file->getError());
         }
 
-        $date = new \DateTime();
-        $year = $date->format('Y');
-        $month = $date->format('m');
-
-        // Hedef dizin: var/uploads/{clinic_id}/{year}/{month}/
-        $relativeDir = sprintf('%d/%s/%s', $clinicId, $year, $month);
         $targetDir = $this->basePath . '/' . $relativeDir;
+        $this->ensureDirectory($targetDir);
 
-        if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0755, true)) {
-                throw new RuntimeException('Klasör oluşturulamadı: ' . $targetDir);
-            }
-        }
-
-        // Dosya adı için güvenli hash üret (rastgele bytes)
+        // Güvenli hash dosya adı
         $extension = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
-        $randomName = bin2hex(random_bytes(16)); // 32 chars
-        $fileName = $randomName . '.' . $extension; // hash.pdf
-
-        // Tam yol
+        $fileName = bin2hex(random_bytes(16)) . '.' . $extension;
         $targetPath = $targetDir . '/' . $fileName;
 
-        // Dosyayı taşı (Slim/PSR-7 moveTo)
         try {
             $file->moveTo($targetPath);
         } catch (\Exception $e) {
             throw new RuntimeException('Dosya taşınamadı: ' . $e->getMessage());
         }
 
-        // Dosya bütünlüğü için hash al (SHA-256)
-        $fileHash = hash_file('sha256', $targetPath);
-        $size = (int) $file->getSize();
-
         return [
-            'path' => $relativeDir . '/' . $fileName, // DB'ye sadece relative path (1/2026/01/xyz.pdf)
-            'hash' => $fileHash,
-            'size' => $size
+            'path' => $relativeDir . '/' . $fileName,
+            'hash' => hash_file('sha256', $targetPath),
+            'size' => (int) $file->getSize()
         ];
+    }
+
+    /**
+     * Dizin varlığını kontrol eder, yoksa oluşturur.
+     */
+    private function ensureDirectory(string $path): void
+    {
+        if (is_dir($path)) {
+            return;
+        }
+
+        if (!mkdir($path, 0777, true) && !is_dir($path)) {
+            $error = error_get_last();
+            $msg = $error ? $error['message'] : 'Bilinmeyen hata';
+            throw new RuntimeException('Klasör oluşturulamadı (' . $msg . '): ' . $path);
+        }
+
+        // Umask'tan etkilenmemesi için manuel chmod
+        @chmod($path, 0777);
     }
 
     /**
@@ -94,19 +145,19 @@ class StorageService
         $realBase = realpath($this->basePath);
         $realPath = realpath($path);
 
-        if ($realPath === false || strpos($realPath, $realBase) !== 0) {
-            // Dosya yoksa bile güvenlik için kontrol etmeliyiz
-            // Eğer dosya yoksa realpath false döner.
-            // Dosya varlığını kontrol et:
-            if (!file_exists($path)) {
-                throw new RuntimeException('Dosya bulunamadı: ' . $relativePath);
-            }
-            // Realpath check tekrar (file_exists true ise)
-            $realPath = realpath($path);
-            if (strpos($realPath, $realBase) !== 0) {
+        // Eğer dosya henüz yoksa (yeni oluşturulacaksa) realpath false döner.
+        // Bu durumda manuel kontrol yapıyoruz.
+        if ($realPath === false) {
+            // Path traversal kontrolü: '..' içeriyor mu?
+            if (strpos($path, '..') !== false) {
                 throw new RuntimeException('Geçersiz dosya yolu (Path traversal detected).');
             }
-            return $realPath;
+            return $path;
+        }
+
+        // Dosya varsa, gerçek yolun base path altında olduğunu doğrula
+        if (strpos($realPath, $realBase) !== 0) {
+            throw new RuntimeException('Erişim engellendi: Dosya izin verilen sınırların dışında.');
         }
 
         return $realPath;
@@ -123,8 +174,6 @@ class StorageService
                 return unlink($path);
             }
         } catch (\Exception $e) {
-            // Dosya zaten yoksa veya path hatalıysa false dönmesi yeterli olabilir
-            // ama loglamak iyi olurdu. Şimdilik false dönüyoruz.
             return false;
         }
         return false;

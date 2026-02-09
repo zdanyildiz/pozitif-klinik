@@ -390,10 +390,10 @@ class FileManager {
     initLightbox() {
         if (!document.getElementById('fileManagerLightbox')) {
             const h = `
-                <div class="modal fade" id="fileManagerLightbox" tabindex="-1">
+                <div class="modal fade" id="fileManagerLightbox" tabindex="-1" aria-hidden="true" role="dialog">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
                         <div class="modal-content bg-transparent border-0">
-                            <div class="modal-header border-0"><button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button></div>
+                            <div class="modal-header border-0"><button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button></div>
                             <div class="modal-body p-0 text-center">
                                 <img src="" id="lightboxImage" class="img-fluid rounded" style="max-height: 85vh;">
                                 <div id="lightboxCaption" class="text-white mt-3 fw-bold"></div>

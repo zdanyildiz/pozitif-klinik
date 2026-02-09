@@ -758,13 +758,20 @@
     });
 
     // Timeline Detail Functions
-    const timelineOffcanvas = new bootstrap.Offcanvas(document.getElementById('timelineOffcanvas'));
+    let timelineOffcanvas;
 
-    async function showTimelineDetail(appointmentId, examinationId) {
+    window.showTimelineDetail = async function(appointmentId, examinationId) {
+        // Init Offcanvas if not already
+        if (!timelineOffcanvas) {
+            const el = document.getElementById('timelineOffcanvas');
+            if (el) timelineOffcanvas = new bootstrap.Offcanvas(el);
+        }
+
         // 1. Reset & Show Loading
         document.getElementById('offcanvasLoading').classList.remove('d-none');
         document.getElementById('offcanvasContent').classList.add('d-none');
-        timelineOffcanvas.show();
+        if (timelineOffcanvas) timelineOffcanvas.show();
+
 
         try {
             // 2. Fetch Data Parallel
