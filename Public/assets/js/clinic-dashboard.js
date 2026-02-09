@@ -294,7 +294,7 @@ async function handleUpdateUser() {
     };
 
     const password = document.getElementById('editPassword').value;
-    if (password) {
+    if (password && password.trim() !== '') {
         data.password = password;
     }
 

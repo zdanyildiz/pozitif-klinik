@@ -170,7 +170,8 @@ async function migrateActivityLogs() {
                     null, // IP Address not available
                     `${row.ACIKLAMA || ''} - ${row.DETAY || ''}`.substring(0, 255),
                     'GENELLOG',
-                    legacyId
+                    legacyId,
+                    row.TARIH ? new Date(row.TARIH) : new Date()
                 ]);
 
                 offset = legacyId;
@@ -179,7 +180,7 @@ async function migrateActivityLogs() {
             if (values.length > 0) {
                 await mysqlConn.query(`
                     INSERT IGNORE INTO cln_activity_logs 
-                    (clinic_id, user_id, action, module, record_id, record_type, old_values, new_values, ip_address, description, legacy_table, legacy_record_id)
+                    (clinic_id, user_id, action, module, record_id, record_type, old_values, new_values, ip_address, description, legacy_table, legacy_record_id, created_at)
                     VALUES ?
                 `, [values]);
             }
@@ -249,7 +250,8 @@ async function migrateActivityLogs() {
                     null, // IP
                     `Legacy Change Log TableID:${row.TABLE_ID} RecordID:${row.RECORD_ID}`,
                     'LOG_KAYITDEGISIKLIGI',
-                    legacyId
+                    legacyId,
+                    row.TARIH ? new Date(row.TARIH) : new Date()
                 ]);
 
                 offset = legacyId;
@@ -258,7 +260,7 @@ async function migrateActivityLogs() {
             if (values.length > 0) {
                 await mysqlConn.query(`
                     INSERT IGNORE INTO cln_activity_logs 
-                    (clinic_id, user_id, action, module, record_id, record_type, old_values, new_values, ip_address, description, legacy_table, legacy_record_id)
+                    (clinic_id, user_id, action, module, record_id, record_type, old_values, new_values, ip_address, description, legacy_table, legacy_record_id, created_at)
                     VALUES ?
                 `, [values]);
             }

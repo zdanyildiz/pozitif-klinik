@@ -67,11 +67,12 @@ class SettingsController extends BaseController
             ->key('email', v::optional(v::email()))
             ->key('website', v::optional(v::url()))
             ->key('address', v::optional(v::stringType()))
-            ->key('province_id', v::optional(v::intVal()))
-            ->key('district_id', v::optional(v::intVal()))
+            ->key('province_id', v::optional(v::numericVal())) // string "123" is accepted
+            ->key('district_id', v::optional(v::numericVal())) // string "456" is accepted
             ->key('tax_office', v::optional(v::stringType()))
             ->key('tax_number', v::optional(v::stringType()))
-            ->key('description', v::optional(v::stringType()));
+            ->key('description', v::optional(v::stringType()))
+            ->key('working_hours', v::optional(v::arrayType()));
 
         try {
             $validator->assert($body);
