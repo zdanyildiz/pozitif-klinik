@@ -48,7 +48,13 @@ class AuthWebController
                 ->withStatus(302);
         }
 
-        return $this->view->render($response, 'login.twig', []);
+        $tenant = $request->getAttribute('identified_tenant');
+        $clinicCode = $tenant ? $tenant['domain_prefix'] : '';
+
+        return $this->view->render($response, 'login.twig', [
+            'clinic_code' => $clinicCode,
+            'is_domain_identified' => !empty($clinicCode)
+        ]);
     }
 
     /**
@@ -59,7 +65,10 @@ class AuthWebController
     public function loginPost(Request $request, Response $response): Response
     {
         $data = $request->getParsedBody();
-        $clinicCode = strtolower(trim((string) ($data['clinic_code'] ?? '')));
+        $tenant = $request->getAttribute('identified_tenant');
+
+        // Eğer domain'den tespit edildiyse onu kullan, yoksa formdan gelen kodu kullan
+        $clinicCode = $tenant ? $tenant['domain_prefix'] : strtolower(trim((string) ($data['clinic_code'] ?? '')));
         $username = trim($data['username'] ?? '');
         $password = $data['password'] ?? '';
 
