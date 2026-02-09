@@ -168,18 +168,48 @@ async function main() {
     const [provinces] = await conn.query('SELECT id, name FROM sys_provinces');
     const [districts] = await conn.query('SELECT id, province_id, name FROM sys_districts');
 
-    // Yardımcı lookup fonksiyonları
+    // Akıllı eşleştirme için normalizasyon fonksiyonu
+    const smartNormalize = (text) => {
+        if (!text) return '';
+        let normalized = text.trim().toLowerCase();
+        // Türkçe karakter normalizasyonu
+        const mapping = {
+            'ç': 'c', 'ğ': 'g', 'ı': 'i', 'i': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u',
+            'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'I': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u'
+        };
+        normalized = normalized.split('').map(char => mapping[char] || char).join('');
+        // Gereksiz karakterleri temizle
+        normalized = normalized.replace(/[^a-z0-9]/g, '');
+        return normalized;
+    };
+
+    // Şehir özel eşleştirmeleri (Kısaltmalar)
+    const provinceShorthands = {
+        'ist': 'istanbul',
+        'ank': 'ankara',
+        'izmir': 'izmir',
+        'antalya': 'antalya'
+    };
+
     const findProvinceId = (name) => {
         if (!name) return null;
-        const p = provinces.find(p => p.name.toLocaleUpperCase('tr-TR') === name.toLocaleUpperCase('tr-TR'));
+        let searchName = smartNormalize(name);
+
+        // Kısaltma kontrolü
+        if (provinceShorthands[searchName]) {
+            searchName = provinceShorthands[searchName];
+        }
+
+        const p = provinces.find(p => smartNormalize(p.name) === searchName);
         return p ? p.id : null;
     };
 
     const findDistrictId = (provinceId, name) => {
         if (!provinceId || !name) return null;
+        const searchName = smartNormalize(name);
         const d = districts.find(d =>
             d.province_id === provinceId &&
-            d.name.toLocaleUpperCase('tr-TR') === name.toLocaleUpperCase('tr-TR')
+            smartNormalize(d.name) === searchName
         );
         return d ? d.id : null;
     };
@@ -264,6 +294,15 @@ async function main() {
             const patientValues = batch.map(p => {
                 const provinceId = findProvinceId(p.city);
                 const districtId = findDistrictId(provinceId, p.district);
+
+                // Ham adres bilgisini notlara ekle
+                let finalNotes = p.notes || '';
+                if (p.city || p.district) {
+                    const rawLocation = [p.district, p.city].filter(Boolean).join(' / ');
+                    const prefix = `[Eski Kayıt Lokasyon: ${rawLocation}]`;
+                    finalNotes = finalNotes ? `${prefix} | ${finalNotes}` : prefix;
+                }
+
                 return [
                     CLINIC_ID,
                     encrypt(p.tc_no || '11111111111'),
@@ -278,7 +317,7 @@ async function main() {
                     JSON.stringify(p.insurance_info),
                     JSON.stringify(p.legacy_metadata),
                     JSON.stringify(p.legal_consents),
-                    encrypt(p.notes),
+                    encrypt(finalNotes),
                     p.legacy_id, p.status
                 ];
             });
