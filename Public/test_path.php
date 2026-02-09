@@ -1,31 +1,30 @@
-APP_ENV=development
-APP_DEBUG=true
+<?php
+echo "Current Dir: " . __DIR__ . "<br>";
+$vendorPath = __DIR__ . '/../vendor/autoload.php';
+echo "Looking for: " . $vendorPath . "<br>";
+echo "Real path: " . (realpath($vendorPath) ?: 'CANNOT RESOLVE REALPATH') . "<br><br>";
 
-# Yerel Geliştirme Veritabanı Ayarları (APP_ENV=development)
-LOCAL_DB_HOST=localhost
-LOCAL_DB_NAME=test_klinik
-LOCAL_DB_USER=root
-LOCAL_DB_PASS=
+if (file_exists($vendorPath)) {
+    echo "✅ Dosya BULUNDU!<br>";
+} else {
+    echo "❌ Dosya BULUNAMADI!<br><br>";
 
-# Production Veritabanı Ayarları
-DB_HOST=localhost
-DB_NAME=pozitif_klinik
-DB_USER=pozitif_klinik
-DB_PASS=#Pozitif-Klinik*
+    $parent = dirname(__DIR__);
+    echo "Üst dizin (" . $parent . ") içeriği:<br>";
+    if (is_dir($parent)) {
+        $files = scandir($parent);
+        echo "<pre>";
+        if ($files === false) {
+            echo "KAYITLAR OKUNAMADI (Permission denied?)";
+        } else {
+            print_r($files);
+        }
+        echo "</pre>";
+    } else {
+        echo "Üst dizin bir klasör değil veya erişilemiyor!<br>";
+    }
+}
 
-LOG_LEVEL=DEBUG
-
-APP_KEY=a1b2c3d4e5f678901234567890abcdef1234567890abcdef1234567890abcdef
-
-JWT_SECRET=zY5+LqXG8/vM2JtKpW9nRdT4sBvCaYxB7hNeUiQoZf3wPjGlDmSrKyV*
-
-
-MAIL_SMTP_HOST=smtp.yandex.com
-MAIL_SMTP_PORT=465
-MAIL_SMTP_USER=pozitifklinik@globalpozitif.com.tr
-MAIL_SMTP_PASS=jlltyumwkcaexlaa
-
-MAIL_SMTP_ENCRYPTION=ssl
-MAIL_FROM_EMAIL=pozitifklinik@globalpozitif.com.tr
-MAIL_FROM_NAME="Pozitif Klinik"
-BLIND_INDEX_KEY=e26b3a7ffe751e28f8095e7eb5b38ac00ef0be0d916fb59eb85086270c4d281b
+// open_basedir kontrolü
+$open_basedir = ini_get('open_basedir');
+echo "<strong>open_basedir:</strong> " . ($open_basedir ?: 'Sınırsız (None)') . "<br>";
