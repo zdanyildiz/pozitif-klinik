@@ -430,10 +430,12 @@
                 // Sağ Panel (Vitals)
                 renderVitalsTable(patient.vitals_history || []);
 
-                // Tabları sıfırla (İlk sekmeyi aç)
-                const firstTabEl = document.querySelector('#vitals-tab');
-                const firstTab = new bootstrap.Tab(firstTabEl);
-                firstTab.show();
+                // Tabları sıfırla (Varsayılan veya Aktif sekmeyi aç)
+                const activeTabEl = document.querySelector('#patientDetailTabs .nav-link.active') || document.querySelector('#patientDetailTabs .nav-link');
+                if (activeTabEl) {
+                    const tabInstance = new bootstrap.Tab(activeTabEl);
+                    tabInstance.show();
+                }
 
                 // Dijital Arşiv (FileManager) Başlat
                 patientFileManager = new FileManager({
@@ -445,8 +447,10 @@
                     customListUrl: `/api/files/search?patient_id=${patient.id}`
                 });
 
-                // Add Vital Button'ı ID ile bağla
-                btnAddVital.onclick = () => handleAddVital(patient.id);
+                // Add Vital Button'ı ID ile bağla (Eğer yetki varsa ve buton mevcutsa)
+                if (btnAddVital) {
+                    btnAddVital.onclick = () => handleAddVital(patient.id);
+                }
 
                 Utils.closeLoading();
                 detailModal.show();
@@ -458,6 +462,7 @@
 
         // Vitals Tablosunu Render Et
         function renderVitalsTable(history) {
+            if (!vitalsTableBody) return;
             vitalsTableBody.innerHTML = '';
 
             if (history.length === 0) {
