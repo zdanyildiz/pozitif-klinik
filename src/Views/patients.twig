@@ -35,7 +35,7 @@
 
     <!-- Table Card -->
     <div class="table-card">
-        <div class="table-card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div class="table-card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <h2 class="table-card-title mb-0">
                 <i class="bi bi-person-lines-fill me-2"></i>
                 Hasta Listesi <small class="text-muted fs-6">(Son 20 Kayıt)</small>
@@ -49,10 +49,10 @@
                     <input type="text" id="patientSearch" class="form-control border-start-0"
                         placeholder="İsim veya TC No...">
                 </div>
-                <button class="btn-add" id="btnAddPatient">
+                <a href="{{ base_path }}/admin/patients/add" class="btn-add text-decoration-none">
                     <i class="bi bi-person-plus-fill me-1"></i>
                     Yeni Hasta Ekle
-                </button>
+                </a>
             </div>
         </div>
 
@@ -97,9 +97,9 @@
                                 <a href="{{ base_path }}/admin/patients/{{ patient.id }}" class="btn btn-outline-secondary" title="Tam Detay Sayfası">
                                     <i class="bi bi-box-arrow-up-right"></i>
                                 </a>
-                                <button class="btn btn-outline-warning" onclick="editPatient({{ patient.id }})" title="Düzenle">
+                                <a href="{{ base_path }}/admin/patients/{{ patient.id }}/edit" class="btn btn-outline-warning" title="Düzenle">
                                     <i class="bi bi-pencil"></i>
-                                </button>
+                                </a>
                                 <button class="btn btn-outline-danger" onclick="handleArchivePatient({{ patient.id }})" title="Arşivle">
                                     <i class="bi bi-archive"></i>
                                 </button>
@@ -119,106 +119,7 @@
         </div>
     </div>
 
-    <!-- Modals are kept in the page as they are needed for interaction -->
-    <!-- Modal 1: Hasta Ekle/Düzenle -->
-    <div class="modal fade" id="patientModal" tabindex="-1" aria-labelledby="patientModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="patientModalLabel">
-                        <i class="bi bi-person-plus me-2"></i>
-                        <span id="modalActionText">Yeni Hasta Ekle</span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <form id="patientForm">
-                        <input type="hidden" id="patientId" name="id">
 
-                        <div class="row g-3">
-                            <!-- Zorunlu Alanlar -->
-                            <div class="col-md-6">
-                                <label class="info-label">TC Kimlik No *</label>
-                                <input type="text" class="form-control" name="tc_no" id="tc_no" maxlength="11" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="info-label">Ad Soyad *</label>
-                                <input type="text" class="form-control" name="name" id="name" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="info-label">Telefon *</label>
-                                <input type="tel" class="form-control" name="phone" id="phone" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="info-label">E-Posta</label>
-                                <input type="email" class="form-control" name="email" id="email">
-                            </div>
-
-                            <!-- Opsiyonel Alanlar -->
-                            <div class="col-md-4">
-                                <label class="info-label">Doğum Tarihi</label>
-                                <input type="date" class="form-control" name="birth_date" id="birth_date">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="info-label">Cinsiyet</label>
-                                <select class="form-select" name="gender" id="gender">
-                                    <option value="U">Belirtilmemiş</option>
-                                    <option value="M">Erkek</option>
-                                    <option value="F">Kadın</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="info-label">Kan Grubu</label>
-                                <select class="form-select" name="blood_type" id="blood_type">
-                                    <option value="">Seçiniz</option>
-                                    <option value="A+">A RH+</option>
-                                    <option value="A-">A RH-</option>
-                                    <option value="B+">B RH+</option>
-                                    <option value="B-">B RH-</option>
-                                    <option value="AB+">AB RH+</option>
-                                    <option value="AB-">AB RH-</option>
-                                    <option value="0+">0 RH+</option>
-                                    <option value="0-">0 RH-</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="info-label">İl</label>
-                                <select class="form-select" name="province_id" id="province_id">
-                                    <option value="">İl Seçiniz</option>
-                                    {% for province in provinces %}
-                                        <option value="{{ province.id }}">{{ province.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="info-label">İlçe</label>
-                                <select class="form-select" name="district_id" id="district_id" disabled>
-                                    <option value="">Önce İl Seçiniz</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label class="info-label">Açık Adres</label>
-                                <textarea class="form-control" name="address" id="address" rows="2"
-                                    placeholder="Mahalle, Sokak, No..."></textarea>
-                            </div>
-                            <div class="col-12">
-                                <label class="info-label">Notlar</label>
-                                <textarea class="form-control" name="notes" id="notes" rows="2"></textarea>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer bg-light border-0">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Vazgeç</button>
-                    <button type="button" class="btn btn-primary px-4" id="btnSavePatient">
-                        <i class="bi bi-check2-circle me-1"></i>
-                        Kaydet
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal 2: Hasta Detay & Vitals -->
     <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
@@ -361,16 +262,11 @@
         const userType = localStorage.getItem('user_type');
 
         // Global State
-        let patientModal;
         let detailModal;
-        let patientFileManager; // Yeni eklenen
-
+        let patientFileManager;
 
         // DOM Elements
         let patientsTableBody;
-        let patientForm;
-        let btnSavePatient;
-        let btnAddPatient;
         let patientSearch;
 
         // Detail Modal Elements
@@ -379,38 +275,18 @@
 
         // Sayfa Yüklendiğinde
         document.addEventListener('DOMContentLoaded', () => {
-            patientModal = new bootstrap.Modal(document.getElementById('patientModal'));
             detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
 
             patientsTableBody = document.getElementById('patientsTableBody');
-            patientForm = document.getElementById('patientForm');
-            btnSavePatient = document.getElementById('btnSavePatient');
-            btnAddPatient = document.getElementById('btnAddPatient');
             patientSearch = document.getElementById('patientSearch');
             vitalsTableBody = document.getElementById('vitalsTableBody');
             btnAddVital = document.getElementById('btnAddVital');
 
-            // Kullanıcı bilgileri artık SSR (UserViewMiddleware) üzerinden geliyor.
-            // Client-side hardcoded değerler kaldırıldı.
-
-            // Sayfa açılışında gerekli olan veriler artık SSR (Twig) ile geliyor.
-            // loadProvinces(); // İPTAL: SSR ile geliyor
-            // loadStats(); // İPTAL: SSR ile geliyor
             setupEventListeners();
         });
 
-        // loadStats() ve loadProvinces() fonksiyonları silinebilir veya pasif bırakılabilir.
-        // Artık sayfa yüklenirken fetch işlemi yapılmıyor (Bkz: Mimari Kurallar Bölüm 1.3)
-
         // Event Listeners
         function setupEventListeners() {
-            // Yeni Hasta Modalını Aç
-            btnAddPatient.addEventListener('click', () => {
-                resetPatientForm();
-                document.getElementById('patientModalLabel').innerHTML = '<i class="bi bi-person-plus me-2"></i>Yeni Hasta Ekle';
-                patientModal.show();
-            });
-
             // Sunucu Taraflı Arama (Blind Search Entegrasyonu)
             let searchTimeout = null;
             
@@ -421,9 +297,6 @@
 
                 if (query.length < 2) {
                     if (query.length === 0) {
-                        // Arama temizlendiyse listeyi sıfırla (sayfayı yenile veya ilk 20 kaydı çek)
-                        // Performans için şimdilik reload en temizi, ya da varsayılan listeyi tekrar çekebiliriz.
-                        // Kullanıcı deneyimi için şimdilik reload yapmıyoruz, sonuca göre boşaltıyoruz.
                          window.location.reload(); 
                     }
                     return;
@@ -460,14 +333,6 @@
                     }
                 }, 500); 
             });
-
-            // Hasta Kaydet
-            btnSavePatient.addEventListener('click', handleSavePatient);
-
-            // İl Değiştiğinde İlçeleri Getir
-            document.getElementById('province_id').addEventListener('change', (e) => {
-                loadDistricts(e.target.value);
-            });
         }
 
         /**
@@ -502,6 +367,11 @@
                 // Tarih (updated_at veya created_at)
                 const lastActionDate = patient.updated_at || patient.created_at;
 
+                // Base path construction logic check:
+                // If not available in JS context, we can infer from current location or use a relative path
+                // Since this is admin panel, /admin/patients/... is safe.
+                const basePath = window.location.origin + '/admin';
+
                 tr.innerHTML = `
                     <td><code>${patient.tc_no || '-'}</code></td>
                     <td><div class="fw-bold text-dark">${patient.name}</div></td>
@@ -513,12 +383,12 @@
                             <button class="btn btn-outline-primary" onclick="showPatientDetails(${patient.id})" title="Hızlı Önizleme (Modal)">
                                 <i class="bi bi-eye"></i>
                             </button>
-                            <a href="${window.location.origin}/admin/patients/${patient.id}" class="btn btn-outline-secondary" title="Tam Detay Sayfası">
+                            <a href="${basePath}/patients/${patient.id}" class="btn btn-outline-secondary" title="Tam Detay Sayfası">
                                 <i class="bi bi-box-arrow-up-right"></i>
                             </a>
-                            <button class="btn btn-outline-warning" onclick="editPatient(${patient.id})" title="Düzenle">
+                            <a href="${basePath}/patients/${patient.id}/edit" class="btn btn-outline-warning" title="Düzenle">
                                 <i class="bi bi-pencil"></i>
-                            </button>
+                            </a>
                             <button class="btn btn-outline-danger" onclick="handleArchivePatient(${patient.id})" title="Arşivle">
                                 <i class="bi bi-archive"></i>
                             </button>
@@ -529,133 +399,7 @@
             });
         }
 
-        // loadProvinces() fonksiyonu da artık Twig render ile yapılıyor.
 
-        // İlçeleri API'den Yükle
-        async function loadDistricts(provinceId, selectedDistrictId = null) {
-            const districtSelect = document.getElementById('district_id');
-
-            if (!provinceId) {
-                districtSelect.innerHTML = '<option value="">Önce İl Seçiniz</option>';
-                districtSelect.disabled = true;
-                return;
-            }
-
-            try {
-                districtSelect.disabled = true;
-                districtSelect.innerHTML = '<option value="">Yükleniyor...</option>';
-
-                const response = await api.get(`/api/general/districts?province_id=${provinceId}`);
-                const districts = response.data || [];
-
-                districtSelect.innerHTML = '';
-                const defaultOpt = document.createElement('option');
-                defaultOpt.value = '';
-                defaultOpt.textContent = 'İlçe Seçiniz';
-                districtSelect.appendChild(defaultOpt);
-
-                districts.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.id;
-                    opt.textContent = d.name;
-                    districtSelect.appendChild(opt);
-                });
-
-                districtSelect.disabled = false;
-
-                if (selectedDistrictId) {
-                    districtSelect.value = selectedDistrictId;
-                }
-            } catch (error) {
-                console.error('İlçeler yüklenirken hata:', error);
-                districtSelect.innerHTML = '<option value="">Hata!</option>';
-            }
-        }
-
-
-        // Hasta Kaydet/Güncelle
-        async function handleSavePatient() {
-            const formData = new FormData(patientForm);
-            const data = Object.fromEntries(formData.entries());
-            const id = data.id;
-
-            // Temel Validasyon
-            if (!data.tc_no || !data.name || !data.phone) {
-                Utils.showError('TC No, Ad Soyad ve Telefon alanları zorunludur.');
-                return;
-            }
-
-            if (data.tc_no.length !== 11) {
-                Utils.showError('TC Kimlik No 11 haneli olmalıdır.');
-                return;
-            }
-
-            if (!validateTCKN(data.tc_no)) {
-                Utils.showError('Geçersiz TC Kimlik No! Lütfen kontrol ediniz.');
-                return;
-            }
-
-            btnSavePatient.disabled = true;
-            btnSavePatient.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>İşleniyor...';
-
-            try {
-                if (id) {
-                    await api.put(`/api/patients/${id}`, data);
-                    Utils.showSuccess('Hasta bilgileri güncellendi.');
-                } else {
-                    await api.post('/api/patients', data);
-                    Utils.showSuccess('Yeni hasta başarıyla oluşturuldu.');
-                }
-
-                patientModal.hide();
-                window.location.reload();
-
-            } catch (error) {
-                console.error('Hasta kaydedilirken hata:', error);
-                Utils.showError(typeof error === 'string' ? error : 'İşlem başarısız.');
-            } finally {
-                btnSavePatient.disabled = false;
-                btnSavePatient.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Kaydet';
-            }
-        }
-
-        // Hasta Düzenleme Modu
-        window.editPatient = async function (id) {
-            try {
-                Utils.showLoading('Bilgiler yükleniyor...');
-                const response = await api.get(`/api/patients/${id}`);
-                const patient = response.data;
-
-                if (!patient) return;
-
-                document.getElementById('patientId').value = ''; // Clear ID explicitly before setting
-
-                document.getElementById('patientId').value = patient.id;
-                document.getElementById('tc_no').value = patient.tc_no;
-                document.getElementById('name').value = patient.name;
-                document.getElementById('phone').value = patient.phone;
-                document.getElementById('email').value = patient.email || '';
-                document.getElementById('birth_date').value = patient.birth_date || '';
-                document.getElementById('gender').value = patient.gender || 'U';
-                document.getElementById('blood_type').value = patient.blood_type || '';
-                document.getElementById('province_id').value = patient.province_id || '';
-                if (patient.province_id) {
-                    loadDistricts(patient.province_id, patient.district_id);
-                } else {
-                    document.getElementById('district_id').innerHTML = '<option value="">Önce İl Seçiniz</option>';
-                    document.getElementById('district_id').disabled = true;
-                }
-                document.getElementById('address').value = patient.address || '';
-                document.getElementById('notes').value = patient.notes || '';
-
-                document.getElementById('patientModalLabel').innerHTML = '<i class="bi bi-pencil me-2"></i>Hasta Düzenle';
-                Utils.closeLoading();
-                patientModal.show();
-            } catch (error) {
-                Utils.closeLoading();
-                Utils.showError('Hasta bilgileri yüklenemedi.');
-            }
-        };
 
         // Hasta Detay & Vitals Göster
         window.showPatientDetails = async function (id) {
@@ -829,11 +573,7 @@
             }
         };
 
-        // Form Sıfırlama
-        function resetPatientForm() {
-            patientForm.reset();
-            document.getElementById('patientId').value = '';
-        }
+
 
         /**
          * TC Kimlik Numarası Doğrulayıcı

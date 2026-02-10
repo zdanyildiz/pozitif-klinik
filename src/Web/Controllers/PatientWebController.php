@@ -75,6 +75,20 @@ class PatientWebController
         ]);
     }
 
+    #[Route('GET', '/patients/add')]
+    public function add(Request $request, Response $response): Response
+    {
+        $clinicId = (int) $this->session->get('clinic_id');
+        $provinces = $this->generalRepository->getProvinces();
+
+        return $this->view->render($response, 'patient_form.twig', [
+            'mode' => 'add',
+            'provinces' => $provinces,
+            'pageTitle' => 'Yeni Hasta Ekle',
+            'page' => 'patients'
+        ]);
+    }
+
     #[Route('GET', '/patients/{id}')]
     public function detail(Request $request, Response $response, array $args): Response
     {
@@ -178,6 +192,37 @@ class PatientWebController
             'totalPaid' => $totalPaid,
             'balance' => $balance,
             'pageTitle' => $patient['name'] . ' - Hasta Detayı',
+            'page' => 'patients'
+        ]);
+    }
+
+    #[Route('GET', '/patients/{id}/edit')]
+    public function edit(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->session->get('clinic_id');
+        $patientId = (int) $args['id'];
+
+        // 1. Hasta Verisini Çek
+        $patient = $this->repository->findById($clinicId, $patientId);
+
+        if (!$patient) {
+            return $response->withHeader('Location', '/admin/patients')->withStatus(302);
+        }
+
+        // 2. Referans Verileri Çek
+        $provinces = $this->generalRepository->getProvinces();
+        $districts = [];
+
+        if (!empty($patient['province_id'])) {
+            $districts = $this->generalRepository->getDistricts($patient['province_id']);
+        }
+
+        return $this->view->render($response, 'patient_form.twig', [
+            'mode' => 'edit',
+            'patient' => $patient,
+            'provinces' => $provinces,
+            'districts' => $districts,
+            'pageTitle' => 'Hasta Düzenle: ' . $patient['name'],
             'page' => 'patients'
         ]);
     }

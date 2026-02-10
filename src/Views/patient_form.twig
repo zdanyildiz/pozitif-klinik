@@ -1,0 +1,522 @@
+{% extends 'layout.twig' %}
+
+{% block title %}
+    {% if mode == 'add' %}
+        Yeni Hasta Ekle
+    {% else %}
+        Hasta Düzenle: {{ patient.name }}
+    {% endif %}
+{% endblock %}
+
+{% block head %}
+<style>
+    /* Custom Styling for Form Tabs */
+    .nav-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 1rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        color: #4f46e5;
+        background: rgba(79, 70, 229, 0.05);
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #4f46e5;
+        background: transparent;
+        border-bottom-color: #4f46e5;
+        font-weight: 600;
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        padding: 0.6rem 0.8rem;
+        border-color: #e5e7eb;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .card-form {
+        border: 1px solid #f3f4f6;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        border-radius: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .required-star {
+        color: #ef4444;
+        margin-left: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <a href="{{ base_path }}/admin/patients" class="btn btn-light btn-sm rounded-circle me-3 shadow-sm text-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <span>
+            {% if mode == 'add' %}
+                Yeni Hasta Kaydı
+            {% else %}
+                Hasta Düzenle
+            {% endif %}
+        </span>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <form id="patientForm" class="needs-validation" novalidate>
+        <input type="hidden" name="mode" value="{{ mode }}">
+        {% if mode == 'edit' %}
+            <input type="hidden" name="id" value="{{ patient.id }}">
+        {% endif %}
+
+        <div class="card card-form bg-white">
+            <div class="card-header bg-white border-bottom p-0">
+                <ul class="nav nav-tabs px-4" id="formTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-general" type="button">
+                            <i class="bi bi-person me-2"></i>Genel Bilgiler
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-identity" type="button">
+                            <i class="bi bi-person-vcard me-2"></i>Kimlik & Nüfus
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-work" type="button">
+                            <i class="bi bi-briefcase me-2"></i>Çalışma Bilgileri
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-medical" type="button">
+                            <i class="bi bi-heart-pulse me-2"></i>Tıbbi Bilgiler
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-insurance" type="button">
+                            <i class="bi bi-shield-check me-2"></i>Sigorta & Yasal
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body p-4">
+                <div class="tab-content" id="formTabsContent">
+                    
+                    <!-- TAB 1: GENEL BİLGİLER -->
+                    <div class="tab-pane fade show active" id="tab-general" role="tabpanel">
+                        <h5 class="section-title"><i class="bi bi-info-circle text-primary"></i> Temel İletişim Bilgileri</h5>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6 col-lg-4">
+                                <label class="form-label">Ad Soyad <span class="required-star">*</span></label>
+                                <input type="text" class="form-control" name="name" value="{{ patient.name }}" required minlength="3">
+                                <div class="invalid-feedback">Lütfen geçerli bir ad soyad giriniz.</div>
+                            </div>
+                            
+                            <div class="col-md-6 col-lg-4">
+                                <label class="form-label">TC Kimlik No <span class="required-star">*</span></label>
+                                <input type="text" class="form-control" name="tc_no" value="{{ patient.tc_no }}" required pattern="[0-9]{11}" maxlength="11">
+                                <div class="invalid-feedback">11 haneli TC kimlik numarası giriniz.</div>
+                            </div>
+                            
+                            <div class="col-md-6 col-lg-4">
+                                <label class="form-label">Doğum Tarihi</label>
+                                <input type="date" class="form-control" name="birth_date" value="{{ patient.birth_date }}">
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <label class="form-label">Telefon <span class="required-star">*</span></label>
+                                <input type="tel" class="form-control" name="phone" value="{{ patient.phone }}" required placeholder="05XX XXX XX XX">
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <label class="form-label">E-posta</label>
+                                <input type="email" class="form-control" name="email" value="{{ patient.email }}">
+                            </div>
+
+                            <div class="col-md-6 col-lg-2">
+                                <label class="form-label">Cinsiyet</label>
+                                <select class="form-select" name="gender">
+                                    <option value="U" {{ patient.gender == 'U' ? 'selected' : '' }}>Belirtilmemiş</option>
+                                    <option value="F" {{ patient.gender == 'F' ? 'selected' : '' }}>Kadın</option>
+                                    <option value="M" {{ patient.gender == 'M' ? 'selected' : '' }}>Erkek</option>
+                                </select>
+                            </div>
+                             <div class="col-md-6 col-lg-2">
+                                <label class="form-label">Kan Grubu</label>
+                                <select class="form-select" name="blood_type">
+                                    <option value="">Seçiniz</option>
+                                    {% for group in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'] %}
+                                        <option value="{{ group }}" {{ patient.blood_type == group ? 'selected' : '' }}>{{ group }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-12"><hr class="text-muted opacity-25"></div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">İl</label>
+                                <select class="form-select" name="province_id" id="provinceSelect">
+                                    <option value="">İl Seçiniz</option>
+                                    {% for province in provinces %}
+                                        <option value="{{ province.id }}" {{ patient.province_id == province.id ? 'selected' : '' }}>{{ province.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">İlçe</label>
+                                <select class="form-select" name="district_id" id="districtSelect" {{ mode == 'add' ? 'disabled' : '' }}>
+                                    <option value="">Önce İl Seçiniz</option>
+                                    {% for district in districts %}
+                                        <option value="{{ district.id }}" {{ patient.district_id == district.id ? 'selected' : '' }}>{{ district.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Açık Adres</label>
+                                <textarea class="form-control" name="address" rows="2">{{ patient.address }}</textarea>
+                            </div>
+
+                             <div class="col-12">
+                                <label class="form-label">Genel Notlar</label>
+                                <textarea class="form-control" name="notes" rows="3">{{ patient.notes }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: KİMLİK & NÜFUS -->
+                    <div class="tab-pane fade" id="tab-identity" role="tabpanel">
+                        <h5 class="section-title"><i class="bi bi-person-vcard text-primary"></i> Detaylı Nüfus Verileri</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Baba Adı</label>
+                                <input type="text" class="form-control" name="identity_details[father_name]" value="{{ patient.identity_details.father_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Anne Adı</label>
+                                <input type="text" class="form-control" name="identity_details[mother_name]" value="{{ patient.identity_details.mother_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Doğum Yeri</label>
+                                <input type="text" class="form-control" name="identity_details[birth_place]" value="{{ patient.identity_details.birth_place }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Uyruk</label>
+                                <input type="text" class="form-control" name="identity_details[nationality]" value="{{ patient.identity_details.nationality|default('TC') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Medeni Hal</label>
+                                <select class="form-select" name="identity_details[marital_status]">
+                                    <option value="">Seçiniz</option>
+                                    {% for status in ['Bekar', 'Evli', 'Dul', 'Boşanmış'] %}
+                                        <option value="{{ status }}" {{ patient.identity_details.marital_status == status ? 'selected' : '' }}>{{ status }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                             <div class="col-md-6">
+                                <label class="form-label">Vergi Numarası (Varsa)</label>
+                                <input type="text" class="form-control" name="identity_details[tax_no]" value="{{ patient.identity_details.tax_no }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: ÇALIŞMA BİLGİLERİ -->
+                    <div class="tab-pane fade" id="tab-work" role="tabpanel">
+                         <h5 class="section-title"><i class="bi bi-briefcase text-primary"></i> Meslek ve İşyeri Bilgileri</h5>
+                         <div class="row g-4">
+                             <div class="col-md-6">
+                                <label class="form-label">Meslek</label>
+                                <input type="text" class="form-control" name="work_details[profession]" value="{{ patient.work_details.profession }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Şirket / Kurum Adı</label>
+                                <input type="text" class="form-control" name="work_details[company_name]" value="{{ patient.work_details.company_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Ünvan / Pozisyon</label>
+                                <input type="text" class="form-control" name="work_details[role]" value="{{ patient.work_details.role }}">
+                            </div>
+                             <div class="col-md-6">
+                                <label class="form-label">İş Telefonu</label>
+                                <input type="tel" class="form-control" name="work_details[phone]" value="{{ patient.work_details.phone }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">İş E-postası</label>
+                                <input type="email" class="form-control" name="work_details[email]" value="{{ patient.work_details.email }}">
+                            </div>
+                         </div>
+                    </div>
+
+                    <!-- TAB 4: TIBBİ BİLGİLER -->
+                    <div class="tab-pane fade" id="tab-medical" role="tabpanel">
+                        <h5 class="section-title"><i class="bi bi-heart-pulse text-primary"></i> Önemli Tıbbi Uyarılar</h5>
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <label class="form-label">Kronik Hastalıklar (Çoklu Seçim)</label>
+                                <select class="form-select" name="medical_info[chronic_diseases][]" multiple size="5">
+                                    {% for disease in ['Diyabet', 'Hipertansiyon', 'Astım', 'KOAH', 'Kalp Yetmezliği', 'Epilepsi', 'Tiroid'] %}
+                                        <option value="{{ disease }}" {{ disease in patient.medical_info.chronic_diseases ? 'selected' : '' }}>{{ disease }}</option>
+                                    {% endfor %}
+                                    <option value="Diğer" {{ 'Diğer' in patient.medical_info.chronic_diseases ? 'selected' : '' }}>Diğer</option>
+                                </select>
+                                <div class="form-text">Birden fazla seçim yapmak için CTRL tuşuna basılı tutun.</div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label">Önemli Uyarılar</label>
+                                <textarea class="form-control border-danger" name="medical_info[warnings]" rows="3" placeholder="Örn: Kan sulandırıcı kullanıyor, hamilelik şüphesi vb.">{{ patient.medical_info.warnings }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: SİGORTA & YASAL -->
+                    <div class="tab-pane fade" id="tab-insurance" role="tabpanel">
+                         <h5 class="section-title"><i class="bi bi-shield-check text-primary"></i> Sigorta ve Yasal İzinler</h5>
+                         <div class="row g-4">
+                             <div class="col-md-6">
+                                <label class="form-label">SGK Durumu</label>
+                                <select class="form-select" name="insurance_info[sgk_status]">
+                                    <option value="Yok" {{ patient.insurance_info.sgk_status == 'Yok' ? 'selected' : '' }}>Güvence Yok (Ücretli)</option>
+                                    <option value="Çalışan" {{ patient.insurance_info.sgk_status == 'Çalışan' ? 'selected' : '' }}>Çalışan (4A)</option>
+                                    <option value="Bağkur" {{ patient.insurance_info.sgk_status == 'Bağkur' ? 'selected' : '' }}>Bağkur (4B)</option>
+                                    <option value="Emekli" {{ patient.insurance_info.sgk_status == 'Emekli' ? 'selected' : '' }}>Emekli (4C)</option>
+                                    <option value="GSS" {{ patient.insurance_info.sgk_status == 'GSS' ? 'selected' : '' }}>GSS</option>
+                                </select>
+                             </div>
+                             
+                             <div class="col-12">
+                                 <div class="card bg-light border">
+                                     <div class="card-body">
+                                         <h6 class="fw-bold mb-3">Yasal İzinler (ETK ve KVKK)</h6>
+                                         <div class="form-check form-switch mb-2">
+                                             <input class="form-check-input" type="checkbox" id="kvkkCheck" name="legal_consents[kvkk][is_accepted]" value="1" {{ patient.legal_consents.kvkk.is_accepted ? 'checked' : '' }}>
+                                             <label class="form-check-label" for="kvkkCheck">KVKK Aydınlatma Metni Onaylandı</label>
+                                         </div>
+                                         <div class="form-check form-switch mb-2">
+                                             <input class="form-check-input" type="checkbox" id="smsCheck" name="legal_consents[etk][sms][allowed]" value="1" {{ patient.legal_consents.etk.sms.allowed ? 'checked' : '' }}>
+                                             <label class="form-check-label" for="smsCheck">SMS İle Bilgilendirme İzni (ETK)</label>
+                                         </div>
+                                         <div class="form-check form-switch">
+                                             <input class="form-check-input" type="checkbox" id="emailCheck" name="legal_consents[etk][email][allowed]" value="1" {{ patient.legal_consents.etk.email.allowed ? 'checked' : '' }}>
+                                             <label class="form-check-label" for="emailCheck">E-posta İle Bilgilendirme İzni (ETK)</label>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="card-footer bg-light p-4 border-top d-flex justify-content-between align-items-center">
+                <a href="{{ base_path }}/admin/patients" class="btn btn-link text-decoration-none text-muted">İptal</a>
+                <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm" id="btnSave">
+                    <i class="bi bi-check-lg me-2"></i>
+                    {% if mode == 'add' %}
+                        Hastayı Kaydet
+                    {% else %}
+                        Değişiklikleri Kaydet
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('patientForm');
+        const provinceSelect = document.getElementById('provinceSelect');
+        const districtSelect = document.getElementById('districtSelect');
+        const btnSave = document.getElementById('btnSave');
+        const mode = "{{ mode }}";
+        const patientId = "{{ patient.id }}";
+
+        // İlçe Yükleme logic
+        provinceSelect.addEventListener('change', async (e) => {
+            const provinceId = e.target.value;
+            districtSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+            districtSelect.disabled = true;
+
+            if (!provinceId) {
+                districtSelect.innerHTML = '<option value="">Önce İl Seçiniz</option>';
+                return;
+            }
+
+            try {
+                // Districts endpoint should be public or general
+                const res = await api.get(`/api/general/districts?province_id=${provinceId}`);
+                if (res.data) {
+                    districtSelect.innerHTML = '<option value="">İlçe Seçiniz</option>';
+                    res.data.forEach(d => {
+                        districtSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+                    });
+                    districtSelect.disabled = false;
+                }
+            } catch (err) {
+                console.error(err);
+                districtSelect.innerHTML = '<option value="">Hata Oluştu</option>';
+            }
+        });
+
+        // Form Submit
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!form.checkValidity()) {
+                e.stopPropagation();
+                form.classList.add('was-validated');
+                // Find first invalid input and switch tab if needed
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) {
+                     const tabPane = firstInvalid.closest('.tab-pane');
+                     if(tabPane) {
+                         const tabId = tabPane.id;
+                         const tabBtn = document.querySelector(`button[data-bs-target="#${tabId}"]`);
+                         if(tabBtn) tabBtn.click();
+                     }
+                     firstInvalid.focus();
+                }
+                return;
+            }
+
+            // Collect Data
+            const formData = new FormData(form);
+            const data = {};
+            
+            // Convert FormData to JSON object, handling arrays and nested objects
+            // Simple approach: We will construct the object manually to ensure structure matches API
+            
+            // General
+            data.name = formData.get('name');
+            data.tc_no = formData.get('tc_no');
+            data.phone = formData.get('phone');
+            data.email = formData.get('email');
+            data.birth_date = formData.get('birth_date');
+            data.gender = formData.get('gender');
+            data.blood_type = formData.get('blood_type');
+            data.province_id = formData.get('province_id');
+            data.district_id = formData.get('district_id');
+            data.address = formData.get('address');
+            data.notes = formData.get('notes');
+
+            // Nested JSONs
+            data.identity_details = {
+                father_name: formData.get('identity_details[father_name]'),
+                mother_name: formData.get('identity_details[mother_name]'),
+                birth_place: formData.get('identity_details[birth_place]'),
+                nationality: formData.get('identity_details[nationality]'),
+                marital_status: formData.get('identity_details[marital_status]'),
+                tax_no: formData.get('identity_details[tax_no]')
+            };
+
+            data.work_details = {
+                profession: formData.get('work_details[profession]'),
+                company_name: formData.get('work_details[company_name]'),
+                role: formData.get('work_details[role]'),
+                phone: formData.get('work_details[phone]'),
+                email: formData.get('work_details[email]')
+            };
+            
+            // Medical Info (Multiselect handling)
+            const diseases = [];
+            const diseaseSelect = document.querySelector('select[name="medical_info[chronic_diseases][]"]');
+            if(diseaseSelect) {
+                for(let opt of diseaseSelect.options) {
+                    if(opt.selected) diseases.push(opt.value);
+                }
+            }
+
+            data.medical_info = {
+                chronic_diseases: diseases,
+                warnings: formData.get('medical_info[warnings]')
+            };
+
+            data.insurance_info = {
+                sgk_status: formData.get('insurance_info[sgk_status]')
+            };
+
+            data.legal_consents = {
+                kvkk: { is_accepted: formData.get('legal_consents[kvkk][is_accepted]') === '1' },
+                etk: {
+                    sms: { allowed: formData.get('legal_consents[etk][sms][allowed]') === '1' },
+                    email: { allowed: formData.get('legal_consents[etk][email][allowed]') === '1' }
+                }
+            };
+
+            // Send to API
+            try {
+                btnSave.disabled = true;
+                btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+
+                let response;
+                if (mode === 'add') {
+                    response = await api.post('/api/patients', data);
+                } else {
+                    response = await api.put(`/api/patients/${patientId}`, data);
+                }
+
+                if (response.data.status) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Başarılı!',
+                        text: 'Hasta bilgileri başarıyla kaydedildi.',
+                        confirmButtonText: 'Tamam'
+                    }).then(() => {
+                        window.location.href = `{{ base_path }}/admin/patients/${response.data.data.id || patientId}`;
+                    });
+                } else {
+                    throw new Error(response.data.message || 'Bir hata oluştu');
+                }
+
+            } catch (error) {
+                console.error(error);
+                let msg = "Sunucu hatası oluştu.";
+                if(error.response && error.response.data && error.response.data.message) {
+                    msg = error.response.data.message;
+                } else if (error.message) {
+                   msg = error.message;
+                }
+                Swal.fire('Hata', msg, 'error');
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = '<i class="bi bi-check-lg me-2"></i>Kaydet';
+            }
+        });
+    });
+</script>
+{% endblock %}

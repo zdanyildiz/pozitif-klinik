@@ -19,12 +19,12 @@ Pozitif Klinik, multi-tenant SaaS mimarisi üzerine kurulu bir klinik yönetim s
                                       ▼
 +---------------------------------------------------------------------+
 |                      WEB SUNUCUSU (Nginx / Apache)                    |
-|                      (public/index.php'ye yönlendirir)                |
+|                      (Public/index.php'ye yönlendirir)                |
 +---------------------------------------------------------------------+
                                       |
                                       ▼
 +---------------------------------------------------------------------+
-|                     SLIM APP (public/index.php)                     |
+|                     SLIM APP (Public/index.php)                     |
 |                                                                     |
 |    +-----------------------------------------------------------+    |
 |    |                        MIDDLEWARE                         |    |

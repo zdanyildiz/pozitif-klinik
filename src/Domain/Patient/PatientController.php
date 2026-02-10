@@ -141,7 +141,12 @@ class PatientController extends BaseController
             ->key('address', v::optional(v::stringType()))
             ->key('province_id', v::optional(v::intVal()))
             ->key('district_id', v::optional(v::intVal()))
-            ->key('notes', v::optional(v::stringType()));
+            ->key('notes', v::optional(v::stringType()))
+            ->key('identity_details', v::optional(v::arrayType()))
+            ->key('work_details', v::optional(v::arrayType()))
+            ->key('medical_info', v::optional(v::arrayType()))
+            ->key('insurance_info', v::optional(v::arrayType()))
+            ->key('legal_consents', v::optional(v::arrayType()));
 
         try {
             $validator->assert($data);
@@ -183,7 +188,12 @@ class PatientController extends BaseController
             ->key('address', v::optional(v::stringType()))
             ->key('province_id', v::optional(v::intVal()))
             ->key('district_id', v::optional(v::intVal()))
-            ->key('notes', v::optional(v::stringType()));
+            ->key('notes', v::optional(v::stringType()))
+            ->key('identity_details', v::optional(v::arrayType()))
+            ->key('work_details', v::optional(v::arrayType()))
+            ->key('medical_info', v::optional(v::arrayType()))
+            ->key('insurance_info', v::optional(v::arrayType()))
+            ->key('legal_consents', v::optional(v::arrayType()));
 
         try {
             $validator->assert($data);
