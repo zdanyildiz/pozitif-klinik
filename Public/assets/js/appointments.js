@@ -456,6 +456,19 @@ function renderAppointments() {
             statusBadge.textContent = getStatusLabel(app.status);
         }
         statusWrapper.appendChild(statusBadge);
+
+        // Epikriz (Muayene Notu) Kontrolü
+        const hasEpicrisis = app.epicrisis_count && parseInt(app.epicrisis_count) > 0;
+        const needsEpicrisis = app.status === 'completed' || app.status === 'in_test';
+
+        if (needsEpicrisis && !hasEpicrisis) {
+            const warningBadge = document.createElement('span');
+            warningBadge.className = 'badge badge-epicrisis-missing';
+            warningBadge.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Epikriz Eksik!';
+            warningBadge.title = 'Henüz kalıcı epikriz belgesi oluşturulmamış.';
+            statusWrapper.appendChild(warningBadge);
+        }
+
         tdStatus.appendChild(statusWrapper);
         row.appendChild(tdStatus);
 
@@ -508,7 +521,9 @@ function renderAppointments() {
 
         // 2. Muayene Butonu
         const btnExam = document.createElement('button');
-        btnExam.className = 'btn btn-sm btn-exam-action shadow-none';
+        const isEpicrisisMissing = needsEpicrisis && !hasEpicrisis;
+
+        btnExam.className = `btn btn-sm btn-exam-action shadow-none ${isEpicrisisMissing ? 'btn-exam-missing' : ''}`;
         btnExam.style.fontSize = '0.75rem';
         btnExam.innerHTML = '<i class="bi bi-person-pulse"></i> Muayene';
         btnExam.onclick = (e) => {
@@ -621,6 +636,7 @@ function renderStatusOptions() {
             opt.textContent = s.name;
             sel2.appendChild(opt);
         });
+        sel2.value = 'confirmed';
     }
 }
 
@@ -1403,6 +1419,7 @@ function resetAppointmentForm() {
 
     // Tarihi bugün yap
     document.getElementById('appDate').value = document.getElementById('filterDate').value || new Date().toISOString().split('T')[0];
+    document.getElementById('createStatusSelect').value = 'confirmed';
     document.getElementById('appTime').value = '';
     document.getElementById('selectedSlot').value = '';
 

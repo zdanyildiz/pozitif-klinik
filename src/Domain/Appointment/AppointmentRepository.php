@@ -726,7 +726,9 @@ class AppointmentRepository
                     u.name as doctor_name,
                     s.name as status_name,
                     s.color_code as status_color,
-                    s.icon_class as status_icon
+                    s.icon_class as status_icon,
+                    (SELECT COUNT(*) FROM cln_examinations WHERE appointment_id = a.id) as examination_count,
+                    (SELECT COUNT(*) FROM cln_patient_documents WHERE appointment_id = a.id AND document_type = 'epicrisis') as epicrisis_count
                 FROM cln_appointments a
                 JOIN ptn_cards p ON a.patient_id = p.id
                 JOIN cln_appointment_types t ON a.type_id = t.id
@@ -750,7 +752,9 @@ class AppointmentRepository
                     u.name as doctor_name,
                     s.name as status_name,
                     s.color_code as status_color,
-                    s.icon_class as status_icon
+                    s.icon_class as status_icon,
+                    (SELECT COUNT(*) FROM cln_examinations WHERE appointment_id = a.id) as examination_count,
+                    (SELECT COUNT(*) FROM cln_patient_documents WHERE appointment_id = a.id AND document_type = 'epicrisis') as epicrisis_count
                 FROM cln_appointments a
                 JOIN ptn_cards p ON a.patient_id = p.id
                 JOIN cln_appointment_types t ON a.type_id = t.id
@@ -773,7 +777,9 @@ class AppointmentRepository
                     u.name as doctor_name,
                     s.name as status_name,
                     s.color_code as status_color,
-                    s.icon_class as status_icon
+                    s.icon_class as status_icon,
+                    (SELECT COUNT(*) FROM cln_examinations WHERE appointment_id = a.id) as examination_count,
+                    (SELECT COUNT(*) FROM cln_patient_documents WHERE appointment_id = a.id AND document_type = 'epicrisis') as epicrisis_count
                 FROM cln_appointments a
                 JOIN cln_appointment_types t ON a.type_id = t.id
                 LEFT JOIN sys_users u ON a.doctor_id = u.id

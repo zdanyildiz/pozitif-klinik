@@ -367,3 +367,44 @@
     font-size: 1rem;
     margin-right: 4px;
 }
+
+/* Epicrisis Missing Warning - High Visibility */
+.badge-epicrisis-missing {
+    background-color: #fff5f5 !important;
+    color: #e53e3e !important;
+    border: 1px solid #feb2b2 !important;
+    padding: 0.25rem 0.5rem !important;
+    font-weight: 700 !important;
+    font-size: 0.7rem !important;
+    border-radius: 4px;
+    animation: pulse-danger-subtle 2s infinite;
+}
+
+@keyframes pulse-danger-subtle {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.4);
+    }
+
+    70% {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 6px rgba(229, 62, 62, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(229, 62, 62, 0);
+    }
+}
+
+.btn-exam-missing {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
+    box-shadow: 0 2px 8px rgba(253, 160, 133, 0.4) !important;
+    color: white !important;
+    border: 1px solid #fda085 !important;
+}
+
+.btn-exam-missing:hover {
+    background: linear-gradient(135deg, #f5cc4a 0%, #fd9272 100%) !important;
+    transform: translateY(-2px);
+}
