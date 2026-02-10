@@ -18,19 +18,25 @@ class ClinicWebController
     private \App\Domain\Appointment\AppointmentRepository $appointmentRepository;
     private \App\Domain\Surgery\SurgeryRepository $surgeryRepository;
     private \App\Domain\User\UserRepository $userRepository;
+    private \App\Domain\Platform\TenantRepository $tenantRepository;
+    private \App\Domain\System\GeneralRepository $generalRepository;
 
     public function __construct(
         Twig $view,
         \App\Core\Service\SessionService $session,
         \App\Domain\Appointment\AppointmentRepository $appointmentRepository,
         \App\Domain\Surgery\SurgeryRepository $surgeryRepository,
-        \App\Domain\User\UserRepository $userRepository
+        \App\Domain\User\UserRepository $userRepository,
+        \App\Domain\Platform\TenantRepository $tenantRepository,
+        \App\Domain\System\GeneralRepository $generalRepository
     ) {
         $this->view = $view;
         $this->session = $session;
         $this->appointmentRepository = $appointmentRepository;
         $this->surgeryRepository = $surgeryRepository;
         $this->userRepository = $userRepository;
+        $this->tenantRepository = $tenantRepository;
+        $this->generalRepository = $generalRepository;
     }
 
     /**
@@ -104,8 +110,40 @@ class ClinicWebController
     #[Middleware(SessionAuthMiddleware::class)]
     public function settings(Request $request, Response $response): Response
     {
+        $clinicId = (int) $this->session->get('clinic_id');
+
+        $settings = $this->tenantRepository->getBasicInfo($clinicId);
+        $displayConfig = $this->tenantRepository->getDisplayConfig($clinicId);
+        $provinces = $this->generalRepository->getProvinces();
+
+        // Eğer displayConfig boşsa varsayılanları dolduralım (Frontend ile uyumlu)
+        if (empty($displayConfig)) {
+            $displayConfig = [
+                'modules' => [
+                    'surgery' => ['doctor' => true, 'secretary' => true],
+                    'finance' => ['doctor' => true, 'admin' => true],
+                    'personnel' => ['admin' => true]
+                ],
+                'patient_detail' => [
+                    'show_finance' => ['admin' => true, 'secretary' => true],
+                    'show_vitals' => ['doctor' => true, 'secretary' => true]
+                ]
+            ];
+        }
+
+        // Seçili ilin ilçelerini de getirelim (Interactivity için ilk yüklemede lazım olabilir ama JS zaten province change'de çekiyor)
+        // Ancak SSR kuralına göre ilk yüklemede seçili olan gelmeli.
+        $districts = [];
+        if (!empty($settings['province_id'])) {
+            $districts = $this->generalRepository->getDistricts((int) $settings['province_id']);
+        }
+
         return $this->view->render($response, 'clinic_settings.twig', [
-            'page' => 'settings'
+            'page' => 'settings',
+            'settings' => $settings,
+            'display_config' => $displayConfig,
+            'provinces' => $provinces,
+            'districts' => $districts
         ]);
     }
 

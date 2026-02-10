@@ -29,13 +29,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupFilters();
     setupEventListeners();
 
-    await Promise.all([
-        loadTypes(),
-        loadStatuses(),
-        loadPatients(),
-        loadDoctors(),
-        loadStats()
-    ]);
+    try {
+        await Promise.allSettled([
+            loadTypes(),
+            loadStatuses(),
+            loadPatients(),
+            loadDoctors(),
+            loadStats()
+        ]);
+    } catch (e) {
+        console.error('Initialization error:', e);
+    }
 
     renderServiceOptionsForTypes();
     loadAppointments();
@@ -125,9 +129,14 @@ function setupEventListeners() {
         window.location.href = API_URL + '/admin/login';
     });
 
-    document.getElementById('btnAddService').addEventListener('click', toggleServicePanel);
-    document.getElementById('btnConfirmAddService').addEventListener('click', handleConfirmAddService);
-    document.getElementById('btnUpdateDetails').addEventListener('click', handleSaveDetails);
+    const btnAddService = document.getElementById('btnAddService');
+    if (btnAddService) btnAddService.addEventListener('click', toggleServicePanel);
+
+    const btnConfirmAddService = document.getElementById('btnConfirmAddService');
+    if (btnConfirmAddService) btnConfirmAddService.addEventListener('click', handleConfirmAddService);
+
+    const btnUpdateDetails = document.getElementById('btnUpdateDetails');
+    if (btnUpdateDetails) btnUpdateDetails.addEventListener('click', handleSaveDetails);
 
     // ==========================================
     // SLOT GRID EVENT LISTENERS
@@ -342,25 +351,29 @@ async function loadPatients() {
 
 
 async function loadDoctors() {
-    const res = await api.get('/api/users');
-    doctors = (res.data.users || []).filter(u => u.role === 'doctor');
-    renderDoctorOptions();
+    try {
+        const res = await api.get('/api/users');
+        doctors = (res.data.users || []).filter(u => u.role === 'doctor');
+        renderDoctorOptions();
 
-    // Tom Select Başlat
-    if (!doctorTomSelect) {
-        doctorTomSelect = new TomSelect('#doctorSelect', {
-            create: false,
-            sortField: { field: 'text', order: 'asc' },
-            placeholder: 'Doktor Seç...',
-            allowEmptyOption: true
-        });
-    } else {
-        doctorTomSelect.clearOptions();
-        const options = doctors.map(d => ({
-            value: d.id,
-            text: d.name || d.username
-        }));
-        doctorTomSelect.addOptions(options);
+        // Tom Select Başlat
+        if (!doctorTomSelect) {
+            doctorTomSelect = new TomSelect('#doctorSelect', {
+                create: false,
+                sortField: { field: 'text', order: 'asc' },
+                placeholder: 'Doktor Seç...',
+                allowEmptyOption: true
+            });
+        } else {
+            doctorTomSelect.clearOptions();
+            const options = doctors.map(d => ({
+                value: d.id,
+                text: d.name || d.username
+            }));
+            doctorTomSelect.addOptions(options);
+        }
+    } catch (e) {
+        console.error('Doktorlar yüklenemedi:', e);
     }
 }
 
@@ -451,45 +464,47 @@ function renderAppointments() {
         const actionWrapper = document.createElement('div');
         actionWrapper.className = 'd-flex justify-content-end align-items-center gap-2';
 
-        // 1. Ödeme/Tahsilat Butonu (Birleştirilmiş Mantık)
-        const remainingDebt = parseFloat(app.remaining_amount || 0);
-        const isPaid = app.payment_status === 'paid' && remainingDebt <= 0;
+        // 1. Ödeme/Tahsilat Butonu (Birleştirilmiş Mantık) - Yetki Kontrollü
+        if (window.permissions && window.permissions.can_view_finance) {
+            const remainingDebt = parseFloat(app.remaining_amount || 0);
+            const isPaid = app.payment_status === 'paid' && remainingDebt <= 0;
 
-        const btnPayment = document.createElement('button');
-        // Stil: Diğer butonlarla aynı boyutta (btn-sm)
-        if (isPaid) {
-            // Ödendi Durumu
-            btnPayment.className = 'btn btn-sm btn-outline-success shadow-none';
-            btnPayment.textContent = 'Ödendi';
-            btnPayment.title = 'Ödeme Detayları';
-        } else {
-            // Tahsilat Durumu
-            btnPayment.className = 'btn btn-sm btn-primary shadow-none'; // Daha belirgin
-            btnPayment.textContent = 'Tahsilat';
-        }
-
-        // Tıklama Olayı (Her iki durumda da açılacak)
-        btnPayment.onclick = async (e) => {
-            e.stopPropagation();
-            const originalHtml = btnPayment.innerHTML;
-            try {
-                btnPayment.disabled = true;
-                btnPayment.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
-                // Her zaman güncel veriyi çek
-                const res = await api.get(`/api/appointments/${app.id}`);
-                if (res.data) {
-                    openPaymentModal(res.data);
-                }
-            } catch (err) {
-                console.error(err);
-                if (typeof Utils !== 'undefined') Utils.showError('Randevu bilgileri yüklenemedi.');
-            } finally {
-                btnPayment.innerHTML = originalHtml;
-                btnPayment.disabled = false;
+            const btnPayment = document.createElement('button');
+            // Stil: Diğer butonlarla aynı boyutta (btn-sm)
+            if (isPaid) {
+                // Ödendi Durumu
+                btnPayment.className = 'btn btn-sm btn-outline-success shadow-none';
+                btnPayment.textContent = 'Ödendi';
+                btnPayment.title = 'Ödeme Detayları';
+            } else {
+                // Tahsilat Durumu
+                btnPayment.className = 'btn btn-sm btn-primary shadow-none'; // Daha belirgin
+                btnPayment.textContent = 'Tahsilat';
             }
-        };
-        actionWrapper.appendChild(btnPayment);
+
+            // Tıklama Olayı (Her iki durumda da açılacak)
+            btnPayment.onclick = async (e) => {
+                e.stopPropagation();
+                const originalHtml = btnPayment.innerHTML;
+                try {
+                    btnPayment.disabled = true;
+                    btnPayment.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                    // Her zaman güncel veriyi çek
+                    const res = await api.get(`/api/appointments/${app.id}`);
+                    if (res.data) {
+                        openPaymentModal(res.data);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    if (typeof Utils !== 'undefined') Utils.showError('Randevu bilgileri yüklenemedi.');
+                } finally {
+                    btnPayment.innerHTML = originalHtml;
+                    btnPayment.disabled = false;
+                }
+            };
+            actionWrapper.appendChild(btnPayment);
+        }
 
         // 2. Muayene Butonu
         const btnExam = document.createElement('button');

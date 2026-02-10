@@ -46,21 +46,27 @@
                 <a href="{{ base_path }}/admin/appointments" class="nav-link-custom {% if page == 'appointments' %}active{% endif %}">
                     <i class="bi bi-calendar-check"></i>Randevular
                 </a>
+                {% if permissions.can_view_surgery %}
                 <a href="{{ base_path }}/admin/surgeries" class="nav-link-custom {% if page == 'surgeries' %}active{% endif %}">
                     <i class="bi bi-heart-pulse"></i>Ameliyat Takibi
                 </a>
+                {% endif %}
                 <a href="{{ base_path }}/admin/files" class="nav-link-custom {% if page == 'files' %}active{% endif %}">
                     <i class="bi bi-folder2-open"></i>Dijital Arşiv
                 </a>
+                {% if permissions.can_view_finance %}
                 <a href="{{ base_path }}/admin/finance" class="nav-link-custom {% if page == 'finance' %}active{% endif %}">
                     <i class="bi bi-wallet2"></i>Kasa & Finans
                 </a>
+                {% endif %}
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Kurumsal</div>
+                {% if permissions.can_view_personnel %}
                 <a href="{{ base_path }}/admin/personnel" class="nav-link-custom {% if page == 'personnel' %}active{% endif %}">
                     <i class="bi bi-people"></i>Personel
                 </a>
+                {% endif %}
                 <a href="{{ base_path }}/admin/services" class="nav-link-custom {% if page == 'services' %}active{% endif %}">
                     <i class="bi bi-list-check"></i>Hizmet Tanımları
                 </a>

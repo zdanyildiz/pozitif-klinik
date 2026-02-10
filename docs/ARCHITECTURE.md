@@ -255,6 +255,13 @@ Tüm klinikler (tenant'lar) aynı veritabanını ve aynı tablo şemasını payl
     - **Anahtar Yönetimi:** `APP_KEY` environment değişkeni (64 karakter hex) hem AES şifrelemesi hem de HMAC hash üretimi için ana bileşendir.
     - **CryptoService:** `src/Core/Security/CryptoService.php` tüm bu karmaşıklığı soyutlayarak `encrypt()`, `decrypt()` ve `blindIndex()` metodlarını sunar. Repo katmanı bu metodları kullanarak şifreleme/çözme işlemlerini şeffaf bir şekilde yönetir.
 
+9. **Dinamik Yetkilendirme ve Görünüm Kontrolü (Role-Based Display Control):**
+    - Proje, statik rol yetkilerinin ötesinde, her klinik için özelleştirilebilen dinamik bir yetkilendirme katmanına sahiptir.
+    - **UISettingsMiddleware:** Sunucu tarafında her istek için kullanıcının rolü ile kliniğin `display_config` (JSON) ayarlarını karşılaştırır.
+    - **Flattened Permissions:** Middleware, karmaşık JSON yapısını `can_view_finance`, `can_view_surgery` gibi basit boolean değerlere dönüştürerek Twig global değişkenlerine (`permissions`) enjekte eder.
+    - **UI Entegrasyonu:** Hem Twig şablonları (`{% if permissions.can_view_finance %}`) hem de Frontend JavaScript (`window.permissions`) bu merkezi yetki nesnesini kullanarak butonları, tabları ve hassas veri alanlarını otomatik olarak yönetir.
+    - **Güvenlik Devre Kesicileri:** Sadece CSS ile değil, DOM'dan tamamen kaldırma ve JS tarafında "existence check" (varlık kontrolü) mekanizmaları ile yetkisiz erişimler engellenir.
+
 
 ## Yazılım Kalite Standartları
 

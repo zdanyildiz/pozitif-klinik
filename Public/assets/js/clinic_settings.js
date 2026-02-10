@@ -194,7 +194,89 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // 7. Görünüm Ayarlarını Yükle
+    async function loadDisplaySettings() {
+        try {
+            const response = await axios.get('/api/clinic/settings/display');
+            if (response.data.status) {
+                const config = response.data.data;
+                // Recursive function to set checkboxes
+                setCheckboxes(config);
+            }
+        } catch (error) {
+            console.error('Görünüm ayarları yüklenemedi', error);
+        }
+    }
+
+    function setCheckboxes(obj, prefix = '') {
+        for (const key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+                setCheckboxes(obj[key], prefix ? `${prefix}[${key}]` : key);
+            } else {
+                const name = prefix ? `${prefix}[${key}]` : key;
+                const checkbox = document.querySelector(`input[name="${name}"]`);
+                if (checkbox) {
+                    checkbox.checked = obj[key] == true;
+                }
+            }
+        }
+    }
+
+    // 8. Görünüm Ayarlarını Kaydet
+    const displayForm = document.getElementById('displaySettingsForm');
+    const saveDisplayBtn = document.getElementById('saveDisplayBtn');
+
+    if (displayForm) {
+        displayForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            saveDisplayBtn.disabled = true;
+            saveDisplayBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+
+            try {
+                const payload = {};
+                // Helper to set nested value
+                const setNestedValue = (obj, name, value) => {
+                    const keys = name.replace(/\]/g, '').split('[');
+                    let current = obj;
+                    for (let i = 0; i < keys.length - 1; i++) {
+                        if (!current[keys[i]]) current[keys[i]] = {};
+                        current = current[keys[i]];
+                    }
+                    current[keys[keys.length - 1]] = value;
+                };
+
+                const inputs = displayForm.querySelectorAll('input[type="checkbox"]');
+                inputs.forEach(input => {
+                    setNestedValue(payload, input.name, input.checked);
+                });
+
+                const response = await axios.put('/api/clinic/settings/display', payload);
+                if (response.data.status) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Başarılı',
+                        text: 'Görünüm ayarları güncellendi.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            } catch (error) {
+                console.error('Kaydetme hatası', error);
+                Swal.fire('Hata', 'Görünüm ayarları kaydedilemedi.', 'error');
+            } finally {
+                saveDisplayBtn.disabled = false;
+                saveDisplayBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Görünüm Ayarlarını Kaydet';
+            }
+        });
+    }
+
     // Başlangıç
-    await loadProvinces();
-    await loadSettings();
+    // İl değişiminde ilçeleri yükleme işlevi korunur
+    document.getElementById('provinceId').addEventListener('change', (e) => {
+        loadDistricts(e.target.value);
+    });
+
+    // Çalışma saatlerini render et (Twig'deki data-hours'tan alarak)
+    const initialHours = JSON.parse(workingHoursContainer.getAttribute('data-hours') || '{}');
+    renderWorkingHours(initialHours);
 });

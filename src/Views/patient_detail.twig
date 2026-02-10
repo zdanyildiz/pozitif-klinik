@@ -62,6 +62,7 @@
     <div class="row g-4">
         <!-- Sidebar Info -->
         <div class="col-lg-3">
+            {% if permissions.can_view_patient_finance %}
             <div class="card card-glass mb-4">
                 <div class="card-body">
                     <h5 class="card-title fw-bold mb-3 text-secondary">Finansal Özet</h5>
@@ -87,6 +88,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
 
             <div class="card card-glass">
                 <div class="card-body">
@@ -613,6 +615,7 @@
                 </div>
             </div>
 
+            {% if permissions.can_view_patient_finance %}
             <!-- Hizmetler / İşlemler -->
             <div class="p-4">
                 <h6 class="fw-bold text-success mb-3">
@@ -637,6 +640,7 @@
                     </table>
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>

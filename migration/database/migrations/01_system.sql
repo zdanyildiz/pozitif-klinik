@@ -37,6 +37,7 @@ CREATE TABLE `sys_tenants` (
   `tax_office` varchar(100) DEFAULT NULL,
   `tax_number` varchar(20) DEFAULT NULL,
   `working_hours` JSON DEFAULT NULL,
+  `display_config` JSON DEFAULT NULL,
   `description` text DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),

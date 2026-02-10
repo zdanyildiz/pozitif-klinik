@@ -185,9 +185,11 @@
                         <li class="nav-item">
                             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-general">Genel Bilgiler</button>
                         </li>
+                        {% if permissions.can_view_finance %}
                         <li class="nav-item">
                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-billing">Hizmetler & Ücretler</button>
                         </li>
+                        {% endif %}
                     </ul>
 
                     <div class="tab-content">
@@ -223,6 +225,7 @@
                             </div>
                         </div>
 
+                        {% if permissions.can_view_finance %}
                         <!-- Billing Tab -->
                         <div class="tab-pane fade" id="tab-billing">
                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -260,6 +263,7 @@
                             </table>
                             <div id="billingSummaryContainer"></div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="modal-footer border-0">
@@ -326,6 +330,9 @@
 
 
 {% block scripts %}
+    <script>
+        window.permissions = {{ permissions|json_encode|raw }};
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script src="{{ base_path }}/assets/js/finance-shared.js?v={{ version }}&t={{ 'now'|date('U') }}"></script>
     <script src="{{ base_path }}/assets/js/appointments.js?v={{ version }}&t={{ 'now'|date('U') }}"></script>

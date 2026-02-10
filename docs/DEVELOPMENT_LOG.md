@@ -737,3 +737,12 @@ LOG_LEVEL=DEBUG
 - **Utils Entegrasyonu:** Tüm bildirimler `window.Utils` üzerinden SweetAlert2 ve Toastify tabanlı modern, şık ve projeye uyumlu bildirimlerle değiştirildi.
 - **Hata Yönetimi ve UX:** İşlem başarı/hata mesajları daha kullanıcı dostu hale getirildi. Silme işlemleri için onay kutuları modernize edildi.
 ---
+---
+
+### 54. Dinamik Yetki ve Görünüm Kontrolü Sistemi (✅ Tamamlandı)
+**Tarih:** 2026-02-10
+- **Merkezi Yetki Yönetimi:** `UISettingsMiddleware` geliştirilerek her kliniğin kendi rol-yetki matrisini (`display_config`) dinamik olarak yönetebilmesi sağlandı.
+- **Finansal Veri Gizliliği:** "Kasa & Finans" yetkisi olmayan personeller için randevu ekranındaki "Tahsilat" butonları, "Hizmetler & Ücretler" sekmeleri ve hasta detayındaki tüm finansal özetler hem HTML hem de JS seviyesinde tamamen kaldırıldı.
+- **JS Hardening:** Finansal elementlerin yokluğu durumunda JavaScript hatalarını önlemek için `Existence Checks` ve API hata toleransı (`Promise.allSettled`) mekanizmaları eklendi.
+- **Şablon Onarımı:** Loglarda tespit edilen `patients.twig` derleme hatası (`Unexpected endif`) ve `appointments.js` yetki hataları giderildi.
+- **Dökümantasyon:** Yeni yetki mimarisi `ARCHITECTURE.md` ve `GELISTIRME_PLANI_GORUNUM_AYARLARI.md` dosyalarına işlendi.

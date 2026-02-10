@@ -111,8 +111,13 @@ class TenantRepository
      */
     public function findByDomain(string $prefix): ?array
     {
-        $sql = "SELECT id, name, domain_prefix FROM sys_tenants WHERE domain_prefix = ?";
+        $sql = "SELECT id, name, domain_prefix, display_config FROM sys_tenants WHERE domain_prefix = ?";
         $result = $this->db->fetch($sql, [$prefix]);
+
+        if ($result && $result['display_config']) {
+            $result['display_config'] = json_decode($result['display_config'], true);
+        }
+
         return $result ?: null;
     }
 
@@ -123,6 +128,11 @@ class TenantRepository
     {
         $sql = "SELECT * FROM sys_tenants WHERE id = ?";
         $result = $this->db->fetch($sql, [$id]);
+
+        if ($result && $result['display_config']) {
+            $result['display_config'] = json_decode($result['display_config'], true);
+        }
+
         return $result ?: null;
     }
 
@@ -336,6 +346,32 @@ class TenantRepository
     {
         $sql = "UPDATE sys_tenants SET logo_url = ? WHERE id = ?";
         $this->db->query($sql, [$logoUrl, $clinicId]);
+        return true;
+    }
+
+    /**
+     * Klinik görünüm ve yetki ayarlarını getirir
+     */
+    public function getDisplayConfig(int $clinicId): array
+    {
+        $sql = "SELECT display_config FROM sys_tenants WHERE id = ?";
+        $result = $this->db->fetch($sql, [$clinicId]);
+
+        if ($result && $result['display_config']) {
+            return json_decode($result['display_config'], true);
+        }
+
+        return [];
+    }
+
+    /**
+     * Klinik görünüm ve yetki ayarlarını günceller
+     */
+    public function updateDisplayConfig(int $clinicId, array $config): bool
+    {
+        $json = json_encode($config, JSON_UNESCAPED_UNICODE);
+        $sql = "UPDATE sys_tenants SET display_config = ? WHERE id = ?";
+        $this->db->query($sql, [$json, $clinicId]);
         return true;
     }
 }

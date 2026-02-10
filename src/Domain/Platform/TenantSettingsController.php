@@ -214,6 +214,48 @@ class TenantSettingsController extends BaseController
     }
 
     /**
+     * Görünüm ve Erişim Ayarlarını Getir
+     */
+    #[Route('GET', '/{id:[0-9]+}/settings/display')]
+    public function getDisplaySettings(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $args['id'];
+        $config = $this->tenantRepository->getDisplayConfig($clinicId);
+
+        // Varsayılan yapı (Eğer DB boşsa)
+        if (empty($config)) {
+            $config = [
+                'modules' => [
+                    'surgery' => ['doctor' => true, 'secretary' => true],
+                    'finance' => ['doctor' => true, 'admin' => true],
+                    'personnel' => ['admin' => true]
+                ],
+                'patient_detail' => [
+                    'show_finance' => ['admin' => true, 'secretary' => true],
+                    'show_vitals' => ['doctor' => true, 'secretary' => true]
+                ]
+            ];
+        }
+
+        return $this->success($response, $config);
+    }
+
+    /**
+     * Görünüm ve Erişim Ayarlarını Kaydet
+     */
+    #[Route('POST', '/{id:[0-9]+}/settings/display')]
+    public function saveDisplaySettings(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $args['id'];
+        $body = $request->getParsedBody();
+
+        // Validasyon eklenebilir (şimdilik basit kaydediyoruz)
+        $this->tenantRepository->updateDisplayConfig($clinicId, $body);
+
+        return $this->success($response, null, 'Görünüm ayarları başarıyla kaydedildi.');
+    }
+
+    /**
      * Görüntüleme için e-posta config'ini hazırlar (şifresiz)
      */
     private function getEmailConfigForDisplay(int $clinicId): array

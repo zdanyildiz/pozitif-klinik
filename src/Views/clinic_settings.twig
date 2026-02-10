@@ -103,114 +103,233 @@
 {% endblock %}
 
 {% block content %}
-<form id="settingsForm">
-    <div class="row">
-        <!-- Sol Kolon: Temel Bilgiler ve İletişim -->
-        <div class="col-lg-6">
-            <!-- Temel Bilgiler -->
-            <div class="settings-card">
-                <div class="settings-header">
-                    <h5><i class="bi bi-info-circle me-2"></i>Genel Bilgiler</h5>
+<ul class="nav nav-pills mb-4 gap-2" id="settingsTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active px-4" id="general-tab" data-bs-toggle="pill" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="true">
+        <i class="bi bi-gear me-2"></i>Genel Ayarlar
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link px-4" id="display-tab" data-bs-toggle="pill" data-bs-target="#display" type="button" role="tab" aria-controls="display" aria-selected="false">
+        <i class="bi bi-eye me-2"></i>Görünüm ve Erişim
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="settingsTabsContent">
+  <!-- GENEL AYARLAR TABI -->
+  <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+    <form id="settingsForm">
+        <div class="row">
+            <!-- Sol Kolon: Temel Bilgiler ve İletişim -->
+            <div class="col-lg-6">
+                <!-- Temel Bilgiler -->
+                <div class="settings-card">
+                    <div class="settings-header">
+                        <h5><i class="bi bi-info-circle me-2"></i>Genel Bilgiler</h5>
+                    </div>
+                    <div class="settings-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Klinik Adı</label>
+                            <input type="text" class="form-control" name="name" id="name" value="{{ settings.name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Klinik Açıklaması</label>
+                            <textarea class="form-control" name="description" id="description" rows="3">{{ settings.description }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Web Sitesi</label>
+                            <input type="url" class="form-control" name="website" id="website" value="{{ settings.website }}" placeholder="https://...">
+                        </div>
+                    </div>
                 </div>
-                <div class="settings-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Klinik Adı</label>
-                        <input type="text" class="form-control" name="name" id="name" required>
+
+                <!-- İletişim Bilgileri -->
+                <div class="settings-card">
+                    <div class="settings-header">
+                        <h5><i class="bi bi-telephone me-2"></i>İletişim ve Adres</h5>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Klinik Açıklaması</label>
-                        <textarea class="form-control" name="description" id="description" rows="3"></textarea>
+                    <div class="settings-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Telefon</label>
+                                <input type="text" class="form-control" name="phone" id="phone" value="{{ settings.phone }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">E-Posta</label>
+                                <input type="email" class="form-control" name="email" id="email" value="{{ settings.email }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">İl</label>
+                                <select class="form-select" name="province_id" id="provinceId">
+                                    <option value="">Seçiniz...</option>
+                                    {% for province in provinces %}
+                                        <option value="{{ province.id }}" {{ settings.province_id == province.id ? 'selected' : '' }}>{{ province.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">İlçe</label>
+                                <select class="form-select" name="district_id" id="districtId" {{ districts is empty ? 'disabled' : '' }}>
+                                    <option value="">{{ districts is empty ? 'Önce İl Seçiniz' : 'Seçiniz...' }}</option>
+                                    {% for district in districts %}
+                                        <option value="{{ district.id }}" {{ settings.district_id == district.id ? 'selected' : '' }}>{{ district.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Açık Adres</label>
+                            <textarea class="form-control" name="address" id="address" rows="3">{{ settings.address }}</textarea>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Web Sitesi</label>
-                        <input type="url" class="form-control" name="website" id="website" placeholder="https://...">
+                </div>
+
+                <!-- Vergi Bilgileri -->
+                <div class="settings-card">
+                    <div class="settings-header">
+                        <h5><i class="bi bi-receipt me-2"></i>Vergi Bilgileri</h5>
+                    </div>
+                    <div class="settings-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Vergi Dairesi</label>
+                                <input type="text" class="form-control" name="tax_office" id="taxOffice" value="{{ settings.tax_office }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Vergi Numarası</label>
+                                <input type="text" class="form-control" name="tax_number" id="taxNumber" value="{{ settings.tax_number }}">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- İletişim Bilgileri -->
-            <div class="settings-card">
-                <div class="settings-header">
-                    <h5><i class="bi bi-telephone me-2"></i>İletişim ve Adres</h5>
+            <!-- Sağ Kolon: Çalışma Saatleri -->
+            <div class="col-lg-6">
+                <div class="settings-card">
+                    <div class="settings-header d-flex justify-content-between align-items-center">
+                        <h5><i class="bi bi-clock me-2"></i>Çalışma Saatleri</h5>
+                        <small class="text-muted">Günlük açılış/kapanış saatleri</small>
+                    </div>
+                    <div class="settings-body" id="workingHoursContainer" data-hours='{{ settings.working_hours|json_encode|raw }}'>
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="settings-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Telefon</label>
-                            <input type="text" class="form-control" name="phone" id="phone">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">E-Posta</label>
-                            <input type="email" class="form-control" name="email" id="email">
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">İl</label>
-                            <select class="form-select" name="province_id" id="provinceId">
-                                <option value="">Seçiniz...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">İlçe</label>
-                            <select class="form-select" name="district_id" id="districtId" disabled>
-                                <option value="">Önce İl Seçiniz</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Açık Adres</label>
-                        <textarea class="form-control" name="address" id="address" rows="3"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Vergi Bilgileri -->
-            <div class="settings-card">
-                <div class="settings-header">
-                    <h5><i class="bi bi-receipt me-2"></i>Vergi Bilgileri</h5>
-                </div>
-                <div class="settings-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Vergi Dairesi</label>
-                            <input type="text" class="form-control" name="tax_office" id="taxOffice">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Vergi Numarası</label>
-                            <input type="text" class="form-control" name="tax_number" id="taxNumber">
-                        </div>
-                    </div>
+                <!-- Kaydet Butonu -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
+                        <i class="bi bi-check-circle me-2"></i>Ayarları Kaydet
+                    </button>
                 </div>
             </div>
         </div>
+    </form>
+  </div>
 
-        <!-- Sağ Kolon: Çalışma Saatleri -->
-        <div class="col-lg-6">
-            <div class="settings-card">
-                <div class="settings-header d-flex justify-content-between align-items-center">
-                    <h5><i class="bi bi-clock me-2"></i>Çalışma Saatleri</h5>
-                    <small class="text-muted">Günlük açılış/kapanış saatleri</small>
-                </div>
-                <div class="settings-body" id="workingHoursContainer">
-                    <!-- Javascript ile doldurulacak -->
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Kaydet Butonu -->
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
-                    <i class="bi bi-check-circle me-2"></i>Ayarları Kaydet
-                </button>
-            </div>
-        </div>
+  <!-- GÖRÜNÜM VE ERİŞİM TABI -->
+  <div class="tab-pane fade" id="display" role="tabpanel" aria-labelledby="display-tab">
+    <div class="alert alert-info border-0 bg-info-subtle text-info-emphasis mb-4">
+        <i class="bi bi-info-circle me-2"></i>
+        Bu sayfadaki ayarlar, kliniğinizdeki kullanıcı rollerinin (Doktor, Sekreter vb.) hangi modüllere ve hasta verilerine erişebileceğini belirler.
     </div>
-</form>
+    
+    <form id="displaySettingsForm">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="settings-card">
+                    <div class="settings-header">
+                        <h5><i class="bi bi-grid-fill me-2"></i>Sol Menü Modülleri</h5>
+                    </div>
+                    <div class="settings-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Modül Adı</th>
+                                        <th class="text-center">Doktor</th>
+                                        <th class="text-center">Sekreterya</th>
+                                        <th class="text-center">Yönetici</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                     <tr>
+                                        <td class="ps-4"><i class="bi bi-heart-pulse text-danger me-2"></i>Ameliyat Takibi</td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="modules[surgery][doctor]" {{ display_config.modules.surgery.doctor ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="modules[surgery][secretary]" {{ display_config.modules.surgery.secretary ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="modules[surgery][admin]" {{ display_config.modules.surgery.admin ? 'checked' : '' }}></td>
+                                     </tr>
+                                     <tr>
+                                        <td class="ps-4"><i class="bi bi-wallet2 text-success me-2"></i>Kasa & Finans</td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="modules[finance][doctor]" {{ display_config.modules.finance.doctor ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="modules[finance][secretary]" {{ display_config.modules.finance.secretary ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="modules[finance][admin]" {{ display_config.modules.finance.admin ? 'checked' : '' }}></td>
+                                     </tr>
+                                     <tr>
+                                        <td class="ps-4"><i class="bi bi-people text-primary me-2"></i>Personel Yönetimi</td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="modules[personnel][doctor]" {{ display_config.modules.personnel.doctor ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="modules[personnel][secretary]" {{ display_config.modules.personnel.secretary ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="modules[personnel][admin]" {{ display_config.modules.personnel.admin ? 'checked' : '' }}></td>
+                                     </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                 <div class="settings-card">
+                    <div class="settings-header">
+                        <h5><i class="bi bi-person-vcard me-2"></i>Hasta Detay Gizliliği</h5>
+                    </div>
+                    <div class="settings-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Veri Alanı</th>
+                                        <th class="text-center">Doktor</th>
+                                        <th class="text-center">Sekreterya</th>
+                                        <th class="text-center">Yönetici</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                     <tr>
+                                        <td class="ps-4"><i class="bi bi-currency-lira text-success me-2"></i>Finansal Veriler (Borç/Alacak)</td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="patient_detail[show_finance][doctor]" {{ display_config.patient_detail.show_finance.doctor ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="patient_detail[show_finance][secretary]" {{ display_config.patient_detail.show_finance.secretary ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="patient_detail[show_finance][admin]" {{ display_config.patient_detail.show_finance.admin ? 'checked' : '' }}></td>
+                                     </tr>
+                                     <tr>
+                                        <td class="ps-4"><i class="bi bi-activity text-danger me-2"></i>Yaşam Bulguları (Vitals)</td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="patient_detail[show_vitals][doctor]" {{ display_config.patient_detail.show_vitals.doctor ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="patient_detail[show_vitals][secretary]" {{ display_config.patient_detail.show_vitals.secretary ? 'checked' : '' }}></td>
+                                        <td class="text-center"><input type="checkbox" class="form-check-input" name="patient_detail[show_vitals][admin]" {{ display_config.patient_detail.show_vitals.admin ? 'checked' : '' }}></td>
+                                     </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg" id="saveDisplayBtn">
+                        <i class="bi bi-check-circle me-2"></i>Görünüm Ayarlarını Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
