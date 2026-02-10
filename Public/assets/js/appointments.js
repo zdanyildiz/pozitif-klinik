@@ -13,6 +13,7 @@ let detailModal;
 let appointmentModal;
 let typeModal;
 let currentAppointmentId = null;
+let currentAppointmentData = null;
 let currentTypeId = null; // Düzenleme için tür ID'si
 let patientTomSelect = null;
 let doctorTomSelect = null;
@@ -458,14 +459,14 @@ function renderAppointments() {
         statusWrapper.appendChild(statusBadge);
 
         // Epikriz (Muayene Notu) Kontrolü
+        const hasExam = app.examination_count && parseInt(app.examination_count) > 0;
         const hasEpicrisis = app.epicrisis_count && parseInt(app.epicrisis_count) > 0;
-        const needsEpicrisis = app.status === 'completed' || app.status === 'in_test';
 
-        if (needsEpicrisis && !hasEpicrisis) {
+        if (hasExam && !hasEpicrisis) {
             const warningBadge = document.createElement('span');
             warningBadge.className = 'badge badge-epicrisis-missing';
             warningBadge.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Epikriz Eksik!';
-            warningBadge.title = 'Henüz kalıcı epikriz belgesi oluşturulmamış.';
+            warningBadge.title = 'Muayene kaydı var ancak henüz kalıcı epikriz belgesi oluşturulmamış.';
             statusWrapper.appendChild(warningBadge);
         }
 
@@ -786,6 +787,17 @@ async function handleSaveAppointment() {
 
     const isEdit = !!currentAppointmentId;
 
+    // Epikriz Kontrolü: Muayene kaydı varsa epikriz zorunlu
+    if (isEdit && data.status === 'completed' && currentAppointmentData) {
+        const hasExam = currentAppointmentData.examination_count && parseInt(currentAppointmentData.examination_count) > 0;
+        const hasEpicrisis = currentAppointmentData.epicrisis_count && parseInt(currentAppointmentData.epicrisis_count) > 0;
+
+        if (hasExam && !hasEpicrisis) {
+            Utils.showError('Muayene kaydı bulunan randevular, epikriz oluşturulmadan "Tamamlandı" olarak işaretlenemez.');
+            return;
+        }
+    }
+
     try {
         if (isEdit) {
             await api.put(`/api/appointments/${currentAppointmentId}`, data);
@@ -810,6 +822,7 @@ async function editAppointment(id, e) {
     try {
         const res = await api.get(`/api/appointments/${id}`);
         const app = res.data;
+        currentAppointmentData = app;
 
         // Modal Başlığını Güncelle
         document.querySelector('#appointmentModal .modal-title').textContent = 'Randevu Düzenle';
@@ -872,6 +885,7 @@ async function viewDetail(id, e) {
     try {
         const res = await api.get(`/api/appointments/${id}`);
         const app = res.data;
+        currentAppointmentData = app;
 
         document.getElementById('detailPatientName').textContent = app.patient_name;
 
@@ -1232,6 +1246,18 @@ async function removeBillingItem(itemId) {
 
 async function handleSaveDetails() {
     const status = document.getElementById('detailStatusSelect').value;
+
+    // Epikriz Kontrolü: Muayene kaydı varsa epikriz zorunlu
+    if (status === 'completed' && currentAppointmentData) {
+        const hasExam = currentAppointmentData.examination_count && parseInt(currentAppointmentData.examination_count) > 0;
+        const hasEpicrisis = currentAppointmentData.epicrisis_count && parseInt(currentAppointmentData.epicrisis_count) > 0;
+
+        if (hasExam && !hasEpicrisis) {
+            Utils.showError('Muayene kaydı bulunan randevular, epikriz oluşturulmadan "Tamamlandı" olarak işaretlenemez.');
+            return;
+        }
+    }
+
     try {
         await api.put(`/api/appointments/${currentAppointmentId}/status`, { status });
 

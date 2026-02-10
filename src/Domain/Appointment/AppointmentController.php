@@ -173,6 +173,13 @@ class AppointmentController extends BaseController
             return $this->error($response, 'Durum bilgisi eksik.', 400);
         }
 
+        if ($data['status'] === 'completed') {
+            $check = $this->repository->canMarkAsCompleted($clinicId, $appointmentId);
+            if (!$check['can']) {
+                return $this->error($response, $check['message'], 400);
+            }
+        }
+
         $userId = (int) $this->getUserId($request);
         $this->repository->updateStatus($clinicId, $appointmentId, $data['status'], $userId);
 
@@ -229,6 +236,13 @@ class AppointmentController extends BaseController
                 $conflict['type_name']
             );
             return $this->error($response, $message, 409);
+        }
+
+        if (isset($data['status']) && $data['status'] === 'completed') {
+            $check = $this->repository->canMarkAsCompleted($clinicId, $appointmentId);
+            if (!$check['can']) {
+                return $this->error($response, $check['message'], 400);
+            }
         }
 
         $this->repository->updateAppointment($clinicId, $appointmentId, $data);

@@ -553,7 +553,9 @@ class AppointmentRepository
                     u.name as doctor_name,
                     s.name as status_name,
                     s.color_code as status_color,
-                    s.icon_class as status_icon
+                    s.icon_class as status_icon,
+                    (SELECT COUNT(*) FROM cln_examinations WHERE appointment_id = a.id) as examination_count,
+                    (SELECT COUNT(*) FROM cln_patient_documents WHERE appointment_id = a.id AND document_type = 'epicrisis') as epicrisis_count
                 FROM cln_appointments a
                 JOIN ptn_cards p ON a.patient_id = p.id
                 JOIN cln_appointment_types t ON a.type_id = t.id
@@ -598,6 +600,27 @@ class AppointmentRepository
         $appointment['remaining_amount'] = $appointment['total_amount'] - $appointment['total_paid'];
 
         return $appointment;
+    }
+
+    public function canMarkAsCompleted(int $clinicId, int $appointmentId): array
+    {
+        $sql = "SELECT 
+                    (SELECT COUNT(*) FROM cln_examinations WHERE clinic_id = :clinic_id AND appointment_id = :appointment_id) as examination_count,
+                    (SELECT COUNT(*) FROM cln_patient_documents WHERE clinic_id = :clinic_id AND appointment_id = :appointment_id AND document_type = 'epicrisis') as epicrisis_count";
+
+        $res = $this->db->fetch($sql, ['clinic_id' => $clinicId, 'appointment_id' => $appointmentId]);
+
+        $hasExam = ((int) $res['examination_count']) > 0;
+        $hasEpicrisis = ((int) $res['epicrisis_count']) > 0;
+
+        if ($hasExam && !$hasEpicrisis) {
+            return [
+                'can' => false,
+                'message' => 'Muayene kaydı bulunan randevular, epikriz oluşturulmadan tamamlandı olarak işaretlenemez.'
+            ];
+        }
+
+        return ['can' => true];
     }
 
     public function updateStatus(int $clinicId, int $appointmentId, string $status, ?int $userId = null): bool
