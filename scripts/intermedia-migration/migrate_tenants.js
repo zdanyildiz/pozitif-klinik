@@ -5,23 +5,14 @@
 
 const sql = require('mssql');
 const mysql = require('mysql2/promise');
-const { getSourceConfig, getTargetConfig } = require('./db.helper');
+const { getSourceConfig, getTargetConfig } = require('./core/db.helper');
 
 // Function to convert Turkish characters to English equivalents
 function turkishToEnglish(text) {
+    if (!text) return '';
     return text
-        .replace(/ç/g, 'c')
-        .replace(/ğ/g, 'g')
-        .replace(/ı/g, 'i')
-        .replace(/ö/g, 'o')
-        .replace(/ş/g, 's')
-        .replace(/ü/g, 'u')
-        .replace(/Ç/g, 'C')
-        .replace(/Ğ/g, 'G')
-        .replace(/İ/g, 'I')
-        .replace(/Ö/g, 'O')
-        .replace(/Ş/g, 'S')
-        .replace(/Ü/g, 'U');
+        .replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u')
+        .replace(/Ç/g, 'C').replace(/Ğ/g, 'G').replace(/İ/g, 'I').replace(/Ö/g, 'O').replace(/Ş/g, 'S').replace(/Ü/g, 'U');
 }
 
 async function migrateTenants() {
@@ -29,73 +20,33 @@ async function migrateTenants() {
     let mysqlConn;
 
     try {
-        console.log('🚀 Migration Başlatılıyor: SUBE -> sys_tenants');
+        console.log('\n🚀 Şubeler Senkronize Ediliyor (SUBE -> sys_tenants)...');
 
-        // Bağlantılar
         mssqlPool = await sql.connect(getSourceConfig());
         mysqlConn = await mysql.createConnection(getTargetConfig());
 
-        // 1. Kaynak veriyi çek (İptal edilmemiş gerçek şubeler)
         const result = await mssqlPool.request().query('SELECT * FROM SUBE WHERE Iptal = 0 AND ID > 0 ORDER BY ID');
         const subeler = result.recordset;
 
         console.log(`📊 ${subeler.length} geçerli şube bulundu.`);
 
-        if (subeler.length === 0) {
-            console.log('⚠️ Aktarılacak şube bulunamadı.');
-            return;
-        }
-
-        // 2. Hedef tabloyu temizle mi yoksa ekle mi? 
-        // Genelde tenants tablosu temizlenmez ama migration başında istenebilir.
-        // Şimdilik sadece yeni kayıtları ekleyelim veya varsa güncelleyelim.
-
         for (const sube of subeler) {
-            console.log(`🔹 İşleniyor: ${sube.SubeAdi} (ID: ${sube.ID})`);
-
-            // domain_prefix için şube adından güvenli bir string oluştur
             const domainPrefix = turkishToEnglish(sube.SubeAdi)
-                .toLowerCase()
-                .replace(/[^a-z0-9]/g, '-')
-                .replace(/-+/g, '-')
-                .slice(0, 50);
+                .toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 50);
 
-            // MySQL Insert
             const sqlQuery = `
-                INSERT INTO sys_tenants (
-                    name, 
-                    phone, 
-                    address, 
-                    is_active, 
-                    domain_prefix,
-                    created_at
-                ) VALUES (?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                    name = VALUES(name),
-                    phone = VALUES(phone),
-                    address = VALUES(address),
-                    is_active = VALUES(is_active)
+                INSERT INTO sys_tenants (id, name, phone, address, is_active, domain_prefix) 
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE name = VALUES(name), phone = VALUES(phone), address = VALUES(address)
             `;
 
-            const params = [
-                sube.SubeAdi,
-                sube.Telefonlar || null,
-                sube.Adresi || null,
-                sube.Iptal ? 0 : 1,
-                domainPrefix,
-                sube.SonKayitTarihi || new Date()
-            ];
-
+            const params = [sube.ID, sube.SubeAdi, sube.Telefonlar || null, sube.Adresi || null, 1, domainPrefix];
             await mysqlConn.execute(sqlQuery, params);
-            console.log(`✅ ${sube.SubeAdi} aktarıldı/güncellendi.`);
+            console.log(`✅ [ID: ${sube.ID}] ${sube.SubeAdi} aktarıldı/güncellendi.`);
         }
 
-        console.log('------------------------------------------------------------');
-        console.log(`🎉 SUBE migration tamamlandı. Toplam: ${subeler.length}`);
-        console.log('------------------------------------------------------------');
-
     } catch (err) {
-        console.error('🛑 Migration Hatası:', err.message);
+        console.error('🛑 Şube Migration Hatası:', err.message);
         process.exit(1);
     } finally {
         if (mssqlPool) await mssqlPool.close();

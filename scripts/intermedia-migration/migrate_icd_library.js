@@ -1,6 +1,6 @@
 const sql = require('mssql');
 const mysql = require('mysql2/promise');
-const { getSourceConfig, getTargetConfig } = require('./db.helper');
+const { getSourceConfig, getTargetConfig } = require('./core/db.helper');
 
 const dbConfig = getTargetConfig();
 const mssqlConfig1 = getSourceConfig();
@@ -75,7 +75,8 @@ async function migrateICD() {
 
     } catch (err) {
         console.error('Migration failed:', err);
+        throw err;
     }
 }
 
-migrateICD();
+migrateICD().catch(err => { console.error(err); process.exit(1); });

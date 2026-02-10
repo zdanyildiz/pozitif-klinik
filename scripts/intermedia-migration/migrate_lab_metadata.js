@@ -1,9 +1,10 @@
 const sql = require('mssql');
 const mysql = require('mysql2/promise');
 
-const CLINIC_ID = 1;
+const { getSourceConfig, getTargetConfig } = require('./core/db.helper');
+const { parseClinicId } = require('./core/cli.helper');
+const CLINIC_ID = parseClinicId();
 
-const { getSourceConfig, getTargetConfig } = require('./db.helper');
 const mssqlConfig = getSourceConfig();
 const mysqlConfig = getTargetConfig();
 

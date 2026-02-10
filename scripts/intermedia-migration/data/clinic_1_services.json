@@ -1,0 +1,2186 @@
+[
+  {
+    "legacy_code": "270010",
+    "name": "ACTH",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270020",
+    "name": "ADA",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270030",
+    "name": "AFP (Alfa-Fetoprotein)",
+    "price": 170,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270040",
+    "name": "ALDOLAZ",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270050",
+    "name": "ALDOSTERON",
+    "price": 370,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270060",
+    "name": "Albumin",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270070",
+    "name": "Alfa 1 Antitripsin",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270080",
+    "name": "Alkalen Fosfataz (ALP)",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270090",
+    "name": "AKA İGM",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270100",
+    "name": "AKA İGG",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270110",
+    "name": "AMA",
+    "price": 290,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270120",
+    "name": "Amilaz (Alfa-Amilaz)",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270130",
+    "name": "Amonyak",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270140",
+    "name": "Aminoasit",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270150",
+    "name": "ANCA",
+    "price": 390,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270160",
+    "name": "ANDROSTEREDİON",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270170",
+    "name": "Antigliadin IgA",
+    "price": 250,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270180",
+    "name": "Antigliadin IgG",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270190",
+    "name": "Angiotensin Converting Enzyme(ACE)",
+    "price": 270,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270200",
+    "name": "Angiotensin I (PRA)",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270210",
+    "name": "Anti-Adacık Hücre Antikoru (ICA)",
+    "price": 380,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270220",
+    "name": "ANTİ GLİADİN IGA",
+    "price": 340,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270230",
+    "name": "ANTİBİYOGRAM",
+    "price": 160,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270240",
+    "name": "Anti-CCP",
+    "price": 160,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270250",
+    "name": "Anti-GAD",
+    "price": 200,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270260",
+    "name": "Anti-dsDNA",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270270",
+    "name": "ASMA(Anti-Düz Kas Antikoru",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270280",
+    "name": "Anti Delta AK",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270290",
+    "name": "ANTİ ENA SSA",
+    "price": 370,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270300",
+    "name": "ANTİ ENA SSB",
+    "price": 370,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270310",
+    "name": "ANTİ ENDOMİSYUM IGA ANTİKORU",
+    "price": 370,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270320",
+    "name": "Anti-HAV IgM",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270330",
+    "name": "Anti-HAV; total",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270340",
+    "name": "Anti HBc İgM",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270350",
+    "name": "Anti HBc İgG",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270360",
+    "name": "Anti-HBc; total",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270370",
+    "name": "Anti-HBe; total",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270380",
+    "name": "Anti-HBs",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270390",
+    "name": "Anti-HCV (IIIrd generation)",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270400",
+    "name": "Anti HİV",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270410",
+    "name": "Anti-LKM1 Antikoru",
+    "price": 410,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270420",
+    "name": "Anti-Mikrozomal Antikor",
+    "price": 420,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270430",
+    "name": "Anti Müllerien Hormon",
+    "price": 790,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270440",
+    "name": "Anti-M2 Antikoru",
+    "price": 380,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270450",
+    "name": "Antinükleer Antikor (ANA)(FANA)",
+    "price": 190,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270460",
+    "name": "Anti-Tiroglobulin Antikoru",
+    "price": 170,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270470",
+    "name": "ANTİ TRANSGLUTAMİNAZ IGA ANTİKORU",
+    "price": 340,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270480",
+    "name": "Anti-Trombin III (AT III)",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270490",
+    "name": "Anti-TSH Reseptör Antikor (TRAK)",
+    "price": 380,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270500",
+    "name": "Anti Tg",
+    "price": 270,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270510",
+    "name": "Anti Tpo",
+    "price": 270,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270520",
+    "name": "AntissA",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270530",
+    "name": "AntissB",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270540",
+    "name": "aPTT",
+    "price": 80,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270550",
+    "name": "ASETİLKOLİN RESEPTÖR ANTİKORU",
+    "price": 940,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270560",
+    "name": "ASO (Anti-Streptolizin O)",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270570",
+    "name": "ASPERGİLLUS FUMİGATUS IGG",
+    "price": 370,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270580",
+    "name": "ASPERGİLLUS GALAKTOMANNAN ANTİJENİ",
+    "price": 710,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270590",
+    "name": "At3 Düzeyi",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270600",
+    "name": "Bakır",
+    "price": 190,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270610",
+    "name": "BALGAMDA ARB+BACTEC",
+    "price": 900,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270620",
+    "name": "BALGAM KÜLTÜR ANTİBİYOGRAM",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270630",
+    "name": "BETA 2 GLİKOPROTEİN I IGG ANTİKORU",
+    "price": 410,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270640",
+    "name": "BETA 2 GLİKOPROTEİN I IGM ANTİKORU",
+    "price": 410,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270650",
+    "name": "B2 MİKROGLOBULİN",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270660",
+    "name": "Beta-hCG",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270670",
+    "name": "Bilirubin",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270680",
+    "name": "BUN",
+    "price": 50,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270690",
+    "name": "B2 MİKROALBUMİN",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270700",
+    "name": "BOĞAZ KÜLTÜR ANTİBİYOGRAM",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270710",
+    "name": "C1 Q ESTERAZ(İNAKTİVATÖR AKTİVİTESİ)",
+    "price": 620,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270720",
+    "name": "C3",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270730",
+    "name": "C4",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270740",
+    "name": "CEA",
+    "price": 190,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270750",
+    "name": "CA 125",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270760",
+    "name": "CA 15-3",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270770",
+    "name": "CA 19-9",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270780",
+    "name": "CA 72-4",
+    "price": 440,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270790",
+    "name": "CD19(B LENFOSİT)",
+    "price": 440,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270800",
+    "name": "CD4/CD8",
+    "price": 620,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270810",
+    "name": "CK",
+    "price": 80,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270820",
+    "name": "CK-MB",
+    "price": 200,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270830",
+    "name": "CMV DNA,KANTİTATİF PCR",
+    "price": 1870,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270840",
+    "name": "CMV IgG Antikoru",
+    "price": 170,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270850",
+    "name": "CMV IgM Antikoru",
+    "price": 170,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270860",
+    "name": "COOMBSLU WRİGHT TESTİ",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270870",
+    "name": "COXSACKİE VİRUS IGG ANTİKORU",
+    "price": 520,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270880",
+    "name": "COXSACKİE VİRUS IGM ANTİKORU",
+    "price": 830,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270890",
+    "name": "c-ANCA",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270900",
+    "name": "C-peptid",
+    "price": 200,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270910",
+    "name": "C-Reaktif Protein (CRP)",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270920",
+    "name": "Çinko (AAS)",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270930",
+    "name": "ÇOCUK ALERJEN PANELİ",
+    "price": 1550,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270940",
+    "name": "D-Dimer",
+    "price": 310,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270950",
+    "name": "Demir",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270960",
+    "name": "Demir Bağlama Kapasitesi",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270970",
+    "name": "DHEA-S",
+    "price": 190,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270980",
+    "name": "Dışkı Direkt Mikroskopisi",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "270990",
+    "name": "Dışkıda Gizli Kan",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271000",
+    "name": "Dıkşı Flora Sindirim Paneli",
+    "price": 4650,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271010",
+    "name": "Digoksin",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271020",
+    "name": "Direkt Bilirubin",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271030",
+    "name": "Direkt Coombs (Jel Santrifugasyon) ",
+    "price": 130,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271040",
+    "name": "Direkt Mantar İncelemesi",
+    "price": 130,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271050",
+    "name": "Doku Transglutanları IgG",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271060",
+    "name": "DOWN I.TRİMESTER",
+    "price": 420,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271070",
+    "name": "DR 70",
+    "price": 2360,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271080",
+    "name": "DRUG ABUSE TARAMA TESTİ",
+    "price": 1240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271090",
+    "name": "EBV-VCA IgG Antikoru",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271100",
+    "name": "EBV-VCA IgM Antikoru",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271110",
+    "name": "EBV-EBNA IgG",
+    "price": 380,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271120",
+    "name": "EBV-EBNA IgM",
+    "price": 380,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271130",
+    "name": "EBV PROFİLİ",
+    "price": 380,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271140",
+    "name": "EKLEM SIVISI KÜLTÜRÜ",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271150",
+    "name": "Estradiol (E2)",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271160",
+    "name": "ENA Profili",
+    "price": 340,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271170",
+    "name": "Eritroprotein",
+    "price": 500,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271180",
+    "name": "Faktör 5 Leyding",
+    "price": 340,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271190",
+    "name": "FMF Gen Mutasyonu",
+    "price": 2070,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271200",
+    "name": "Fenitoin (Difenilhidantoin)",
+    "price": 390,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271210",
+    "name": "Fenobarbital",
+    "price": 390,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271220",
+    "name": "Ferritin",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271230",
+    "name": "Fibrin Yıkım Ürünleri (FDP)",
+    "price": 390,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271240",
+    "name": "Fibrinojen",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271250",
+    "name": "Folik Asit",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271260",
+    "name": "Fosfor",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271270",
+    "name": "FSH",
+    "price": 190,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271280",
+    "name": "Gaitada parazit",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271290",
+    "name": "Gaita mikroskopisi",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271300",
+    "name": "GAİTADA HAZIM TESTLERİ",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271310",
+    "name": "Gastrin",
+    "price": 250,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271320",
+    "name": "GENİTAL PANEL",
+    "price": 4040,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271330",
+    "name": "GGT",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271340",
+    "name": "Gıda Duyarlılığı",
+    "price": 2150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271350",
+    "name": "Growth hormonu(büyüme hormonu)",
+    "price": 370,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271360",
+    "name": "Glukoz",
+    "price": 50,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271370",
+    "name": "GRUBER WİDAL",
+    "price": 130,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271380",
+    "name": "HAPTOGLOBİN",
+    "price": 160,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271390",
+    "name": "HBeAg",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271400",
+    "name": "HBsAg",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271410",
+    "name": "HBVDNA",
+    "price": 1880,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271420",
+    "name": "H1N1",
+    "price": 1820,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271430",
+    "name": "HCVRNA",
+    "price": 2070,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271440",
+    "name": "HDL Kolesterol",
+    "price": 80,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271450",
+    "name": "Hematokrit (Hct)",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271460",
+    "name": "Hemoglobin",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271470",
+    "name": "Hemoglobin A1c",
+    "price": 200,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271480",
+    "name": "HE4",
+    "price": 630,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271490",
+    "name": "Hb.Elektrofarazi",
+    "price": 340,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271500",
+    "name": "HIV (1&2) Antikor/Antijen",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271510",
+    "name": "HLAB27",
+    "price": 620,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271520",
+    "name": "HLAB5",
+    "price": 1240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271530",
+    "name": "HoloTC (Holotranskobalamin)",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271540",
+    "name": "Homa IR",
+    "price": 270,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271550",
+    "name": "Homosistein",
+    "price": 340,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271560",
+    "name": "HSV Tip 1 IgG Antikoru",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271570",
+    "name": "HSV Tip 1 IgM Antikoru",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271580",
+    "name": "HSV Tip 2 IgG Antikoru",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271590",
+    "name": "HSV Tip 2 IgM Antikoru",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271600",
+    "name": "HEMO KÜLTÜR",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271610",
+    "name": "hs-CRP",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271620",
+    "name": "IgA",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271630",
+    "name": "IgE",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271640",
+    "name": "IgF1",
+    "price": 440,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271650",
+    "name": "IgG",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271660",
+    "name": "IgG4",
+    "price": 490,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271670",
+    "name": "IgM",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271680",
+    "name": "İdrar Analizi",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271690",
+    "name": "İdrar Kültür Antibiyogram",
+    "price": 170,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271700",
+    "name": "İdrar İmmun Elektrofarazi",
+    "price": 490,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271710",
+    "name": "İMMUNELEKTROFOREZ Yöntem:Kapiller Elektroforezi (CE)",
+    "price": 1220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271720",
+    "name": "İMMUNELEKTROFOREZ Yöntem:Kapiller Elektroforezi (CE)(Kantitatif)",
+    "price": 1220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271730",
+    "name": "İndirekt Coombs (Jel Santrifugasyon) ",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271740",
+    "name": "İnsülin",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271750",
+    "name": "İNFLUENZA A+B",
+    "price": 420,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271760",
+    "name": "İyonize Kalsiyum",
+    "price": 170,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271770",
+    "name": "Jak-2 Mutasyonu",
+    "price": 1690,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271780",
+    "name": "KALPROTEKTİN",
+    "price": 1130,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271790",
+    "name": "Kalsitonin",
+    "price": 440,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271800",
+    "name": "Kalsiyum",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271810",
+    "name": "Kan Grubu (Jel Santrifugasyon)",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271820",
+    "name": "Kan Sayımı",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271830",
+    "name": "Kan Gazı",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271840",
+    "name": "Karbamazepin",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271850",
+    "name": "Klorür",
+    "price": 80,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271860",
+    "name": "Kortizol",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271870",
+    "name": "KORTİZOL İLAÇLI",
+    "price": 340,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271880",
+    "name": "Kreatinin",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271890",
+    "name": "Kreatinin Klirensi",
+    "price": 170,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271900",
+    "name": "Kromogranin",
+    "price": 1240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271910",
+    "name": "Kromozom Analizi",
+    "price": 1870,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271920",
+    "name": "LAK",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271930",
+    "name": "LDH",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271940",
+    "name": "LDL Kolesterol",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271950",
+    "name": "Legionella pneumophilia Antijeni",
+    "price": 420,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271960",
+    "name": "Levetiracetam",
+    "price": 1130,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271970",
+    "name": "LH",
+    "price": 170,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271980",
+    "name": "Lipaz",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "271990",
+    "name": "Lityum",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272000",
+    "name": "Lökosit Formülü",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272010",
+    "name": "Lökosit Sayısı",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272020",
+    "name": "Lupus Antikoagülanı",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272030",
+    "name": "M.Tuberculosis DNA(PCR)",
+    "price": 3940,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272040",
+    "name": "Magnezyum",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272050",
+    "name": "Measles IgG Antikoru",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272060",
+    "name": "Measles IgM Antikoru",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272070",
+    "name": "Makroprolaktin",
+    "price": 410,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272080",
+    "name": "Monotest",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272090",
+    "name": "MTHFR Mutasyonu",
+    "price": 570,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272100",
+    "name": "OGTT 50 GR",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272110",
+    "name": "OGTT 75 GR",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272120",
+    "name": "OGTT 100 GR",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272130",
+    "name": "Osteokalsin",
+    "price": 490,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272140",
+    "name": "Osmolorite(Serum)",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272150",
+    "name": "Osmolorite(İdrar)",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272160",
+    "name": "p-ANCA",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272170",
+    "name": "Periferik Yayma",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272180",
+    "name": "Potasyum",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272190",
+    "name": "PRA",
+    "price": 420,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272200",
+    "name": "Pro BNP",
+    "price": 500,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272210",
+    "name": "Pro PSA",
+    "price": 2270,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272220",
+    "name": "Progesteron",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272230",
+    "name": "Prokalsitenin",
+    "price": 540,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272240",
+    "name": "Prolaktin (PRL)",
+    "price": 190,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272250",
+    "name": "Prostatik Asit Fosfataz (PAP)",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272260",
+    "name": "Protein C Düzeyi",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272270",
+    "name": "Protein S Düzeyi",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272280",
+    "name": "Protein C Rezistansı",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272290",
+    "name": "PROTEİN ELEKTROFOREZİ Yöntem:Kapiller Elektroforezi (CE)",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272300",
+    "name": "Protrombin Zamanı (PT)(İNR)",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272310",
+    "name": "PTH; intakt",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272320",
+    "name": "PTH rp",
+    "price": 750,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272330",
+    "name": "Retikülosit Sayısı",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272340",
+    "name": "Romatoid faktör (RF)",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272350",
+    "name": "Rubella IgG Antikoru",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272360",
+    "name": "Rubella IgM Antikoru",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272370",
+    "name": "Sedimentasyon Hızı (ESR)",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272380",
+    "name": "Selenyum",
+    "price": 570,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272390",
+    "name": "Serbest PSA",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272400",
+    "name": "Serbest T3",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272410",
+    "name": "Serbest T4",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272420",
+    "name": "Serbest Testosteron",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272430",
+    "name": "Seruloplazmin",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272440",
+    "name": "Serum Gastrin Düzeyi",
+    "price": 240,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272450",
+    "name": "Serum İmmun Elektrofarazi",
+    "price": 500,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272460",
+    "name": "Sex Bağlayıcı Hormon",
+    "price": 370,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272470",
+    "name": "Spot İdrarda Mikroalbümüniri",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272480",
+    "name": "SPESİFİK İGE(GIDA)",
+    "price": 1650,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272490",
+    "name": "SPESİFİK İGE(SOLUNUM)",
+    "price": 1420,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272500",
+    "name": "SGOT (AST)",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272510",
+    "name": "SGPT (ALT)",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272520",
+    "name": "spermiyogram",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272530",
+    "name": "Sodyum",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272540",
+    "name": "SpIgE d1 Dermatophagoides pteronyssinus",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272550",
+    "name": "SpIgE d2 Dermatophagoides farinae",
+    "price": 230,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272560",
+    "name": "T3 (Triiyodotironin)",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272570",
+    "name": "T4 (Tiroksin)",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272580",
+    "name": "Teofilin",
+    "price": 530,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272590",
+    "name": "Tiroglobulin (hTG)",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272600",
+    "name": "Tiroid Peroksidaz Antikoru",
+    "price": 270,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272610",
+    "name": "TORCH",
+    "price": 370,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272620",
+    "name": "Total Bilirubin",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272630",
+    "name": "Total Demir Bağlama Kapasitesi",
+    "price": 140,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272640",
+    "name": "Total Kolesterol",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272650",
+    "name": "Total Lipid",
+    "price": 80,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272660",
+    "name": "Total Protein",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272670",
+    "name": "Total PSA",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272680",
+    "name": "Total Testosteron",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272690",
+    "name": "Toxoplasma IgG Antikoru",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272700",
+    "name": "Toxoplasma IgM Antikoru",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272710",
+    "name": "Toxoplazma IgG Avidite",
+    "price": 340,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272720",
+    "name": "TPHA",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272730",
+    "name": "Trigliseritler",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272740",
+    "name": "Troponin T (TnT)",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272750",
+    "name": "Trombofoli paneli",
+    "price": 2480,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272760",
+    "name": "TSH",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272770",
+    "name": "Ureaplasma-Mycoplasma Kültürü",
+    "price": 200,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272780",
+    "name": "Ürik Asit",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272790",
+    "name": "Vagen Kültürü",
+    "price": 120,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272800",
+    "name": "Valproik Asit",
+    "price": 270,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272810",
+    "name": "Vancomycin",
+    "price": 690,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272820",
+    "name": "Vanilmandelik Asit (VMA)",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272830",
+    "name": "Varicella zoster IgG Antikoru",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272840",
+    "name": "Varicella zoster IgM Antikoru",
+    "price": 300,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272850",
+    "name": "Venöz Bikarbonat (HCO3)",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272860",
+    "name": "Vitamin A",
+    "price": 270,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272870",
+    "name": "Vitamin B12",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272880",
+    "name": "Vitamin B6",
+    "price": 1040,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272890",
+    "name": "VDRL",
+    "price": 1040,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272900",
+    "name": "VİTAMİN H (BİOTİN)",
+    "price": 530,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272910",
+    "name": "Vitamin D3",
+    "price": 390,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272920",
+    "name": "VLDL Kolesterol",
+    "price": 110,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272930",
+    "name": "YARA KÜLTÜRÜ",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272940",
+    "name": "QUANTİFERON TESTİ",
+    "price": 1130,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272950",
+    "name": "Wright Testi",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272960",
+    "name": "24 Saatlik idrarda metanefrin",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272970",
+    "name": "24 saatlik idrarda normetanefrin",
+    "price": 260,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272980",
+    "name": "24 saatlik idrarda Dopamin",
+    "price": 320,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "272990",
+    "name": "24 saatlik idrarda kreatinin klerans",
+    "price": 90,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273000",
+    "name": "24 saatlik idrarda mikroalbümüniri",
+    "price": 170,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273010",
+    "name": "24 saatlik idrarda Epinefrin",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273020",
+    "name": "24 saatlik idrarda Norepinefrin",
+    "price": 220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273030",
+    "name": "24 saatlik idrarda 5-HİAA",
+    "price": 180,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273040",
+    "name": "24 saatlik İdrarda Kalsiyum",
+    "price": 80,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273050",
+    "name": "24 saatlik idrarda Bakır",
+    "price": 200,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273060",
+    "name": "24 saatlik idrarda protein",
+    "price": 130,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273070",
+    "name": "24 saatlik idrarda sodyum",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273080",
+    "name": "24 saatlik idrarda potasyum",
+    "price": 70,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273090",
+    "name": "24 saatlik idrarda İmmun Elektroforazi",
+    "price": 390,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273100",
+    "name": "SAFRA ASITI",
+    "price": 390,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "273110",
+    "name": "24 SAATLIK IDRARDA SERBEST KORTIZOL",
+    "price": 370,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "430010",
+    "name": "Tek Bölge BT",
+    "price": 1550,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "430020",
+    "name": "Üriner BT (İlaç Dahil)",
+    "price": 1600,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "430030",
+    "name": "BT Anjio (İlaç Dahil)",
+    "price": 2550,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "430040",
+    "name": "Periferik BT Anjio (İlaç Dahil)",
+    "price": 3330,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "430050",
+    "name": "Kroner BT Anjio (İlaç Dahil)",
+    "price": 3000,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450010",
+    "name": "Ekokardiyografi",
+    "price": 750,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450020",
+    "name": "İnce iğne Aspirasyon Biyopsisi",
+    "price": 2550,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450030",
+    "name": "İnce iğne Aspirasyon Biyopsisi. Birden çok nodül",
+    "price": 4000,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450040",
+    "name": "Perkütan Kalın İğne Biyopsisi (Meme)",
+    "price": 3470,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450050",
+    "name": "Tel işaretleme",
+    "price": 1740,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450060",
+    "name": "Paket (Tiroid, karotis, tüm Batın)",
+    "price": 2610,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450070",
+    "name": "Tiroid-boyun US+ Tiroid RDUS",
+    "price": 700,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450080",
+    "name": "Abdomen US, tüm",
+    "price": 700,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450090",
+    "name": "Karotis+vertebral renkli Doppler US",
+    "price": 1220,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450100",
+    "name": "Meme US + Meme RDUS ( Bakırköy Renkli USG )",
+    "price": 870,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450110",
+    "name": "Transrektal US + Transrektal RDUS",
+    "price": 870,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450120",
+    "name": "Transvajinal US + Transvajinal RDUS",
+    "price": 760,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450130",
+    "name": "Yüzeyel doku US",
+    "price": 350,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450140",
+    "name": "Alt ekstremite derin venler renkli Doppler US, tek taraflı",
+    "price": 580,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450150",
+    "name": "Pelvik US, Pelvik arterler RDUS, Pelvik venler RDUS",
+    "price": 1050,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450160",
+    "name": "Penil renkli Doppler US",
+    "price": 870,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450170",
+    "name": "Portal ven RDUS + Hepatik venler RDUS",
+    "price": 1160,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450180",
+    "name": "Renal US, Renal parankim RDUS, Renal arter RDUS, Renal ven RDUS, iki taraflı",
+    "price": 1510,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450190",
+    "name": "Skrotal US, Skrotal RDUS",
+    "price": 700,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450200",
+    "name": "Aortoiliyak ve tek ekstremite arterleri RDUS",
+    "price": 1160,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450210",
+    "name": "Aortoiliyak ve her iki alt ekstremite arterleri RDUS",
+    "price": 1740,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450220",
+    "name": "Alt ekstremite arter, tek taraflı",
+    "price": 580,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450230",
+    "name": "Alt ekstremite yüzeyel-derin-perforan venöz sistem RDUS, tek taraflı",
+    "price": 1160,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450240",
+    "name": "Üst ekstremite arteriel sistem RDUS, tek taraflı",
+    "price": 580,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450250",
+    "name": "Üst ekstremite venöz sistem RDUS, tek taraflı",
+    "price": 580,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450260",
+    "name": "Transrektal renkli Doppler",
+    "price": 580,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450270",
+    "name": "Transvajinal renkli Doppler",
+    "price": 580,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450280",
+    "name": "Meme USG (Spektromar)",
+    "price": 580,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450290",
+    "name": "Tüm Batın USG (Spektromar)",
+    "price": 690,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450300",
+    "name": "Troid USG (Spektromar)",
+    "price": 515,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450310",
+    "name": "Akciğer PA (Spektromar)",
+    "price": 175,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450320",
+    "name": "Tek Yön Grafi",
+    "price": 175,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450330",
+    "name": "Mamografi (Spektromar)",
+    "price": 560,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450340",
+    "name": "Skolyoz-Ortoröngen",
+    "price": 690,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450350",
+    "name": "Doppler INC",
+    "price": 690,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450360",
+    "name": "I.V.P (İlaç Dahil)",
+    "price": 900,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "450370",
+    "name": "Dexa",
+    "price": 360,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "560010",
+    "name": "Meme İİAB",
+    "price": 0,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "560020",
+    "name": "Meme Tel İşaretleme US Rehberliğinde",
+    "price": 0,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "560030",
+    "name": "Tru-Cut",
+    "price": 0,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "560040",
+    "name": "Tiroid İİAB",
+    "price": 0,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "590010",
+    "name": "İç Hastalıkları Muayenesi",
+    "price": 750,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "590020",
+    "name": "Kontrol Muayenesi",
+    "price": 0,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "810010",
+    "name": "EKG",
+    "price": 150,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "810020",
+    "name": "Tansiyon Holter",
+    "price": 750,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "810030",
+    "name": "Ritim Holter",
+    "price": 750,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "810040",
+    "name": "Glutatyon",
+    "price": 700,
+    "is_active": 1
+  },
+  {
+    "legacy_code": "810050",
+    "name": "SFT",
+    "price": 350,
+    "is_active": 1
+  }
+]

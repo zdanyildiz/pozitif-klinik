@@ -1,9 +1,10 @@
 const sql = require('mssql');
 const mysql = require('mysql2/promise');
-const { getSourceConfig, getTargetConfig } = require('./db.helper');
+const { getSourceConfig, getTargetConfig } = require('./core/db.helper');
+const { parseClinicId } = require('./core/cli.helper');
 
 const BATCH_SIZE = 1000;
-const CLINIC_ID = 1; // Default Clinic
+const CLINIC_ID = parseClinicId();
 
 const RECORD_RESOLVERS = {
     Patient: { table: 'ptn_cards', legacyColumn: 'legacy_id' },

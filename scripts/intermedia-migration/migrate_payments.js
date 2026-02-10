@@ -1,48 +1,61 @@
 /**
- * Pozitif Klinik - Ödeme Verileri Aktarım Scripti (Extract)
+ * Pozitif Klinik - Ödeme Verileri Aktarım Scripti
  * 
- * Eski MSSQL sisteminden ödeme (tahsilat) verilerini çeker ve JSON olarak kaydeder.
+ * Eski MSSQL sisteminden ödeme (tahsilat) verilerini çeker ve MySQL'e yükler.
  * 
  * Kullanım:
- *   node scripts/migrate_payments.js
+ *   node migrate_payments.js --clinic=1
  */
 
 const sql = require('mssql');
-const fs = require('fs');
+const mysql = require('mysql2/promise');
 const path = require('path');
 
-// MSSQL Config (Eski Sistem)
-const { getSourceConfig } = require('./db.helper');
-const mssqlConfig = getSourceConfig();
+const { getSourceConfig, getTargetConfig } = require('./core/db.helper');
+const { parseClinicId } = require('./core/cli.helper');
 
-const CLINIC_ID = 1;
-const OUTPUT_FILE = path.resolve(__dirname, 'payments_data.json');
+const mssqlConfig = { ...getSourceConfig(), requestTimeout: 120000 };
+const mysqlConfig = { ...getTargetConfig(), connectTimeout: 60000 };
+const CLINIC_ID = parseClinicId();
 
-class PaymentMigrator {
-    constructor() {
-        this.mssqlPool = null;
+function mapPaymentType(typeCode) {
+    switch (String(typeCode)) {
+        case '1': return 'credit_card';
+        case '2': return 'bank_transfer';
+        default: return 'cash';
     }
+}
 
-    async connect() {
-        console.log('MSSQL bağlantısı kuruluyor...');
-        this.mssqlPool = await sql.connect(mssqlConfig);
-        console.log('MSSQL bağlantısı başarılı.');
-    }
+async function main() {
+    console.log('Veritabanlarına bağlanılıyor...');
+    const mssqlPool = await sql.connect(mssqlConfig);
+    const mysqlConn = await mysql.createConnection(mysqlConfig);
+    console.log('Bağlantı başarılı.');
 
-    async disconnect() {
-        if (this.mssqlPool) {
-            await this.mssqlPool.close();
-            console.log('MSSQL bağlantısı kapatıldı.');
-        }
-    }
+    try {
+        // 1. Patient ve Appointment map'lerini yükle
+        console.log('Eşleşmeler yükleniyor...');
+        const [patientRows] = await mysqlConn.query(
+            'SELECT id, legacy_id FROM ptn_cards WHERE clinic_id = ? AND legacy_id IS NOT NULL', [CLINIC_ID]
+        );
+        const patientMap = new Map(patientRows.map(r => [r.legacy_id, r.id]));
 
-    async extractPayments() {
-        console.log('\n--- ÖDEMELER (TAHSİLATLAR) ---');
+        const [apptRows] = await mysqlConn.query(
+            'SELECT id, legacy_visit_id FROM cln_appointments WHERE clinic_id = ? AND legacy_visit_id IS NOT NULL', [CLINIC_ID]
+        );
+        const appointmentMap = new Map(apptRows.map(r => [r.legacy_visit_id, r.id]));
+        console.log(`  ${patientMap.size} hasta, ${appointmentMap.size} randevu eşleşmesi yüklendi.`);
 
-        // NOT: Kolon isimleri tahmini olarak yazılmıştır.
-        // Gerçek veritabanında HST_ODEMELER tablosunun şemasına göre düzenlenmelidir.
-        // Olası kolonlar: ID, HASTANO, TARIH, TUTAR, ODEMETIPI, ACIKLAMA, ...
-        const query = `
+        // 2. Mevcut ödemeleri kontrol et (tekrar aktarımı engelle)
+        const [existingPayments] = await mysqlConn.query(
+            'SELECT legacy_id FROM cln_payments WHERE clinic_id = ? AND legacy_id IS NOT NULL', [CLINIC_ID]
+        );
+        const existingSet = new Set(existingPayments.map(r => r.legacy_id));
+        console.log(`  ${existingSet.size} mevcut ödeme kaydı atlanacak.`);
+
+        // 3. MSSQL'den ödemeleri çek
+        console.log('\nMSSQL\'den ödemeler çekiliyor...');
+        const result = await mssqlPool.request().query(`
             SELECT 
                 o.ODEMENO,
                 g.HASTANO,
@@ -54,58 +67,75 @@ class PaymentMigrator {
                 o.IPTAL
             FROM HST_ODEMELER o
             LEFT JOIN HST_GELISLER g ON o.GELISNO = g.GELISNO
-            ORDER BY o.TARIH DESC
-        `;
+            ORDER BY o.TARIH
+        `);
+        console.log(`${result.recordset.length} ödeme kaydı bulundu.`);
 
-        try {
-            const result = await this.mssqlPool.request().query(query);
+        // 4. MySQL'e yükle
+        let inserted = 0;
+        let skippedNoPatient = 0;
+        let skippedExisting = 0;
+        const batchSize = 500;
+        const values = [];
 
-            const payments = result.recordset.map(row => ({
-                legacy_id: row.ODEMENO,
-                patient_legacy_id: row.HASTANO,
-                appointment_legacy_id: row.GELISNO || null,
-                amount: parseFloat(row.MIKTAR) || 0,
-                payment_date: row.TARIH ? new Date(row.TARIH).toISOString().slice(0, 19).replace('T', ' ') : null,
-                payment_type: this.mapPaymentType(row.ODEMETURU),
-                notes: row.NOTLAR || null,
-                status: row.IPTAL ? 'cancelled' : 'completed'
-            }));
+        for (const row of result.recordset) {
+            // Zaten aktarılmış mı?
+            if (existingSet.has(row.ODEMENO)) {
+                skippedExisting++;
+                continue;
+            }
 
-            console.log(`${payments.length} ödeme kaydı bulundu.`);
-            return payments;
-        } catch (err) {
-            console.warn('HST_ODEMELER tablosu okunamadı veya bulunamadı:', err.message);
-            return [];
+            // Hasta eşleşmesi var mı?
+            const patientId = patientMap.get(row.HASTANO);
+            if (!patientId) {
+                skippedNoPatient++;
+                continue;
+            }
+
+            const appointmentId = appointmentMap.get(row.GELISNO) || null;
+            const paymentDate = row.TARIH
+                ? new Date(row.TARIH).toISOString().slice(0, 19).replace('T', ' ')
+                : '1970-01-01 00:00:00';
+
+            values.push([
+                CLINIC_ID,
+                patientId,
+                appointmentId,
+                mapPaymentType(row.ODEMETURU),
+                parseFloat(row.MIKTAR) || 0,
+                'TRY',
+                paymentDate,
+                row.NOTLAR || null,
+                row.IPTAL ? 'cancelled' : 'completed',
+                row.ODEMENO
+            ]);
         }
-    }
 
-    mapPaymentType(typeCode) {
-        // Eski sistem kodlarına göre mapping (Tahmini)
-        switch (String(typeCode)) {
-            case '1': return 'credit_card';
-            case '2': return 'bank_transfer';
-            default: return 'cash';
+        // Batch insert
+        for (let i = 0; i < values.length; i += batchSize) {
+            const batch = values.slice(i, i + batchSize);
+            await mysqlConn.query(
+                `INSERT INTO cln_payments 
+                (clinic_id, patient_id, appointment_id, payment_type, amount, currency, payment_date, notes, status, legacy_id) 
+                VALUES ?`,
+                [batch]
+            );
+            inserted += batch.length;
         }
-    }
 
-    async run() {
-        await this.connect();
-        try {
-            const payments = await this.extractPayments();
+        console.log(`\n--- Ödeme Aktarım Özeti ---`);
+        console.log(`Toplam Kaynak: ${result.recordset.length}`);
+        console.log(`Başarılı Insert: ${inserted}`);
+        console.log(`Atlanan (Mevcut): ${skippedExisting}`);
+        console.log(`Atlanan (Hasta Yok): ${skippedNoPatient}`);
 
-            const data = {
-                clinic_id: CLINIC_ID,
-                extracted_at: new Date().toISOString(),
-                payments: payments
-            };
-
-            fs.writeFileSync(OUTPUT_FILE, JSON.stringify(data, null, 2));
-            console.log(`Veriler kaydedildi: ${OUTPUT_FILE}`);
-        } finally {
-            await this.disconnect();
-        }
+    } catch (err) {
+        console.error('\n❌ HATA:', err);
+        throw err;
+    } finally {
+        await mssqlPool.close();
+        await mysqlConn.end();
     }
 }
 
-const migrator = new PaymentMigrator();
-migrator.run().catch(console.error);
+main().catch(err => { console.error(err); process.exit(1); });

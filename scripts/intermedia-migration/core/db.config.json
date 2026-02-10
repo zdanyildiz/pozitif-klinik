@@ -1,0 +1,37 @@
+{
+    "_comment": "Intermedia Migration Merkezi Veritabanı Konfigürasyonu",
+    "_usage": "const config = require('./db.config.json'); veya getDbConfig() helper fonksiyonu ile kullanılır",
+    "source": {
+        "_description": "Kaynak veritabanı (MSSQL - Eski sistem)",
+        "type": "mssql",
+        "user": "sa",
+        "password": "#Global2025*",
+        "server": "localhost",
+        "database": "ErhanOzel",
+        "port": 1433,
+        "options": {
+            "encrypt": false,
+            "trustServerCertificate": true
+        }
+    },
+    "target": {
+        "_description": "Hedef veritabanı (MySQL - Yeni sistem)",
+        "type": "mysql",
+        "host": "127.0.0.1",
+        "user": "root",
+        "password": "",
+        "database": "test_klinik",
+        "charset": "utf8mb4"
+    },
+    "migration": {
+        "_description": "Migration ayarları",
+        "clinic_id": 1,
+        "batch_size": 100,
+        "data_output_path": "./data/migration_data.json"
+    },
+    "encryption": {
+        "_description": "Şifreleme ayarları (KVKK)",
+        "_warning": "Production için APP_KEY .env dosyasından okunmalıdır!",
+        "app_key": "a1b2c3d4e5f678901234567890abcdef1234567890abcdef1234567890abcdef"
+    }
+}

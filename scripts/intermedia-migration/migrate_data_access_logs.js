@@ -1,9 +1,10 @@
 const sql = require('mssql');
 const mysql = require('mysql2/promise');
-const { getSourceConfig, getTargetConfig } = require('./db.helper');
+const { getSourceConfig, getTargetConfig } = require('./core/db.helper');
+const { parseClinicId } = require('./core/cli.helper');
 
 const BATCH_SIZE = 2000;
-const CLINIC_ID = 1;
+const CLINIC_ID = parseClinicId();
 
 async function migrateDataAccessLogs() {
     console.log('🚀 Starting Data Access Logs Migration...');
@@ -29,36 +30,34 @@ async function migrateDataAccessLogs() {
 
         console.log(`Loaded ${userMap.size} users and ${patientMap.size} patients.`);
 
-        // 3. Get Last Imported Offset (Legacy ID / RowNum)
-        // We are using synthetic RowNum as legacy_record_id for this table since it has no PK.
+        // 3. Get Last Imported KayitID (Cursor-based pagination — ROW_NUMBER CTE yerine)
         const [res] = await mysqlConn.query("SELECT MAX(legacy_record_id) as max_id FROM cln_data_access_logs WHERE legacy_table = 'Kullanici_Log_KayitErisim'");
-        let currentOffset = res[0].max_id || 0;
+        let lastKayitId = res[0].max_id || 0;
 
-        console.log(`   Detailed: Resuming from Offset ${currentOffset}`);
+        console.log(`   Resuming from KayitID > ${lastKayitId}`);
 
+        let totalProcessed = 0;
         let hasMore = true;
 
         while (hasMore) {
-            // MSSQL Query using Window Function for Pagination
-            const result = await mssqlPool.request().query(`
-                WITH OrderedLogs AS (
-                    SELECT 
-                        ROW_NUMBER() OVER (ORDER BY TarihSaat, KullaniciID) as RowNum,
+            // Cursor tabanlı pagination: ROW_NUMBER yerine KayitID üzerinden ilerle
+            // Bu yöntem offset arttıkça yavaşlamaz — her sorgu sabit performansta çalışır
+            const result = await mssqlPool.request()
+                .input('lastId', sql.Int, lastKayitId)
+                .query(`
+                    SELECT TOP ${BATCH_SIZE}
+                        KayitID,
                         KullaniciID,
                         HastaNo,
                         GelisNo,
                         KayitTuruTanimID,
-                        KayitID,
                         TarihSaat,
                         Notlar,
                         SubeID
                     FROM Kullanici_Log_KayitErisim
-                )
-                SELECT TOP ${BATCH_SIZE} *
-                FROM OrderedLogs
-                WHERE RowNum > ${currentOffset}
-                ORDER BY RowNum
-            `);
+                    WHERE KayitID > @lastId
+                    ORDER BY KayitID
+                `);
 
             if (result.recordset.length === 0) {
                 hasMore = false;
@@ -69,7 +68,6 @@ async function migrateDataAccessLogs() {
             for (const row of result.recordset) {
                 const userId = userMap.get(row.KullaniciID) || null;
                 const patientId = patientMap.get(row.HastaNo) || null;
-                const syntheticId = row.RowNum;
 
                 // Determine Record Type
                 // KayitTuruTanimID: 1 -> Patient, 200 -> Appointment (Gelis)
@@ -81,25 +79,24 @@ async function migrateDataAccessLogs() {
                     recordId = patientId; // Link to new Patient ID
                 } else if (row.KayitTuruTanimID === 200) { // Appointment
                     recordType = 'Appointment';
-                    // We cannot link to new Appointment ID without map. Leaving NULL.
                     recordId = null;
                 }
 
                 values.push([
                     CLINIC_ID,
                     userId,
-                    patientId, // patient_id column
+                    patientId,
                     recordType,
-                    recordId, // record_id column (New ID)
+                    recordId,
                     'DATA_ACCESS',
                     null, // IP
                     row.Notlar || 'Legacy Access Log',
                     row.TarihSaat ? new Date(row.TarihSaat) : new Date(),
                     'Kullanici_Log_KayitErisim',
-                    syntheticId // legacy_record_id (Used for offset)
+                    row.KayitID // Gerçek PK — sentetik RowNum yerine
                 ]);
 
-                currentOffset = syntheticId;
+                lastKayitId = row.KayitID;
             }
 
             if (values.length > 0) {
@@ -109,8 +106,10 @@ async function migrateDataAccessLogs() {
                     VALUES ?
                 `, [values]);
             }
-            if (currentOffset % 10000 === 0) {
-                console.log(`Processed up to RowNum ${currentOffset}`);
+
+            totalProcessed += result.recordset.length;
+            if (totalProcessed % 10000 === 0) {
+                console.log(`Processed ${totalProcessed} records (KayitID: ${lastKayitId})`);
             }
         }
 

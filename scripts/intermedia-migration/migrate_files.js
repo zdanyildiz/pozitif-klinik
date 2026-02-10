@@ -7,11 +7,12 @@ const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 
 // --- Configuration ---
-const CLINIC_ID = 1;
-const UPLOAD_ROOT = path.resolve(__dirname, '../../storage/app/uploads'); // Relative path
+const { getSourceConfig, getTargetConfig } = require('./core/db.helper');
+const { parseClinicId } = require('./core/cli.helper');
+const CLINIC_ID = parseClinicId();
+const UPLOAD_ROOT = path.resolve(__dirname, '../../storage/app/uploads');
 
 // Database Config
-const { getSourceConfig, getTargetConfig } = require('./db.helper');
 const mssqlConfig = getSourceConfig();
 const mysqlConfig = getTargetConfig();
 

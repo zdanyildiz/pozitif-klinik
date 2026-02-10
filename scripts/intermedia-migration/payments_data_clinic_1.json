@@ -1,0 +1,2016 @@
+{
+  "clinic_id": 1,
+  "extracted_at": "2026-02-10T10:46:02.579Z",
+  "payments": [
+    {
+      "legacy_id": 1198,
+      "patient_legacy_id": 1362,
+      "appointment_legacy_id": 71322,
+      "amount": 3000,
+      "payment_date": "2022-08-03 09:47:17",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 1197,
+      "patient_legacy_id": 822,
+      "appointment_legacy_id": 71321,
+      "amount": 750,
+      "payment_date": "2022-08-03 09:47:00",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 1196,
+      "patient_legacy_id": 5615,
+      "appointment_legacy_id": 71320,
+      "amount": 2240,
+      "payment_date": "2022-08-03 09:46:34",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 1195,
+      "patient_legacy_id": 5615,
+      "appointment_legacy_id": 71320,
+      "amount": 10,
+      "payment_date": "2022-08-03 09:46:07",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 1194,
+      "patient_legacy_id": 15095,
+      "appointment_legacy_id": 71319,
+      "amount": 1500,
+      "payment_date": "2022-08-03 09:45:40",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 1193,
+      "patient_legacy_id": 9692,
+      "appointment_legacy_id": 71318,
+      "amount": 1500,
+      "payment_date": "2022-08-03 09:45:03",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 1192,
+      "patient_legacy_id": 15127,
+      "appointment_legacy_id": 69556,
+      "amount": 750,
+      "payment_date": "2022-06-14 12:46:55",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 194,
+      "patient_legacy_id": 14824,
+      "appointment_legacy_id": 67944,
+      "amount": 750,
+      "payment_date": "2022-05-18 08:58:55",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 193,
+      "patient_legacy_id": 14824,
+      "appointment_legacy_id": 69677,
+      "amount": 750,
+      "payment_date": "2022-05-18 08:58:36",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 192,
+      "patient_legacy_id": 14824,
+      "appointment_legacy_id": 68715,
+      "amount": 750,
+      "payment_date": "2022-05-18 08:58:24",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 191,
+      "patient_legacy_id": 14360,
+      "appointment_legacy_id": 68140,
+      "amount": 750,
+      "payment_date": "2021-11-19 14:37:56",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 190,
+      "patient_legacy_id": 14360,
+      "appointment_legacy_id": 68138,
+      "amount": 1499,
+      "payment_date": "2021-11-19 14:32:01",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 189,
+      "patient_legacy_id": 12098,
+      "appointment_legacy_id": 66863,
+      "amount": 750,
+      "payment_date": "2021-09-11 13:11:49",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 188,
+      "patient_legacy_id": 12098,
+      "appointment_legacy_id": 67385,
+      "amount": 1,
+      "payment_date": "2021-09-11 13:11:30",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 187,
+      "patient_legacy_id": 14118,
+      "appointment_legacy_id": 67418,
+      "amount": 1,
+      "payment_date": "2021-09-11 10:26:47",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 186,
+      "patient_legacy_id": 101,
+      "appointment_legacy_id": 67372,
+      "amount": 1,
+      "payment_date": "2021-09-10 12:48:35",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 185,
+      "patient_legacy_id": 14726,
+      "appointment_legacy_id": 67347,
+      "amount": 1,
+      "payment_date": "2021-09-03 09:36:48",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 184,
+      "patient_legacy_id": 14620,
+      "appointment_legacy_id": 66842,
+      "amount": 1,
+      "payment_date": "2021-08-05 10:27:49",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 183,
+      "patient_legacy_id": 14619,
+      "appointment_legacy_id": 67180,
+      "amount": 1,
+      "payment_date": "2021-08-03 10:48:09",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 182,
+      "patient_legacy_id": 14619,
+      "appointment_legacy_id": 67180,
+      "amount": 1,
+      "payment_date": "2021-08-03 10:38:10",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 181,
+      "patient_legacy_id": 14619,
+      "appointment_legacy_id": 66834,
+      "amount": 1,
+      "payment_date": "2021-08-03 10:37:54",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 180,
+      "patient_legacy_id": 5615,
+      "appointment_legacy_id": 67104,
+      "amount": 750,
+      "payment_date": "2021-08-02 08:57:34",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 179,
+      "patient_legacy_id": 8206,
+      "appointment_legacy_id": 67071,
+      "amount": 1,
+      "payment_date": "2021-06-30 10:29:21",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 178,
+      "patient_legacy_id": 5897,
+      "appointment_legacy_id": 67052,
+      "amount": 1,
+      "payment_date": "2021-06-30 10:29:01",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 177,
+      "patient_legacy_id": 14636,
+      "appointment_legacy_id": 66912,
+      "amount": 1,
+      "payment_date": "2021-06-28 09:42:12",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 176,
+      "patient_legacy_id": 3576,
+      "appointment_legacy_id": 66116,
+      "amount": 1,
+      "payment_date": "2021-06-15 12:51:10",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 175,
+      "patient_legacy_id": 3576,
+      "appointment_legacy_id": 66947,
+      "amount": 4,
+      "payment_date": "2021-06-15 12:50:54",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 174,
+      "patient_legacy_id": 3576,
+      "appointment_legacy_id": 66947,
+      "amount": 1,
+      "payment_date": "2021-06-15 12:50:00",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 173,
+      "patient_legacy_id": 6246,
+      "appointment_legacy_id": 66502,
+      "amount": 1,
+      "payment_date": "2021-06-14 12:50:21",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 172,
+      "patient_legacy_id": 14622,
+      "appointment_legacy_id": 66847,
+      "amount": 750,
+      "payment_date": "2021-06-10 15:29:35",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 171,
+      "patient_legacy_id": 14626,
+      "appointment_legacy_id": 66876,
+      "amount": 750,
+      "payment_date": "2021-06-08 12:50:30",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 170,
+      "patient_legacy_id": 14627,
+      "appointment_legacy_id": 66882,
+      "amount": 750,
+      "payment_date": "2021-06-08 12:49:57",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 169,
+      "patient_legacy_id": 14617,
+      "appointment_legacy_id": 66810,
+      "amount": 2370,
+      "payment_date": "2021-06-03 09:48:55",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 168,
+      "patient_legacy_id": 14616,
+      "appointment_legacy_id": 66809,
+      "amount": 750,
+      "payment_date": "2021-06-03 09:48:36",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 167,
+      "patient_legacy_id": 14003,
+      "appointment_legacy_id": 66768,
+      "amount": 750,
+      "payment_date": "2021-05-27 09:20:59",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 166,
+      "patient_legacy_id": 14564,
+      "appointment_legacy_id": 66524,
+      "amount": 4360,
+      "payment_date": "2021-05-21 11:10:39",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 165,
+      "patient_legacy_id": 14600,
+      "appointment_legacy_id": 66701,
+      "amount": 750,
+      "payment_date": "2021-05-20 10:16:35",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 164,
+      "patient_legacy_id": 14596,
+      "appointment_legacy_id": 66691,
+      "amount": 750,
+      "payment_date": "2021-05-20 09:15:58",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 163,
+      "patient_legacy_id": 14595,
+      "appointment_legacy_id": 66687,
+      "amount": 1600,
+      "payment_date": "2021-05-17 09:50:42",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 162,
+      "patient_legacy_id": 14548,
+      "appointment_legacy_id": 66449,
+      "amount": 750,
+      "payment_date": "2021-05-10 15:52:50",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 161,
+      "patient_legacy_id": 14554,
+      "appointment_legacy_id": 66475,
+      "amount": 1,
+      "payment_date": "2021-05-10 10:19:10",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 160,
+      "patient_legacy_id": 14565,
+      "appointment_legacy_id": 66525,
+      "amount": 100,
+      "payment_date": "2021-05-10 09:05:20",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 159,
+      "patient_legacy_id": 14591,
+      "appointment_legacy_id": 66669,
+      "amount": 750,
+      "payment_date": "2021-05-08 10:55:12",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 158,
+      "patient_legacy_id": 7119,
+      "appointment_legacy_id": 66665,
+      "amount": 100,
+      "payment_date": "2021-05-07 14:12:06",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 157,
+      "patient_legacy_id": 14582,
+      "appointment_legacy_id": 66596,
+      "amount": 750,
+      "payment_date": "2021-05-07 12:59:14",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 156,
+      "patient_legacy_id": 14590,
+      "appointment_legacy_id": 66668,
+      "amount": 500,
+      "payment_date": "2021-05-07 11:47:26",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 155,
+      "patient_legacy_id": 14572,
+      "appointment_legacy_id": 66571,
+      "amount": 750,
+      "payment_date": "2021-05-06 09:03:40",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 154,
+      "patient_legacy_id": 14588,
+      "appointment_legacy_id": 66649,
+      "amount": 750,
+      "payment_date": "2021-05-06 09:00:19",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 153,
+      "patient_legacy_id": 11648,
+      "appointment_legacy_id": 66648,
+      "amount": 750,
+      "payment_date": "2021-05-06 08:55:21",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 152,
+      "patient_legacy_id": 14529,
+      "appointment_legacy_id": 66348,
+      "amount": 100,
+      "payment_date": "2021-05-05 12:34:45",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 151,
+      "patient_legacy_id": 8974,
+      "appointment_legacy_id": 66650,
+      "amount": 750,
+      "payment_date": "2021-05-05 12:33:33",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 150,
+      "patient_legacy_id": 14589,
+      "appointment_legacy_id": 66651,
+      "amount": 100,
+      "payment_date": "2021-05-05 10:02:36",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 149,
+      "patient_legacy_id": 14560,
+      "appointment_legacy_id": 66492,
+      "amount": 100,
+      "payment_date": "2021-05-04 09:03:22",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 148,
+      "patient_legacy_id": 4209,
+      "appointment_legacy_id": 66585,
+      "amount": 750,
+      "payment_date": "2021-05-03 12:38:26",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 147,
+      "patient_legacy_id": 14587,
+      "appointment_legacy_id": 66638,
+      "amount": 750,
+      "payment_date": "2021-05-03 09:20:00",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 146,
+      "patient_legacy_id": 13849,
+      "appointment_legacy_id": 66629,
+      "amount": 750,
+      "payment_date": "2021-05-03 09:19:20",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 145,
+      "patient_legacy_id": 13849,
+      "appointment_legacy_id": 66533,
+      "amount": 100,
+      "payment_date": "2021-05-03 09:19:12",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 144,
+      "patient_legacy_id": 5840,
+      "appointment_legacy_id": 66622,
+      "amount": 100,
+      "payment_date": "2021-05-03 09:15:25",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 143,
+      "patient_legacy_id": 13612,
+      "appointment_legacy_id": 66606,
+      "amount": 750,
+      "payment_date": "2021-05-03 09:13:02",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 142,
+      "patient_legacy_id": 13034,
+      "appointment_legacy_id": 66631,
+      "amount": 750,
+      "payment_date": "2021-05-03 09:11:04",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 141,
+      "patient_legacy_id": 12407,
+      "appointment_legacy_id": 66621,
+      "amount": 100,
+      "payment_date": "2021-04-30 12:36:02",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 140,
+      "patient_legacy_id": 14574,
+      "appointment_legacy_id": 66577,
+      "amount": 100,
+      "payment_date": "2021-04-30 12:24:14",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 139,
+      "patient_legacy_id": 14584,
+      "appointment_legacy_id": 66605,
+      "amount": 100,
+      "payment_date": "2021-04-30 10:16:20",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 138,
+      "patient_legacy_id": 14547,
+      "appointment_legacy_id": 66439,
+      "amount": 100,
+      "payment_date": "2021-04-29 09:57:48",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 137,
+      "patient_legacy_id": 14547,
+      "appointment_legacy_id": 66438,
+      "amount": 100,
+      "payment_date": "2021-04-29 09:57:31",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 136,
+      "patient_legacy_id": 5840,
+      "appointment_legacy_id": 66589,
+      "amount": 100,
+      "payment_date": "2021-04-29 09:55:24",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 135,
+      "patient_legacy_id": 791,
+      "appointment_legacy_id": 66590,
+      "amount": 2280,
+      "payment_date": "2021-04-28 10:18:12",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 134,
+      "patient_legacy_id": 14580,
+      "appointment_legacy_id": 66594,
+      "amount": 750,
+      "payment_date": "2021-04-28 10:14:56",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 133,
+      "patient_legacy_id": 14551,
+      "appointment_legacy_id": 66460,
+      "amount": 750,
+      "payment_date": "2021-04-28 10:11:51",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 132,
+      "patient_legacy_id": 12422,
+      "appointment_legacy_id": 66503,
+      "amount": 100,
+      "payment_date": "2021-04-28 10:09:32",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 131,
+      "patient_legacy_id": 14573,
+      "appointment_legacy_id": 66576,
+      "amount": 750,
+      "payment_date": "2021-04-27 17:04:06",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 130,
+      "patient_legacy_id": 1283,
+      "appointment_legacy_id": 66214,
+      "amount": 1530,
+      "payment_date": "2021-04-27 15:21:16",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 129,
+      "patient_legacy_id": 11019,
+      "appointment_legacy_id": 66443,
+      "amount": 750,
+      "payment_date": "2021-04-27 14:36:33",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 128,
+      "patient_legacy_id": 14570,
+      "appointment_legacy_id": 66557,
+      "amount": 100,
+      "payment_date": "2021-04-26 09:57:53",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 127,
+      "patient_legacy_id": 13774,
+      "appointment_legacy_id": 66500,
+      "amount": 750,
+      "payment_date": "2021-04-26 09:55:19",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 126,
+      "patient_legacy_id": 12555,
+      "appointment_legacy_id": 66493,
+      "amount": 750,
+      "payment_date": "2021-04-26 09:53:47",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 125,
+      "patient_legacy_id": 12533,
+      "appointment_legacy_id": 66550,
+      "amount": 100,
+      "payment_date": "2021-04-26 09:21:26",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 124,
+      "patient_legacy_id": 14571,
+      "appointment_legacy_id": 66560,
+      "amount": 100,
+      "payment_date": "2021-04-26 09:12:53",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 123,
+      "patient_legacy_id": 14563,
+      "appointment_legacy_id": 66523,
+      "amount": 7000,
+      "payment_date": "2021-04-22 10:04:22",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 122,
+      "patient_legacy_id": 14568,
+      "appointment_legacy_id": 66538,
+      "amount": 1000,
+      "payment_date": "2021-04-22 08:43:28",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 121,
+      "patient_legacy_id": 11208,
+      "appointment_legacy_id": 66551,
+      "amount": 750,
+      "payment_date": "2021-04-21 17:41:21",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 120,
+      "patient_legacy_id": 14557,
+      "appointment_legacy_id": 66485,
+      "amount": 100,
+      "payment_date": "2021-04-15 16:27:04",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 119,
+      "patient_legacy_id": 14496,
+      "appointment_legacy_id": 66328,
+      "amount": 750,
+      "payment_date": "2021-04-14 10:49:37",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 118,
+      "patient_legacy_id": 12596,
+      "appointment_legacy_id": 66416,
+      "amount": 1000,
+      "payment_date": "2021-04-13 11:58:10",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 117,
+      "patient_legacy_id": 3200,
+      "appointment_legacy_id": 66424,
+      "amount": 1000,
+      "payment_date": "2021-04-12 14:58:11",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 116,
+      "patient_legacy_id": 13931,
+      "appointment_legacy_id": 66426,
+      "amount": 750,
+      "payment_date": "2021-04-12 14:54:59",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 115,
+      "patient_legacy_id": 14541,
+      "appointment_legacy_id": 66412,
+      "amount": 6290,
+      "payment_date": "2021-04-09 17:32:40",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 114,
+      "patient_legacy_id": 14540,
+      "appointment_legacy_id": 66408,
+      "amount": 10800,
+      "payment_date": "2021-04-09 13:22:39",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 113,
+      "patient_legacy_id": 14537,
+      "appointment_legacy_id": 66392,
+      "amount": 750,
+      "payment_date": "2021-04-09 10:48:49",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 112,
+      "patient_legacy_id": 10628,
+      "appointment_legacy_id": 66375,
+      "amount": 48,
+      "payment_date": "2021-04-06 13:38:56",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 111,
+      "patient_legacy_id": 10628,
+      "appointment_legacy_id": 66375,
+      "amount": 1,
+      "payment_date": "2021-04-06 13:37:04",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 110,
+      "patient_legacy_id": 10628,
+      "appointment_legacy_id": 66103,
+      "amount": 2820,
+      "payment_date": "2021-04-06 13:36:53",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 109,
+      "patient_legacy_id": 10628,
+      "appointment_legacy_id": 66375,
+      "amount": 1,
+      "payment_date": "2021-04-06 13:35:47",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 108,
+      "patient_legacy_id": 14326,
+      "appointment_legacy_id": 66349,
+      "amount": 1630,
+      "payment_date": "2021-04-06 13:15:56",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 107,
+      "patient_legacy_id": 14532,
+      "appointment_legacy_id": 66374,
+      "amount": 5000,
+      "payment_date": "2021-04-06 09:00:31",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 106,
+      "patient_legacy_id": 14510,
+      "appointment_legacy_id": 66324,
+      "amount": 1540,
+      "payment_date": "2021-04-02 14:54:20",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 105,
+      "patient_legacy_id": 5848,
+      "appointment_legacy_id": 66339,
+      "amount": 750,
+      "payment_date": "2021-04-02 09:34:33",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 104,
+      "patient_legacy_id": 14085,
+      "appointment_legacy_id": 66334,
+      "amount": 750,
+      "payment_date": "2021-04-02 09:16:16",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 103,
+      "patient_legacy_id": 14524,
+      "appointment_legacy_id": 66326,
+      "amount": 750,
+      "payment_date": "2021-04-02 09:05:56",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 102,
+      "patient_legacy_id": 14525,
+      "appointment_legacy_id": 66327,
+      "amount": 750,
+      "payment_date": "2021-04-02 09:02:19",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 101,
+      "patient_legacy_id": 14530,
+      "appointment_legacy_id": 66360,
+      "amount": 750,
+      "payment_date": "2021-04-02 08:54:21",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 100,
+      "patient_legacy_id": 14526,
+      "appointment_legacy_id": 66329,
+      "amount": 750,
+      "payment_date": "2021-03-31 14:20:23",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 99,
+      "patient_legacy_id": 795,
+      "appointment_legacy_id": 66303,
+      "amount": 2000,
+      "payment_date": "2021-03-31 14:15:30",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 98,
+      "patient_legacy_id": 7934,
+      "appointment_legacy_id": 66257,
+      "amount": 750,
+      "payment_date": "2021-03-31 13:54:12",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 97,
+      "patient_legacy_id": 14523,
+      "appointment_legacy_id": 66323,
+      "amount": 750,
+      "payment_date": "2021-03-30 13:17:14",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 96,
+      "patient_legacy_id": 14496,
+      "appointment_legacy_id": 66156,
+      "amount": 9710,
+      "payment_date": "2021-03-30 13:16:55",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 95,
+      "patient_legacy_id": 13993,
+      "appointment_legacy_id": 66307,
+      "amount": 1570,
+      "payment_date": "2021-03-29 16:57:44",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 94,
+      "patient_legacy_id": 14522,
+      "appointment_legacy_id": 66311,
+      "amount": 650,
+      "payment_date": "2021-03-29 16:57:32",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 93,
+      "patient_legacy_id": 11622,
+      "appointment_legacy_id": 66314,
+      "amount": 650,
+      "payment_date": "2021-03-29 16:57:06",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 92,
+      "patient_legacy_id": 14500,
+      "appointment_legacy_id": 66172,
+      "amount": 3560,
+      "payment_date": "2021-03-27 11:49:43",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 91,
+      "patient_legacy_id": 14481,
+      "appointment_legacy_id": 66168,
+      "amount": 390,
+      "payment_date": "2021-03-25 14:59:23",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 90,
+      "patient_legacy_id": 14481,
+      "appointment_legacy_id": 66168,
+      "amount": 6000,
+      "payment_date": "2021-03-25 14:59:08",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 89,
+      "patient_legacy_id": 14515,
+      "appointment_legacy_id": 66274,
+      "amount": 13000,
+      "payment_date": "2021-03-25 13:58:41",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 88,
+      "patient_legacy_id": 14499,
+      "appointment_legacy_id": 66163,
+      "amount": 3400,
+      "payment_date": "2021-03-25 12:11:15",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 87,
+      "patient_legacy_id": 14511,
+      "appointment_legacy_id": 66238,
+      "amount": 4980,
+      "payment_date": "2021-03-24 14:54:08",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 86,
+      "patient_legacy_id": 1935,
+      "appointment_legacy_id": 66108,
+      "amount": 3870,
+      "payment_date": "2021-03-24 14:53:22",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 85,
+      "patient_legacy_id": 14515,
+      "appointment_legacy_id": 66274,
+      "amount": 2000,
+      "payment_date": "2021-03-24 12:25:23",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 84,
+      "patient_legacy_id": 14317,
+      "appointment_legacy_id": 66217,
+      "amount": 750,
+      "payment_date": "2021-03-24 11:20:37",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 83,
+      "patient_legacy_id": 14513,
+      "appointment_legacy_id": 66244,
+      "amount": 12730,
+      "payment_date": "2021-03-23 10:46:37",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 82,
+      "patient_legacy_id": 14490,
+      "appointment_legacy_id": 66127,
+      "amount": 750,
+      "payment_date": "2021-03-19 12:49:36",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 81,
+      "patient_legacy_id": 14510,
+      "appointment_legacy_id": 66235,
+      "amount": 2680,
+      "payment_date": "2021-03-18 10:03:18",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 80,
+      "patient_legacy_id": 14504,
+      "appointment_legacy_id": 66199,
+      "amount": 2410,
+      "payment_date": "2021-03-17 10:49:44",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 79,
+      "patient_legacy_id": 14196,
+      "appointment_legacy_id": 66220,
+      "amount": 1570,
+      "payment_date": "2021-03-16 17:41:55",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 78,
+      "patient_legacy_id": 14421,
+      "appointment_legacy_id": 66219,
+      "amount": 3220,
+      "payment_date": "2021-03-16 17:41:40",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 77,
+      "patient_legacy_id": 14509,
+      "appointment_legacy_id": 66226,
+      "amount": 470,
+      "payment_date": "2021-03-16 17:41:22",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 76,
+      "patient_legacy_id": 14509,
+      "appointment_legacy_id": 66226,
+      "amount": 900,
+      "payment_date": "2021-03-16 17:41:06",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 75,
+      "patient_legacy_id": 14495,
+      "appointment_legacy_id": 66227,
+      "amount": 750,
+      "payment_date": "2021-03-16 17:40:53",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 74,
+      "patient_legacy_id": 14508,
+      "appointment_legacy_id": 66222,
+      "amount": 750,
+      "payment_date": "2021-03-16 11:44:59",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 73,
+      "patient_legacy_id": 13924,
+      "appointment_legacy_id": 66204,
+      "amount": 4785,
+      "payment_date": "2021-03-15 18:15:57",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 72,
+      "patient_legacy_id": 14507,
+      "appointment_legacy_id": 66209,
+      "amount": 4340,
+      "payment_date": "2021-03-15 14:41:13",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 71,
+      "patient_legacy_id": 14503,
+      "appointment_legacy_id": 66196,
+      "amount": 750,
+      "payment_date": "2021-03-15 14:40:57",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 70,
+      "patient_legacy_id": 10948,
+      "appointment_legacy_id": 66183,
+      "amount": 750,
+      "payment_date": "2021-03-15 11:43:13",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 69,
+      "patient_legacy_id": 9925,
+      "appointment_legacy_id": 66171,
+      "amount": 750,
+      "payment_date": "2021-03-15 09:47:33",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 68,
+      "patient_legacy_id": 5074,
+      "appointment_legacy_id": 66170,
+      "amount": 750,
+      "payment_date": "2021-03-15 09:44:23",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 67,
+      "patient_legacy_id": 14498,
+      "appointment_legacy_id": 66161,
+      "amount": 750,
+      "payment_date": "2021-03-12 15:11:32",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 66,
+      "patient_legacy_id": 14495,
+      "appointment_legacy_id": 66155,
+      "amount": 3000,
+      "payment_date": "2021-03-11 09:48:59",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 65,
+      "patient_legacy_id": 14492,
+      "appointment_legacy_id": 66144,
+      "amount": 750,
+      "payment_date": "2021-03-10 13:17:16",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 64,
+      "patient_legacy_id": 14436,
+      "appointment_legacy_id": 66143,
+      "amount": 2,
+      "payment_date": "2021-03-10 13:17:06",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 63,
+      "patient_legacy_id": 14436,
+      "appointment_legacy_id": 66143,
+      "amount": 2000,
+      "payment_date": "2021-03-10 13:16:32",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "cancelled"
+    },
+    {
+      "legacy_id": 62,
+      "patient_legacy_id": 14243,
+      "appointment_legacy_id": 66142,
+      "amount": 310,
+      "payment_date": "2021-03-10 13:16:06",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 61,
+      "patient_legacy_id": 14489,
+      "appointment_legacy_id": 66115,
+      "amount": 650,
+      "payment_date": "2021-03-10 13:15:28",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 60,
+      "patient_legacy_id": 14489,
+      "appointment_legacy_id": 66115,
+      "amount": 650,
+      "payment_date": "2021-03-10 13:15:11",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "cancelled"
+    },
+    {
+      "legacy_id": 59,
+      "patient_legacy_id": 14489,
+      "appointment_legacy_id": 66115,
+      "amount": 100,
+      "payment_date": "2021-03-10 13:14:51",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 58,
+      "patient_legacy_id": 14139,
+      "appointment_legacy_id": 66132,
+      "amount": 1140,
+      "payment_date": "2021-03-09 14:21:28",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 57,
+      "patient_legacy_id": 14156,
+      "appointment_legacy_id": 66133,
+      "amount": 750,
+      "payment_date": "2021-03-09 14:13:26",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 56,
+      "patient_legacy_id": 14156,
+      "appointment_legacy_id": 66134,
+      "amount": 750,
+      "payment_date": "2021-03-09 14:12:55",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 55,
+      "patient_legacy_id": 14255,
+      "appointment_legacy_id": 66110,
+      "amount": 3000,
+      "payment_date": "2021-03-09 10:31:21",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 54,
+      "patient_legacy_id": 14486,
+      "appointment_legacy_id": 66109,
+      "amount": 4540,
+      "payment_date": "2021-03-09 10:26:26",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 53,
+      "patient_legacy_id": 14488,
+      "appointment_legacy_id": 66112,
+      "amount": 4100,
+      "payment_date": "2021-03-09 10:16:41",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 52,
+      "patient_legacy_id": 14487,
+      "appointment_legacy_id": 66111,
+      "amount": 8760,
+      "payment_date": "2021-03-09 10:10:43",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 51,
+      "patient_legacy_id": 14475,
+      "appointment_legacy_id": 66044,
+      "amount": 750,
+      "payment_date": "2021-03-08 17:17:59",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 50,
+      "patient_legacy_id": 11597,
+      "appointment_legacy_id": 66089,
+      "amount": 1220,
+      "payment_date": "2021-03-08 14:20:35",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 49,
+      "patient_legacy_id": 1603,
+      "appointment_legacy_id": 66027,
+      "amount": 5000,
+      "payment_date": "2021-03-06 12:11:35",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 48,
+      "patient_legacy_id": 14482,
+      "appointment_legacy_id": 66082,
+      "amount": 3200,
+      "payment_date": "2021-03-03 14:22:18",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 47,
+      "patient_legacy_id": 14481,
+      "appointment_legacy_id": 66081,
+      "amount": 6000,
+      "payment_date": "2021-03-03 14:22:11",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 46,
+      "patient_legacy_id": 14480,
+      "appointment_legacy_id": 66080,
+      "amount": 2660,
+      "payment_date": "2021-03-03 11:36:18",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 45,
+      "patient_legacy_id": 14477,
+      "appointment_legacy_id": 66059,
+      "amount": 750,
+      "payment_date": "2021-03-03 09:55:53",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 44,
+      "patient_legacy_id": 786,
+      "appointment_legacy_id": 66068,
+      "amount": 8500,
+      "payment_date": "2021-03-03 09:55:30",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 43,
+      "patient_legacy_id": 14479,
+      "appointment_legacy_id": 66071,
+      "amount": 1950,
+      "payment_date": "2021-03-02 15:19:09",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 42,
+      "patient_legacy_id": 707,
+      "appointment_legacy_id": 66067,
+      "amount": 5600,
+      "payment_date": "2021-03-02 15:18:43",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 41,
+      "patient_legacy_id": 14459,
+      "appointment_legacy_id": 65976,
+      "amount": 2500,
+      "payment_date": "2021-03-02 12:18:16",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 40,
+      "patient_legacy_id": 1377,
+      "appointment_legacy_id": 66058,
+      "amount": 750,
+      "payment_date": "2021-03-01 13:39:48",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 39,
+      "patient_legacy_id": 1377,
+      "appointment_legacy_id": 66058,
+      "amount": 1200,
+      "payment_date": "2021-03-01 13:38:31",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 38,
+      "patient_legacy_id": 14476,
+      "appointment_legacy_id": 66055,
+      "amount": 3600,
+      "payment_date": "2021-03-01 12:22:08",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 37,
+      "patient_legacy_id": 14472,
+      "appointment_legacy_id": 66032,
+      "amount": 750,
+      "payment_date": "2021-03-01 11:04:05",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 36,
+      "patient_legacy_id": 14471,
+      "appointment_legacy_id": 66031,
+      "amount": 750,
+      "payment_date": "2021-03-01 10:56:12",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 35,
+      "patient_legacy_id": 14172,
+      "appointment_legacy_id": 66030,
+      "amount": 600,
+      "payment_date": "2021-02-27 10:49:32",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 34,
+      "patient_legacy_id": 14474,
+      "appointment_legacy_id": 66043,
+      "amount": 750,
+      "payment_date": "2021-02-26 15:07:58",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 33,
+      "patient_legacy_id": 14453,
+      "appointment_legacy_id": 65944,
+      "amount": 750,
+      "payment_date": "2021-02-26 14:42:09",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 32,
+      "patient_legacy_id": 14447,
+      "appointment_legacy_id": 66040,
+      "amount": 750,
+      "payment_date": "2021-02-26 13:34:50",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 31,
+      "patient_legacy_id": 14458,
+      "appointment_legacy_id": 65974,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:05:52",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 30,
+      "patient_legacy_id": 11648,
+      "appointment_legacy_id": 65973,
+      "amount": 500,
+      "payment_date": "2021-02-25 18:05:44",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 29,
+      "patient_legacy_id": 8900,
+      "appointment_legacy_id": 65989,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:05:13",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 28,
+      "patient_legacy_id": 10857,
+      "appointment_legacy_id": 66002,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:04:53",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 27,
+      "patient_legacy_id": 14161,
+      "appointment_legacy_id": 66000,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:04:37",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 26,
+      "patient_legacy_id": 14465,
+      "appointment_legacy_id": 65998,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:04:14",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 25,
+      "patient_legacy_id": 14464,
+      "appointment_legacy_id": 65997,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:03:58",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 24,
+      "patient_legacy_id": 14460,
+      "appointment_legacy_id": 65977,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:03:28",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 23,
+      "patient_legacy_id": 14469,
+      "appointment_legacy_id": 66008,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:02:34",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 22,
+      "patient_legacy_id": 455,
+      "appointment_legacy_id": 66009,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:01:27",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 21,
+      "patient_legacy_id": 3015,
+      "appointment_legacy_id": 66007,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:01:18",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 20,
+      "patient_legacy_id": 14468,
+      "appointment_legacy_id": 66006,
+      "amount": 600,
+      "payment_date": "2021-02-25 18:01:07",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 19,
+      "patient_legacy_id": 14467,
+      "appointment_legacy_id": 66005,
+      "amount": 600,
+      "payment_date": "2021-02-25 18:00:51",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 18,
+      "patient_legacy_id": 14466,
+      "appointment_legacy_id": 66003,
+      "amount": 750,
+      "payment_date": "2021-02-25 18:00:19",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 17,
+      "patient_legacy_id": 14463,
+      "appointment_legacy_id": 65987,
+      "amount": 750,
+      "payment_date": "2021-02-25 17:59:28",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 16,
+      "patient_legacy_id": 13969,
+      "appointment_legacy_id": 65981,
+      "amount": 2600,
+      "payment_date": "2021-02-25 17:58:56",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 15,
+      "patient_legacy_id": 14470,
+      "appointment_legacy_id": 66014,
+      "amount": 500,
+      "payment_date": "2021-02-25 17:46:56",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 13,
+      "patient_legacy_id": 2878,
+      "appointment_legacy_id": 66004,
+      "amount": 750,
+      "payment_date": "2021-02-25 16:51:44",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 12,
+      "patient_legacy_id": 1035,
+      "appointment_legacy_id": 65986,
+      "amount": 750,
+      "payment_date": "2021-02-25 16:48:17",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 11,
+      "patient_legacy_id": 14462,
+      "appointment_legacy_id": 65980,
+      "amount": 4000,
+      "payment_date": "2021-02-25 16:47:10",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 10,
+      "patient_legacy_id": 14461,
+      "appointment_legacy_id": 65979,
+      "amount": 600,
+      "payment_date": "2021-02-25 16:45:45",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 9,
+      "patient_legacy_id": 10653,
+      "appointment_legacy_id": 65969,
+      "amount": 2000,
+      "payment_date": "2021-02-25 16:36:20",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 8,
+      "patient_legacy_id": null,
+      "appointment_legacy_id": 65971,
+      "amount": 80,
+      "payment_date": "2021-02-25 14:31:31",
+      "payment_type": "bank_transfer",
+      "notes": null,
+      "status": "cancelled"
+    },
+    {
+      "legacy_id": 7,
+      "patient_legacy_id": null,
+      "appointment_legacy_id": 65971,
+      "amount": 70,
+      "payment_date": "2021-02-25 14:31:11",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "cancelled"
+    },
+    {
+      "legacy_id": 6,
+      "patient_legacy_id": 2021,
+      "appointment_legacy_id": 65970,
+      "amount": 100,
+      "payment_date": "2021-02-25 14:28:03",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 5,
+      "patient_legacy_id": 2021,
+      "appointment_legacy_id": 65970,
+      "amount": 750,
+      "payment_date": "2021-02-25 14:26:18",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 4,
+      "patient_legacy_id": 10653,
+      "appointment_legacy_id": 65969,
+      "amount": 750,
+      "payment_date": "2021-02-25 14:20:28",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "cancelled"
+    },
+    {
+      "legacy_id": 2,
+      "patient_legacy_id": 1,
+      "appointment_legacy_id": 65965,
+      "amount": 750,
+      "payment_date": "2021-02-25 14:19:02",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 1,
+      "patient_legacy_id": null,
+      "appointment_legacy_id": 65967,
+      "amount": 750,
+      "payment_date": "2021-02-25 14:10:18",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "cancelled"
+    },
+    {
+      "legacy_id": 14,
+      "patient_legacy_id": 10408,
+      "appointment_legacy_id": 65984,
+      "amount": 750,
+      "payment_date": "2021-02-24 17:25:05",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    },
+    {
+      "legacy_id": 3,
+      "patient_legacy_id": 14457,
+      "appointment_legacy_id": 65968,
+      "amount": 750,
+      "payment_date": "2021-02-18 14:19:09",
+      "payment_type": "credit_card",
+      "notes": null,
+      "status": "completed"
+    }
+  ]
+}

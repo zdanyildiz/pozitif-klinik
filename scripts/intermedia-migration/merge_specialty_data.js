@@ -1,12 +1,20 @@
 const sql = require('mssql');
 const mysql = require('mysql2/promise');
 
-const CLINIC_ID = 1;
-const BATCH_SIZE = 2000;
+const { getSourceConfig, getTargetConfig } = require('./core/db.helper');
+const { parseClinicId } = require('./core/cli.helper');
+const CLINIC_ID = parseClinicId();
+const BATCH_SIZE = 1000; // Smaller batch size to prevent ECONNRESET
 
-const { getSourceConfig, getTargetConfig } = require('./db.helper');
-const mssqlConfig = getSourceConfig();
-const mysqlConfig = getTargetConfig();
+const mssqlConfig = {
+    ...getSourceConfig(),
+    requestTimeout: 300000 // 5 minutes
+};
+
+const mysqlConfig = {
+    ...getTargetConfig(),
+    connectTimeout: 60000
+};
 
 async function mergeSpecialtyData() {
     let mssqlPool, mysqlConn;
@@ -34,150 +42,118 @@ async function mergeSpecialtyData() {
         apptRows.forEach(r => apptMap.set(r.legacy_visit_id, r));
         console.log(`${apptMap.size} adet randevu eşleşmesi yüklendi.`);
 
-        // 2. Mevcut muayene kayıtlarını yükle (Mükerrer insert önlemek için)
-        const [examRows] = await mysqlConn.execute(
-            'SELECT id, legacy_visit_id FROM cln_examinations WHERE legacy_visit_id IS NOT NULL AND clinic_id = ?',
-            [CLINIC_ID]
-        );
-        const existingExamMap = new Map();
-        examRows.forEach(r => existingExamMap.set(r.legacy_visit_id, r.id));
-
-        // 3. İç Hastalıkları verilerini çek
+        // 2. Fetch data from MSSQL using pagination (Cursor-based)
         console.log('Eski sistemden İç Hastalıkları notları okunuyor...');
-        const result = await mssqlPool.request().query(`
-            SELECT 
-                GELISNO, 
-                SIKAYETLER, 
-                HIKAYESI, 
-                TANI, 
-                TEDAVI, 
-                TAVSIYELER, 
-                FIZIKMUA,
-                RADYOLOJI,
-                LABORATUVAR
+
+        // Get max ID first to know range (optional, but good for progress)
+        // For simplicity, we'll scan by ID or GELISNO ranges if possible, 
+        // but GELISNO might not be sequential. We'll use ORDER BY and OFFSET/FETCH.
+        // Or better: Use stream if supported, or simple Loop with OFFSET.
+
+        // Let's count total first
+        const countResult = await mssqlPool.request().query(`
+            SELECT COUNT(*) as Total
             FROM UZM_ICHASTALIKLARI_HST_ANAMNEZ
             WHERE (SIKAYETLER IS NOT NULL AND SIKAYETLER != '') 
                OR (TANI IS NOT NULL AND TANI != '')
                OR (RADYOLOJI IS NOT NULL AND RADYOLOJI != '')
                OR (LABORATUVAR IS NOT NULL AND LABORATUVAR != '')
         `);
+        const totalRecords = countResult.recordset[0].Total;
+        console.log(`${totalRecords} adet kayıt işlenecek.`);
 
-        console.log(`${result.recordset.length} adet dolu klinik not bulundu. İşlem başlıyor...`);
+        let processed = 0;
+        let inserted = 0;
+        let skipped = 0;
 
-        let updatedCount = 0;
-        let insertedCount = 0;
-        let skippedCount = 0;
+        for (let offset = 0; offset < totalRecords; offset += BATCH_SIZE) {
 
-        // Process in batches
-        for (let batchStart = 0; batchStart < result.recordset.length; batchStart += BATCH_SIZE) {
-            const batchEnd = Math.min(batchStart + BATCH_SIZE, result.recordset.length);
-            const batch = result.recordset.slice(batchStart, batchEnd);
+            const result = await mssqlPool.request().query(`
+                SELECT 
+                    GELISNO, 
+                    SIKAYETLER, 
+                    HIKAYESI, 
+                    TANI, 
+                    TEDAVI, 
+                    TAVSIYELER, 
+                    FIZIKMUA,
+                    RADYOLOJI,
+                    LABORATUVAR
+                FROM UZM_ICHASTALIKLARI_HST_ANAMNEZ
+                WHERE (SIKAYETLER IS NOT NULL AND SIKAYETLER != '') 
+                   OR (TANI IS NOT NULL AND TANI != '')
+                   OR (RADYOLOJI IS NOT NULL AND RADYOLOJI != '')
+                   OR (LABORATUVAR IS NOT NULL AND LABORATUVAR != '')
+                ORDER BY GELISNO
+                OFFSET ${offset} ROWS FETCH NEXT ${BATCH_SIZE} ROWS ONLY
+            `);
 
-            const updateCases = {
-                complaint: [],
-                story: [],
-                diagnosis: [],
-                treatment: [],
-                bulgular: [],
-                lab_result_text: [],
-                ids: []
-            };
-            const insertValues = [];
+            const values = [];
 
-            for (const row of batch) {
+            for (const row of result.recordset) {
                 const appt = apptMap.get(row.GELISNO);
                 if (!appt) {
-                    skippedCount++;
+                    skipped++;
                     continue;
                 }
 
-                const labResultText = (row.LABORATUVAR ? 'LABORATUVAR:\n' + row.LABORATUVAR + '\n\n' : '') +
-                    (row.RADYOLOJI ? 'RADYOLOJI:\n' + row.RADYOLOJI : '') || null;
+                // Prepare Data
+                const labResultText = [
+                    row.LABORATUVAR ? `LABORATUVAR:\n${row.LABORATUVAR}` : null,
+                    row.RADYOLOJI ? `RADYOLOJI:\n${row.RADYOLOJI}` : null
+                ].filter(Boolean).join('\n\n') || null;
 
-                if (existingExamMap.has(row.GELISNO)) {
-                    // Collect for bulk update
-                    const examId = existingExamMap.get(row.GELISNO);
-                    updateCases.ids.push(examId);
-                    updateCases.complaint.push({ id: examId, value: row.SIKAYETLER || null });
-                    updateCases.story.push({ id: examId, value: row.HIKAYESI || null });
-                    updateCases.diagnosis.push({ id: examId, value: row.TANI || null });
-                    updateCases.treatment.push({ id: examId, value: row.TEDAVI || null });
-                    updateCases.bulgular.push({ id: examId, value: row.FIZIKMUA || null });
-                    updateCases.lab_result_text.push({ id: examId, value: labResultText });
-                    updatedCount++;
-                } else {
-                    // Collect for bulk insert
-                    insertValues.push([
-                        CLINIC_ID,
-                        appt.patient_id,
-                        appt.doctor_id || 1,
-                        appt.id,
-                        row.SIKAYETLER || null,
-                        row.HIKAYESI || null,
-                        row.TANI || null,
-                        row.TEDAVI || null,
-                        row.FIZIKMUA || null,
-                        labResultText,
-                        row.GELISNO
-                    ]);
-                    existingExamMap.set(row.GELISNO, -1); // Prevent duplicate inserts within batch
-                    insertedCount++;
-                }
+                values.push([
+                    CLINIC_ID,
+                    appt.patient_id,
+                    appt.doctor_id || null,
+                    appt.id,
+                    row.SIKAYETLER ? String(row.SIKAYETLER).substring(0, 65000) : null,
+                    row.HIKAYESI ? String(row.HIKAYESI).substring(0, 65000) : null,
+                    row.TANI ? String(row.TANI).substring(0, 65000) : null,
+                    row.TEDAVI ? String(row.TEDAVI).substring(0, 65000) : null,
+                    row.FIZIKMUA ? String(row.FIZIKMUA).substring(0, 65000) : null,
+                    labResultText ? labResultText.substring(0, 65000) : null, // MySQL TEXT limit
+                    row.GELISNO
+                ]);
             }
 
-            // Execute bulk UPDATE using CASE WHEN (more efficient than individual updates)
-            if (updateCases.ids.length > 0) {
-                // Build CASE statements for each field
-                const buildCaseStatement = (field, cases) => {
-                    const whenClauses = cases.map(c => `WHEN ${c.id} THEN ${c.value === null ? 'NULL' : mysqlConn.escape(c.value)}`).join(' ');
-                    return `${field} = COALESCE(${field}, CASE id ${whenClauses} ELSE ${field} END)`;
-                };
-
-                const idList = updateCases.ids.join(',');
-                const updateQuery = `
-                    UPDATE cln_examinations SET
-                        ${buildCaseStatement('complaint', updateCases.complaint)},
-                        ${buildCaseStatement('story', updateCases.story)},
-                        ${buildCaseStatement('diagnosis', updateCases.diagnosis)},
-                        ${buildCaseStatement('treatment', updateCases.treatment)},
-                        ${buildCaseStatement('bulgular', updateCases.bulgular)},
-                        ${buildCaseStatement('lab_result_text', updateCases.lab_result_text)}
-                    WHERE id IN (${idList}) AND clinic_id = ${CLINIC_ID}
+            if (values.length > 0) {
+                // Bulk Insert with ON DUPLICATE KEY UPDATE
+                // This handles both INSERT (if new) and UPDATE (if exists) in one go
+                const sql = `
+                    INSERT INTO cln_examinations (
+                        clinic_id, patient_id, doctor_user_id, appointment_id,
+                        complaint, story, diagnosis, treatment, bulgular, lab_result_text, legacy_visit_id
+                    ) VALUES ?
+                    ON DUPLICATE KEY UPDATE
+                        complaint = COALESCE(VALUES(complaint), complaint),
+                        story = COALESCE(VALUES(story), story),
+                        diagnosis = COALESCE(VALUES(diagnosis), diagnosis),
+                        treatment = COALESCE(VALUES(treatment), treatment),
+                        bulgular = COALESCE(VALUES(bulgular), bulgular),
+                        lab_result_text = COALESCE(VALUES(lab_result_text), lab_result_text)
                 `;
 
                 try {
-                    await mysqlConn.query(updateQuery);
+                    await mysqlConn.query(sql, [values]);
+                    inserted += values.length;
                 } catch (err) {
-                    console.error('\nBulk update error:', err.message);
+                    console.error(`\n❌ Batch Error (Offset ${offset}):`, err.message);
                 }
             }
 
-            // Execute bulk INSERT
-            if (insertValues.length > 0) {
-                try {
-                    await mysqlConn.query(
-                        `INSERT INTO cln_examinations (
-                            clinic_id, patient_id, doctor_user_id, appointment_id, 
-                            complaint, story, diagnosis, treatment, bulgular, lab_result_text, legacy_visit_id
-                        ) VALUES ?`,
-                        [insertValues]
-                    );
-                } catch (err) {
-                    console.error('\nBulk insert error:', err.message);
-                }
-            }
-
-            process.stdout.write(`\rİşlenen: ${batchEnd}/${result.recordset.length}...`);
+            processed += result.recordset.length;
+            process.stdout.write(`\rİşlenen: ${processed}/${totalRecords} (Skipped: ${skipped})...`);
         }
 
-        console.log('\n--- AKTARIM ÖZETİ ---');
-        console.log(`Güncellenen Muayene Kaydı: ${updatedCount}`);
-        console.log(`Yeni Eklenen Muayene Kaydı: ${insertedCount}`);
-        console.log(`Randevu kaydı bulunamayan (Atlanan): ${skippedCount}`);
-        console.log('---------------------');
+        console.log('\n\n✅ Aktarım Tamamlandı.');
+        console.log(`Toplam: ${processed}`);
+        console.log(`Başarılı (Insert/Update): ${inserted}`);
+        console.log(`Atlanan (Randevusu Yok): ${skipped}`);
 
     } catch (err) {
-        console.error('❌ Hata:', err);
+        console.error('\n❌ Genel Hata:', err);
         process.exit(1);
     } finally {
         if (mssqlPool) await mssqlPool.close();

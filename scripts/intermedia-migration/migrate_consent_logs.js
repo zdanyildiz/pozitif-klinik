@@ -1,9 +1,10 @@
 const sql = require('mssql');
 const mysql = require('mysql2/promise');
-const { getSourceConfig, getTargetConfig } = require('./db.helper');
+const { getSourceConfig, getTargetConfig } = require('./core/db.helper');
+const { parseClinicId } = require('./core/cli.helper');
 
 const BATCH_SIZE = 2000;
-const CLINIC_ID = 1;
+const CLINIC_ID = parseClinicId();
 
 async function migrateConsentLogs() {
     console.log('🚀 Starting Consent Logs Migration...');

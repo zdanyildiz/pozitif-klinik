@@ -1,0 +1,66 @@
+[
+  {
+    "legacy_id": -1,
+    "username": "user_-1",
+    "name": "Bilgi Sistemi",
+    "role": "admin",
+    "specialty": null,
+    "is_active": 1
+  },
+  {
+    "legacy_id": 1,
+    "username": "709acb80-094d-4136-bdfd-9b365a388d18",
+    "name": "interMEDIA Yazılım",
+    "role": "admin",
+    "specialty": null,
+    "is_active": 1
+  },
+  {
+    "legacy_id": 2,
+    "username": "eo",
+    "name": "Erhan Özel",
+    "role": "doctor",
+    "specialty": null,
+    "is_active": 1
+  },
+  {
+    "legacy_id": 3,
+    "username": "23",
+    "name": "Sistem Yöneticisi",
+    "role": "admin",
+    "specialty": null,
+    "is_active": 1
+  },
+  {
+    "legacy_id": 4,
+    "username": "serhat",
+    "name": "Şahine Kaya",
+    "role": "admin",
+    "specialty": null,
+    "is_active": 0
+  },
+  {
+    "legacy_id": 5,
+    "username": "1997",
+    "name": "Demet Çankaya",
+    "role": "admin",
+    "specialty": null,
+    "is_active": 0
+  },
+  {
+    "legacy_id": 6,
+    "username": "ta",
+    "name": "Türkan Ayna",
+    "role": "secretary",
+    "specialty": null,
+    "is_active": 1
+  },
+  {
+    "legacy_id": 7,
+    "username": "lk",
+    "name": "Laboratuvar Kullanıcısı",
+    "role": "secretary",
+    "specialty": null,
+    "is_active": 1
+  }
+]
