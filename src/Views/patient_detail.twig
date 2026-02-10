@@ -850,26 +850,30 @@
 
             // Services / Items
             const tbody = document.getElementById('offcanvasServices');
-            tbody.innerHTML = '';
-            let total = 0;
+            const totalEl = document.getElementById('offcanvasTotal');
+            
+            if (tbody && totalEl) {
+                tbody.innerHTML = '';
+                let total = 0;
 
-            if (appt.items && appt.items.length > 0) {
-                appt.items.forEach(item => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>
-                            <div class="fw-medium">${item.item_name}</div>
-                            <small class="text-muted" style="font-size:0.75rem">Adet: ${item.quantity}</small>
-                        </td>
-                        <td class="text-end">${parseFloat(item.total_price).toFixed(2)} TL</td>
-                    `;
-                    tbody.appendChild(tr);
-                    total += parseFloat(item.total_price);
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted small fst-italic">İşlem/Hizmet kaydı yok.</td></tr>';
+                if (appt.items && appt.items.length > 0) {
+                    appt.items.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>
+                                <div class="fw-medium">${item.item_name}</div>
+                                <div class="text-muted small" style="font-size:0.75rem">Adet: ${item.quantity}</div>
+                            </td>
+                            <td class="text-end">${parseFloat(item.total_price).toFixed(2)} TL</td>
+                        `;
+                        tbody.appendChild(tr);
+                        total += parseFloat(item.total_price);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted small fst-italic">İşlem/Hizmet kaydı yok.</td></tr>';
+                }
+                totalEl.textContent = total.toFixed(2) + ' TL';
             }
-            document.getElementById('offcanvasTotal').textContent = total.toFixed(2) + ' TL';
 
             // 4. Show Content
             document.getElementById('offcanvasLoading').classList.add('d-none');
@@ -877,7 +881,10 @@
 
         } catch (error) {
             console.error(error);
-            document.getElementById('offcanvasLoading').innerHTML = '<div class="text-danger p-4"><i class="bi bi-exclamation-triangle fs-2"></i><br>Detaylar yüklenemedi.</div>';
+            const loadingEl = document.getElementById('offcanvasLoading');
+            if (loadingEl) {
+                loadingEl.innerHTML = '<div class="text-danger p-4"><i class="bi bi-exclamation-triangle fs-2"></i><br>Detaylar yüklenemedi.</div>';
+            }
         }
     }
 </script>

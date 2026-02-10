@@ -177,6 +177,12 @@ class DataMigrator {
                 HASTALIK_DIYABET, HASTALIK_HEPATIT, HASTALIK_HIV, HASTALIK_COVID, HASTALIK_DIGER,
                 SIGORTA_POLICENO, SGK_KURUM, SGK_SOSYALGUVNO,
                 IPTAL,
+                -- İş Bilgileri
+                IS_ADI, IS_GOREVI, IS_TELEFON, IS_EMAIL,
+                IS_ADRES1, IS_ADRES2, IS_ADRES_SEMT, IS_ADRES_ILCE, IS_ADRES_IL,
+                -- Kimlik Detayları
+                ESININADI, VERGINO, NK_MEDENIHALI,
+                NK_ILKODU, NK_ILCEKODU, NK_CILTNO, NK_AILENO, NK_BIREYNO,
                 -- KVKK ve Onam Bilgileri
                 K.KVKKabulEdiyorum, K.KVKKabulEtmiyorum, K.KVKK_IYSOnayID, 
                 K.HukukiTemsilci_Isim, K.HukukiTemsilci_YakinlikDerecesi,
@@ -250,7 +256,7 @@ class DataMigrator {
                         district_code: row.NK_ILCEKODU || null,
                         volume_no: row.NK_CILTNO || null,
                         family_order_no: row.NK_AILENO || null,
-                        order_no: row.NK_SIRANO || null
+                        order_no: row.NK_BIREYNO || null
                     }
                 },
                 insurance_info: {

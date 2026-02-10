@@ -304,6 +304,7 @@ async function main() {
                 }
 
                 return [
+                    p.legacy_id, // FORCE ID = LEGACY_ID
                     CLINIC_ID,
                     encrypt(p.tc_no || '11111111111'),
                     encrypt(p.name),
@@ -323,9 +324,9 @@ async function main() {
             });
 
             // Bulk insert patients
-            const [res] = await conn.query(
+            await conn.query(
                 `INSERT INTO ptn_cards (
-                    clinic_id, tc_no, name, phone, 
+                    id, clinic_id, tc_no, name, phone, 
                     email, birth_date, gender, blood_type, address, province_id, district_id,
                     medical_info, work_details, identity_details, insurance_info, legacy_metadata, legal_consents,
                     notes, legacy_id, status
@@ -333,10 +334,9 @@ async function main() {
                 [patientValues]
             );
 
-            // Map legacy IDs to new IDs (auto-increment garantisiyle)
-            let currentId = res.insertId;
+            // Map legacy IDs to new IDs (Birebir eşleşme)
             batch.forEach(p => {
-                patientMap.set(p.legacy_id, currentId++);
+                patientMap.set(p.legacy_id, p.legacy_id);
             });
 
             // Build search index rows for this batch
