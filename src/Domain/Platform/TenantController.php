@@ -53,6 +53,11 @@ class TenantController extends BaseController
             return $this->error($response, 'Tüm alanlar (name, domain_prefix, admin_username, admin_password) gereklidir', 400);
         }
 
+        // Domain prefix format kontrolü (küçük harf, rakam ve tire)
+        if (!preg_match('/^[a-z0-9-]+$/', $domain_prefix)) {
+            return $this->error($response, 'Domain prefix sadece küçük harf, rakam ve tire (-) içerebilir', 400);
+        }
+
         // Domain prefix kontrolü
         if ($this->tenantRepository->findByDomain($domain_prefix)) {
             return $this->error($response, sprintf("Bu domain prefix ('%s') zaten kullanımda", $domain_prefix), 400);

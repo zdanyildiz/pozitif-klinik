@@ -244,9 +244,9 @@ async function handleSaveTenant() {
         return;
     }
 
-    // Domain prefix validasyonu (sadece küçük harf ve rakam)
-    if (!/^[a-z0-9]+$/.test(data.domain_prefix)) {
-        Utils.showError('Domain prefix sadece küçük harf ve rakam içerebilir.');
+    // Domain prefix validasyonu (küçük harf, rakam ve tire)
+    if (!/^[a-z0-9-]+$/.test(data.domain_prefix)) {
+        Utils.showError('Domain prefix sadece küçük harf, rakam ve tire (-) içerebilir.');
         return;
     }
 
