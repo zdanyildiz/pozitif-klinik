@@ -605,10 +605,10 @@ class AppointmentRepository
     public function canMarkAsCompleted(int $clinicId, int $appointmentId): array
     {
         $sql = "SELECT 
-                    (SELECT COUNT(*) FROM cln_examinations WHERE clinic_id = :clinic_id AND appointment_id = :appointment_id) as examination_count,
-                    (SELECT COUNT(*) FROM cln_patient_documents WHERE clinic_id = :clinic_id AND appointment_id = :appointment_id AND document_type = 'epicrisis') as epicrisis_count";
+                    (SELECT COUNT(*) FROM cln_examinations WHERE clinic_id = ? AND appointment_id = ?) as examination_count,
+                    (SELECT COUNT(*) FROM cln_patient_documents WHERE clinic_id = ? AND appointment_id = ? AND document_type = 'epicrisis') as epicrisis_count";
 
-        $res = $this->db->fetch($sql, ['clinic_id' => $clinicId, 'appointment_id' => $appointmentId]);
+        $res = $this->db->fetch($sql, [$clinicId, $appointmentId, $clinicId, $appointmentId]);
 
         $hasExam = ((int) $res['examination_count']) > 0;
         $hasEpicrisis = ((int) $res['epicrisis_count']) > 0;
@@ -795,6 +795,8 @@ class AppointmentRepository
     {
         $sql = "SELECT 
                     a.*, 
+                    p.name as patient_name_encrypted, 
+                    p.phone as patient_phone_encrypted,
                     t.name as type_name, 
                     t.color_code,
                     u.name as doctor_name,
@@ -804,6 +806,7 @@ class AppointmentRepository
                     (SELECT COUNT(*) FROM cln_examinations WHERE appointment_id = a.id) as examination_count,
                     (SELECT COUNT(*) FROM cln_patient_documents WHERE appointment_id = a.id AND document_type = 'epicrisis') as epicrisis_count
                 FROM cln_appointments a
+                JOIN ptn_cards p ON a.patient_id = p.id
                 JOIN cln_appointment_types t ON a.type_id = t.id
                 LEFT JOIN sys_users u ON a.doctor_id = u.id
                 LEFT JOIN sys_appointment_statuses s ON a.status = s.status_code
@@ -812,10 +815,7 @@ class AppointmentRepository
 
         $results = $this->db->fetchAll($sql, [$clinicId, $patientId]);
 
-        // Patient information is known, so we don't strictly need to decrypt patient name here, 
-        // but to keep structure consistent if we used the decryption helper, it expects 'patient_name_encrypted'.
-        // However, here we don't join patient table again for name since we query by patient_id.
-        return $results;
+        return array_map([$this, 'decryptAppointmentPatientName'], $results);
     }
 
     public function getPatientTotalDebt(int $clinicId, int $patientId): float

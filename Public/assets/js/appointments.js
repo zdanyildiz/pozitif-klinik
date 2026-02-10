@@ -461,8 +461,9 @@ function renderAppointments() {
         // Epikriz (Muayene Notu) Kontrolü
         const hasExam = app.examination_count && parseInt(app.examination_count) > 0;
         const hasEpicrisis = app.epicrisis_count && parseInt(app.epicrisis_count) > 0;
+        const isNoteNeeded = hasExam && !hasEpicrisis;
 
-        if (hasExam && !hasEpicrisis) {
+        if (isNoteNeeded) {
             const warningBadge = document.createElement('span');
             warningBadge.className = 'badge badge-epicrisis-missing';
             warningBadge.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Epikriz Eksik!';
@@ -522,9 +523,8 @@ function renderAppointments() {
 
         // 2. Muayene Butonu
         const btnExam = document.createElement('button');
-        const isEpicrisisMissing = needsEpicrisis && !hasEpicrisis;
 
-        btnExam.className = `btn btn-sm btn-exam-action shadow-none ${isEpicrisisMissing ? 'btn-exam-missing' : ''}`;
+        btnExam.className = `btn btn-sm btn-exam-action shadow-none ${isNoteNeeded ? 'btn-exam-missing' : ''}`;
         btnExam.style.fontSize = '0.75rem';
         btnExam.innerHTML = '<i class="bi bi-person-pulse"></i> Muayene';
         btnExam.onclick = (e) => {
