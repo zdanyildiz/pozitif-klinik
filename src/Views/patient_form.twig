@@ -483,30 +483,35 @@
                 btnSave.disabled = true;
                 btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
 
-                let response;
+                let res;
                 if (mode === 'add') {
-                    response = await api.post('/api/patients', data);
+                    res = await api.post('/api/patients', data);
                 } else {
-                    response = await api.put(`/api/patients/${patientId}`, data);
+                    res = await api.put(`/api/patients/${patientId}`, data);
                 }
 
-                if (response.data.status) {
+                // Global api client (config.js) returns response.data directly if status is true
+                if (res && res.status) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Başarılı!',
                         text: 'Hasta bilgileri başarıyla kaydedildi.',
                         confirmButtonText: 'Tamam'
                     }).then(() => {
-                        window.location.href = `{{ base_path }}/admin/patients/${response.data.data.id || patientId}`;
+                        const newId = (res.data && res.data.id) ? res.data.id : patientId;
+                        window.location.href = `{{ base_path }}/admin/patients/${newId}`;
                     });
                 } else {
-                    throw new Error(response.data.message || 'Bir hata oluştu');
+                    throw new Error(res.message || 'Bir hata oluştu');
                 }
 
             } catch (error) {
                 console.error(error);
                 let msg = "Sunucu hatası oluştu.";
-                if(error.response && error.response.data && error.response.data.message) {
+                // Axios error handling
+                if(error && typeof error === 'string') {
+                    msg = error;
+                } else if(error.response && error.response.data && error.response.data.message) {
                     msg = error.response.data.message;
                 } else if (error.message) {
                    msg = error.message;
