@@ -179,7 +179,19 @@ class LabRepository
                 JOIN sys_lab_test_definitions d ON pi.test_definition_id = d.id
                 WHERE pi.panel_id = ? AND d.is_active = 1
                 ORDER BY pi.sort_order ASC, d.test_name ASC";
-        return $this->db->fetchAll($sql, [$panelId]);
+        $items = $this->db->fetchAll($sql, [$panelId]);
+
+        if (empty($items)) {
+            return [];
+        }
+
+        // Her test için referans aralıklarını (normals) ekle
+        foreach ($items as &$item) {
+            $sqlNormals = "SELECT * FROM sys_lab_test_normals WHERE test_definition_id = ?";
+            $item['normals'] = $this->db->fetchAll($sqlNormals, [(int) $item['id']]);
+        }
+
+        return $items;
     }
 
     /**

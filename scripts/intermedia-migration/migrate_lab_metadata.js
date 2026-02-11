@@ -48,55 +48,70 @@ async function migrateMetadata() {
         console.log(`Migrated ${testResult.recordset.length} definitions.`);
 
         // 2. Migrate Normals (sys_lab_test_normals)
-        console.log('Migrating normal values...');
-        const normalResult = await mssqlPool.request().query(`
-            SELECT 
-                TESTKODU, CINSIYET, ALT_ZAMAN, UST_ZAMAN, 
-                NORMAL_ALT, NORMAL_UST, NORMALDEGERLER, BIRIM
-            FROM LAB_TESTNORMALLERI
-        `);
+        const [cnt] = await mysqlConn.execute('SELECT COUNT(*) as c FROM sys_lab_test_normals');
+        const shouldMigrateNormals = cnt[0].c <= 100;
 
-        for (const row of normalResult.recordset) {
-            // Find our definition id
-            const [defRows] = await mysqlConn.execute(
-                'SELECT id FROM sys_lab_test_definitions WHERE test_code = ?',
-                [String(row.TESTKODU)]
-            );
-            if (defRows.length === 0) continue;
+        if (!shouldMigrateNormals) {
+            console.log(`Global Lab Normals kütüphanesi (${cnt[0].c} kayıt) zaten dolu, atlanıyor.`);
+        } else {
+            console.log('Migrating normal values from scratch...');
+            await mysqlConn.execute('SET FOREIGN_KEY_CHECKS = 0');
+            await mysqlConn.execute('TRUNCATE TABLE sys_lab_test_normals');
+            await mysqlConn.execute('SET FOREIGN_KEY_CHECKS = 1');
 
-            const defId = defRows[0].id;
-            let gender = 'both';
-            if (row.CINSIYET === 'E' || row.CINSIYET === 'M') gender = 'M';
-            if (row.CINSIYET === 'K' || row.CINSIYET === 'F') gender = 'F';
+            const normalResult = await mssqlPool.request().query(`
+                SELECT 
+                    TESTKODU, CINSIYET, ALT_ZAMAN, UST_ZAMAN, 
+                    NORMAL_ALT, NORMAL_UST, NORMALDEGERLER, BIRIM
+                FROM LAB_TESTNORMALLERI
+            `);
 
-            // Insert normal value
-            await mysqlConn.execute(
-                `INSERT INTO sys_lab_test_normals (test_definition_id, gender, age_min, age_max, min_value, max_value, reference_text, unit)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    defId,
-                    gender,
-                    row.ALT_ZAMAN || 0,
-                    row.UST_ZAMAN || 200,
-                    row.NORMAL_ALT,
-                    row.NORMAL_UST,
-                    row.NORMALDEGERLER,
-                    row.BIRIM
-                ]
-            );
-
-            // Also update the main definition's default unit if it's still null
-            if (row.BIRIM) {
-                await mysqlConn.execute(
-                    'UPDATE sys_lab_test_definitions SET default_unit = ? WHERE id = ? AND default_unit IS NULL',
-                    [row.BIRIM, defId]
+            for (const row of normalResult.recordset) {
+                // Find our definition id
+                const [defRows] = await mysqlConn.execute(
+                    'SELECT id FROM sys_lab_test_definitions WHERE test_code = ?',
+                    [String(row.TESTKODU)]
                 );
+                if (defRows.length === 0) continue;
+
+                const defId = defRows[0].id;
+                let gender = 'both';
+                if (row.CINSIYET === 'E' || row.CINSIYET === 'M') gender = 'M';
+                if (row.CINSIYET === 'K' || row.CINSIYET === 'F') gender = 'F';
+
+                // Insert normal value
+                await mysqlConn.execute(
+                    `INSERT INTO sys_lab_test_normals (test_definition_id, gender, age_min, age_max, min_value, max_value, reference_text, unit)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        defId,
+                        gender,
+                        row.ALT_ZAMAN || 0,
+                        row.UST_ZAMAN || 200,
+                        row.NORMAL_ALT,
+                        row.NORMAL_UST,
+                        row.NORMALDEGERLER,
+                        row.BIRIM
+                    ]
+                );
+
+                // Also update the main definition's default unit if it's still null
+                if (row.BIRIM) {
+                    await mysqlConn.execute(
+                        'UPDATE sys_lab_test_definitions SET default_unit = ? WHERE id = ? AND default_unit IS NULL',
+                        [row.BIRIM, defId]
+                    );
+                }
             }
+            console.log(`Migrated ${normalResult.recordset.length} normal values.`);
         }
-        console.log(`Migrated ${normalResult.recordset.length} normal values.`);
 
         // 3. Migrate Panels (cln_lab_test_panels)
-        console.log('Migrating panels...');
+        console.log(`Migrating panels for Clinic ID: ${CLINIC_ID}...`);
+
+        // Bu klinik için eski şablonları temizle (Yeniden çalıştırıldığında mükerrer olmaması için)
+        await mysqlConn.execute('DELETE FROM cln_lab_test_panels WHERE clinic_id = ?', [CLINIC_ID]);
+
         const panelResult = await mssqlPool.request().query(`SELECT ID, GrupAdi, Sira FROM Lab_TestGrubu WHERE Iptal = 0`);
 
         for (const row of panelResult.recordset) {

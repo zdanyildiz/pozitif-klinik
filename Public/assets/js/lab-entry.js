@@ -88,10 +88,23 @@ const LabEntry = {
                 if (isEmpty) tbody.innerHTML = '';
 
                 res.data.forEach(item => {
+                    let refRange = '';
+                    let min = '';
+                    let max = '';
+
+                    if (item.normals && item.normals.length > 0) {
+                        const normal = item.normals[0]; // Şimdilik ilkini alıyoruz
+                        refRange = normal.reference_text || `${normal.min_value} - ${normal.max_value}`;
+                        min = normal.min_value;
+                        max = normal.max_value;
+                    }
+
                     this.addRow({
                         test_name: item.test_name,
-                        unit: item.default_unit,
-                        // We could fetch reference ranges here too or let the user enter
+                        unit: item.default_unit || (item.normals && item.normals[0] ? item.normals[0].unit : ''),
+                        reference_range: refRange,
+                        min: min,
+                        max: max
                     });
                 });
             }
@@ -113,7 +126,7 @@ const LabEntry = {
             </td>
             <td><input type="text" class="form-control form-control-sm result-input" name="result_value[]" placeholder="Değer" required></td>
             <td><input type="text" class="form-control form-control-sm unit-input" name="unit[]" placeholder="Birim" value="${data.unit || ''}"></td>
-            <td><input type="text" class="form-control form-control-sm ref-input" name="reference_range[]" placeholder="Ref. Aralığı"></td>
+            <td><input type="text" class="form-control form-control-sm ref-input" name="reference_range[]" placeholder="Ref. Aralığı" value="${data.reference_range || ''}"></td>
             <td class="text-center">
                 <div class="form-check form-switch d-flex justify-content-center">
                     <input class="form-check-input abnormal-check" type="checkbox" name="is_abnormal_check[]">
@@ -126,6 +139,9 @@ const LabEntry = {
                 </button>
             </td>
         `;
+
+        if (data.min) row.dataset.min = data.min;
+        if (data.max) row.dataset.max = data.max;
 
         this.initRowEvents(row);
         tbody.appendChild(row);

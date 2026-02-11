@@ -34,6 +34,22 @@ async function migrateICD() {
         const records = result.recordset;
         console.log(`Found ${records.length} ICD codes.`);
 
+        // CHECK: ICD tablosu dolu mu?
+        const [rows] = await mysqlConn.execute('SELECT COUNT(*) as count FROM sys_icd10');
+        const count = rows[0].count;
+
+        if (count > 100) {
+            console.log(`\n⚠️ SİSTEM UYARISI: sys_icd10 tablosunda zaten ${count} kayıt var.`);
+            console.log('   Global ICD kütüphanesi korundu ve üzerine yazılmadı.');
+            console.log('   (Yeniden yüklemek istiyorsanız tabloyu manuel boşaltın veya --force kullanın - henüz implemente edilmedi)');
+
+            await mysqlConn.end();
+            await pool.close();
+            return;
+        }
+
+        console.log('Target table looks empty or small. Proceeding with full migration...');
+
         console.log('Truncating target table sys_icd10...');
         await mysqlConn.execute('SET FOREIGN_KEY_CHECKS = 0');
         await mysqlConn.execute('TRUNCATE TABLE sys_icd10');
