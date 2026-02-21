@@ -1,0 +1,101 @@
+{% extends 'frontend_layout.twig' %}
+
+{% block title %}İletişim | Pozitif Klinik{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="container">
+        <div class="page-header">
+            <h1>İletişim</h1>
+            <p>Bizimle iletişime geçin, sorularınızı memnuniyetle yanıtlayalım.</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="content-card">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h3>Bize Ulaşın</h3>
+                            <p><strong>Global Pozitif Teknolojiler San. ve Dış Tic. A.Ş.</strong></p>
+                            <p>Pozitif Klinik platformu hakkında detaylı bilgi almak, demo talebinde bulunmak veya teknik destek almak için aşağıdaki iletişim bilgilerini kullanarak bizimle irtibata geçebilirsiniz.</p>
+                            
+                            <div class="mt-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="rounded-circle bg-primary bg-opacity-25 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-envelope-fill text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-0 text-white">E-Posta</h5>
+                                        <p class="mb-0">info@globalpozitif.com.tr</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="rounded-circle bg-primary bg-opacity-25 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-telephone-fill text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-0 text-white">Telefon</h5>
+                                        <p class="mb-0">0850 303 34 38<br>0531 263 18 24</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-25 d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-geo-alt-fill text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-0 text-white">Adres</h5>
+                                        <p class="mb-0">Adnan Kahveci Mah. Avrupa Cd. <br>Kubist İstanbul Park Residance <br>No:108/187 Gürpınar Beylikdüzü <br>İSTANBUL, Türkiye</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                            
+                            {% if error %}
+                                <div class="alert alert-danger" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+                                </div>
+                            {% endif %}
+                            
+                            {% if success %}
+                                <div class="alert alert-success" role="alert">
+                                    <i class="bi bi-check-circle-fill me-2"></i>{{ success }}
+                                </div>
+                            {% endif %}
+
+                            <form action="/iletisim" method="POST">
+                                <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+                                <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+
+                                <div class="mb-3">
+                                    <label class="form-label text-white">Adınız Soyadınız *</label>
+                                    <input type="text" name="name" class="form-control" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1);" placeholder="Ad Soyad" value="{{ form.name ?? '' }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-white">E-Posta Adresiniz *</label>
+                                    <input type="email" name="email" class="form-control" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1);" placeholder="ornek@email.com" value="{{ form.email ?? '' }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-white">Konu *</label>
+                                    <input type="text" name="subject" class="form-control" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1);" placeholder="Konu başlığı" value="{{ form.subject ?? '' }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-white">Mesajınız *</label>
+                                    <textarea name="message" class="form-control" rows="4" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1);" placeholder="Mesajınızı buraya yazın..." required>{{ form.message ?? '' }}</textarea>
+                                </div>
+
+                                <div class="mb-3 d-flex justify-content-center">
+                                    <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 rounded-pill mt-2">Mesajı Gönder</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'frontend_layout.twig' %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-bg-shapes">
+            <div class="hero-shape hero-shape-1"></div>
+            <div class="hero-shape hero-shape-2"></div>
+        </div>
+        
+        <div class="container hero-content">
+            <div class="row align-items-center">
+                <div class="col-lg-6 col-md-12">
+                    <span class="badge bg-primary bg-opacity-25 text-primary border border-primary mb-3 px-3 py-2 rounded-pill fw-semibold">
+                        Klinikler İçin Yenilikçi Çözüm
+                    </span>
+                    <h1>Klinik Yönetiminde Yeni Bir Dönem Başlıyor.</h1>
+                    <p>
+                        Pozitif Klinik ile randevu yönetiminden hasta takibine, epikriz yazımından finansal raporlamaya kadar sürecinizi tek bir merkezden, hızlı ve güvenli bir şekilde yönetin.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="/admin/login" class="btn btn-primary-custom" title="Giriş yapın ve hemen başlayın">
+                            <i class="bi bi-arrow-right-circle"></i> Panele Giriş Yap
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6 d-none d-lg-block">
+                    <!-- Dashboard Mockup Abstraction using CSS -->
+                    <div style="background: rgba(20,25,50,0.6); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5); transform: perspective(1000px) rotateY(-5deg) rotateX(5deg);">
+                        <div style="display:flex; gap: 8px; margin-bottom: 15px;">
+                            <div style="width:12px; height:12px; border-radius:50%; background:#ff5f56"></div>
+                            <div style="width:12px; height:12px; border-radius:50%; background:#ffbd2e"></div>
+                            <div style="width:12px; height:12px; border-radius:50%; background:#27c93f"></div>
+                        </div>
+                        <div style="display: flex; gap: 20px;">
+                            <div style="width: 25%; background: rgba(255,255,255,0.05); border-radius: 10px; height: 350px;">
+                                <div style="height: 40px; background: rgba(255,255,255,0.1); border-radius: 10px 10px 0 0; margin-bottom: 20px;"></div>
+                                <div style="height: 20px; background: rgba(255,255,255,0.05); margin: 10px; border-radius: 5px;"></div>
+                                <div style="height: 20px; background: rgba(255,255,255,0.05); margin: 10px; border-radius: 5px;"></div>
+                                <div style="height: 20px; background: rgba(255,255,255,0.05); margin: 10px; border-radius: 5px;"></div>
+                            </div>
+                            <div style="width: 75%; display: flex; flex-direction: column; gap: 15px;">
+                                <div style="display: flex; gap: 15px;">
+                                    <div style="flex:1; height: 100px; background: linear-gradient(135deg, rgba(0,118,245,0.2), rgba(0,118,245,0.05)); border-radius: 15px; border: 1px solid rgba(0,118,245,0.3)"></div>
+                                    <div style="flex:1; height: 100px; background: linear-gradient(135deg, rgba(0,229,255,0.2), rgba(0,229,255,0.05)); border-radius: 15px; border: 1px solid rgba(0,229,255,0.3)"></div>
+                                </div>
+                                <div style="flex:1; background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px;">
+                                    <div style="height: 20px; width: 30%; background: rgba(255,255,255,0.1); border-radius: 5px; margin-bottom: 15px;"></div>
+                                    <div style="height: 10px; width: 100%; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 8px;"></div>
+                                    <div style="height: 10px; width: 85%; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 8px;"></div>
+                                    <div style="height: 10px; width: 90%; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 8px;"></div>
+                                    <div style="height: 10px; width: 70%; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 8px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Öne Çıkan Özellikler</h2>
+                <p>Güçlü mimarisi, yüksek güvenliği ve kullanıcı dostu arayüzü ile kliniklerin tüm ihtiyaçlarına cevap veren kapsamlı çözümler.</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h3>Hasta Yönetimi</h3>
+                        <p>Kapsamlı hasta kayıtları, körlenmiş veri güvenliği (AES-256) ve detaylı anamnez oluşturma özellikleri ile hasta süreçlerini hatasız yönetin.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-calendar3"></i>
+                        </div>
+                        <h3>Akıllı Randevu</h3>
+                        <p>Çakışma kontrolü, doktor çalışma saatleri yönetimi ve statü tabanlı renk kodlamasıyla desteklenen akıllı randevu planlama modülü.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <h3>Finans ve Raporlama</h3>
+                        <p>Hasta hesapları, özel hizmet katalogları ve kapsamlı faturalandırma takibi ile kliniğinizin tüm gelir süreçlerini güvenle takip edin.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h3>Üstün Güvenlik & SMS</h3>
+                        <p>Kliniklere özel veri izolasyonu (Multi-Tenant) altyapısı ve dinamik entegre SMS sağayıcı modülüyle hasta iletişiminde güçlü güvenlik limitleri.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-journal-medical"></i>
+                        </div>
+                        <h3>E-Reçete & Epikriz</h3>
+                        <p>Hibrid Doküman mimarisi sayesinde tahlil sonuçları yükleme, dinamik epikriz yazımı ve PDF snapshot özellikleri ile yasal geçerli kayıtlar.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h3>Sistem Logs</h3>
+                        <p>Rol bazlı dinamik erişim kontrollerinin ötesinde "Trace ID" destekli detaylı klinik işlem loglarıyla mükemmel şeffaflık.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
