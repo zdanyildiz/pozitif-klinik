@@ -60,8 +60,10 @@ class HomeWebController
     #[Route('GET', '/iletisim')]
     public function contact(Request $request, Response $response): Response
     {
+        $siteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? $_SERVER['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY');
+
         return $this->view->render($response, 'frontend/contact.twig', [
-            'turnstile_site_key' => $_ENV['TURNSTILE_SITE_KEY'] ?? ''
+            'turnstile_site_key' => $siteKey ?: ''
         ]);
     }
 
@@ -89,7 +91,7 @@ class HomeWebController
             $error = 'Lütfen güvenlik doğrulamasını (Turnstile) tamamlayın.';
         } else {
             // Turnstile Doğrulaması
-            $secretKey = $_ENV['TURNSTILE_SECRET_KEY'] ?? '';
+            $secretKey = $_ENV['TURNSTILE_SECRET_KEY'] ?? $_SERVER['TURNSTILE_SECRET_KEY'] ?? getenv('TURNSTILE_SECRET_KEY') ?: '';
             $verifyResponse = @file_get_contents('https://challenges.cloudflare.com/turnstile/v0/siteverify', false, stream_context_create([
                 'http' => [
                     'header' => "Content-type: application/x-www-form-urlencoded\r\n",
@@ -129,8 +131,10 @@ class HomeWebController
             }
         }
 
+        $siteKey = $_ENV['TURNSTILE_SITE_KEY'] ?? $_SERVER['TURNSTILE_SITE_KEY'] ?? getenv('TURNSTILE_SITE_KEY');
+
         return $this->view->render($response, 'frontend/contact.twig', [
-            'turnstile_site_key' => $_ENV['TURNSTILE_SITE_KEY'] ?? '',
+            'turnstile_site_key' => $siteKey ?: '',
             'error' => $error,
             'success' => $success,
             'form' => compact('name', 'email', 'subject', 'message')
