@@ -116,8 +116,8 @@ class HomeWebController
                 $body .= "<p><strong>Konu:</strong> " . htmlspecialchars($subject) . "</p>";
                 $body .= "<p><strong>Mesaj:</strong><br>" . nl2br(htmlspecialchars($message)) . "</p>";
 
-                // Alıcı adresi olarak sistem e-posta hesabı
-                $toEmail = $_ENV['MAIL_SMTP_USER'] ?? 'info@globalpozitif.com.tr';
+                // Bütün iletişim formu taleplerinin doğrudan bu adrese gitmesi istendi
+                $toEmail = 'info@globalpozitif.com.tr';
                 $emailSubject = 'İletişim Formu: ' . $subject;
 
                 $result = $this->emailService->send(0, $toEmail, $emailSubject, $body);
