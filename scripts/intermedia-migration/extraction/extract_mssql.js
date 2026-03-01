@@ -1,7 +1,7 @@
 /**
- * Pozitif Klinik - Evrensel Veri Çıkarma Scripti (Extraction - Final)
+ * Pozitif Klinik - Evrensel Veri Çıkarma Scripti (Extraction - Final v2)
  * 
- * GÜNCELLEME: Tespit edilen TÜM branş tablolarını (UZM_*) otomatik tarar ve birleştirir.
+ * GÜNCELLEME: Specialty tablolarından TAVSIYELER kolonu da eklendi.
  */
 
 const sql = require('mssql');
@@ -127,14 +127,22 @@ class DataMigrator {
 
                 rows.recordset.forEach(row => {
                     const existing = examsMap.get(row.GELISNO) || {};
-                    const combinedBulgular = [existing.bulgular, row.FIZIKMUA, row.RADYOLOJI, row.LABORATUVAR].filter(v => v && v.trim() !== '').join('\n---\n');
+                    
+                    // Bulgular kısmına radyoloji, laboratuvar ve fizik muayeneyi ekle
+                    const combinedBulgular = [existing.bulgular, row.FIZIKMUA, row.RADYOLOJI, row.LABORATUVAR]
+                        .filter(v => v && String(v).trim() !== '').join('\n---\n');
+                    
+                    // Tedavi kısmına branş tedavisi ve tavsiyeleri ekle
+                    const combinedTreatment = [existing.treatment, row.TEDAVI, row.TAVSIYELER]
+                        .filter(v => v && String(v).trim() !== '').join('\n---\n');
+
                     examsMap.set(row.GELISNO, {
                         legacy_visit_id: row.GELISNO,
-                        complaint: [existing.complaint, row.SIKAYETLER].filter(v => v && v.trim() !== '').join('\n---\n'),
-                        story: [existing.story, row.HIKAYESI].filter(v => v && v.trim() !== '').join('\n---\n'),
+                        complaint: [existing.complaint, row.SIKAYETLER].filter(v => v && String(v).trim() !== '').join('\n---\n'),
+                        story: [existing.story, row.HIKAYESI].filter(v => v && String(v).trim() !== '').join('\n---\n'),
                         bulgular: combinedBulgular || null,
-                        diagnosis: [existing.diagnosis, row.TANI].filter(v => v && v.trim() !== '').join('\n---\n'),
-                        treatment: [existing.treatment, row.TEDAVI].filter(v => v && v.trim() !== '').join('\n---\n'),
+                        diagnosis: [existing.diagnosis, row.TANI].filter(v => v && String(v).trim() !== '').join('\n---\n'),
+                        treatment: combinedTreatment || null,
                         result_note: existing.result_note || null,
                         created_at: existing.created_at || null
                     });

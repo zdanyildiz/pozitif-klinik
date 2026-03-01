@@ -1,223 +1,94 @@
 /**
- * Pozitif Klinik - Birleşik Migration Orkestratörü
+ * Pozitif Klinik - Birleşik Migration Orkestratörü (Final Optimized)
  * 
- * Tüm migrasyon adımlarını belirtilen klinik için sırasıyla çalıştırır.
- * Bu script, hangi klasörden çalıştırılırsa çalıştırılsın
- * her zaman kendi bulunduğu dizine göre yolları çözer.
- * 
- * Kullanım:
- *   node scripts/intermedia-migration/run.js --clinic=1
- *   node scripts/intermedia-migration/run.js --clinic=1 --from=5        (5. adımdan başla)
- *   node scripts/intermedia-migration/run.js --clinic=1 --only=3        (sadece 3. adımı çalıştır)
- *   node scripts/intermedia-migration/run.js --clinic=1 --list          (adımları listele)
- * 
- * Referans: MIGRATION_REFACTOR_ANALYSIS.md
+ * GÜNCELLEME: merge_specialty_data adımı kaldırıldı. 
+ * Veriler artık extraction aşamasında birleştirilip loading aşamasında şifreli yazılıyor.
  */
 
 const { execSync } = require('child_process');
 const path = require('path');
 
-// ─── CLI Arguments ─────────────────────────────────────────────
+// CLI'dan klinik ID al: node run.js --clinic=1
 const args = process.argv.slice(2);
-
-function getArg(name) {
-    const arg = args.find(a => a.startsWith(`--${name}=`));
-    return arg ? arg.split('=')[1] : null;
-}
-
-const CLINIC_ID = parseInt(getArg('clinic'));
-const FROM_STEP = parseInt(getArg('from')) || 1;
-const ONLY_STEP = parseInt(getArg('only')) || null;
-const LIST_MODE = args.includes('--list');
-
-if (!CLINIC_ID || isNaN(CLINIC_ID)) {
-    console.log('\n❌ HATA: Klinik ID belirtilmedi!');
-    console.log('Kullanım: node scripts/intermedia-migration/run.js --clinic=ID');
-    console.log('');
-    console.log('Seçenekler:');
-    console.log('  --clinic=N    Zorunlu. Eski sistemdeki SUBE_ID');
-    console.log('  --from=N      N. adımdan başla (devam etmek için)');
-    console.log('  --only=N      Sadece N. adımı çalıştır');
-    console.log('  --list        Adımları listele, çalıştırma');
-    console.log('');
-    console.log('Örnek: node scripts/intermedia-migration/run.js --clinic=1');
-    process.exit(1);
-}
-
-// ─── Step Definitions ──────────────────────────────────────────
-// --clinic parametresi her alt scripte iletilir
-const C = `--clinic=${CLINIC_ID}`;
+const clinicArg = args.find(a => a.startsWith('--clinic='));
+const CLINIC_ID = clinicArg ? parseInt(clinicArg.split('=')[1]) : 1;
 
 const steps = [
     {
         name: 'Şube Migrasyonu',
-        command: 'node migrate_tenants.js',
-        description: 'MSSQL SUBE verilerini sys_tenants tablosuna aktarır.',
-        needsClinic: false // Tüm şubeleri aktarır
+        desc: 'MSSQL SUBE verilerini sys_tenants tablosuna aktarır.',
+        command: `node migrate_tenants.js`
     },
     {
         name: 'MSSQL Veri Çıkarma (Extraction)',
-        command: `node extraction/extract_mssql.js ${C}`,
-        description: 'MSSQL verilerini okur ve JSON dosyasına kaydeder.'
+        desc: 'MSSQL verilerini okur, tüm branşları birleştirir ve JSON dosyasına kaydeder.',
+        command: `node extraction/extract_mssql.js --clinic=${CLINIC_ID}`
     },
     {
         name: 'MySQL Veri Yükleme (Loading)',
-        command: `node loading/load_mysql.js ${C}`,
-        description: 'JSON dosyasındaki hastaları, randevuları, muayeneleri MySQL\'e aktarır.'
-    },
-    {
-        name: 'Branş Verileri Birleştirme',
-        command: `node merge_specialty_data.js ${C}`,
-        description: 'Laboratuvar/Radyoloji metinlerini birleştirir, muayene notlarını aktarır.'
+        desc: 'JSON verilerini şifreli (AES-256) ve indeksli şekilde MySQL\'e aktarır.',
+        command: `node loading/load_mysql.js --clinic=${CLINIC_ID}`
     },
     {
         name: 'Uzmanlık Kategorizasyonu',
-        command: `node categorize_specialty.js ${C}`,
-        description: 'Muayene kayıtlarını branş kodlarına göre işaretler.'
+        desc: 'Muayene kayıtlarını branş kodlarına göre işaretler.',
+        command: `node categorize_specialty.js --clinic=${CLINIC_ID}`
     },
     {
         name: 'Laboratuvar Metadata',
-        command: `node migrate_lab_metadata.js ${C}`,
-        description: 'Lab test tanımlarını, referans aralıklarını ve panelleri aktarır.'
+        desc: 'Lab test tanımlarını ve referans aralıklarını aktarır.',
+        command: `node migrate_lab_metadata.js --clinic=${CLINIC_ID}`
     },
     {
         name: 'Laboratuvar Sonuçları',
-        command: `node migrate_lab_data.js ${C}`,
-        description: 'Detaylı laboratuvar sonuçlarını aktarır.'
-    },
-    {
-        name: 'Dosya Migrasyonu',
-        command: `node migrate_files.js ${C}`,
-        description: 'Hasta dosyalarını ve radyoloji raporlarını aktarır.'
+        desc: 'Detaylı laboratuvar sonuçlarını aktarır.',
+        command: `node migrate_lab_data.js --clinic=${CLINIC_ID}`
     },
     {
         name: 'Ödeme Migrasyonu',
-        command: `node migrate_payments.js ${C}`,
-        description: 'Finansal kayıtları ve ödemeleri aktarır.'
-    },
-    {
-        name: 'ICD-10 Kütüphanesi',
-        command: 'node migrate_icd_library.js',
-        description: 'ICD-10 tanı kodlarını sys_icd10 tablosuna aktarır.',
-        needsClinic: false // Global veri
+        desc: 'Finansal kayıtları ve ödemeleri aktarır.',
+        command: `node migrate_payments.js --clinic=${CLINIC_ID}`
     },
     {
         name: 'Activity Logs Migrasyonu',
-        command: `node migrate_activity_logs.js ${C}`,
-        description: 'GENELLOG ve LOG_KAYITDEGISIKLIGI kayıtlarını aktarır.'
-    },
-    {
-        name: 'Data Access Logs Migrasyonu',
-        command: `node migrate_data_access_logs.js ${C}`,
-        description: 'Kullanici_Log_KayitErisim kayıtlarını aktarır.'
-    },
-    {
-        name: 'Consent Logs Migrasyonu',
-        command: `node migrate_consent_logs.js ${C}`,
-        description: 'Gizlilik onam loglarını ptn_consent_logs tablosuna aktarır.'
+        desc: 'Sistem loglarını aktarır.',
+        command: `node migrate_activity_logs.js --clinic=${CLINIC_ID}`
     }
 ];
 
-// ─── List Mode ─────────────────────────────────────────────────
-if (LIST_MODE) {
-    console.log(`\n📋 Migrasyon Adımları (Klinik ID: ${CLINIC_ID}):\n`);
-    steps.forEach((step, i) => {
-        const num = String(i + 1).padStart(2, ' ');
-        const clinic = step.needsClinic === false ? '(global)' : `(clinic=${CLINIC_ID})`;
-        console.log(`  ${num}. ${step.name} ${clinic}`);
-        console.log(`      ${step.description}`);
-        console.log(`      $ ${step.command}`);
-        console.log('');
-    });
-    console.log(`Toplam: ${steps.length} adım`);
-    process.exit(0);
-}
-
-// ─── Execution ─────────────────────────────────────────────────
-const MIGRATION_ROOT = __dirname;
-const startTime = Date.now();
-
-console.log('');
 console.log('══════════════════════════════════════════════════');
-console.log('  INTERMEDIA → POZİTİF KLİNİK MİGRASYON');
+console.log('  INTERMEDIA → POZİTİF KLİNİK GÜVENLİ MİGRASYON');
 console.log('══════════════════════════════════════════════════');
 console.log(`  📍 Klinik ID:    ${CLINIC_ID}`);
-console.log(`  📁 Çalışma Dir:  ${MIGRATION_ROOT}`);
 console.log(`  📊 Toplam Adım:  ${steps.length}`);
-if (ONLY_STEP) {
-    console.log(`  🎯 Sadece Adım:  ${ONLY_STEP}`);
-} else if (FROM_STEP > 1) {
-    console.log(`  ⏩ Başlangıç:    Adım ${FROM_STEP}`);
-}
 console.log(`  🕑 Başlangıç:    ${new Date().toLocaleString('tr-TR')}`);
-console.log('══════════════════════════════════════════════════');
+console.log('══════════════════════════════════════════════════\n');
 
-const results = [];
+const startTime = Date.now();
 
-for (let i = 0; i < steps.length; i++) {
-    const stepNum = i + 1;
-    const step = steps[i];
-
-    // Skip logic
-    if (ONLY_STEP && stepNum !== ONLY_STEP) continue;
-    if (!ONLY_STEP && stepNum < FROM_STEP) {
-        console.log(`\n⏭  [${stepNum}/${steps.length}] ${step.name} — Atlandı`);
-        results.push({ step: stepNum, name: step.name, status: 'skipped' });
-        continue;
-    }
-
-    console.log(`\n──────────────────────────────────────────────────`);
-    console.log(`  [${stepNum}/${steps.length}] ${step.name}`);
-    console.log(`  ${step.description}`);
+steps.forEach((step, index) => {
+    console.log(`──────────────────────────────────────────────────`);
+    console.log(`  [${index + 1}/${steps.length}] ${step.name}`);
+    console.log(`  ${step.desc}`);
     console.log(`  $ ${step.command}`);
     console.log(`  ⏱  ${new Date().toLocaleTimeString('tr-TR')}`);
     console.log(`──────────────────────────────────────────────────`);
 
-    const stepStart = Date.now();
-
     try {
-        execSync(step.command, {
-            stdio: 'inherit',
-            cwd: MIGRATION_ROOT,
-            timeout: 3600000 // 1 saat max
-        });
-
-        const elapsed = ((Date.now() - stepStart) / 1000).toFixed(1);
-        console.log(`\n  ✅ BAŞARILI (${elapsed}s)`);
-        results.push({ step: stepNum, name: step.name, status: 'success', elapsed });
-    } catch (error) {
-        const elapsed = ((Date.now() - stepStart) / 1000).toFixed(1);
-        console.error(`\n  ❌ BAŞARISIZ (${elapsed}s)`);
-        console.error(`     Hata Kodu: ${error.status || 'bilinmiyor'}`);
-        if (error.signal) console.error(`     Sinyal: ${error.signal}`);
-
-        results.push({ step: stepNum, name: step.name, status: 'failed', elapsed });
-
-        if (ONLY_STEP) {
-            process.exit(1);
-        }
-
-        console.error(`\n  🛑 Migrasyon durduruldu. Devam etmek için:`);
-        console.error(`     node scripts/intermedia-migration/run.js --clinic=${CLINIC_ID} --from=${stepNum}`);
+        const startStep = Date.now();
+        execSync(step.command, { stdio: 'inherit', cwd: __dirname });
+        const elapsed = ((Date.now() - startStep) / 1000).toFixed(1);
+        console.log(`\n  ✅ BAŞARILI (${elapsed}s)\n`);
+    } catch (err) {
+        console.error(`\n  ❌ HATA: Step "${step.name}" başarısız oldu.`);
         process.exit(1);
     }
-}
+});
 
-// ─── Summary ───────────────────────────────────────────────────
 const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-
-console.log('');
 console.log('══════════════════════════════════════════════════');
-console.log('  MİGRASYON ÖZETİ');
+console.log('  MİGRASYON TAMAMLANDI');
 console.log('══════════════════════════════════════════════════');
-
-for (const r of results) {
-    const icon = r.status === 'success' ? '✅' : r.status === 'skipped' ? '⏭ ' : '❌';
-    const time = r.elapsed ? ` (${r.elapsed}s)` : '';
-    console.log(`  ${icon} ${String(r.step).padStart(2)}. ${r.name}${time}`);
-}
-
-console.log('──────────────────────────────────────────────────');
 console.log(`  Toplam Süre: ${totalElapsed}s`);
 console.log(`  Bitiş: ${new Date().toLocaleString('tr-TR')}`);
 console.log('══════════════════════════════════════════════════');
