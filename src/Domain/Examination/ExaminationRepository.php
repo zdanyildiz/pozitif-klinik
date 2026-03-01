@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Domain\Examination;
 
 use App\Core\Database;
+use App\Core\Security\CryptoService;
 use PDO;
 
 class ExaminationRepository
 {
     private Database $db;
+    private CryptoService $crypto;
 
-    public function __construct(Database $db)
+    public function __construct(Database $db, CryptoService $crypto)
     {
         $this->db = $db;
+        $this->crypto = $crypto;
     }
 
     public function findAllByPatient(int $clinicId, int $patientId): array
@@ -73,7 +76,8 @@ class ExaminationRepository
             'pid2' => $patientId,
             'pid3' => $patientId
         ]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_map([$this, 'decryptExaminationData'], $results);
     }
 
     public function findById(int $clinicId, int $id): ?array
@@ -89,7 +93,7 @@ class ExaminationRepository
             'id' => $id
         ]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ?: null;
+        return $result ? $this->decryptExaminationData($result) : null;
     }
 
     public function findByAppointmentId(int $clinicId, int $appointmentId): ?array
@@ -107,19 +111,19 @@ class ExaminationRepository
             'appointment_id' => $appointmentId
         ]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ?: null;
+        return $result ? $this->decryptExaminationData($result) : null;
     }
 
     public function create(array $data): int
     {
         $sql = "INSERT INTO cln_examinations (
                     clinic_id, patient_id, doctor_user_id, 
-                    anamnez, complaint, story, bulgular, 
+                    complaint, story, bulgular, 
                     diagnosis, treatment, result_note, lab_result_text, appointment_id,
                     specialty_code, specialty_data
                 ) VALUES (
                     :clinic_id, :patient_id, :doctor_user_id, 
-                    :anamnez, :complaint, :story, :bulgular, 
+                    :complaint, :story, :bulgular, 
                     :diagnosis, :treatment, :result_note, :lab_result_text, :appointment_id,
                     :specialty_code, :specialty_data
                 )";
@@ -129,17 +133,16 @@ class ExaminationRepository
             'clinic_id' => $data['clinic_id'],
             'patient_id' => $data['patient_id'],
             'doctor_user_id' => $data['doctor_user_id'],
-            'anamnez' => $data['anamnez'] ?? null,
-            'complaint' => $data['complaint'] ?? null,
-            'story' => $data['story'] ?? null,
-            'bulgular' => $data['bulgular'] ?? null,
-            'diagnosis' => $data['diagnosis'] ?? null,
-            'treatment' => $data['treatment'] ?? null,
-            'result_note' => $data['result_note'] ?? null,
-            'lab_result_text' => $data['lab_result_text'] ?? null,
+            'complaint' => $this->crypto->encryptSafe($data['complaint'] ?? null),
+            'story' => $this->crypto->encryptSafe($data['anamnez'] ?? $data['story'] ?? null),
+            'bulgular' => $this->crypto->encryptSafe($data['bulgular'] ?? null),
+            'diagnosis' => $this->crypto->encryptSafe($data['diagnosis'] ?? null),
+            'treatment' => $this->crypto->encryptSafe($data['treatment'] ?? null),
+            'result_note' => $this->crypto->encryptSafe($data['result_note'] ?? null),
+            'lab_result_text' => $this->crypto->encryptSafe($data['lab_result_text'] ?? null),
             'appointment_id' => $data['appointment_id'] ?? null,
             'specialty_code' => $data['specialty_code'] ?? null,
-            'specialty_data' => $data['specialty_data'] ?? null
+            'specialty_data' => $this->crypto->encryptSafe(is_array($data['specialty_data'] ?? null) ? json_encode($data['specialty_data']) : ($data['specialty_data'] ?? null))
         ]);
 
         return (int) $this->db->getConnection()->lastInsertId();
@@ -148,7 +151,6 @@ class ExaminationRepository
     public function update(int $clinicId, int $id, array $data): bool
     {
         $sql = "UPDATE cln_examinations SET 
-                    anamnez = :anamnez,
                     complaint = :complaint,
                     story = :story,
                     bulgular = :bulgular,
@@ -164,16 +166,50 @@ class ExaminationRepository
         return $stmt->execute([
             'clinic_id' => $clinicId,
             'id' => $id,
-            'anamnez' => $data['anamnez'] ?? null,
-            'complaint' => $data['complaint'] ?? null,
-            'story' => $data['story'] ?? null,
-            'bulgular' => $data['bulgular'] ?? null,
-            'diagnosis' => $data['diagnosis'] ?? null,
-            'treatment' => $data['treatment'] ?? null,
-            'result_note' => $data['result_note'] ?? null,
-            'lab_result_text' => $data['lab_result_text'] ?? null,
+            'complaint' => $this->crypto->encryptSafe($data['complaint'] ?? null),
+            'story' => $this->crypto->encryptSafe($data['anamnez'] ?? $data['story'] ?? null),
+            'bulgular' => $this->crypto->encryptSafe($data['bulgular'] ?? null),
+            'diagnosis' => $this->crypto->encryptSafe($data['diagnosis'] ?? null),
+            'treatment' => $this->crypto->encryptSafe($data['treatment'] ?? null),
+            'result_note' => $this->crypto->encryptSafe($data['result_note'] ?? null),
+            'lab_result_text' => $this->crypto->encryptSafe($data['lab_result_text'] ?? null),
             'specialty_code' => $data['specialty_code'] ?? null,
-            'specialty_data' => $data['specialty_data'] ?? null
+            'specialty_data' => $this->crypto->encryptSafe(is_array($data['specialty_data'] ?? null) ? json_encode($data['specialty_data']) : ($data['specialty_data'] ?? null))
         ]);
+    }
+
+    /**
+     * Muayene verilerini çözer
+     */
+    private function decryptExaminationData(array $exam): array
+    {
+        $fields = [
+            'anamnez',
+            'complaint',
+            'story',
+            'bulgular',
+            'diagnosis',
+            'treatment',
+            'result_note',
+            'lab_result_text',
+            'specialty_data'
+        ];
+
+        foreach ($fields as $field) {
+            if (!empty($exam[$field])) {
+                $decrypted = $this->crypto->decrypt($exam[$field]);
+                $exam[$field] = $decrypted ?? $exam[$field];
+
+                // specialty_data ise ve deşifre edildiyse, diziye çevir
+                if ($field === 'specialty_data' && !empty($exam[$field])) {
+                    $decoded = json_decode((string) $exam[$field], true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $exam[$field] = $decoded;
+                    }
+                }
+            }
+        }
+
+        return $exam;
     }
 }

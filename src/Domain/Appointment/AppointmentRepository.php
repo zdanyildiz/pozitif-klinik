@@ -496,7 +496,7 @@ class AppointmentRepository
             $data['type_id'],
             $data['appointment_date'],
             $status,
-            $data['notes'] ?? null
+            $this->crypto->encryptSafe($data['notes'] ?? null)
         ]);
 
         $appointmentId = (int) $this->db->getConnection()->lastInsertId();
@@ -665,7 +665,7 @@ class AppointmentRepository
             $data['type_id'],
             $data['appointment_date'],
             $data['status'] ?? 'confirmed',
-            $data['notes'] ?? null,
+            $this->crypto->encryptSafe($data['notes'] ?? null),
             $clinicId,
             $appointmentId
         ]);
@@ -909,7 +909,19 @@ class AppointmentRepository
                 WHERE i.clinic_id = ? AND i.appointment_id = ?
                 ORDER BY i.id ASC";
 
-        return $this->db->fetchAll($sql, [$clinicId, $appointmentId]);
+        $items = $this->db->fetchAll($sql, [$clinicId, $appointmentId]);
+
+        return array_map(function ($item) {
+            if (!empty($item['item_name'])) {
+                $decrypted = $this->crypto->decrypt($item['item_name']);
+                $item['item_name'] = $decrypted ?? $item['item_name'];
+            }
+            if (!empty($item['description'])) {
+                $decryptedDesc = $this->crypto->decrypt($item['description']);
+                $item['description'] = $decryptedDesc ?? $item['description'];
+            }
+            return $item;
+        }, $items);
     }
 
     public function addItem(int $clinicId, int $appointmentId, array $data, ?int $userId = null): int
@@ -1042,6 +1054,12 @@ class AppointmentRepository
         if (!empty($appointment['patient_tc_no'])) {
             $decryptedTc = $this->crypto->decrypt($appointment['patient_tc_no']);
             $appointment['patient_tc_no'] = $decryptedTc ?? $appointment['patient_tc_no'];
+        }
+
+        // Notes decryption
+        if (!empty($appointment['notes'])) {
+            $decryptedNotes = $this->crypto->decrypt($appointment['notes']);
+            $appointment['notes'] = $decryptedNotes ?? $appointment['notes'];
         }
 
         return $appointment;

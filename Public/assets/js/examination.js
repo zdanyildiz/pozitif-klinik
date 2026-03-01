@@ -101,7 +101,7 @@ async function loadHistory() {
             if (exam.id == currentExaminationId) item.classList.add('active');
 
             const date = Utils.formatDate(exam.created_at);
-            const summary = exam.diagnosis || exam.complaint || 'Detay belirtilmemiş';
+            const summary = exam.diagnosis || exam.complaint || exam.story || 'Detay belirtilmemiş';
 
             let filesHtml = '';
             const hasFiles = exam.files && exam.files.length > 0;
@@ -346,7 +346,7 @@ window.removeBillingItem = async (itemId) => {
 function fillExaminationForm(exam) {
     document.getElementById('examinationIdInput').value = exam.id;
     document.getElementById('complaint').value = exam.complaint || '';
-    document.getElementById('anamnez').value = exam.anamnez || '';
+    document.getElementById('anamnez').value = exam.story || '';
     document.getElementById('bulgular').value = exam.bulgular || '';
     document.getElementById('diagnosis').value = exam.diagnosis || '';
     document.getElementById('treatment').value = exam.treatment || '';
@@ -364,7 +364,7 @@ function viewHistoricalExam(exam) {
         html: `
             <div class="text-start small">
                 <p><strong>Şikayet:</strong> ${exam.complaint || '-'}</p>
-                <p><strong>Anamnez:</strong> ${exam.anamnez || '-'}</p>
+                <p><strong>Anamnez:</strong> ${exam.story || '-'}</p>
                 <p><strong>Bulgular:</strong> ${exam.bulgular || '-'}</p>
                 <p><strong>Tanı:</strong> ${exam.diagnosis || '-'}</p>
                 <p><strong>Tedavi:</strong> ${exam.treatment || '-'}</p>

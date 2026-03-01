@@ -41,6 +41,9 @@
         </div>
 
         <div class="d-flex gap-2 mt-3 mt-md-0 align-self-md-end mb-md-2">
+            <button class="btn btn-light rounded-pill px-4" onclick="openFastRecordModal()">
+                <i class="bi bi-lightning-fill me-2"></i>Hızlı Kayıt
+            </button>
             <a href="{{ base_path }}/admin/patients/{{ patient.id }}/edit" class="btn action-btn rounded-pill px-4 text-decoration-none" id="btnEditPatient">
                 <i class="bi bi-pencil me-2"></i>Düzenle
             </a>
@@ -668,7 +671,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-secondary small">Hikaye (Anamnez)</label>
-                        <textarea class="form-control" id="editExamStory" rows="2"></textarea>
+                        <textarea class="form-control" id="editExamAnamnez" rows="2"></textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-secondary small">Bulgular</label>
@@ -777,6 +780,65 @@
                  <button type="button" class="btn btn-primary px-4" onclick="LabEntry.save()">
                     <i class="bi bi-check-lg me-1"></i> Kaydet
                  </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fast Record Modal (Hızlı Muayene Kaydı) -->
+<div class="modal fade" id="fastRecordModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-lightning-fill me-2"></i>Hızlı Muayene Girişi</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="fastRecordForm">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">Muayene Tarihi</label>
+                            <input type="datetime-local" class="form-control" name="appointment_date" id="fastRecordDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">Doktor</label>
+                            <select class="form-select" name="doctor_id" id="fastRecordDoctor" required>
+                                <option value="">Doktor Seçiniz...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Şikayet</label>
+                        <textarea class="form-control" name="complaint" rows="1"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Hikaye (Anamnez)</label>
+                        <textarea class="form-control" name="anamnez" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Bulgular</label>
+                        <textarea class="form-control" name="bulgular" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-primary small">Tanı (Diagnöz)</label>
+                        <textarea class="form-control border-primary" name="diagnosis" rows="1"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Tedavi / Plan</label>
+                        <textarea class="form-control" name="treatment" rows="2"></textarea>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold text-secondary small">Sonuç Notu</label>
+                        <textarea class="form-control" name="result_note" rows="1"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 bg-light">
+                <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSaveFastRecord" onclick="saveFastRecord()">
+                    <i class="bi bi-check-lg me-1"></i>Kaydı Tamamla
+                </button>
             </div>
         </div>
     </div>
@@ -893,7 +955,7 @@
                 };
 
                 setText('offcanvasComplaint', exam.complaint);
-                setText('offcanvasStory', exam.story);
+                setText('offcanvasStory', exam.story || exam.anamnez);
                 setText('offcanvasFindings', exam.bulgular);
                 setText('offcanvasDiagnosis', exam.diagnosis);
                 setText('offcanvasTreatment', exam.treatment);
@@ -984,7 +1046,7 @@
         if (isNew) {
             document.getElementById('editExamId').value = 'new';
             document.getElementById('editExamComplaint').value = '';
-            document.getElementById('editExamStory').value = '';
+            document.getElementById('editExamAnamnez').value = '';
             document.getElementById('editExamFindings').value = '';
             document.getElementById('editExamDiagnosis').value = '';
             document.getElementById('editExamTreatment').value = '';
@@ -993,7 +1055,7 @@
         } else {
             document.getElementById('editExamId').value = currentExamData.id;
             document.getElementById('editExamComplaint').value = currentExamData.complaint || '';
-            document.getElementById('editExamStory').value = currentExamData.story || '';
+            document.getElementById('editExamAnamnez').value = currentExamData.anamnez || currentExamData.story || '';
             document.getElementById('editExamFindings').value = currentExamData.bulgular || '';
             document.getElementById('editExamDiagnosis').value = currentExamData.diagnosis || '';
             document.getElementById('editExamTreatment').value = currentExamData.treatment || '';
@@ -1013,7 +1075,8 @@
 
         const payload = {
             complaint: document.getElementById('editExamComplaint').value.trim(),
-            story: document.getElementById('editExamStory').value.trim(),
+            anamnez: document.getElementById('editExamAnamnez').value.trim(),
+            story: document.getElementById('editExamAnamnez').value.trim(), // Her ikisine de yazalım tutarlılık için
             bulgular: document.getElementById('editExamFindings').value.trim(),
             diagnosis: document.getElementById('editExamDiagnosis').value.trim(),
             treatment: document.getElementById('editExamTreatment').value.trim(),
@@ -1064,5 +1127,116 @@
         }
     };
     {% endif %}
+    // Fast Record (Hızlı Kayıt) Functions
+    let fastRecordModalInst;
+    let appointmentTypes = [];
+
+    window.openFastRecordModal = async function() {
+        if (!fastRecordModalInst) {
+            fastRecordModalInst = new bootstrap.Modal(document.getElementById('fastRecordModal'));
+        }
+
+        // 1. Set default date (now)
+        const now = new Date();
+        const offset = now.getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
+        document.getElementById('fastRecordDate').value = localISOTime;
+
+        // 2. Load Doctors if select is empty
+        const doctorSelect = document.getElementById('fastRecordDoctor');
+        if (doctorSelect.options.length <= 1) {
+            try {
+                const res = await api.get('/api/users');
+                const users = res.data.users || [];
+                const doctors = users.filter(u => u.role === 'doctor' && u.is_active);
+                doctors.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.textContent = d.name;
+                    doctorSelect.appendChild(opt);
+                });
+            } catch (e) {
+                console.error('Doctors load error', e);
+            }
+        }
+
+        // 3. Load Appointment Types (Cache)
+        if (appointmentTypes.length === 0) {
+            try {
+                const res = await api.get('/api/appointments/types');
+                appointmentTypes = res.data || [];
+            } catch (e) {
+                console.error('Appt types load error', e);
+            }
+        }
+
+        fastRecordModalInst.show();
+    };
+
+    window.saveFastRecord = async function() {
+        const form = document.getElementById('fastRecordForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        if (!data.appointment_date || !data.doctor_id) {
+            Swal.fire('Uyarı', 'Lütfen tarih ve doktor seçiniz.', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('btnSaveFastRecord');
+        const originalHtml = btn.innerHTML;
+        
+        try {
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>İşleniyor...';
+            btn.disabled = true;
+
+            // 1. Randevu Oluştur
+            const defaultType = appointmentTypes.find(t => t.is_active) || { id: 1 };
+            
+            const apptPayload = {
+                patient_id: {{ patient.id }},
+                doctor_id: data.doctor_id,
+                type_id: defaultType.id,
+                appointment_date: data.appointment_date.replace('T', ' ') + ':00',
+                status: 'completed'
+            };
+
+            const apptRes = await api.post('/api/appointments', apptPayload);
+            const apptId = apptRes.data.id;
+
+            // 2. Muayene Kaydı Oluştur
+            const examPayload = {
+                patient_id: {{ patient.id }},
+                appointment_id: apptId,
+                doctor_user_id: data.doctor_id,
+                complaint: data.complaint,
+                story: data.anamnez, // Story kolonu kullanıyoruz
+                bulgular: data.bulgular,
+                diagnosis: data.diagnosis,
+                treatment: data.treatment,
+                result_note: data.result_note
+            };
+
+            await api.post('/api/examinations', examPayload);
+
+            fastRecordModalInst.hide();
+            Swal.fire({
+                icon: 'success',
+                title: 'Başarılı',
+                text: 'Randevu ve muayene kaydı oluşturuldu.',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                window.location.reload();
+            });
+
+        } catch (error) {
+            console.error('Fast record error', error);
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            const errorMsg = typeof error === 'string' ? error : (error.response?.data?.message || 'Kayıt sırasında bir hata oluştu.');
+            Swal.fire('Hata', errorMsg, 'error');
+        }
+    };
 </script>
 {% endblock %}

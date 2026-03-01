@@ -114,13 +114,36 @@ class ExaminationController extends BaseController
             return true;
         }
 
-        $fields = ['anamnez', 'complaint', 'story', 'bulgular', 'diagnosis', 'treatment', 'result_note', 'specialty_code', 'specialty_data'];
+        $fields = [
+            'complaint',
+            'story',
+            'bulgular',
+            'diagnosis',
+            'treatment',
+            'result_note',
+            'lab_result_text',
+            'specialty_code',
+            'specialty_data'
+        ];
 
         foreach ($fields as $field) {
             $lastValue = $lastRecord[$field] ?? '';
             $newValue = $newData[$field] ?? '';
 
-            // Boşlukları temizleyip karşılaştıralım (minik format farklarını yoksayalım)
+            // Özel Durum: Eğer yeni veride story yok ama anamnez varsa (UI'dan dolayı), onu baz al
+            if ($field === 'story' && empty($newValue) && !empty($newData['anamnez'])) {
+                $newValue = $newData['anamnez'];
+            }
+
+            // Handle arrays/objects (e.g. specialty_data)
+            if (is_array($newValue)) {
+                $newValue = json_encode($newValue);
+            }
+            if (is_array($lastValue)) {
+                $lastValue = json_encode($lastValue);
+            }
+
+            // Boşlukları temizleyip karşılaştıralım
             if (trim((string) $lastValue) !== trim((string) $newValue)) {
                 return true;
             }

@@ -112,14 +112,16 @@ return [
     // Examination Repository
     \App\Domain\Examination\ExaminationRepository::class => function (ContainerInterface $c) {
         return new \App\Domain\Examination\ExaminationRepository(
-            $c->get(Database::class)
+            $c->get(Database::class),
+            $c->get(CryptoService::class)
         );
     },
 
     // Lab Repository
     \App\Domain\Lab\LabRepository::class => function (ContainerInterface $c) {
         return new \App\Domain\Lab\LabRepository(
-            $c->get(Database::class)
+            $c->get(Database::class),
+            $c->get(CryptoService::class)
         );
     },
 

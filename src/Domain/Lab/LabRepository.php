@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Domain\Lab;
 
 use App\Core\Database;
+use App\Core\Security\CryptoService;
 use PDO;
 
 class LabRepository
 {
     private Database $db;
+    private CryptoService $crypto;
 
-    public function __construct(Database $db)
+    public function __construct(Database $db, CryptoService $crypto)
     {
         $this->db = $db;
+        $this->crypto = $crypto;
     }
 
     /**
@@ -49,7 +52,8 @@ class LabRepository
     public function getItemsByResultId(int $resultId): array
     {
         $sql = "SELECT * FROM cln_lab_result_items WHERE result_id = ? ORDER BY id ASC";
-        return $this->db->fetchAll($sql, [$resultId]);
+        $items = $this->db->fetchAll($sql, [$resultId]);
+        return array_map([$this, 'decryptLabItem'], $items);
     }
 
     /**
@@ -100,10 +104,10 @@ class LabRepository
 
         $stmt = $this->db->query($sql, [
             'result_id' => $resultId,
-            'test_name' => $item['test_name'],
-            'result_value' => $item['result_value'],
-            'unit' => $item['unit'] ?? null,
-            'reference_range' => $item['reference_range'] ?? null,
+            'test_name' => $this->crypto->encryptSafe($item['test_name']),
+            'result_value' => $this->crypto->encryptSafe($item['result_value']),
+            'unit' => $this->crypto->encryptSafe($item['unit'] ?? null),
+            'reference_range' => $this->crypto->encryptSafe($item['reference_range'] ?? null),
             'is_abnormal' => !empty($item['is_abnormal']) ? 1 : 0
         ]);
 
@@ -221,5 +225,20 @@ class LabRepository
         }
 
         return $def;
+    }
+
+    /**
+     * Laboratuvar kalemi verilerini şifre çözer
+     */
+    private function decryptLabItem(array $item): array
+    {
+        $fields = ['test_name', 'result_value', 'unit', 'reference_range'];
+        foreach ($fields as $field) {
+            if (!empty($item[$field])) {
+                $decrypted = $this->crypto->decrypt($item[$field]);
+                $item[$field] = $decrypted ?? $item[$field];
+            }
+        }
+        return $item;
     }
 }
