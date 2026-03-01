@@ -155,7 +155,9 @@ class ExaminationRepository
                     diagnosis = :diagnosis,
                     treatment = :treatment,
                     result_note = :result_note,
-                    lab_result_text = :lab_result_text
+                    lab_result_text = :lab_result_text,
+                    specialty_code = :specialty_code,
+                    specialty_data = :specialty_data
                 WHERE clinic_id = :clinic_id AND id = :id";
 
         $stmt = $this->db->getConnection()->prepare($sql);
@@ -169,7 +171,9 @@ class ExaminationRepository
             'diagnosis' => $data['diagnosis'] ?? null,
             'treatment' => $data['treatment'] ?? null,
             'result_note' => $data['result_note'] ?? null,
-            'lab_result_text' => $data['lab_result_text'] ?? null
+            'lab_result_text' => $data['lab_result_text'] ?? null,
+            'specialty_code' => $data['specialty_code'] ?? null,
+            'specialty_data' => $data['specialty_data'] ?? null
         ]);
     }
 }

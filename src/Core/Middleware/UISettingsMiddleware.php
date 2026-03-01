@@ -92,6 +92,12 @@ class UISettingsMiddleware implements MiddlewareInterface
             $p['can_view_patient_vitals'] = (bool) $config['patient_detail']['show_vitals'][$role];
         }
 
+        // 6. İş Akışı - Hasta Geçmişini Düzenle (Rol bağımsız, genel ayar)
+        $p['can_edit_history'] = false;
+        if (isset($config['workflow']['editable_patient_history'])) {
+            $p['can_edit_history'] = (bool) $config['workflow']['editable_patient_history'];
+        }
+
         return $p;
     }
 }

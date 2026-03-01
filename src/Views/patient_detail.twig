@@ -526,7 +526,14 @@
             <h5 class="offcanvas-title fw-bold" id="timelineOffcanvasLabel">Randevu Detayı</h5>
             <small class="text-muted" id="offcanvasDate">...</small>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat" style="filter: none; opacity: 1;"></button>
+        <div class="d-flex align-items-center gap-2">
+            {% if permissions.can_edit_history %}
+            <button type="button" class="btn btn-sm btn-outline-primary d-none" id="btnEditExamOffcanvas" onclick="editExamFromOffcanvas()">
+                <i class="bi bi-pencil me-1"></i>Düzenle
+            </button>
+            {% endif %}
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Kapat" style="filter: none; opacity: 1;"></button>
+        </div>
     </div>
     <div class="offcanvas-body p-0">
         <div id="offcanvasLoading" class="text-center p-5">
@@ -590,6 +597,13 @@
                 <div id="examEmpty" class="text-center text-muted py-3 d-none">
                     <i class="bi bi-journal-x fs-4"></i>
                     <br>Bu randevu için doktor muayene notu girilmemiş.
+                    {% if permissions.can_edit_history %}
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="editExamFromOffcanvas(true)">
+                            <i class="bi bi-plus-lg me-1"></i>Yeniden Not Ekle
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -632,6 +646,62 @@
         </div>
     </div>
 </div>
+
+{% if permissions.can_edit_history %}
+<!-- Examination Edit Modal -->
+<div class="modal fade" id="examEditModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Geçmiş Muayene Kaydını Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning mb-4 py-2 border-0 bg-warning-subtle text-warning-emphasis">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Uyarı:</strong> Geçmiş tıbbi kayıtların vizyonunu düzenliyorsunuz. Lütfen doğru veriler girdiğinizden emin olun.
+                </div>
+                <form id="examEditForm">
+                    <input type="hidden" id="editExamId">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Şikayet</label>
+                        <textarea class="form-control" id="editExamComplaint" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Hikaye (Anamnez)</label>
+                        <textarea class="form-control" id="editExamStory" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Bulgular</label>
+                        <textarea class="form-control" id="editExamFindings" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-primary small">Tanı (ICD-10 veya Serbest Metin)</label>
+                        <textarea class="form-control border-primary" id="editExamDiagnosis" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Tedavi / Plan</label>
+                        <textarea class="form-control" id="editExamTreatment" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Sonuç Notu</label>
+                        <textarea class="form-control" id="editExamResultNote" rows="2"></textarea>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold text-secondary small">Laboratuvar Sonuç Metni</label>
+                        <textarea class="form-control" id="editExamLabResult" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 bg-light">
+                <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSaveExamEdit" onclick="saveExamEdit()">
+                    <i class="bi bi-check-lg me-1"></i>Değişiklikleri Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Lab Entry Modal -->
 <div class="modal fade" id="labEntryModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -848,6 +918,21 @@
                 }
             }
 
+            // Edit button visibility
+            {% if permissions.can_edit_history %}
+            currentApptId = appointmentId || null;
+            const btnEdit = document.getElementById('btnEditExamOffcanvas');
+            if (btnEdit) {
+                if (exam && exam.id) {
+                    currentExamData = exam;
+                    btnEdit.classList.remove('d-none');
+                } else {
+                    currentExamData = null;
+                    btnEdit.classList.add('d-none');
+                }
+            }
+            {% endif %}
+
             // Services / Items
             const tbody = document.getElementById('offcanvasServices');
             const totalEl = document.getElementById('offcanvasTotal');
@@ -886,6 +971,98 @@
                 loadingEl.innerHTML = '<div class="text-danger p-4"><i class="bi bi-exclamation-triangle fs-2"></i><br>Detaylar yüklenemedi.</div>';
             }
         }
-    }
+    };
+
+    {% if permissions.can_edit_history %}
+    let currentExamData = null;
+    let currentApptId = null;
+    let examEditModalInst = null;
+
+    window.editExamFromOffcanvas = function(isNew = false) {
+        if (!isNew && (!currentExamData || !currentExamData.id)) return;
+        
+        if (isNew) {
+            document.getElementById('editExamId').value = 'new';
+            document.getElementById('editExamComplaint').value = '';
+            document.getElementById('editExamStory').value = '';
+            document.getElementById('editExamFindings').value = '';
+            document.getElementById('editExamDiagnosis').value = '';
+            document.getElementById('editExamTreatment').value = '';
+            document.getElementById('editExamResultNote').value = '';
+            document.getElementById('editExamLabResult').value = '';
+        } else {
+            document.getElementById('editExamId').value = currentExamData.id;
+            document.getElementById('editExamComplaint').value = currentExamData.complaint || '';
+            document.getElementById('editExamStory').value = currentExamData.story || '';
+            document.getElementById('editExamFindings').value = currentExamData.bulgular || '';
+            document.getElementById('editExamDiagnosis').value = currentExamData.diagnosis || '';
+            document.getElementById('editExamTreatment').value = currentExamData.treatment || '';
+            document.getElementById('editExamResultNote').value = currentExamData.result_note || '';
+            document.getElementById('editExamLabResult').value = currentExamData.lab_result_text || '';
+        }
+
+        if (!examEditModalInst) {
+            examEditModalInst = new bootstrap.Modal(document.getElementById('examEditModal'));
+        }
+        examEditModalInst.show();
+    };
+
+    window.saveExamEdit = async function() {
+        const examId = document.getElementById('editExamId').value;
+        if (!examId) return;
+
+        const payload = {
+            complaint: document.getElementById('editExamComplaint').value.trim(),
+            story: document.getElementById('editExamStory').value.trim(),
+            bulgular: document.getElementById('editExamFindings').value.trim(),
+            diagnosis: document.getElementById('editExamDiagnosis').value.trim(),
+            treatment: document.getElementById('editExamTreatment').value.trim(),
+            result_note: document.getElementById('editExamResultNote').value.trim(),
+            lab_result_text: document.getElementById('editExamLabResult').value.trim()
+        };
+
+        const btn = document.getElementById('btnSaveExamEdit');
+        const originalHtml = btn.innerHTML;
+
+        try {
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kaydediliyor...';
+            btn.disabled = true;
+
+            let res;
+            if (examId === 'new') {
+                payload.patient_id = {{ patient.id }};
+                payload.appointment_id = currentApptId;
+                
+                // Eğer randevu yoksa boş kayıt (randevusuz muayene) hatası olabilir mi? currentApptId null olabilir.
+                // Randevu ID si varsa gönderiyoruz.
+                res = await api.post(`/api/examinations`, payload);
+            } else {
+                res = await api.put(`/api/examinations/${examId}`, payload);
+            }
+            
+            // Axios interceptor returns response.data directly on success
+            if (res && res.status) {
+                examEditModalInst.hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Başarılı',
+                    text: 'Geçmiş muayene bilgileri güncellendi.',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            }
+        } catch (error) {
+            console.error('Save exam error', error);
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Değişiklikleri Kaydet';
+            btn.disabled = false;
+            
+            // Error handling matching interceptor strings
+            const errorMsg = typeof error === 'string' ? error : (error.response?.data?.message || 'Muayene güncellenirken bir hata oluştu.');
+            Swal.fire('Hata', errorMsg, 'error');
+        }
+    };
+    {% endif %}
 </script>
 {% endblock %}

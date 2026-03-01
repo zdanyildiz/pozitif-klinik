@@ -320,6 +320,29 @@
                     </div>
                 </div>
 
+                <div class="settings-card mt-4">
+                    <div class="settings-header">
+                        <h5><i class="bi bi-arrow-repeat me-2"></i>İş Akışı Ayarları</h5>
+                    </div>
+                    <div class="settings-body">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="updateExamination" name="workflow[examination_update_existing]" {{ display_config.workflow.examination_update_existing ? 'checked' : '' }}>
+                            <label class="form-check-label fw-semibold" for="updateExamination">Mevcut Muayene Formunu Güncelle</label>
+                            <div class="form-text mt-1 text-muted">
+                                Açık ise, aynı randevuda yapılan her güncelleme yeni bir kayıt oluşturmak yerine, mevcut muayene kaydını günceller.
+                            </div>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3 mt-3 border-top pt-3">
+                            <input class="form-check-input" type="checkbox" id="editableHistory" name="workflow[editable_patient_history]" {{ display_config.workflow.editable_patient_history ? 'checked' : '' }}>
+                            <label class="form-check-label fw-semibold" for="editableHistory">Hasta Geçmişini Düzenle (Zaman Tüneli)</label>
+                            <div class="form-text mt-1 text-muted">
+                                Açık ise, hasta detay sayfasındaki zaman tüneli üzerinde eski muayene ve randevu kayıtlarının detayları doğrudan düzenlenebilir.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-primary btn-lg" id="saveDisplayBtn">
                         <i class="bi bi-check-circle me-2"></i>Görünüm Ayarlarını Kaydet
