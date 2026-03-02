@@ -85,8 +85,7 @@
                         </td>
                         <td>
                             <small class="text-muted">
-                                <!-- Use last_visit_date if available, fallback to created_at -->
-                                {{ patient.last_visit_date|default(patient.created_at) }}
+                                {{ patient.last_visit_date }}
                             </small>
                         </td>
                         <td class="text-end">
@@ -364,8 +363,8 @@
                     genderHtml = '<span class="badge bg-danger-subtle text-danger rounded-pill">Kadın</span>';
                 }
 
-                // Tarih (last_visit_date veya created_at)
-                const lastActionDate = patient.last_visit_date || patient.created_at;
+                // Tarih (Sadece last_visit_date)
+                const lastActionDate = patient.last_visit_date;
 
                 // Base path construction logic check:
                 // If not available in JS context, we can infer from current location or use a relative path
