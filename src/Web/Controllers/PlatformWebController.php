@@ -108,4 +108,15 @@ class PlatformWebController
             'page' => 'documents-templates'
         ]);
     }
+
+    /**
+     * AI Ayarları Sayfası
+     */
+    #[Route('GET', '/platform/ai-settings')]
+    public function aiSettingsPage(Request $request, Response $response): Response
+    {
+        return $this->view->render($response, 'platform_ai_settings.twig', [
+            'page' => 'ai-settings'
+        ]);
+    }
 }

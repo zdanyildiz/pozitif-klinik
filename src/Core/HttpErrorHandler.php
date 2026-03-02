@@ -84,6 +84,8 @@ class HttpErrorHandler extends ErrorHandler
         // For production, hide specific details
         if (!$this->displayErrorDetails && !($exception instanceof HttpException)) {
             $message = 'Beklenmedik bir hata oluştu.';
+        } else if ($this->displayErrorDetails) {
+            $message = $exception->getMessage();
         }
 
         $payload = [

@@ -32,6 +32,7 @@ class PatientWebController
     private LabRepository $labRepository;
     private PaymentRepository $paymentRepository;
     private FileRepository $fileRepository;
+    private \App\Domain\Ai\AiSettingsRepository $aiSettingsRepo;
 
     public function __construct(
         Twig $view,
@@ -42,7 +43,8 @@ class PatientWebController
         ExaminationRepository $examinationRepository,
         LabRepository $labRepository,
         PaymentRepository $paymentRepository,
-        FileRepository $fileRepository
+        FileRepository $fileRepository,
+        \App\Domain\Ai\AiSettingsRepository $aiSettingsRepo
     ) {
         $this->view = $view;
         $this->repository = $repository;
@@ -53,6 +55,7 @@ class PatientWebController
         $this->labRepository = $labRepository;
         $this->paymentRepository = $paymentRepository;
         $this->fileRepository = $fileRepository;
+        $this->aiSettingsRepo = $aiSettingsRepo;
     }
 
     #[Route('GET', '/patients')]
@@ -184,6 +187,9 @@ class PatientWebController
             return strcmp($b['date'], $a['date']);
         });
 
+        // 7. Varsa AI Özeti
+        $aiSummary = $this->aiSettingsRepo->getPatientLatestSummary($clinicId, $patientId);
+
         return $this->view->render($response, 'patient_detail.twig', [
             'patient' => $patient,
             'timeline' => $timeline,
@@ -191,6 +197,7 @@ class PatientWebController
             'totalDebt' => $totalDebt,
             'totalPaid' => $totalPaid,
             'balance' => $balance,
+            'aiSummary' => $aiSummary,
             'pageTitle' => $patient['name'] . ' - Hasta Detayı',
             'page' => 'patients'
         ]);

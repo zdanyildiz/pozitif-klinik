@@ -106,24 +106,24 @@ class PatientRepository
 
         $this->db->query($sql, [
             $clinicId,
-            $this->crypto->encrypt($data['tc_no']),
-            $this->crypto->encrypt($data['name']),
-            $this->crypto->encrypt($data['phone']),
+            $this->crypto->encrypt($data['tc_no'] ?? ''),
+            $this->crypto->encrypt($data['name'] ?? ''),
+            $this->crypto->encrypt($data['phone'] ?? ''),
             $this->crypto->encryptSafe($data['email'] ?? null),
-            $data['birth_date'] ?? null,
+            $data['birth_date'] ?: null,
             $data['gender'] ?? 'U',
-            $data['blood_type'] ?? null,
-            $this->crypto->encryptSafe($data['address'] ?? null),
-            $data['province_id'] ?? null,
-            $data['district_id'] ?? null,
-            $this->crypto->encryptSafe($data['notes'] ?? null),
+            $data['blood_type'] ?: null,
+            $this->crypto->encryptSafe($data['address'] ?: null),
+            ($data['province_id'] !== '' && $data['province_id'] !== null) ? (int) $data['province_id'] : null,
+            ($data['district_id'] !== '' && $data['district_id'] !== null) ? (int) $data['district_id'] : null,
+            $this->crypto->encryptSafe($data['notes'] ?: null),
             1, // status = 1 (Active)
-            !empty($data['medical_info']) ? json_encode($data['medical_info']) : null,
-            !empty($data['work_details']) ? json_encode($data['work_details']) : null,
-            !empty($data['identity_details']) ? json_encode($data['identity_details']) : null,
-            !empty($data['insurance_info']) ? json_encode($data['insurance_info']) : null,
-            !empty($data['legacy_metadata']) ? json_encode($data['legacy_metadata']) : null,
-            !empty($data['legal_consents']) ? json_encode($data['legal_consents']) : null
+            (!empty($data['medical_info'])) ? json_encode($data['medical_info']) : null,
+            (!empty($data['work_details'])) ? json_encode($data['work_details']) : null,
+            (!empty($data['identity_details'])) ? json_encode($data['identity_details']) : null,
+            (!empty($data['insurance_info'])) ? json_encode($data['insurance_info']) : null,
+            (!empty($data['legacy_metadata'])) ? json_encode($data['legacy_metadata']) : null,
+            (!empty($data['legal_consents'])) ? json_encode($data['legal_consents']) : null
         ]);
 
         $patientId = (int) $this->db->getConnection()->lastInsertId();
@@ -148,23 +148,23 @@ class PatientRepository
                 WHERE clinic_id = ? AND id = ?";
 
         $this->db->query($sql, [
-            $this->crypto->encrypt($data['tc_no']),
-            $this->crypto->encrypt($data['name']),
-            $this->crypto->encrypt($data['phone']),
+            $this->crypto->encrypt($data['tc_no'] ?? ''),
+            $this->crypto->encrypt($data['name'] ?? ''),
+            $this->crypto->encrypt($data['phone'] ?? ''),
             $this->crypto->encryptSafe($data['email'] ?? null),
-            $data['birth_date'] ?? null,
+            $data['birth_date'] ?: null,
             $data['gender'] ?? 'U',
-            $data['blood_type'] ?? null,
-            $this->crypto->encryptSafe($data['address'] ?? null),
-            $data['province_id'] ?? null,
-            $data['district_id'] ?? null,
-            $this->crypto->encryptSafe($data['notes'] ?? null),
-            !empty($data['medical_info']) ? json_encode($data['medical_info']) : null,
-            !empty($data['work_details']) ? json_encode($data['work_details']) : null,
-            !empty($data['identity_details']) ? json_encode($data['identity_details']) : null,
-            !empty($data['insurance_info']) ? json_encode($data['insurance_info']) : null,
-            !empty($data['legacy_metadata']) ? json_encode($data['legacy_metadata']) : null,
-            !empty($data['legal_consents']) ? json_encode($data['legal_consents']) : null,
+            $data['blood_type'] ?: null,
+            $this->crypto->encryptSafe($data['address'] ?: null),
+            ($data['province_id'] !== '' && $data['province_id'] !== null) ? (int) $data['province_id'] : null,
+            ($data['district_id'] !== '' && $data['district_id'] !== null) ? (int) $data['district_id'] : null,
+            $this->crypto->encryptSafe($data['notes'] ?: null),
+            (!empty($data['medical_info'])) ? json_encode($data['medical_info']) : null,
+            (!empty($data['work_details'])) ? json_encode($data['work_details']) : null,
+            (!empty($data['identity_details'])) ? json_encode($data['identity_details']) : null,
+            (!empty($data['insurance_info'])) ? json_encode($data['insurance_info']) : null,
+            (!empty($data['legacy_metadata'])) ? json_encode($data['legacy_metadata']) : null,
+            (!empty($data['legal_consents'])) ? json_encode($data['legal_consents']) : null,
             $clinicId,
             $patientId
         ]);

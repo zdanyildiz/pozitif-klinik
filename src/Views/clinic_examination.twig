@@ -44,6 +44,11 @@
                     </ul>
                 </div>
 
+                <button class="btn btn-outline-info btn-sm ms-2" id="btnShowAiSummary" onclick="openExamAiSummaryModal()" style="display: none;">
+                    <i class="bi bi-robot"></i>
+                    <span class="ms-1 d-none d-sm-inline">AI Özeti</span>
+                </button>
+
                 <button class="btn btn-outline-primary btn-sm ms-2" id="btnShowBilling">
                     <i class="bi bi-receipt"></i>
                     <span class="ms-1 d-none d-sm-inline">Hizmet & Ücret</span>
@@ -255,6 +260,76 @@
         </div>
     </div>
 </div>
+
+<!-- AI Özeti Modalı (Muayene Ekranı) -->
+<div class="modal fade" id="examAiSummaryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 1rem;">
+            <div class="modal-header bg-primary bg-opacity-10 border-bottom-0 pb-3" style="border-radius: 1rem 1rem 0 0;">
+                <h5 class="modal-title fw-bold text-light"><i class="bi bi-robot me-2 fs-4 align-middle"></i>Yapay Zeka Destekli Hasta Özeti</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-white">
+                <div id="examAiSummaryNoConsent" style="display: none;">
+                    <div class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis mb-0 p-4 rounded-3 text-center">
+                        <i class="bi bi-exclamation-triangle-fill fs-2 d-block mb-3 text-warning"></i>
+                        <h6 class="fw-bold">İzin Gerekli</h6>
+                        <p class="mb-3 small">Hastanın yapay zeka özeti için "AI İzin Onayı" bulunmamaktadır. KVKK ve gizlilik standartları gereği veriler dış kaynaklara gönderilemez.</p>
+                        <button class="btn btn-warning btn-sm fw-bold" onclick="window.open('/admin/patients/' + currentPatientId + '/edit', '_blank')">Profilden İzin Ekle</button>
+                    </div>
+                </div>
+
+                <div id="examAiSummaryView" style="display: none;">
+                    <!-- Gizlilik ve Güvenlik Bilgi Kutusu -->
+                    <div class="alert alert-info border-0 bg-info-subtle border-start border-4 border-info mb-4 p-3 rounded-3 shadow-sm">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-shield-lock-fill text-primary fs-3 me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Veri Gizliliği ve Güvenliği</h6>
+                                <p class="mb-0 small text-muted">Hasta mahremiyeti gereği; <b>Ad-Soyad, TC Kimlik No, Telefon ve E-posta</b> gibi tanımlayıcı bilgiler kesinlikle yapay zeka modeline <u>gönderilmemektedir</u>. Sadece anonimleştirilmiş tıbbi muayene notları ve klinik bulgular analiz edilir.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded-3 border">
+                        <p class="mb-0 text-muted small pe-3" style="line-height: 1.5;">
+                            <i class="bi bi-info-circle-fill text-primary me-1"></i>Bu özet, hastanın tıbbi geçmişindeki anonim veriler kullanılarak hazırlanır.
+                        </p>
+                         <button class="btn btn-primary px-4 rounded-pill shadow-sm text-nowrap" id="btnExamGenerateAiSummary" onclick="generateExamAiSummary()">
+                            <i class="bi bi-magic me-1"></i> <span id="btnExamGenerateAiSummaryText">Özet Çıkar</span>
+                        </button>
+                    </div>
+
+                    <!-- Özeti Gösterme Alanı -->
+                    <div id="examAiSummaryContentBox" class="p-4 rounded-3 border bg-white shadow-sm" style="display: none;">
+                        <div id="examAiSummaryMarkdown" class="text-dark" style="line-height: 1.7; font-size: 0.95rem;">-</div>
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center text-muted small">
+                            <span id="examAiSummaryCachedBadge" class="badge bg-secondary-subtle text-secondary border border-secondary fw-normal">Yapay Zeka Özetidir, hekim teyidi gerektirir</span>
+                            <span id="examAiSummaryTimestamp"><i class="bi bi-clock me-1"></i>Son güncelleme: -</span>
+                        </div>
+                    </div>
+
+                    <!-- Boş Durum (Artık içeride) -->
+                    <div id="examAiSummaryEmptyState" class="text-center py-5 text-muted" style="display: none;">
+                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle bg-light mb-4" style="width: 80px; height: 80px;">
+                            <i class="bi bi-robot fs-1 text-primary opacity-50"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">Henüz Özet Çıkarılmamış</h5>
+                        <p class="mb-0 mx-auto" style="max-width: 400px;">Yukarıdaki butona tıklayarak geçmiş muayene kayıtlarından kapsamlı bir sağlık özeti oluşturabilirsiniz.</p>
+                    </div>
+                </div>
+
+                <!-- Yükleniyor Durumu -->
+                <div id="examAiSummaryLoading" class="text-center py-5" style="display: none;">
+                    <div class="spinner-grow text-primary mb-4" role="status" style="width: 3rem; height: 3rem;"></div>
+                    <h5 class="fw-bold text-primary mb-2">Veriler Analiz Ediliyor...</h5>
+                    <p class="text-muted small mx-auto" style="max-width: 350px;">Hastanın klinik geçmişi ve tetkikleri incelenerek doktorun hızlı bir bakışta görebileceği özet hazırlanıyor.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -264,4 +339,126 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script src="{{ base_path }}/assets/js/file-manager.js?v={{ version }}"></script>
     <script src="{{ base_path }}/assets/js/examination.js?v={{ version }}"></script>
+    <script>
+        // AI Summary Logic for Examination UI
+        let examPatientConsentInfo = null;
+        let ptnLoadTries = 0;
+
+        // Sayfa ilk yüklendiğinde, currentPatientId set edildikten hemen sonra çalışmasını sağlamak için Interval veya Hook kullanılabilir.
+        // Ancak examination.js initPageData kullanıyor. Biz de belli aralıklarla kontrol edip butonu aktif edebiliriz.
+        const checkPatientInterval = setInterval(async () => {
+            if (typeof currentPatientId !== 'undefined' && currentPatientId) {
+                clearInterval(checkPatientInterval);
+                try {
+                    // Hastanın legal consent bilgisini kontrol et
+                    const pRes = await api.get(`/api/patients/${currentPatientId}`);
+                    examPatientConsentInfo = pRes.data.legal_consents?.ai_summary?.is_accepted;
+                    
+                    // Görünür yap
+                    document.getElementById('btnShowAiSummary').style.display = 'inline-block';
+                } catch(e) {
+                    console.error("AI Consent Check error: ", e);
+                }
+            } else if (++ptnLoadTries > 20) {
+                clearInterval(checkPatientInterval);
+            }
+        }, 500);
+
+        async function openExamAiSummaryModal() {
+            const modal = new bootstrap.Modal(document.getElementById('examAiSummaryModal'));
+            modal.show();
+
+            const noConsent = document.getElementById('examAiSummaryNoConsent');
+            const viewPanel = document.getElementById('examAiSummaryView');
+            const emptyState = document.getElementById('examAiSummaryEmptyState');
+            const contentBox = document.getElementById('examAiSummaryContentBox');
+            const loadingBox = document.getElementById('examAiSummaryLoading');
+
+            // Reset UI
+            noConsent.style.display = 'none';
+            viewPanel.style.display = 'none';
+            loadingBox.style.display = 'block';
+
+            if (examPatientConsentInfo !== true) {
+                loadingBox.style.display = 'none';
+                noConsent.style.display = 'block';
+                return;
+            }
+
+            try {
+                // Get existing summary
+                const res = await api.get(`/api/patients/${currentPatientId}/ai-summary`);
+                loadingBox.style.display = 'none';
+                viewPanel.style.display = 'block';
+
+                if (res.data && res.data.has_summary) {
+                    fillExamSummaryText(res.data.summary);
+                    document.getElementById('btnExamGenerateAiSummaryText').innerText = 'Özeti Güncelle';
+                    emptyState.style.display = 'none';
+                    contentBox.style.display = 'block';
+                } else {
+                    document.getElementById('btnExamGenerateAiSummaryText').innerText = 'Özet Çıkar';
+                    contentBox.style.display = 'none';
+                    emptyState.style.display = 'block';
+                }
+            } catch(e) {
+                loadingBox.style.display = 'none';
+                viewPanel.style.display = 'block';
+                document.getElementById('btnExamGenerateAiSummaryText').innerText = 'Özet Çıkar';
+                contentBox.style.display = 'none';
+                emptyState.style.display = 'block';
+                Utils.showToast('Özet durumu kontrol edilemedi.', 'error');
+            }
+        }
+
+        async function generateExamAiSummary(isFirst = false) {
+            const viewPanel = document.getElementById('examAiSummaryView');
+            const emptyState = document.getElementById('examAiSummaryEmptyState');
+            const contentBox = document.getElementById('examAiSummaryContentBox');
+            const loadingBox = document.getElementById('examAiSummaryLoading');
+
+            viewPanel.style.display = 'none';
+            loadingBox.style.display = 'block';
+
+            try {
+                const res = await api.post(`/api/patients/${currentPatientId}/ai-summary`, {});
+                if (res && res.status) {
+                    fillExamSummaryText({ summary_text: res.data.summary || '', created_at: new Date() });
+                    
+                    if (res.data.is_cached && !isFirst) {
+                         Utils.showToast('Gelen yeni bir veri bulunmadığından özet değişmedi.', 'info');
+                    } else {
+                         Swal.fire({ title: 'Tamamlandı!', text: 'Hastanın özeti çıkarıldı.', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+                    }
+                    loadingBox.style.display = 'none';
+                    
+                    document.getElementById('btnExamGenerateAiSummaryText').innerText = 'Özeti Güncelle';
+                    emptyState.style.display = 'none';
+                    contentBox.style.display = 'block';
+                    viewPanel.style.display = 'block';
+                }
+            } catch(e) {
+                loadingBox.style.display = 'none';
+                viewPanel.style.display = 'block';
+                Utils.showError('Sistem hatası: Özet oluşturulamadı.');
+            }
+        }
+
+        function fillExamSummaryText(summaryObj) {
+            let htmlText = summaryObj.summary_text || '';
+            // HTML Tag temizle & Markdown dönüştür (basitçe)
+            if (!htmlText.includes('<p>') && !htmlText.includes('<br>') && !htmlText.includes('<strong>')) {
+                htmlText = htmlText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                htmlText = htmlText.replace(/^### (.*$)/gim, '<h6 class="fw-bold text-primary mt-3">$1</h6>');
+                htmlText = htmlText.replace(/^## (.*$)/gim, '<h5 class="fw-bold text-primary mt-3 border-bottom pb-2">$1</h5>');
+                htmlText = htmlText.replace(/^# (.*$)/gim, '<h4 class="fw-bold text-primary mt-3 border-bottom pb-2">$1</h4>');
+                htmlText = htmlText.replace(/^\* (.*$)/gim, '<li class="ms-3 mb-1"><i class="bi bi-circle-fill text-muted me-2" style="font-size: 6px; vertical-align: middle;"></i>$1</li>');
+            }
+            document.getElementById('examAiSummaryMarkdown').innerHTML = htmlText;
+            
+            const dp = summaryObj.created_at ? new Date(summaryObj.created_at) : new Date();
+            const timeStr = dp.toLocaleDateString('tr-TR') + ' ' + dp.getHours().toString().padStart(2, '0') + ':' + dp.getMinutes().toString().padStart(2, '0');
+            document.getElementById('examAiSummaryTimestamp').innerHTML = `<i class="bi bi-clock me-1"></i>Son güncelleme: ${timeStr}`;
+        }
+    </script>
 {% endblock %}

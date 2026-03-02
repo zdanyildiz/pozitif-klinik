@@ -41,6 +41,10 @@
         </div>
 
         <div class="d-flex gap-2 mt-3 mt-md-0 align-self-md-end mb-md-2">
+            <!-- AI Özeti Butonu -->
+            <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm bg-white" id="btnAiSummary" onclick="openAiSummaryModal()">
+                <i class="bi bi-robot me-1"></i>AI Özeti
+            </button>
             <button class="btn btn-light rounded-pill px-4" onclick="openFastRecordModal()">
                 <i class="bi bi-lightning-fill me-2"></i>Hızlı Kayıt
             </button>
@@ -785,6 +789,78 @@
     </div>
 </div>
 
+<!-- AI Özeti Modalı -->
+<div class="modal fade" id="aiSummaryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 1rem;">
+            <div class="modal-header bg-primary bg-opacity-10 border-bottom-0 pb-3" style="border-radius: 1rem 1rem 0 0;">
+                <h5 class="modal-title fw-bold text-light"><i class="bi bi-robot me-2 fs-4 align-middle"></i>Yapay Zeka Destekli Hasta Özeti</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-white">
+                {% if not patient.legal_consents.ai_summary.is_accepted %}
+                    <div class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis mb-0 p-4 rounded-3 text-center">
+                        <i class="bi bi-exclamation-triangle-fill fs-2 d-block mb-3 text-warning"></i>
+                        <h6 class="fw-bold">İzin Gerekli</h6>
+                        <p class="mb-3 small">Hastanın yapay zeka özeti için "AI İzin Onayı" bulunmamaktadır. KVKK ve gizlilik standartları gereği veriler dış kaynaklara gönderilemez.</p>
+                        <a href="{{ base_path }}/admin/patients/{{ patient.id }}/edit" class="btn btn-warning btn-sm fw-bold">Profilden İzin Ekle</a>
+                    </div>
+                {% else %}
+                    <!-- Gizlilik ve Güvenlik Bilgi Kutusu -->
+                    <div class="alert alert-info border-0 bg-info-subtle border-start border-4 border-info mb-4 p-3 rounded-3 shadow-sm">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-shield-lock-fill text-primary fs-3 me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Veri Gizliliği ve Güvenliği</h6>
+                                <p class="mb-0 small text-muted">Hasta mahremiyeti gereği; <b>Ad-Soyad, TC Kimlik No, Telefon ve E-posta</b> gibi tanımlayıcı bilgiler kesinlikle yapay zeka modeline <u>gönderilmemektedir</u>. Sadece anonimleştirilmiş tıbbi muayene notları ve klinik bulgular analiz edilir.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded-3 border">
+                        <p class="mb-0 text-muted small pe-3" style="line-height: 1.5;">
+                            <i class="bi bi-info-circle-fill text-primary me-1"></i>Bu özet, hastanın tıbbi geçmişindeki anonim veriler kullanılarak hazırlanır.
+                        </p>
+                        <button class="btn btn-primary px-4 rounded-pill shadow-sm text-nowrap" id="btnGenerateAiSummary" onclick="generateAiSummary()">
+                            <i class="bi bi-magic me-1"></i>
+                            {% if aiSummary %}
+                                Özeti Güncelle
+                            {% else %}
+                                Özet Çıkar
+                            {% endif %}
+                        </button>
+                    </div>
+
+                    <!-- Özeti Gösterme Alanı -->
+                    <div id="aiSummaryContentBox" class="p-4 rounded-3 border bg-white shadow-sm" style="display: {% if aiSummary %}block{% else %}none{% endif %};">
+                        <div id="aiSummaryMarkdown" class="text-dark" style="line-height: 1.7; font-size: 0.95rem;">{{ aiSummary.summary_text|raw }}</div>
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center text-muted small">
+                            <span id="aiSummaryCachedBadge" class="badge bg-secondary-subtle text-secondary border border-secondary fw-normal">Yapay Zeka Özetidir, hekim teyidi gerektirir</span>
+                            <span id="aiSummaryTimestamp"><i class="bi bi-clock me-1"></i>Son güncelleme: {{ aiSummary.created_at ? aiSummary.created_at|date('d.m.Y H:i') : 'Şimdi' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Boş Durum -->
+                    <div id="aiSummaryEmptyState" class="text-center py-5 text-muted" style="display: {% if aiSummary %}none{% else %}block{% endif %};">
+                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle bg-light mb-4" style="width: 80px; height: 80px;">
+                            <i class="bi bi-robot fs-1 text-primary opacity-50"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">Henüz Özet Çıkarılmamış</h5>
+                        <p class="mb-0 mx-auto" style="max-width: 400px;">Yukarıdaki butona tıklayarak geçmiş muayene kayıtlarından kapsamlı bir sağlık özeti oluşturabilirsiniz.</p>
+                    </div>
+                    
+                    <!-- Yükleniyor Durumu -->
+                    <div id="aiSummaryLoading" class="text-center py-5" style="display: none;">
+                        <div class="spinner-grow text-primary mb-4" role="status" style="width: 3rem; height: 3rem;"></div>
+                        <h5 class="fw-bold text-primary mb-2">Veriler Analiz Ediliyor...</h5>
+                        <p class="text-muted small mx-auto" style="max-width: 350px;">Hastanın klinik geçmişi ve tetkikleri incelenerek doktorun hızlı bir bakışta görebileceği özet hazırlanıyor.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Fast Record Modal (Hızlı Muayene Kaydı) -->
 <div class="modal fade" id="fastRecordModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -852,33 +928,123 @@
 <script src="{{ base_path }}/assets/js/file-manager.js?v={{ version }}"></script>
 <script src="{{ base_path }}/assets/js/lab-entry.js?v={{ version }}"></script>
 <script>
-    function openPatientPayment() {
-        if (typeof PaymentModule !== 'undefined') {
-            PaymentModule.open({
-                patient_id: {{ patient.id }},
-                total_debt: {{ totalDebt }},
-                remaining_debt: {{ balance }}
-            });
+    const CLOUD_URL_PREFIX = "{{ cloud_url_prefix|default('') }}";
+    
+    // AI Summary Login
+    function openAiSummaryModal() {
+        new bootstrap.Modal('#aiSummaryModal').show();
+    }
+
+    async function generateAiSummary() {
+        const btn = document.getElementById('btnGenerateAiSummary');
+        const emptyState = document.getElementById('aiSummaryEmptyState');
+        const contentBox = document.getElementById('aiSummaryContentBox');
+        const loadingBox = document.getElementById('aiSummaryLoading');
+        const mdContainer = document.getElementById('aiSummaryMarkdown');
+
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Görüşülüyor...';
+        
+        if (emptyState) emptyState.style.display = 'none';
+        contentBox.style.display = 'none';
+        loadingBox.style.display = 'block';
+
+        try {
+            const res = await api.post(`/api/patients/{{ patient.id }}/ai-summary`, {});
+            
+            if (res && res.status) {
+                // Basit Markdown to HTML Render (Bold, liste vb.)
+                let htmlText = res.data.summary || '';
+                
+                // Eğer içinde HTML yoksa (eski kayıtlar vs) basit Markdown to HTML fallback
+                if (!htmlText.includes('<p>') && !htmlText.includes('<br>') && !htmlText.includes('<strong>')) {
+                    // Bold
+                    htmlText = htmlText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    // Headers (# Header)
+                    htmlText = htmlText.replace(/^### (.*$)/gim, '<h6 class="fw-bold text-primary mt-3">$1</h6>');
+                    htmlText = htmlText.replace(/^## (.*$)/gim, '<h5 class="fw-bold text-primary mt-3 border-bottom pb-2">$1</h5>');
+                    htmlText = htmlText.replace(/^# (.*$)/gim, '<h4 class="fw-bold text-primary mt-3 border-bottom pb-2">$1</h4>');
+                    // Lists
+                    htmlText = htmlText.replace(/^\* (.*$)/gim, '<li class="ms-3 mb-1"><i class="bi bi-circle-fill text-muted me-2" style="font-size: 6px; vertical-align: middle;"></i>$1</li>');
+                }
+                
+                mdContainer.innerHTML = htmlText;
+                
+                const now = new Date();
+                const timeStr = now.toLocaleDateString('tr-TR') + ' ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                document.getElementById('aiSummaryTimestamp').innerHTML = `<i class="bi bi-clock me-1"></i>Son güncelleme: ${timeStr}`;
+
+                if (res.data.is_cached) {
+                    Utils.showToast('Gelen yeni bir veri bulunmadığından özet güncellenmedi, aynı kaldı.', 'info');
+                } else {
+                    Swal.fire({
+                        title: 'Tamamlandı!',
+                        text: 'Mükemmel, hastanın özeti çıkarıldı.',
+                        icon: 'success',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                }
+                
+                loadingBox.style.display = 'none';
+                contentBox.style.display = 'block';
+                
+                btn.innerHTML = '<i class="bi bi-magic me-1"></i>Özeti Güncelle';
+            }
+        } catch(e) {
+            console.error(e);
+            let msg = 'Yapay zeka ile iletişim kurulurken bir hata oluştu.';
+            if (e.response?.data?.message) {
+                msg = e.response.data.message;
+            } else if (e.response?.data?.error?.message) { // Standart backend hata fırlatma formatı
+                msg = e.response.data.error.message;    
+            } else if (e.message) {
+                msg = e.message;
+            }
+            Swal.fire('Bağlantı Hatası', msg, 'error');
+            
+            loadingBox.style.display = 'none';
+            // Geri yükle
+            if(mdContainer.innerHTML.trim() !== '') {
+                contentBox.style.display = 'block';
+                btn.innerHTML = '<i class="bi bi-magic me-1"></i>Özeti Güncelle';
+            } else if(emptyState) {
+                emptyState.style.display = 'block';
+                btn.innerHTML = originalText;
+            }
+        } finally {
+            btn.disabled = false;
         }
     }
 
-    // Refresh on payment
+    // Payment Module logic
     window.addEventListener('payment-saved', () => {
         window.location.reload();
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        // PaymentModule initialization if needed
+        if (typeof PaymentModule !== 'undefined' && typeof PaymentModule.init === 'function') {
+            PaymentModule.init({
+                patient_id: {{ patient.id | default(0) }},
+                total_debt: {{ totalDebt | default(0) | number_format(2, '.', '') }},
+                remaining_debt: {{ balance | default(0) | number_format(2, '.', '') }}
+            });
+        }
 
 
         // Init File Manager separately if needed or reuse logic
         if (typeof FileManager !== 'undefined') {
             new FileManager({
                 module: 'patient',
-                relatedId: {{ patient.id }},
+                relatedId: {{ patient.id | default(0) }},
                 containerId: 'patient_file_list',
                 uploadBtnId: 'patient_file_upload',
                 csrfToken: '{{ csrf.value }}',
-                customListUrl: `/api/files/search?patient_id={{ patient.id }}`
+                customListUrl: `/api/files/search?patient_id={{ patient.id | default(0) }}`
             });
         }
     });
@@ -1093,7 +1259,7 @@
 
             let res;
             if (examId === 'new') {
-                payload.patient_id = {{ patient.id }};
+                payload.patient_id = {{ patient.id | default(0) }};
                 payload.appointment_id = currentApptId;
                 
                 // Eğer randevu yoksa boş kayıt (randevusuz muayene) hatası olabilir mi? currentApptId null olabilir.
@@ -1194,7 +1360,7 @@
             const defaultType = appointmentTypes.find(t => t.is_active) || { id: 1 };
             
             const apptPayload = {
-                patient_id: {{ patient.id }},
+                patient_id: {{ patient.id | default(0) }},
                 doctor_id: data.doctor_id,
                 type_id: defaultType.id,
                 appointment_date: data.appointment_date.replace('T', ' ') + ':00',
@@ -1206,7 +1372,7 @@
 
             // 2. Muayene Kaydı Oluştur
             const examPayload = {
-                patient_id: {{ patient.id }},
+                patient_id: {{ patient.id | default(0) }},
                 appointment_id: apptId,
                 doctor_user_id: data.doctor_id,
                 complaint: data.complaint,

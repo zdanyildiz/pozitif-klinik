@@ -327,9 +327,16 @@
                                              <input class="form-check-input" type="checkbox" id="smsCheck" name="legal_consents[etk][sms][allowed]" value="1" {{ patient.legal_consents.etk.sms.allowed ? 'checked' : '' }}>
                                              <label class="form-check-label" for="smsCheck">SMS İle Bilgilendirme İzni (ETK)</label>
                                          </div>
-                                         <div class="form-check form-switch">
+                                         <div class="form-check form-switch mb-2">
                                              <input class="form-check-input" type="checkbox" id="emailCheck" name="legal_consents[etk][email][allowed]" value="1" {{ patient.legal_consents.etk.email.allowed ? 'checked' : '' }}>
                                              <label class="form-check-label" for="emailCheck">E-posta İle Bilgilendirme İzni (ETK)</label>
+                                         </div>
+                                         <div class="form-check form-switch mt-3 pt-3 border-top">
+                                             <input class="form-check-input" type="checkbox" id="aiCheck" name="legal_consents[ai_summary][is_accepted]" value="1" {{ patient.legal_consents.ai_summary.is_accepted ? 'checked' : '' }}>
+                                             <label class="form-check-label fw-bold text-primary" for="aiCheck">
+                                                 <i class="bi bi-robot me-1"></i> Yapay Zeka (AI) Hasta Özeti İzni
+                                             </label>
+                                             <div class="form-text small">Hastanın tıbbi geçmiş verilerinin anonimleştirilerek sağlık özeti çıkarılabilmesi için onay.</div>
                                          </div>
                                      </div>
                                  </div>
@@ -475,7 +482,8 @@
                 etk: {
                     sms: { allowed: formData.get('legal_consents[etk][sms][allowed]') === '1' },
                     email: { allowed: formData.get('legal_consents[etk][email][allowed]') === '1' }
-                }
+                },
+                ai_summary: { is_accepted: formData.get('legal_consents[ai_summary][is_accepted]') === '1' }
             };
 
             // Send to API

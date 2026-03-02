@@ -32,15 +32,21 @@ class PatientController extends BaseController
 {
     private PatientRepository $patientRepository;
     private PatientVitalsRepository $vitalsRepository;
+    private \App\Domain\Ai\AiSummaryService $aiSummaryService;
+    private \App\Domain\Ai\AiSettingsRepository $aiSettingsRepo;
 
     public function __construct(
         ContainerInterface $container,
         PatientRepository $patientRepository,
-        PatientVitalsRepository $vitalsRepository
+        PatientVitalsRepository $vitalsRepository,
+        \App\Domain\Ai\AiSummaryService $aiSummaryService,
+        \App\Domain\Ai\AiSettingsRepository $aiSettingsRepo
     ) {
         parent::__construct($container);
         $this->patientRepository = $patientRepository;
         $this->vitalsRepository = $vitalsRepository;
+        $this->aiSummaryService = $aiSummaryService;
+        $this->aiSettingsRepo = $aiSettingsRepo;
     }
 
     /**
@@ -291,5 +297,43 @@ class PatientController extends BaseController
         ]);
 
         return $this->success($response, null, 'Hasta tamamen silindi');
+    }
+
+    /**
+     * Hastanın mevcut yapay zeka özetini getirir
+     */
+    #[Route('GET', '/{id:[0-9]+}/ai-summary')]
+    public function getAiSummary(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $patientId = (int) $args['id'];
+
+        $summary = $this->aiSettingsRepo->getPatientLatestSummary($clinicId, $patientId);
+
+        return $this->success($response, [
+            'has_summary' => $summary ? true : false,
+            'summary' => $summary
+        ]);
+    }
+
+    /**
+     * Hastanın yapay zeka özetini oluşturur veya günceller
+     */
+    #[Route('POST', '/{id:[0-9]+}/ai-summary')]
+    public function generateAiSummary(Request $request, Response $response, array $args): Response
+    {
+        $clinicId = (int) $this->getClinicId($request);
+        $patientId = (int) $args['id'];
+
+        $result = $this->aiSummaryService->generatePatientSummary($clinicId, $patientId);
+
+        if (!$result['success']) {
+            return $this->error($response, $result['message'], 400);
+        }
+
+        return $this->success($response, [
+            'summary' => $result['summary'],
+            'is_cached' => $result['is_cached'] ?? false
+        ], $result['message']);
     }
 }
