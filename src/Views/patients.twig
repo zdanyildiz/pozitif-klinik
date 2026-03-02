@@ -85,8 +85,8 @@
                         </td>
                         <td>
                             <small class="text-muted">
-                                <!-- Simple date formatting, ideal is a Twig extension or filter -->
-                                {{ patient.updated_at|default(patient.created_at) }}
+                                <!-- Use last_visit_date if available, fallback to created_at -->
+                                {{ patient.last_visit_date|default(patient.created_at) }}
                             </small>
                         </td>
                         <td class="text-end">
@@ -364,8 +364,8 @@
                     genderHtml = '<span class="badge bg-danger-subtle text-danger rounded-pill">Kadın</span>';
                 }
 
-                // Tarih (updated_at veya created_at)
-                const lastActionDate = patient.updated_at || patient.created_at;
+                // Tarih (last_visit_date veya created_at)
+                const lastActionDate = patient.last_visit_date || patient.created_at;
 
                 // Base path construction logic check:
                 // If not available in JS context, we can infer from current location or use a relative path

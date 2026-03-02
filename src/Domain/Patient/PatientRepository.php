@@ -34,7 +34,8 @@ class PatientRepository
      */
     public function findAll(int $clinicId): array
     {
-        $sql = "SELECT p.*, pr.name as province_name, d.name as district_name 
+        $sql = "SELECT p.*, pr.name as province_name, d.name as district_name,
+                       (SELECT MAX(appointment_date) FROM cln_appointments WHERE patient_id = p.id) as last_visit_date
                 FROM ptn_cards p
                 LEFT JOIN sys_provinces pr ON p.province_id = pr.id
                 LEFT JOIN sys_districts d ON p.district_id = d.id
@@ -373,7 +374,8 @@ class PatientRepository
 
         // 3. Search Index Üzerinden Join
         // Sorgudaki tokenlar ile en çok eşleşen (relevance ranking) kayıtları getir.
-        $sql = "SELECT p.*, pr.name as province_name, d.name as district_name, COUNT(*) as match_count
+        $sql = "SELECT p.*, pr.name as province_name, d.name as district_name, COUNT(*) as match_count,
+                       (SELECT MAX(appointment_date) FROM cln_appointments WHERE patient_id = p.id) as last_visit_date
                 FROM ptn_cards p
                 JOIN search_index si ON p.id = si.record_id
                 LEFT JOIN sys_provinces pr ON p.province_id = pr.id
