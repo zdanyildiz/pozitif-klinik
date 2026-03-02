@@ -1,91 +1,37 @@
-# Intermedia Migrasyonu: Mimari Değişiklikler ve Kararlar
+# Intermedia Migrasyonu: Mimari Kararlar ve Veri Güvenliği
 
-Bu doküman, Intermedia (MSSQL) sisteminden Pozitif Klinik (MySQL) sistemine veri aktarımı sırasında yapılan mimari geliştirmeleri, yeni eklenen alanları ve veri eşleştirme mantığını açıklamaktadır.
+Bu doküman, Intermedia (MSSQL) sisteminden Pozitif Klinik (MySQL) sistemine geçiş sırasında uygulanan temel mimari kararları, güvenlik standartlarını ve veri eşleştirme mantığını açıklamaktadır.
 
-## 1. Konfigürasyon ve Altyapı
-**Merkezi Yönetim (`db.config.json` & `db.helper.js`)**
-Veritabanı bağlantı ayarları, şifreleme anahtarları ve migrasyon parametreleri (batch size, clinic id) tek bir JSON dosyasında toplanmıştır.
-- **Konfigürasyon:** `scripts/intermedia-migration/db.config.json`
-- **Helper:** `scripts/intermedia-migration/db.helper.js` (Environment variable desteği ile)
+## 1. Mimari Yaklaşım: Üç Aşamalı ETL
+Süreç, doğrudan veritabanından veritabanına (DB-to-DB) aktarım yerine, daha kontrollü olan üç aşamalı bir yapıya evrilmiştir:
 
-## 2. Mimari Kararlar ve Yaklaşım
+1.  **Extraction (Çıkarma):** MSSQL'den ham veriler okunur ve branş bazlı dağınık muayene verileri birleştirilerek JSON formatına dönüştürülür.
+2.  **Transformation (Dönüşüm):** JSON verileri üzerinde temizlik, normalizasyon ve multi-tenant hazırlığı yapılır.
+3.  **Loading (Yükleme):** Veriler şifrelenerek (AES-256) ve arama indeksleri (Blind Index) oluşturularak hedef MySQL veritabanına yazılır.
 
-### 2.1 JSON Metadata Yapısı (`extra_metadata`)
-**Amaç:** Eski sistemdeki dağınık tıbbi ve arşivsel verileri, ana tablo şemasını (RDBMS) kirletmeden esnek bir yapıda toplamak.
+## 2. Veri Güvenliği ve KVKK Standartları
 
-**Neden?**
-- Eski sistemde alerjiler, kronik hastalıklar ve arşiv bilgileri onlarca farklı sütuna yayılmıştı.
-- Bu veriler her zaman sorgu kriteri (index) gerektirmez, ancak hasta kartında bir bütün olarak görülmesi kritiktir.
-- JSON yapısı, gelecekte farklı branşlardan gelecek yeni veri tiplerine (örn: Diş hekimliği özel verileri) şema değişikliği yapmadan uyum sağlar.
+Aktarım sırasında tüm hassas veriler aşağıdaki güvenlik katmanlarından geçer:
 
-**Kapsam:**
-```json
-{
-  "medical": {
-    "allergies": { "drug": "...", "substance": "..." },
-    "chronic_diseases": ["Diyabet", "Hepatit", "..."],
-    "medical_warnings": "..."
-  },
-  "archival": {
-    "archive_no": "...",
-    "family_no": "..."
-  },
-  "insurance": {
-    "policy_no": "...",
-    "institution": "..."
-  }
-}
-```
+### 2.1 Veri Şifreleme (Encryption)
+- **Yöntem:** `AES-256-GCM` standardı kullanılır.
+- **Kapsam:** Hasta adı, TC Kimlik No, Telefon, E-posta ve Adres bilgileri veritabanında şifreli olarak saklanır.
+- **Anahtar Yönetimi:** Şifreleme anahtarı projenin ana `.env` dosyasındaki `APP_KEY` üzerinden türetilir.
 
-### 2.2 İlişkisel Veri Eşleştirme (İl/İlçe)
-**Yöntem:** String birleştirme yerine, Pozitif Klinik'in `sys_provinces` ve `sys_districts` tablolarıyla ID bazlı ilişki kurulur.
+### 2.2 Blind Index ile Güvenli Arama
+- **Sorun:** Şifreli veriler üzerinde standart SQL sorguları (`LIKE %...%`) çalışmaz.
+- **Çözüm:** Hassas verilerin normalleştirilmiş halleri `SHA-256 HMAC` ile hash'lenerek `search_index` tablosuna yazılır.
+- **Kullanım:** Arama yapıldığında, aranan kelime aynı hash algoritmasıyla dönüştürülür ve index tablosunda eşleştirilir. Bu sayede veritabanı çalınsa dahi, arama anahtarları üzerinden gerçek verilere ulaşılamaz.
 
-**Mantık:**
-- `extract_mssql.js` ile il ve ilçe isimleri metin olarak çekilir.
-- `load_mysql.js` aşamasında bu metinler, hedef sistemdeki mevcut coğrafi veri setiyle (Case-insensitive) eşleştirilir.
-- Eşleşen kayıtlar `province_id` ve `district_id` sütunlarına fiziksel anahtar (Foreign Key) olarak yazılır.
+## 3. Akıllı Veri Birleştirme
 
-### 2.3 Metin Birleştirme Stratejisi (Lab & Radyoloji)
-**Sorun:** Eski sistemde tetkik sonuçları ve radyoloji raporları, yapılandırılmış veri yerine metin blokları halinde (text) tutuluyordu ve farklı sütunlardaydı.
-**Çözüm:** Bu veriler `cln_examinations` tablosundaki `lab_result_text` alanında birleştirilir.
-**Format:**
-```text
-LABORATUVAR:
-{Eski sistemdeki Lab sonucu}
+### 3.1 JSON Metadata Yapısı (`extra_metadata`)
+Eski sistemdeki onlarca farklı sütuna yayılmış (alerjiler, kronik hastalıklar, arşiv bilgileri vb.) ikincil veriler, ana tablo şemasını şişirmemek için `ptn_cards` tablosundaki `extra_metadata` JSON alanına toplanır.
 
-RADYOLOJI:
-{Eski sistemdeki Radyoloji sonucu}
-```
-Bu işlem `merge_specialty_data.js` scripti ile yapılır.
+### 3.2 Muayene Verilerinin Konsolidasyonu
+MSSQL'de branşlara göre (`UZM_KARDIYO`, `UZM_KBB` vb.) farklı tablolarda tutulan anamnez bilgileri, `GELISNO` (Visit ID) üzerinden birleştirilerek MySQL'deki `cln_examinations` tablosuna tek bir kayıt olarak aktarılır.
 
-## 3. Şema Seviyesindeki Değişiklikler
+## 4. İlişkisel Veri Eşleştirme
 
-Yapılan tüm geliştirmeler projenin orijinal SQL dosyalarına (`migration/database/migrations/`) yansıtılmıştır:
-
-### 3.1 Hasta Kartları (`ptn_cards`)
-- **`extra_metadata` (JSON):** Yukarıda açıklanan tıbbi ve idari profili tutar.
-- **`legacy_id`:** Eski sistemdeki `HASTANO` bilgisini tutar (Geriye dönük takip için).
-- **`identity_details` JSON:** `father_name`, `mother_name`, `birth_place`, `nationality` gibi kimlik detayları JSON içinde tutulur.
-- **`work_details` JSON:** `profession` ve iş bilgileri JSON içinde tutulur.
-
-### 3.2 Muayene Kayıtları (`cln_examinations`)
-- **Tıbbi Alanlar:** `complaint` (Şikayet), `story` (Hikaye), `diagnosis` (Tanı), `treatment` (Tedavi), `bulgular` (Fizik Muayene) ve `result_note` (Genel Sonuç) alanları eklendi.
-- **Birleştirilmiş Alan:** `lab_result_text` (Eski sistem Lab ve Radyoloji metinleri).
-- **Esnek Yapı:** `specialty_data` (JSON) ve `specialty_code` alanları, gelecekteki branş bazlı veriler için eklendi.
-- **İlişki:** `legacy_visit_id` üzerinden eski sistemdeki geliş numarasıyla (`GELISNO`) bağ kuruldu.
-
-### 3.3 Hizmet Kataloğu (`cln_services`)
-- **`legacy_code`:** Eski sistemdeki `TETKIK.KOD` bilgisini tutar. Bu sayede işlem kalemleri (adisyon) aktarılırken doğru hizmetle eşleşme sağlanır.
-
-## 4. Veri Güvenliği ve KVKK
-
-Aktarım sırasında şu güvenlik önlemleri uygulanmaktadır:
-- **Şifreleme (Encryption):** TC No, Ad Soyad, Telefon gibi hassas veriler `AES-256-GCM` ile şifrelenir.
-- **Blind Index:** KVKK uyumlu arama yapılabilmesi için hassas verilerin SHA-256 hash'leri oluşturulur.
-- **Aktif/Pasif Durumu:** MSSQL'de `IPTAL` olan kayıtlar silinmez, `status: 0` olarak aktarılarak veri kaybı önlenir.
-
-## 5. Uygulama Yöntemi
-
-Mimari değişikliklerin sisteme uygulanması iki aşamalıdır:
-1. **Sıfır Kurulum:** Proje ana SQL dosyaları güncellendiği için yeni kurulumlarda otomatik gelir.
-2. **Canlı Sistem:** `apply_alters.js` scripti, mevcut veritabanlarındaki verileri bozmadan eksik sütunları `ALTER TABLE` komutlarıyla ekler.
+- **Legacy ID Takibi:** Her kayıt (Hasta, Randevu, Ödeme vb.) eski sistemdeki orijinal ID'sini `legacy_id` veya `legacy_visit_id` alanında saklar. Bu, aktarımın yarıda kalması durumunda kaldığı yerden devam etmesini (idempotency) sağlar.
+- **Coğrafi Veriler:** İl ve ilçe isimleri metin olarak çekilir ve yükleme aşamasında Pozitif Klinik'in merkezi `sys_provinces` ve `sys_districts` tablolarıyla ID bazlı otomatik eşleştirilir.

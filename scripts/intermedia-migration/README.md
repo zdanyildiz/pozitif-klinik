@@ -1,29 +1,32 @@
-# Intermedia Veri Aktarım Rehberi
+# Intermedia MSSQL -> Pozitif Klinik MySQL Migration
 
-Bu dizin, Intermedia (MSSQL) tabanlı sistemlerden Pozitif Klinik (MySQL) platformuna veri aktarımı sağlamak için kullanılan scriptleri içerir.
+Bu dizin, Intermedia (MSSQL) sistemindeki verilerin Pozitif Klinik (MySQL) veritabanına aktarılmasını sağlayan araçları içerir.
 
-## Ana Aktarım Akışı
+## 🚀 Hızlı Başlangıç
 
-Yeni bir klinik müşterisi için aktarım şu sıra ile yapılmalıdır:
+Tüm migrasyon sürecini tek bir komutla çalıştırabilirsiniz:
 
-1.  **`migrate_data.js`**: Temel verileri (Hastalar, Randevular, Epikrizler, Kullanıcılar) aktarır.
-2.  **`migrate_lab_data.js`**: Laboratuvar sonuçlarını ve değerlerini aktarır.
-3.  **`migrate_lab_metadata.js`**: Laboratuvar test tanımlarını ve normal değer aralıklarını aktarır.
-4.  **`migrate_files.js`**: Hasta dosyalarını ve dökümanlarını (UUID ile) aktarır.
-5.  **`migrate_payments.js`**: Finansal kayıtları ve ödemeleri aktarır.
+```bash
+# 1 Numaralı klinik için aktarımı başlatır
+node run.js --clinic=1
+```
 
-## Yeni Eklenen Branş Bazlı Veri Aktarımı (Merge)
+## 📂 Dökümantasyon
 
-Doktorlar bazı verileri branş tablolarına (`UZM_...`) girmiş olabilir. Bu verileri ana tabloya birleştirmek için:
+*   **[MIGRATION_PROCESS.md](./MIGRATION_PROCESS.md):** Aktarım adımları, veri akışı ve tablo eşleşmeleri hakkında detaylı teknik rehber.
+*   **[MIGRATION_ARCHITECTURE.md](./MIGRATION_ARCHITECTURE.md):** Veri güvenliği (şifreleme), JSON metadata yapısı ve mimari kararlar.
+*   **[AGENT_INSTRUCTIONS.md](./AGENT_INSTRUCTIONS.md):** YZ ajanları için özel çalışma talimatları.
 
-1.  **`merge_specialty_data.js`**: `UZM_ICHASTALIKLARI` tablosundaki gerçek klinik notlarını `cln_examinations` tablosuna aktarır. Eksik randevu kayıtlarını da otomatik oluşturur.
-2.  **`categorize_specialty.js`**: Aktarılan verileri branş koduyla (`IC_HASTALIKLARI` vb.) işaretler.
+## 🛠️ Ana Bileşenler
 
-## Tanı ve ICD Kodları
-*   **`check_icd_table.js`**: ICD-10 kütüphanesini kontrol eder.
-*   **`verify_data_presence.js`**: Aktarılan verilerin doluluk oranını kontrol eder.
+| Dosya | Görev |
+| :--- | :--- |
+| `run.js` | Orkestratör - Tüm adımları sırayla çalıştırır. |
+| `extraction/` | MSSQL'den veri çekme ve JSON'a dönüştürme scriptleri. |
+| `loading/` | JSON verilerini şifreleyerek MySQL'e yükleme scriptleri. |
+| `core/db.helper.js` | Veritabanı bağlantı ve yapılandırma yardımcısı. |
 
-## Gereksinimler
-- Node.js (mssql, mysql2 paketleri)
-- MSSQL (Kaynak) ve MySQL (Hedef) veritabanı erişimi
-- `.env` dosyasındaki şifreleme anahtarları (AES-256 için)
+## ⚠️ Önemli Uyarılar
+1.  **Yedekleme:** Aktarım öncesinde hedef MySQL veritabanının yedeğini almanız önerilir.
+2.  **Yapılandırma:** `db.config.json` dosyasının doğru MSSQL ve MySQL bilgilerini içerdiğinden emin olun.
+3.  **Güvenlik:** Aktarılan veriler (TC, Telefon vb.) otomatik olarak şifrelenir ve arama indeksleri oluşturulur.
