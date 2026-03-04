@@ -899,19 +899,22 @@ async function viewDetail(id, e) {
         typeBadgeWrapper.appendChild(badge);
         document.getElementById('detailDoctorName').textContent = app.doctor_name || '-';
         document.getElementById('detailDateTime').textContent = app.appointment_date;
-        document.getElementById('detailNotes').value = app.notes || 'Not yok';
+        document.getElementById('detailNotes').innerHTML = app.notes ? app.notes.replace(/\n/g, '<br>') : 'Not yok';
         document.getElementById('detailStatusSelect').value = app.status;
         // Render Billing
-        renderBillingItems(
-            app.items,
-            app.total_amount,
-            app.total_paid,
-            app.remaining_amount,
-            app.general_discount_amount,
-            app.items_subtotal,
-            app.items_discount_total,
-            app.general_discount_note || ''
-        );
+        const billingBody = document.getElementById('billingItemsBody');
+        if (billingBody) {
+            renderBillingItems(
+                app.items || [],
+                app.total_amount || 0,
+                app.total_paid || 0,
+                app.remaining_amount || 0,
+                app.general_discount_amount || 0,
+                app.items_subtotal || 0,
+                app.items_discount_total || 0,
+                app.general_discount_note || ''
+            );
+        }
 
         detailModal.show();
     } catch (e) {
@@ -939,6 +942,8 @@ function openPaymentModal(app) {
 // item -> {id, item_name, quantity, unit_price, total_price (gross), discount_amount}
 function renderBillingItems(items, netTotal, totalPaid = 0, remaining = 0, generalDiscount = 0, itemsSubtotal = 0, itemsDiscountTotal = 0, generalDiscountNote = '') {
     const tbody = document.getElementById('billingItemsBody');
+    if (!tbody) return;
+
     tbody.innerHTML = '';
 
     // Header'ı güncelle (İndirim kolonları eklendiği için)
