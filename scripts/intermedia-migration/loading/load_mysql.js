@@ -44,7 +44,7 @@ const BINARY_BLIND_INDEX_KEY = BLIND_INDEX_KEY ? Buffer.from(BLIND_INDEX_KEY, 'h
 
 // Helpers
 function encrypt(data) {
-    if (!data) return null;
+    if (data === null || data === undefined) return null;
     const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv('aes-256-gcm', BINARY_KEY, iv);
     const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
@@ -149,12 +149,12 @@ async function main() {
                 const newMeta = [];
                 for (const p of batch) {
                     if (existingSet.has(p.legacy_id)) { patientMap.set(p.legacy_id, existingSet.get(p.legacy_id)); continue; }
-                    values.push([CLINIC_ID, encrypt(p.tc_no || '11111111111'), encrypt(p.name), encrypt(p.phone || '5011234567'), encrypt(p.email), p.birth_date, p.gender, p.blood_type, encrypt(p.address), p.notes, p.legacy_id, p.status]);
+                    values.push([CLINIC_ID, encrypt(p.tc_no || ''), encrypt(p.name || ''), encrypt(p.phone || ''), encrypt(p.email || ''), p.birth_date, p.gender, p.blood_type, encrypt(p.address || ''), p.notes, p.legacy_id, p.status, p.created_at || new Date().toISOString().slice(0, 19).replace('T', ' ')]);
                     newMeta.push(p);
                 }
-                
+
                 if (values.length > 0) {
-                    const [res] = await conn.query(`INSERT INTO ptn_cards (clinic_id, tc_no, name, phone, email, birth_date, gender, blood_type, address, notes, legacy_id, status) VALUES ?`, [values]);
+                    const [res] = await conn.query(`INSERT INTO ptn_cards (clinic_id, tc_no, name, phone, email, birth_date, gender, blood_type, address, notes, legacy_id, status, created_at) VALUES ?`, [values]);
                     let currentId = res.insertId;
                     const searchIndexBatch = [];
                     for (const p of newMeta) {
@@ -189,7 +189,7 @@ async function main() {
                     if (!patientMap.has(a.patient_legacy_id)) continue;
                     const pId = patientMap.get(a.patient_legacy_id);
                     const dId = userMap.get(a.doctor_legacy_id) || null;
-                    values.push([CLINIC_ID, pId, dId, typeId, a.appointment_date || '1970-01-01 00:00:00', a.status, a.protocol_no, a.legacy_visit_id]);
+                    values.push([CLINIC_ID, pId, dId, typeId, a.appointment_date || null, a.status, a.protocol_no, a.legacy_visit_id]);
                     newMeta.push({ ...a, mysql_patient_id: pId, mysql_doctor_id: dId });
                 }
                 if (values.length > 0) {
@@ -216,7 +216,8 @@ async function main() {
                     if (!detail) continue;
                     const [exists] = await conn.query('SELECT id FROM cln_examinations WHERE appointment_id = ?', [detail.id]);
                     if (exists.length > 0) continue;
-                    values.push([CLINIC_ID, detail.patient_id, detail.doctor_id || 1, detail.id, encrypt(e.complaint), encrypt(e.story), encrypt(e.bulgular), encrypt(e.diagnosis), encrypt(e.treatment), encrypt(e.result_note), e.legacy_visit_id, toSqlDate(e.created_at)]);
+                    const examinationDoctorId = userMap.get(e.doctor_legacy_id) || detail.doctor_id || 1;
+                    values.push([CLINIC_ID, detail.patient_id, examinationDoctorId, detail.id, encrypt(e.complaint), encrypt(e.story), encrypt(e.bulgular), encrypt(e.diagnosis), encrypt(e.treatment), encrypt(e.result_note), e.legacy_visit_id, toSqlDate(e.created_at)]);
                 }
                 if (values.length > 0) await conn.query('INSERT INTO cln_examinations (clinic_id, patient_id, doctor_user_id, appointment_id, complaint, story, bulgular, diagnosis, treatment, result_note, legacy_visit_id, created_at) VALUES ?', [values]);
             }

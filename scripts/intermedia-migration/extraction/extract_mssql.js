@@ -12,7 +12,7 @@ const path = require('path');
 const { getSourceConfig } = require('../core/db.helper');
 const mssqlConfig = {
     ...getSourceConfig(),
-    requestTimeout: 600000 
+    requestTimeout: 600000
 };
 
 const args = process.argv.slice(2);
@@ -61,7 +61,8 @@ class DataMigrator {
                 blood_type: row.KANGRUBU || null,
                 address: [row.EV_ADRES1, row.EV_ADRES2, row.EV_ADRES_SEMT].filter(Boolean).join(', ') || null,
                 city: row.EV_ADRES_IL || null, district: row.EV_ADRES_ILCE || null,
-                notes: row.NOTLAR || null, status: 1
+                notes: row.NOTLAR || null, status: 1,
+                created_at: row.ACILANTRH ? new Date(row.ACILANTRH).toISOString().slice(0, 19).replace('T', ' ') : null
             })));
 
             // 2. RANDEVULAR
@@ -92,7 +93,7 @@ class DataMigrator {
 
             // a) Standart Epikrizler
             const stdExams = await this.mssqlPool.request().input('subeid', sql.Int, CLINIC_ID).query(`
-                SELECT t.GELISNO, et.SIKAYETLER, et.HIKAYESI, et.BULGULAR, et.TESHIS, et.TEDAVI, et.SONUC, et.TARIH
+                SELECT t.GELISNO, et.SIKAYETLER, et.HIKAYESI, et.BULGULAR, et.TESHIS, et.TEDAVI, et.SONUC, et.TARIH, et.KAYITKIM
                 FROM HST_TIBBI_EPIKRIZ_TAKIP et
                 INNER JOIN HST_TIBBI_EPIKRIZ e ON et.EPIKRIZ_ID = e.ID
                 INNER JOIN HST_TIBBI t ON e.TIBBIDOSYA_ID = t.RECORD_ID
@@ -103,13 +104,13 @@ class DataMigrator {
                 examsMap.set(row.GELISNO, {
                     legacy_visit_id: row.GELISNO, complaint: row.SIKAYETLER, story: row.HIKAYESI,
                     bulgular: row.BULGULAR, diagnosis: row.TESHIS, treatment: row.TEDAVI,
-                    result_note: row.SONUC, created_at: row.TARIH
+                    result_note: row.SONUC, created_at: row.TARIH, doctor_legacy_id: row.KAYITKIM
                 });
             });
 
             // b) Tüm UZM_*_HST_ANAMNEZ Tablolarını tara
             const uzmTables = [
-                'UZM_ICHASTALIKLARI_HST_ANAMNEZ', 'UZM_FIZIKTEDAVI_HST_ANAMNEZ', 
+                'UZM_ICHASTALIKLARI_HST_ANAMNEZ', 'UZM_FIZIKTEDAVI_HST_ANAMNEZ',
                 'UZM_GOGUSHASTALIKLARI_HST_ANAMNEZ', 'UZM_JINEKO_HST_ANAMNEZ',
                 'UZM_KALPDAMARCERRAH_HST_ANAMNEZ', 'UZM_KARDIYO_HST_ANAMNEZ',
                 'UZM_KBB_HST_ANAMNEZ', 'UZM_MAPMEDYA_HST_ANAMNEZ',
@@ -120,18 +121,18 @@ class DataMigrator {
             for (const table of uzmTables) {
                 console.log(`  > ${table} taranıyor...`);
                 const rows = await this.mssqlPool.request().input('subeid', sql.Int, CLINIC_ID).query(`
-                    SELECT u.* FROM ${table} u 
+                    SELECT u.*, g.TARIH as GELIS_TARIHI FROM ${table} u 
                     INNER JOIN HST_GELISLER g ON u.GELISNO = g.GELISNO 
                     WHERE g.SUBE_ID = @subeid
                 `);
 
                 rows.recordset.forEach(row => {
                     const existing = examsMap.get(row.GELISNO) || {};
-                    
+
                     // Bulgular kısmına radyoloji, laboratuvar ve fizik muayeneyi ekle
                     const combinedBulgular = [existing.bulgular, row.FIZIKMUA, row.RADYOLOJI, row.LABORATUVAR]
                         .filter(v => v && String(v).trim() !== '').join('\n---\n');
-                    
+
                     // Tedavi kısmına branş tedavisi ve tavsiyeleri ekle
                     const combinedTreatment = [existing.treatment, row.TEDAVI, row.TAVSIYELER]
                         .filter(v => v && String(v).trim() !== '').join('\n---\n');
@@ -144,7 +145,8 @@ class DataMigrator {
                         diagnosis: [existing.diagnosis, row.TANI].filter(v => v && String(v).trim() !== '').join('\n---\n'),
                         treatment: combinedTreatment || null,
                         result_note: existing.result_note || null,
-                        created_at: existing.created_at || null
+                        created_at: existing.created_at || row.GELIS_TARIHI || null,
+                        doctor_legacy_id: existing.doctor_legacy_id || row.DOKTOR_ID || null
                     });
                 });
             }

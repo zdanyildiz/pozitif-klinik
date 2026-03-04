@@ -168,7 +168,7 @@ class PatientWebController
             if (!in_array($exam['id'], $mappedExamIds)) {
                 $timeline[] = [
                     'entry_type' => 'examination',
-                    'date' => $exam['created_at'],
+                    'date' => null, // Fallback kaldırıldı: created_at artık geliş tarihi olarak kullanılmıyor.
                     'doctor_name' => $exam['doctor_name'] ?? 'Doktor Notu',
                     'title' => 'Tıbbi Muayene Kaydı',
                     'color' => '#10b981',

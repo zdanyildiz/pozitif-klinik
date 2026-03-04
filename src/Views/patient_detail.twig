@@ -153,7 +153,13 @@
                                                     {% endif %}
                                                     {{ item.title }}
                                                 </h6>
-                                                <small class="text-muted">{{ item.date|date('d.m.Y H:i') }}</small>
+                                                <small class="text-muted">
+                                                    {% if item.date and item.date != '1970-01-01 00:00:00' %}
+                                                        {{ item.date|date('d.m.Y H:i') }}
+                                                    {% else %}
+                                                        Tarih Belirtilmemiş
+                                                    {% endif %}
+                                                </small>
                                                 <span class="ms-2 badge bg-light text-secondary border border-secondary fw-normal" style="font-size: 0.7rem;">
                                                     <i class="bi bi-info-circle me-1"></i>Detay
                                                 </span>
@@ -1084,7 +1090,7 @@
                 exam = examRes.data;
                 // Mock appointment-like structure for the UI header
                 appt = {
-                    appointment_date: exam.created_at,
+                    appointment_date: null, // Fallback kaldırıldı: created_at artık gerçek geliş tarihi yerine geçmeyecek.
                     doctor_name: exam.doctor_name || 'Bilinmiyor',
                     type_name: 'Tıbbi Muayene Kaydı',
                     status_name: 'Tamamlandı',
@@ -1098,7 +1104,7 @@
             // 3. Populate Data
             
             // Header
-            document.getElementById('offcanvasDate').textContent = Utils.formatDate(appt.appointment_date);
+            document.getElementById('offcanvasDate').textContent = appt.appointment_date ? Utils.formatDate(appt.appointment_date) : 'Tarih Belirtilmemiş';
             document.getElementById('offcanvasDoctor').textContent = appt.doctor_name || 'Belirtilmemiş';
             document.getElementById('offcanvasType').textContent = appt.type_name;
             const statusEl = document.getElementById('offcanvasStatus');
