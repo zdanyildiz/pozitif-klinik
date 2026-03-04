@@ -104,7 +104,7 @@ function renderTenantRow(tenant) {
                 <a href="${API_URL}/platform/clinic-settings?id=${tenant.id}" class="btn btn-sm btn-outline-secondary" title="Ayarlar">
                     <i class="bi bi-gear"></i>
                 </a>
-                <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(${tenant.id}, '${escapeHtml(tenant.name)}', '${escapeHtml(tenant.domain_prefix)}', ${isActive}, '${escapeHtml(adminUsername)}')" title="Düzenle">
+                <button class="btn btn-sm btn-outline-primary" onclick="openEditModal(${tenant.id}, '${escapeHtml(tenant.name)}', '${escapeHtml(tenant.domain_prefix)}', ${isActive}, '${escapeHtml(adminUsername)}', ${tenant.admin_id})" title="Düzenle">
                     <i class="bi bi-pencil"></i>
                 </button>
             </div>
@@ -118,9 +118,11 @@ function renderTenantRow(tenant) {
 // Edit Modal Aç
 let editModal;
 let currentEditId = null;
+let currentAdminId = null;
 
-window.openEditModal = function (id, name, domainPrefix, isActive, adminUsername) {
+window.openEditModal = function (id, name, domainPrefix, isActive, adminUsername, adminId) {
     currentEditId = id;
+    currentAdminId = adminId;
     document.getElementById('editClinicName').value = name;
     document.getElementById('editClinicDomain').value = domainPrefix;
     document.getElementById('editClinicStatus').value = isActive ? "1" : "0";
@@ -157,6 +159,7 @@ async function handleUpdateTenant() {
     const payload = {
         name: name,
         is_active: isActive,
+        admin_id: currentAdminId,
         admin_username: adminUsername
     };
 

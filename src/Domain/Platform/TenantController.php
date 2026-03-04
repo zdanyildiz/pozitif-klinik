@@ -106,6 +106,7 @@ class TenantController extends BaseController
         $isActive = isset($body['is_active']) ? (int) $body['is_active'] : 1;
 
         // Yönetici güncelleme bilgileri (opsiyonel)
+        $adminId = $body['admin_id'] ?? null;
         $adminUsername = $body['admin_username'] ?? null;
         $adminPassword = $body['admin_password'] ?? null;
 
@@ -125,6 +126,9 @@ class TenantController extends BaseController
         ];
 
         $adminData = [];
+        if (!empty($adminId)) {
+            $adminData['id'] = $adminId;
+        }
         if (!empty($adminUsername)) {
             $adminData['username'] = $adminUsername;
         }

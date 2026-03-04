@@ -68,10 +68,11 @@ class PlatformAdminMiddleware implements MiddlewareInterface
             // Request'e payload'u ekle
             $request = $request->withAttribute('jwt_payload', $decoded);
 
-            return $handler->handle($request);
         } catch (\Exception $e) {
-            return $this->errorResponse('Token geçersiz veya süresi dolmuş', 401);
+            return $this->errorResponse('Token geçersiz veya süresi dolmuş. Hata: ' . $e->getMessage(), 401);
         }
+
+        return $handler->handle($request);
     }
 
     /**

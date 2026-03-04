@@ -100,7 +100,8 @@ class TenantRepository
     public function findAll(): array
     {
         $sql = "SELECT t.*, 
-                (SELECT username FROM sys_users WHERE clinic_id = t.id AND role = 'admin' LIMIT 1) as admin_username
+                (SELECT id FROM sys_users WHERE clinic_id = t.id AND role = 'admin' ORDER BY id ASC LIMIT 1) as admin_id,
+                (SELECT username FROM sys_users WHERE clinic_id = t.id AND role = 'admin' ORDER BY id ASC LIMIT 1) as admin_username
                 FROM sys_tenants t 
                 ORDER BY t.created_at DESC";
         return $this->db->fetchAll($sql);
@@ -150,6 +151,7 @@ class TenantRepository
         $adminSql = "SELECT id, username, name 
                      FROM sys_users 
                      WHERE clinic_id = ? AND role = 'admin' 
+                     ORDER BY id ASC 
                      LIMIT 1";
         $admin = $this->db->fetch($adminSql, [$id]);
 
@@ -179,14 +181,22 @@ class TenantRepository
 
             // 2. Yönetici Bilgilerini Güncelle (Eğer gönderildiyse)
             if (!empty($adminData)) {
-                // Mevcut admini bul
-                $sqlFindAdmin = "SELECT id FROM sys_users WHERE clinic_id = ? AND role = 'admin' LIMIT 1";
-                $stmtFind = $connection->prepare($sqlFindAdmin);
-                $stmtFind->execute([$id]);
-                $adminUser = $stmtFind->fetch(\PDO::FETCH_ASSOC);
+                $userId = null;
 
-                if ($adminUser) {
-                    $userId = $adminUser['id'];
+                // Eğer admin_id gönderildiyse onu kullan, yoksa bir tane seç
+                if (!empty($adminData['id'])) {
+                    $userId = (int) $adminData['id'];
+                } else {
+                    $sqlFindAdmin = "SELECT id FROM sys_users WHERE clinic_id = ? AND role = 'admin' LIMIT 1";
+                    $stmtFind = $connection->prepare($sqlFindAdmin);
+                    $stmtFind->execute([$id]);
+                    $adminUser = $stmtFind->fetch(\PDO::FETCH_ASSOC);
+                    if ($adminUser) {
+                        $userId = $adminUser['id'];
+                    }
+                }
+
+                if ($userId) {
                     $updates = [];
                     $params = [];
 
