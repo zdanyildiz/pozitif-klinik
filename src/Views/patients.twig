@@ -85,7 +85,7 @@
                         </td>
                         <td>
                             <small class="text-muted">
-2                                {% if patient.last_visit_date and patient.last_visit_date != '1970-01-01 00:00:00' %}
+                                {% if patient.last_visit_date and patient.last_visit_date != '1970-01-01 00:00:00' %}
                                     {{ patient.last_visit_date|date('d.m.Y') }}
                                 {% else %}
                                     İşlem Yok
