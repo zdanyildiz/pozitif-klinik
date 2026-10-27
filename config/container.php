@@ -150,7 +150,7 @@ return [
         // CSRF başarısız olduğunda çalışacak özel hata işleyici
         $guard->setFailureHandler(function ($request, $handler) use ($c, $responseFactory) {
             $logger = $c->get(\Psr\Log\LoggerInterface::class);
-            $logger->error('CSRF Check Failed', [
+            $logger->warning('CSRF Check Failed', [
                 'uri' => (string) $request->getUri(),
                 'method' => $request->getMethod(),
                 'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
