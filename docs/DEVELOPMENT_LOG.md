@@ -746,3 +746,11 @@ LOG_LEVEL=DEBUG
 - **JS Hardening:** Finansal elementlerin yokluğu durumunda JavaScript hatalarını önlemek için `Existence Checks` ve API hata toleransı (`Promise.allSettled`) mekanizmaları eklendi.
 - **Şablon Onarımı:** Loglarda tespit edilen `patients.twig` derleme hatası (`Unexpected endif`) ve `appointments.js` yetki hataları giderildi.
 - **Dökümantasyon:** Yeni yetki mimarisi `ARCHITECTURE.md` ve `GELISTIRME_PLANI_GORUNUM_AYARLARI.md` dosyalarına işlendi.
+
+
+---
+
+### 55. HTTP 405 ve İstemci Hata Loglama İyileştirmesi (✅ Tamamlandı)
+**Tarih:** 2026-10-29
+- **Sahte Alarm Önleme:** Dış taramalar, botlar ve geçersiz HTTP fiili (örn. GET rotasına POST) içeren isteklerde Slim tarafından fırlatılan `HttpMethodNotAllowedException` (405) ve genel 4xx istemci hataları `error` seviyesi yerine `warning` seviyesine çekildi.
+- **Sistem Kararlılığı:** Rutin 404'lerin yanı sıra 405 gibi istemci kaynaklı isteklerin kritik alarm (`ops.alert_remediate`) tetiklemesi engellendi, gerçek sunucu/uygulama hataları (5xx) `error` seviyesinde tutulmaya devam edildi.

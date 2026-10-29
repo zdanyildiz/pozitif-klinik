@@ -9,6 +9,7 @@ use Slim\Handlers\ErrorHandler;
 use Throwable;
 use Slim\Exception\HttpException;
 use Slim\Exception\HttpNotFoundException;
+use Slim\Exception\HttpMethodNotAllowedException;
 use Psr\Log\LoggerInterface;
 use App\Core\Service\LoggerService;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -41,6 +42,10 @@ class HttpErrorHandler extends ErrorHandler
         $level = 'error';
         if ($exception instanceof HttpNotFoundException) {
             $level = 'debug'; // Gereksiz 404 loglarını debug'a çekelim
+        } elseif ($exception instanceof HttpMethodNotAllowedException) {
+            $level = 'warning'; // Geçersiz HTTP metodları (bot/crawler taramaları) sahte alarm üretmesin
+        } elseif ($exception instanceof HttpException && $exception->getCode() >= 400 && $exception->getCode() < 500) {
+            $level = 'warning'; // Diğer 4xx istemci hataları warning seviyesinde loglansın
         }
 
         // Prepare context
