@@ -1,0 +1,61 @@
+# Pozitif Klinik — Yeni Nesil Klinik, Muayenehane ve Sağlık Merkezi Yönetim Sistemi
+
+> Pozitif Klinik (pozitifklinik.tr), hekimler, muayenehaneler, poliklinikler ve tıp merkezleri için geliştirilmiş; hasta zaman tüneli, dinamik muayene formları, ICD-10 tanı motoru, cerrahi/ameliyat takibi ve yapay zeka destekli hasta özetleme yeteneklerine sahip modern, tam bağımsız veri izolasyonlu bulut klinik yönetim platformudur.
+
+## Temel Bilgiler ve Bağlantılar
+
+- [Ana Sayfa](https://pozitifklinik.tr/): Pozitif Klinik muayenehane ve poliklinik yönetim sistemi tanıtımı.
+- [90 Gün Ücretsiz Deneme](https://pozitifklinik.tr/register): Kredi kartı gerekmeden anında 90 gün boyunca tüm özellikleri sınırsız deneyimleyin (trial_90d).
+- [Giriş Yap](https://pozitifklinik.tr/login): Kayıtlı hekim, sekreterya ve klinik personeli için yönetim paneli girişi.
+- [Randevu Sistemi](https://pozitifklinik.tr/appointment): Çoklu hekim randevu takvimi ve online randevu oluşturma.
+
+## Sistemin Sağladığı Temel Modüller ve Yetenekler
+
+### 1. Hasta Zaman Tüneli (Medical Timeline)
+Hastanın kliniğe ilk başvurusundan itibaren gerçekleşen tüm muayeneler, tahlil sonuçları, ameliyat notları, reçeteler ve ödemeler kronolojik bir zaman tüneli üzerinde tek ekranda görüntülenir. Hekim, hastanın tüm geçmişine saniyeler içinde hakim olur.
+
+### 2. Dinamik Muayene Formları ve ICD-10 Tanı Motoru
+- Branşa Özel Dinamik Formlar: Kadın doğum, diş hekimliği, KBB, dermatoloji, ortopedi veya genel cerrahi gibi farklı uzmanlıklara uygun dinamik muayene şablonları.
+- Akıllı ICD-10 Arama: Dünya Sağlık Örgütü (WHO) ICD-10 uluslararası hastalık sınıflandırma kodları içinde Türkçe akıllı arama ve otomatik eşleştirme.
+
+### 3. Cerrahi ve Ameliyat Takip Modülü
+- Operasyon öncesi hazırlık (Pre-op checklist), operasyon süreci (Per-op) ve operasyon sonrası bakım (Post-op) aşamaları.
+- Anestezi türü, cerrahi ekip, ameliyathane rezervasyonu ve detaylı ameliyat epikriz raporlama.
+
+### 4. Laboratuvar ve Tetkik Sonuçları
+- Laboratuvar parametrelerinin sisteme işlenmesi veya entegrasyonla aktarılması.
+- Referans dışı değerler için otomatik görsel uyarılar (düşük/yüksek göstergeleri) ve parametrelerin zaman içindeki değişimini gösteren grafikler.
+
+### 5. Radyoloji, Röntgen ve Dijital Dosya Arşivi
+- DICOM görüntüleyici desteği, röntgen, MR, ultrason ve PDF epikriz belgelerinin hasta profiline güvenle yüklenmesi.
+- Bulut tabanlı, kaybolmayan ve anında erişilebilen medikal arşiv.
+
+### 6. Kasa, Ön Muhasebe ve Esnek Tahsilat
+- Muayene, seans, paket tedavi ve ameliyat tahsilatlarının nakit, kredi kartı veya havale olarak kaydedilmesi.
+- Seanslı işlemler (fizik tedavi, estetik, diş tedavisi vb.) için kalan bakiye ve seans hakediş takibi.
+- Gelir/gider kalemleri, günlük kasa raporu ve mali özetler.
+
+### 7. Low-Code SMS ve Akıllı İletişim Motoru
+- Randevu oluşturulduğunda veya güncellendiğinde otomatik SMS bildirimi.
+- Randevu öncesi hatırlatma SMS'leri ve kontrol randevusu davetleri.
+- Özelleştirilebilir değişkenli SMS şablonları (hasta adı, randevu saati, doktor adı vb.).
+
+### 8. Yapay Zeka Destekli Hasta Özeti (AI Summary)
+Pozitif AI motoru, hastanın geçmiş yüzlerce satırlık muayene, tahlil ve ameliyat geçmişini analiz ederek hekime muayene öncesinde 1 paragraf halinde kritik anamnez, alerji ve kronik rahatsızlık özetini sunar.
+
+### 9. KVKK Uyumluluğu ve Tıbbi Veri Güvenliği
+- AES-256-GCM algoritması ile hassas medikal hasta verileri veritabanında şifreli saklanır.
+- Sodium tabanlı Blind Indexing ile şifreli veriler üzerinde performans kaybı yaşamadan güvenli arama yapılır.
+- Rol tabanlı erişim kontrolü (RBAC): Sekreterya sadece randevu ve tahsilat görürken, medikal detaylar sadece yetkili hekim tarafından görüntülenebilir.
+
+## Fiyatlandırma ve 90 Gün Ücretsiz Deneme (2026)
+
+- Standart 90 Gün Ücretsiz Deneme (trial_90d): Pozitif Klinik, hekimlerin klinik akışını tam anlamıyla deneyimlemesi için 90 gün boyunca sınırsız, taahhütsüz ve ücretsiz deneme sunar. Yapay hız kısıtlaması veya özellik engellemesi yoktur.
+- Muayenehane Paketi: 1.990 TL / ay (veya Yıllık 19.900 TL). Tek hekimli özel muayenehaneler için ideal; hasta takibi, dinamik muayene, kasa, SMS ve arşiv dahil.
+- Poliklinik Paketi: 3.990 TL / ay (veya Yıllık 39.900 TL). Çok hekimli klinikler, cerrahi tıp merkezleri ve poliklinikler için; sınırsız hekim, ameliyat takip modülü, laboratuvar ve öncelikli destek.
+
+## İletişim ve Destek
+
+- Web: https://pozitifklinik.tr
+- E-posta: destek@globalpozitif.com.tr
+- Kurumsal: Global Pozitif Teknolojiler San. ve Dış Tic. A.Ş.
