@@ -83,8 +83,12 @@ $app->addBodyParsingMiddleware();
 $app->add(new \App\Core\Middleware\SecurityHeadersMiddleware());
 
 // 6. CORS (Handles cross-origin requests for everything)
-$app->add(function ($request, $handler) {
-    $response = $handler->handle($request);
+$app->add(function ($request, $handler) use ($app) {
+    if ($request->getMethod() === 'OPTIONS') {
+        $response = $app->getResponseFactory()->createResponse(200);
+    } else {
+        $response = $handler->handle($request);
+    }
     return $response
         ->withHeader('Access-Control-Allow-Origin', '*')
         ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
@@ -94,10 +98,5 @@ $app->add(function ($request, $handler) {
 // Register routes
 $routes = require __DIR__ . '/../config/routes.php';
 $routes($app);
-
-// Handle OPTIONS requests for CORS (Catch-all)
-$app->options('/{routes:.+}', function ($request, $response, $args) {
-    return $response;
-});
 
 $app->run();

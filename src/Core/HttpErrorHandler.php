@@ -40,10 +40,8 @@ class HttpErrorHandler extends ErrorHandler
 
         // Determine log level
         $level = 'error';
-        if ($exception instanceof HttpNotFoundException) {
-            $level = 'debug'; // Gereksiz 404 loglarını debug'a çekelim
-        } elseif ($exception instanceof HttpMethodNotAllowedException) {
-            $level = 'warning'; // Geçersiz HTTP metodları (bot/crawler taramaları) sahte alarm üretmesin
+        if ($exception instanceof HttpNotFoundException || $exception instanceof HttpMethodNotAllowedException) {
+            $level = 'debug'; // 404 ve 405 (bot/crawler taramaları) sahte alarm üretmesin
         } elseif ($exception instanceof HttpException && $exception->getCode() >= 400 && $exception->getCode() < 500) {
             $level = 'warning'; // Diğer 4xx istemci hataları warning seviyesinde loglansın
         }
