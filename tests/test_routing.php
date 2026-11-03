@@ -16,6 +16,11 @@ if (session_status() === PHP_SESSION_NONE) {
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
+$_ENV['DB_HOST'] ??= '127.0.0.1';
+$_ENV['DB_NAME'] ??= 'pozitif_test';
+$_ENV['DB_USER'] ??= 'test';
+$_ENV['DB_PASS'] ??= 'test';
+
 $containerBuilder = new ContainerBuilder();
 $containerBuilder->addDefinitions(__DIR__ . '/../config/container.php');
 $container = $containerBuilder->build();
