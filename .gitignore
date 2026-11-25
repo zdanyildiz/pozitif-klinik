@@ -67,6 +67,8 @@ scripts/intermedia-migration/data/migration_data.json
 docs/tablo-sql/
 *.json_export
 scripts/intermedia-migration/db.config.json
+scripts/intermedia-migration/core/db.config.json
+storage/backups/
 docs/payments_data.json
 storage/app/*
 scripts/intermedia-migration/payments_data.json
