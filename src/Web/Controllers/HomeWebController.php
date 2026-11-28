@@ -9,16 +9,19 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Core\Attributes\Route;
 use Slim\Views\Twig;
 use App\Domain\Email\EmailService;
+use App\Core\Service\SeoUrlResolver;
 
 class HomeWebController
 {
     private Twig $view;
     private EmailService $emailService;
+    private SeoUrlResolver $urlResolver;
 
-    public function __construct(Twig $view, EmailService $emailService)
+    public function __construct(Twig $view, EmailService $emailService, SeoUrlResolver $urlResolver)
     {
         $this->view = $view;
         $this->emailService = $emailService;
+        $this->urlResolver = $urlResolver;
     }
 
     /**
@@ -166,5 +169,41 @@ class HomeWebController
     public function illumination(Request $request, Response $response): Response
     {
         return $this->view->render($response, 'frontend/illumination.twig');
+    }
+
+    /**
+     * Dinamik XML Sitemap
+     */
+    #[Route('GET', '/sitemap.xml')]
+    public function sitemap(Request $request, Response $response): Response
+    {
+        $baseUrl = rtrim($this->urlResolver->resolveBaseUrl($request), '/');
+        $publicRoutes = [
+            ['path' => '/', 'changefreq' => 'weekly', 'priority' => '1.0'],
+            ['path' => '/hakkimizda', 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['path' => '/iletisim', 'changefreq' => 'monthly', 'priority' => '0.8'],
+            ['path' => '/kvkk', 'changefreq' => 'yearly', 'priority' => '0.5'],
+            ['path' => '/acik-riza-metni', 'changefreq' => 'yearly', 'priority' => '0.5'],
+            ['path' => '/aydinlatma-metni', 'changefreq' => 'yearly', 'priority' => '0.5'],
+        ];
+
+        $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        $xml .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+
+        foreach ($publicRoutes as $route) {
+            $loc = htmlspecialchars($baseUrl . $route['path'], ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            $xml .= "  <url>\n";
+            $xml .= "    <loc>{$loc}</loc>\n";
+            $xml .= "    <changefreq>{$route['changefreq']}</changefreq>\n";
+            $xml .= "    <priority>{$route['priority']}</priority>\n";
+            $xml .= "  </url>\n";
+        }
+
+        $xml .= "</urlset>\n";
+
+        $response->getBody()->write($xml);
+        return $response
+            ->withHeader('Content-Type', 'application/xml; charset=utf-8')
+            ->withStatus(200);
     }
 }

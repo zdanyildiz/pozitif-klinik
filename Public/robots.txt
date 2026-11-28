@@ -20,3 +20,5 @@ Allow: /
 # LLM Knowledge File
 # https://llmstxt.org/
 LLMs-Txt: https://pozitifklinik.tr/llms.txt
+
+Sitemap: https://pozitifklinik.tr/sitemap.xml

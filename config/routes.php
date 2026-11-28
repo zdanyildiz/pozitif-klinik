@@ -17,6 +17,7 @@ return function (App $app) {
         $webRegistrar = new RouteRegistrar($group);
         $webRegistrar->registerFromNamespace('App\Web\Controllers', __DIR__ . '/../src/Web/Controllers');
     })
+        ->add(\App\Core\Middleware\SeoViewMiddleware::class)
         ->add(\App\Core\Middleware\UISettingsMiddleware::class)
         ->add(\App\Core\Middleware\UserViewMiddleware::class)
         ->add(\App\Core\Middleware\DomainTenantMiddleware::class)
